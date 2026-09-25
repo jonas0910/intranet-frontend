@@ -120,10 +120,10 @@ Con las dependencias instaladas y el backend disponible, ejecuta:
 npm start
 ```
 
-El script equivale a:
+El script equivale a ejecutar Angular CLI localmente con el proxy:
 
 ```bash
-ng serve --proxy-config proxy.conf.json
+npm run ng -- serve --proxy-config proxy.conf.json
 ```
 
 Después de compilar, abre:
