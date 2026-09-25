@@ -1,59 +1,120 @@
 # IntranetFrontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.15.
+Este proyecto es el frontend de la Intranet, desarrollado con **Angular 19** y configurado con **AdminLTE 3**, **Bootstrap 4** y un sistema de diseño (Design System) unificado para la gestión de subsistemas.
 
-## Development server
+---
 
-To start a local development server, run:
+## 🚀 Requisitos Previos
 
-```bash
-ng serve
+Antes de comenzar, asegúrate de tener instalado lo siguiente en tu entorno local:
+
+1. **Node.js**: Se recomienda utilizar una versión **LTS activa** (v18.x, v20.x o v22.x) compatible con Angular 19.
+   - Verifica tu versión actual con:
+     ```bash
+     node -v
+     ```
+2. **NPM**: Viene incluido automáticamente al instalar Node.js.
+3. **Angular CLI** (Opcional, para ejecutar comandos globales `ng`):
+   ```bash
+   npm install -g @angular/cli@19
+   ```
+
+---
+
+## 📦 Instalación y Configuración Inicial
+
+1. **Clonar el repositorio**:
+   ```bash
+   git clone https://github.com/jonas0910/intranet-frontend.git
+   cd intranet-frontend
+   ```
+
+2. **Instalar dependencias**:
+   Ejecuta el gestor de paquetes para instalar todas las dependencias necesarias:
+   ```bash
+   npm install
+   ```
+   
+   > ⚠️ **Nota importante**: Este proyecto hace uso de `patch-package` para solucionar bugs e incompatibilidades en librerías externas (especialmente en `angular-datatables`). Al ejecutar `npm install`, el script `postinstall` se encargará de aplicar automáticamente los parches ubicados en el directorio `/patches`.
+
+---
+
+## ⚙️ Configuración del Proxy (Backend)
+
+Para evitar problemas de CORS y facilitar la comunicación durante el desarrollo, el frontend está configurado para realizar un proxy de las peticiones de API y multimedia hacia tu backend local.
+
+- **URL de Backend por defecto**: `http://127.0.0.1:8001`
+- **Rutas mapeadas por el proxy**:
+  - `/api` ➡️ Redirige a la API del servidor (por ejemplo, backend Laravel).
+  - `/storage` ➡️ Acceso a archivos del backend.
+  - `/media` ➡️ Acceso a multimedia del backend.
+
+Si necesitas cambiar la dirección o el puerto de tu backend local, edita la propiedad `target` en el archivo **`proxy.conf.json`**:
+```json
+{
+  "/api": {
+    "target": "http://127.0.0.1:TU_PUERTO",
+    "secure": false,
+    ...
+  }
+}
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## 🏃 Levantar el Servidor de Desarrollo
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Para iniciar el servidor de desarrollo local de Angular cargando la configuración del proxy, simplemente ejecuta:
 
 ```bash
-ng generate --help
+npm start
 ```
 
-## Building
+*(Esto equivale a ejecutar `ng serve --proxy-config proxy.conf.json`)*
 
-To build the project run:
+Una vez que compile correctamente:
+1. Abre tu navegador en **[http://localhost:4200/](http://localhost:4200/)**.
+2. Los cambios realizados en el código fuente se reflejarán y recargarán automáticamente en el navegador.
+
+---
+
+## 📡 Websockets y Comunicación en Tiempo Real
+
+El sistema cuenta con soporte para mensajería en tiempo real integrado mediante Laravel Echo / Pusher / Socket.io.
+- **Host por defecto**: `127.0.0.1`
+- **Puerto por defecto**: `8081`
+
+Puedes consultar o modificar estas configuraciones en los archivos de entorno:
+- Desarrollo: `src/environments/environment.ts`
+- Producción: `src/environments/environment.prod.ts`
+
+---
+
+## 🏗️ Compilación para Producción (Build)
+
+Para compilar la aplicación optimizada para el entorno de producción:
 
 ```bash
-ng build
+npm run build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Este comando generará los artefactos optimizados dentro de la carpeta `dist/intranet-frontend/` listos para ser desplegados en tu servidor web (Nginx, Apache, etc.).
 
-## Running unit tests
+---
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## 🧪 Pruebas Unitarias
+
+Si deseas ejecutar el conjunto de pruebas unitarias con el test runner [Karma](https://karma-runner.github.io):
 
 ```bash
-ng test
+npm run test
 ```
 
-## Running end-to-end tests
+---
 
-For end-to-end (e2e) testing, run:
+## 📂 Documentación de Arquitectura y Patrones
 
-```bash
-ng e2e
-```
+El proyecto sigue una arquitectura unificada y modular, con un sistema de diseño propio (Design System) para homogeneizar las interfaces de usuario. Antes de desarrollar nuevas pantallas o subsistemas, te sugerimos leer las siguientes guías internas:
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+* 📑 **[Patrón de Diseño para Nuevos Subsistemas](docs/PATRON-DISEÑO-SUBSISTEMAS.md)**: Cómo estructurar cards, tablas, formularios, modales y layouts de forma unificada.
+* 📑 **[Patrón CRUD para Planillas](docs/PATRON_CRUD_PLANILLAS.md)**: Guía paso a paso para la implementación de planillas y formularios de gestión.
