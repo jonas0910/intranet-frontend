@@ -1,0 +1,338 @@
+<app-system-layout [title]="'Registro de Trabajo Diario'"
+    [subtitle]="'Control de jornada laboral y productividad del personal'" [subtitleItems]="[
+        { label: 'Registro y control del rendimiento del trabajador de limpieza pública', icon: 'fas fa-chart-line' },
+        { label: 'Registro y control de personal de recolección de residuos', icon: 'fas fa-truck-loading' },
+        { label: 'Registro y control de personal de áreas verdes', icon: 'fas fa-seedling' }
+    ]"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Limpieza Pública', url: '/limpieza-publica'}, {label: 'Registro de Trabajo'}]"
+    [subsystem]="'limpieza-publica'">
+
+    <!-- Métricas Rápidas (Estilo Activos Fijos) -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card card-outline card-primary elevation-1 shadow-sm h-100">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-primary-light text-primary rounded-circle mr-3">
+                            <i class="fas fa-user-clock fa-2x"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted small mb-0 font-weight-bold text-uppercase">Horas Trabajadas (Hoy)</p>
+                            <h3 class="mb-0 font-weight-bold text-dark">0.00 <small>hrs</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-outline card-success elevation-1 shadow-sm h-100">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-success-light text-success rounded-circle mr-3">
+                            <i class="fas fa-road fa-2x"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted small mb-0 font-weight-bold text-uppercase">Metros Limpiados (Hoy)</p>
+                            <h3 class="mb-0 font-weight-bold text-dark">0.00 <small>m</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-outline card-warning elevation-1 shadow-sm h-100">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-warning-light text-warning rounded-circle mr-3">
+                            <i class="fas fa-weight-hanging fa-2x"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted small mb-0 font-weight-bold text-uppercase">KG Recolectados (Hoy)</p>
+                            <h3 class="mb-0 font-weight-bold text-dark">0.00 <small>kg</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card elevation-1 border-0"
+        [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-primary'"
+        style="border-radius: 8px;">
+        <!-- Toolbar -->
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="card-title font-weight-bold text-dark mb-0">
+                    <i class="fas fa-list-check mr-2 text-primary"></i> Historial de Trabajo
+                </h3>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill"
+                        (click)="isFiltersCollapsed = !isFiltersCollapsed">
+                        <i class="fas fa-filter mr-1"></i> {{ isFiltersCollapsed ? 'Ver Filtros' : 'Ocultar Filtros' }}
+                    </button>
+                    <ng-container *ngIf="cv.showExportButtons">
+                        <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'"
+                            title="Exportar Excel" (click)="onExportExcel()">
+                            <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{ cv.excelBtnLabel ||
+                            'Excel' }}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'"
+                            title="Exportar PDF" (click)="onExportPdf()">
+                            <i [class]="(cv.pdfBtnIcon || 'fas fa-file-pdf') + ' mr-1'"></i> {{ cv.pdfBtnLabel || 'PDF'
+                            }}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass || 'btn-info'"
+                            title="Imprimir" (click)="onExportPrint()">
+                            <i [class]="(cv.printBtnIcon || 'fas fa-print') + ' mr-1'"></i> {{ cv.printBtnLabel ||
+                            'Imprimir' }}
+                        </button>
+                    </ng-container>
+                    <button class="btn btn-sm btn-primary px-4 rounded-pill shadow-sm ml-2" (click)="abrirNuevo()">
+                        <i class="fas fa-plus mr-2"></i> NUEVO REGISTRO
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="border-bottom bg-light overflow-hidden" [style.max-height]="isFiltersCollapsed ? '0px' : '500px'"
+            style="transition: max-height 0.3s ease;">
+            <div class="p-3">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="mb-1 ds-crud-label text-xs ds-crud-label">BUSCAR POR NOMBRE</label>
+                        <input type="text" class="form-control form-control-sm ds-crud-filter"
+                            [(ngModel)]="filtros.search" (ngModelChange)="onFilterChange()"
+                            placeholder="Nombre del trabajador...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="mb-1 ds-crud-label text-xs ds-crud-label">FECHA DESDE</label>
+                        <input type="date" class="form-control form-control-sm ds-crud-filter"
+                            [(ngModel)]="filtros.fecha_desde" (ngModelChange)="onFilterChange()">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="mb-1 ds-crud-label text-xs ds-crud-label">FECHA HASTA</label>
+                        <input type="date" class="form-control form-control-sm ds-crud-filter"
+                            [(ngModel)]="filtros.fecha_hasta" (ngModelChange)="onFilterChange()">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="mb-1 ds-crud-label text-xs ds-crud-label">RUTA</label>
+                        <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.id_ruta"
+                            (ngModelChange)="onFilterChange()">
+                            <option value="">Todas las rutas</option>
+                            <option *ngFor="let r of catalogos?.rutas" [value]="r.id_ruta">{{ r.nombre }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-sm btn-secondary w-100" (click)="limpiarFiltros()">
+                            <i class="fas fa-sync-alt mr-1"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 ds-crud-table" [class.opacity-50]="loading">
+                    <thead class="bg-light text-dark shadow-xs">
+                        <tr>
+                            <th class="px-4 border-0">TRABAJADOR</th>
+                            <th class="border-0">FECHA</th>
+                            <th class="border-0">HORARIO</th>
+                            <th class="border-0 text-center">HORAS TRAB.</th>
+                            <th class="border-0 text-right">METROS / KG</th>
+                            <th class="border-0 text-center" style="width: 120px;">ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let r of registros" class="align-middle">
+                            <td class="px-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm mr-3 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                        style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                        {{ r.personal?.name.substring(0, 1) }}
+                                    </div>
+                                    <div>
+                                        <div class="font-weight-bold text-dark">{{ r.personal?.name }}</div>
+                                        <small class="text-muted"><i class="fas fa-route mr-1"></i>{{ r.ruta?.nombre ||
+                                            'Sin ruta' }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div>{{ formatDate(r.fecha) }}</div>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge badge-light border font-weight-normal px-2">
+                                    <i class="far fa-clock mr-1 text-primary"></i>
+                                    {{ formatTime(r.hora_inicio) }} - {{ formatTime(r.hora_fin) }}
+                                </span>
+                            </td>
+                            <td class="align-middle text-center">
+                                <strong class="text-primary">{{ r.horas_trabajadas | number:'1.1-2' }}</strong>
+                            </td>
+                            <td class="align-middle text-right pr-4">
+                                <div class="d-flex flex-column align-items-end">
+                                    <small class="text-success" *ngIf="r.metros_limpiados"><i
+                                            class="fas fa-road mr-1"></i>{{ r.metros_limpiados }} m</small>
+                                    <small class="text-warning" *ngIf="r.kg_recolectados"><i
+                                            class="fas fa-weight-hanging mr-1"></i>{{ r.kg_recolectados }} kg</small>
+                                    <small class="text-muted"
+                                        *ngIf="!r.metros_limpiados && !r.kg_recolectados">-</small>
+                                </div>
+                            </td>
+                            <td class="align-middle text-center">
+                                <div class="btn-group btn-group-sm rounded-pill shadow-xs bg-white border">
+                                    <button class="btn btn-link text-warning p-2" (click)="abrirEditar(r)"
+                                        title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-link text-danger p-2 border-left"
+                                        (click)="confirmarEliminar(r)" title="Eliminar">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr *ngIf="!loading && registros.length === 0">
+                            <td colspan="6" class="text-center py-5 text-muted bg-white">
+                                <i class="fas fa-inbox fa-3x mb-3 opacity-20"></i>
+                                <p>No se encontraron registros de trabajo</p>
+                            </td>
+                        </tr>
+                        <!-- Loading skeleton rows -->
+                        <tr *ngIf="loading">
+                            <td colspan="6" class="text-center p-4"><i class="fas fa-circle-notch fa-spin"></i> Cargando
+                                datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="card-footer bg-white border-top-0 py-3" *ngIf="paginacion.lastPage > 1">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted small">Mostrando {{ (paginacion.currentPage - 1) * paginacion.perPage + 1 }} a
+                    {{ Math.min(paginacion.currentPage * paginacion.perPage, paginacion.total) }} de {{ paginacion.total
+                    }} registros</span>
+                <ul class="pagination pagination-sm m-0">
+                    <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                        <a class="page-link" (click)="onPageChange(paginacion.currentPage - 1)"
+                            href="javascript:void(0)"><i class="fas fa-chevron-left"></i></a>
+                    </li>
+                    <li class="page-item" *ngFor="let p of getPaginationPages()"
+                        [class.active]="p === paginacion.currentPage">
+                        <a class="page-link" (click)="onPageChange(p)" href="javascript:void(0)">{{ p }}</a>
+                    </li>
+                    <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                        <a class="page-link" (click)="onPageChange(paginacion.currentPage + 1)"
+                            href="javascript:void(0)"><i class="fas fa-chevron-right"></i></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CREACIÓN / EDICIÓN -->
+    <div class="modal fade" id="modalRegistroTrabajo" tabindex="-1" role="dialog" data-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title font-weight-bold">
+                        <i class="fas mr-2" [ngClass]="editando ? 'fa-edit' : 'fa-plus-circle'"></i>
+                        {{ editando ? 'Editar Registro de Trabajo' : 'Nuevo Registro de Trabajo' }}
+                    </h5>
+                    <button type="button" class="close text-white" (click)="cerrarModal()"><span>&times;</span></button>
+                </div>
+                <form #regForm="ngForm" (ngSubmit)="guardar()">
+                    <div class="modal-body p-4 bg-light">
+                        <div class="row">
+                            <!-- Información del Colaborador -->
+                            <div class="col-md-6 mb-3">
+                                <label class="ds-crud-label ds-crud-label">TRABAJADOR <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-control ds-crud-filter" name="id_personal"
+                                    [(ngModel)]="form.id_personal" required>
+                                    <option value="">Seleccione personal...</option>
+                                    <option *ngFor="let p of catalogos?.personal" [value]="p.id">{{ p.name }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="ds-crud-label ds-crud-label">FECHA <span
+                                        class="text-danger">*</span></label>
+                                <input type="date" class="form-control ds-crud-filter" name="fecha"
+                                    [(ngModel)]="form.fecha" required>
+                            </div>
+
+                            <div class="col-md-12 mb-1 mt-2">
+                                <h6 class="font-weight-bold text-primary small text-uppercase">Horario de Trabajo</h6>
+                                <hr class="mt-1 mb-3">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="ds-crud-label ds-crud-label">HORA INICIO <small
+                                        class="text-muted">(HH:mm)</small></label>
+                                <input type="time" class="form-control ds-crud-filter" name="hora_inicio"
+                                    [(ngModel)]="form.hora_inicio">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="ds-crud-label ds-crud-label">HORA FIN <small
+                                        class="text-muted">(HH:mm)</small></label>
+                                <input type="time" class="form-control ds-crud-filter" name="hora_fin"
+                                    [(ngModel)]="form.hora_fin">
+                            </div>
+
+                            <div class="col-md-12 mb-1 mt-2">
+                                <h6 class="font-weight-bold text-primary small text-uppercase">Métricas y Ubicación</h6>
+                                <hr class="mt-1 mb-3">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="ds-crud-label ds-crud-label">RUTA ASIGNADA</label>
+                                <select class="form-control ds-crud-filter" name="id_ruta" [(ngModel)]="form.id_ruta">
+                                    <option value="">Sin ruta específica</option>
+                                    <option *ngFor="let r of catalogos?.rutas" [value]="r.id_ruta">{{ r.nombre }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="ds-crud-label ds-crud-label">METROS LIMPIADOS</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control ds-crud-filter" name="metros_limpiados"
+                                        [(ngModel)]="form.metros_limpiados">
+                                    <div class="input-group-append"><span class="input-group-text">m</span></div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="ds-crud-label ds-crud-label">KG RECOLECTADOS</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control ds-crud-filter" name="kg_recolectados"
+                                        [(ngModel)]="form.kg_recolectados">
+                                    <div class="input-group-append"><span class="input-group-text">kg</span></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="ds-crud-label ds-crud-label">OBSERVACIONES</label>
+                                <textarea class="form-control" name="observaciones" [(ngModel)]="form.observaciones"
+                                    rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-white border-0">
+                        <button type="button" class="btn btn-link text-muted" (click)="cerrarModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary px-5 rounded-pill shadow"
+                            [disabled]="!regForm.form.valid || guardando">
+                            <i class="fas mr-2" [ngClass]="guardando ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                            {{ guardando ? 'Segundos...' : (editando ? 'Actualizar' : 'Guardar') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>

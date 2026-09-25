@@ -1,0 +1,47 @@
+<app-system-layout
+  title="Nuevo ticket"
+  subtitle="Describe tu solicitud de soporte"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Helpdesk', url: '/helpdesk'}, {label: 'Tickets', url: '/helpdesk/tickets'}, {label: 'Nuevo'}]"
+  subsystem="helpdesk">
+
+  <div class="card">
+    <div class="card-body">
+      <form (ngSubmit)="enviar()">
+        <div class="form-group">
+          <label>Título <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="model.titulo" name="titulo" placeholder="Resumen del problema" required>
+        </div>
+        <div class="form-group">
+          <label>Descripción <span class="text-danger">*</span></label>
+          <textarea class="form-control" rows="5" [(ngModel)]="model.descripcion" name="descripcion" placeholder="Detalla tu consulta o incidencia" required></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Prioridad</label>
+              <select class="form-control" [(ngModel)]="model.prioridad" name="prioridad">
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+                <option value="critica">Crítica</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Categoría</label>
+              <input type="text" class="form-control" [(ngModel)]="model.categoria" name="categoria" placeholder="Ej. Equipo, Accesos, Software">
+            </div>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between mt-3">
+          <a routerLink="/helpdesk/tickets" class="btn btn-outline-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <span *ngIf="loading" class="spinner-border spinner-border-sm mr-1"></span>
+            Enviar ticket
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</app-system-layout>

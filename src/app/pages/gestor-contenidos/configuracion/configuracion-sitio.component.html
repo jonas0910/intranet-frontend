@@ -1,0 +1,165 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1><i class="fas fa-cogs mr-2"></i>Configuración del Sitio</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Contenido</a></li>
+          <li class="breadcrumb-item active">Configuración</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="text-center py-5" *ngIf="loading"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+
+    <div *ngIf="!loading">
+      <!-- Cards por categoría -->
+      <div class="card" *ngFor="let cat of categorias">
+        <div class="card-header">
+          <h3 class="card-title text-capitalize">
+            <i class="fas mr-1" [ngClass]="getCategoriaIcon(cat)"></i>
+            {{ cat.replace('_', ' ') }}
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3 d-flex flex-column" *ngFor="let config of getConfigsByCategoria(cat)">
+              <div class="d-flex justify-content-between align-items-start">
+                <label [for]="'config_' + config.id">
+                  {{ config.clave }}
+                  <small *ngIf="config.descripcion" class="text-muted d-block">{{ config.descripcion }}</small>
+                </label>
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminar(config)" title="Eliminar">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+
+              <!-- Booleano -->
+              <div *ngIf="config.tipo === 'booleano' || config.tipo === 'boolean'" class="custom-control custom-switch">
+                <input type="hidden" [(ngModel)]="config.valor">
+                <input type="checkbox" class="custom-control-input" [id]="'config_' + config.id"
+                       [ngModel]="config.valor === '1' || config.valor === 'true' || config.valor === true"
+                       (ngModelChange)="config.valor = $event ? '1' : '0'">
+                <label class="custom-control-label" [for]="'config_' + config.id">Activado</label>
+              </div>
+
+              <!-- Color -->
+              <div *ngIf="config.tipo === 'color'" class="input-group">
+                <input type="color" class="form-control form-control-color"
+                       [ngModel]="config.valor || '#000000'"
+                       (ngModelChange)="config.valor = $event"
+                       style="width:60px;height:38px;padding:2px">
+                <input type="text" class="form-control" [ngModel]="config.valor || '#000000'"
+                       (ngModelChange)="config.valor = $event" placeholder="#000000">
+              </div>
+
+              <!-- Número -->
+              <input *ngIf="config.tipo === 'numero' || config.tipo === 'number'" type="number" class="form-control"
+                     [(ngModel)]="config.valor">
+
+              <!-- JSON -->
+              <textarea *ngIf="config.tipo === 'json'" class="form-control" rows="4"
+                        [(ngModel)]="config.valor" style="font-family:monospace"></textarea>
+
+              <!-- Imagen (como muni: preview, eliminar, subir archivo o URL) -->
+              <div *ngIf="config.tipo === 'imagen' || config.tipo === 'image'">
+                <div *ngIf="getImagenPreview(config)" class="mb-2 p-2 border rounded bg-light">
+                  <img [src]="getImagenPreview(config)" class="img-thumbnail d-block mb-2" style="max-height:150px;max-width:300px" alt="">
+                  <small class="text-muted d-block">{{ config._archivo ? 'Nueva imagen (se guardará al guardar)' : 'Imagen actual' }}</small>
+                  <div class="custom-control custom-checkbox mt-2">
+                    <input type="checkbox" class="custom-control-input" [id]="'eliminar_' + config.id" [(ngModel)]="config._eliminarImagen">
+                    <label class="custom-control-label text-danger" [for]="'eliminar_' + config.id">
+                      <i class="fas fa-trash"></i> Eliminar esta imagen
+                    </label>
+                  </div>
+                </div>
+                <input type="file" class="form-control-file mb-1" [id]="'file_' + config.id"
+                       accept="image/jpeg,image/png,image/gif,image/webp" (change)="onImagenFile(config, $event)">
+                <input type="text" class="form-control" [(ngModel)]="config.valor" placeholder="O URL de imagen">
+                <small class="text-muted d-block">Formatos: JPG, PNG, GIF, WebP. Tamaño máximo: 5MB</small>
+              </div>
+
+              <!-- Texto (default) -->
+              <input *ngIf="!config.tipo || config.tipo === 'text' || config.tipo === 'texto'" type="text" class="form-control"
+                     [(ngModel)]="config.valor">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="card">
+        <div class="card-body">
+          <button type="button" class="btn btn-primary" (click)="guardarTodas()">
+            <i class="fas" [ngClass]="savingAll ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{ savingAll ? 'Guardando...' : 'Guardar Configuraciones' }}
+          </button>
+          <button type="button" class="btn btn-success ml-2" (click)="openCrear()">
+            <i class="fas fa-plus"></i> Nueva Configuración
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Crear -->
+<div class="modal fade show d-block" *ngIf="showModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary">
+        <h5 class="modal-title text-white"><i class="fas fa-plus-circle mr-2"></i>Nueva Configuración</h5>
+        <button type="button" class="close text-white" (click)="showModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Clave <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="nuevaConfig.clave" placeholder="nombre_configuracion">
+        </div>
+        <div class="form-group">
+          <label>Valor</label>
+          <textarea class="form-control" [(ngModel)]="nuevaConfig.valor" rows="2" placeholder="Valor inicial"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Tipo <span class="text-danger">*</span></label>
+              <select class="form-control" [(ngModel)]="nuevaConfig.tipo">
+                <option value="texto">Texto</option>
+                <option value="numero">Número</option>
+                <option value="booleano">Booleano</option>
+                <option value="color">Color</option>
+                <option value="imagen">Imagen</option>
+                <option value="json">JSON</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Categoría <span class="text-danger">*</span></label>
+              <select class="form-control" [(ngModel)]="nuevaConfig.categoria">
+                <option *ngFor="let opt of categoriasOpciones" [value]="opt">{{ opt.replace('_', ' ') }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-group mb-0">
+          <label>Descripción</label>
+          <textarea class="form-control" [(ngModel)]="nuevaConfig.descripcion" rows="2" placeholder="Descripción"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="showModal = false">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="crearConfiguracion()" [disabled]="savingNueva || !nuevaConfig.clave">
+          <i class="fas" [ngClass]="savingNueva ? 'fa-spinner fa-spin' : 'fa-save'" class="mr-1"></i>
+          {{ savingNueva ? 'Guardando...' : 'Crear' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

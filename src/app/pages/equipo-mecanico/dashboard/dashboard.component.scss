@@ -1,0 +1,145 @@
+// Cuadro de Mando Integral - Equipo Mecánico - Estilos modernos
+
+.dashboard-cmi {
+  .dashboard-content {
+    animation: fadeIn 0.3s ease-in;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// Tarjetas KPI modernas
+.card-kpi {
+  border: none;
+  border-radius: 12px !important;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .card-body {
+    color: #fff;
+    padding: 1.25rem;
+  }
+
+  h3 {
+    font-weight: 700;
+    font-size: 1.75rem;
+    margin-bottom: 0;
+  }
+
+  .small {
+    font-size: 0.85rem;
+  }
+
+  .kpi-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    color: #fff !important;
+  }
+}
+
+.card-kpi-info {
+  background-color: #17a2b8 !important;
+  background-image: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+}
+
+.card-kpi-success {
+  background-color: #28a745 !important;
+  background-image: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+}
+
+.card-kpi-warning {
+  background-color: #ffc107 !important;
+  background-image: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+  color: #212529 !important;
+
+  .text-white, .btn-link, .small, .kpi-icon, h3, p, a, i, span {
+    color: #212529 !important;
+  }
+  
+  .kpi-icon {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    color: #212529 !important;
+  }
+}
+
+.card-kpi-danger {
+  background-color: #dc3545 !important;
+  background-image: linear-gradient(135deg, #dc3545 0%, #b21f2d 100%) !important;
+}
+
+.card-kpi-primary {
+  background-color: #007bff !important;
+  background-image: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+}
+
+// Helpers for opacity
+.bg-opacity-25 {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+// Cards de gráficos y contenedores
+.card.elevation-2 {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+
+  .card-header {
+    border-bottom: 1px solid #eee;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    background-color: transparent;
+  }
+}
+
+// Accesos rápidos
+.card-acceso {
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  border: 1px solid #eee;
+  background-color: #fff;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    border-color: #ddd;
+    
+    i {
+      transform: scale(1.1);
+    }
+  }
+
+  i {
+    transition: transform 0.2s ease;
+  }
+}
+
+.elevation-1 {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.elevation-2 {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 3rem;
+  opacity: 0.15;
+}

@@ -1,0 +1,192 @@
+<div class="container-fluid">
+  
+  <!-- Header -->
+  <div class="row mb-3">
+    <div class="col-md-12">
+      <h2><i class="fas fa-university mr-2"></i>AFP NET - Exportación para AFPs</h2>
+      <p class="text-muted">Genera archivos en formato AFP NET para envío a administradoras de fondos de pensiones</p>
+    </div>
+  </div>
+
+  <!-- Generador -->
+  <div class="card card-primary card-outline mb-3">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fas fa-cog mr-2"></i>Generar Archivo AFP NET</h3>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle mr-2"></i>
+        <strong>Importante:</strong> Los archivos generados deben ser enviados a través del sistema AFP NET de cada administradora. 
+        Puede generar archivos individuales por AFP o generar todos a la vez.
+      </div>
+      
+      <div class="row">
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Año <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" 
+                   [(ngModel)]="filtros.anio" 
+                   min="2020" 
+                   [max]="filtros.anio + 1">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Mes <span class="text-danger">*</span></label>
+            <select class="form-control" 
+                    [(ngModel)]="filtros.mes">
+              <option *ngFor="let mes of meses" [value]="mes.value">
+                {{mes.label}}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label>AFP</label>
+            <select class="form-control" 
+                    [(ngModel)]="filtros.afp_id">
+              <option value="">Todas las AFPs</option>
+              <option *ngFor="let afp of afps" [value]="afp.id">
+                {{afp.nombre}}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="button" 
+                    class="btn btn-success btn-block" 
+                    (click)="generarArchivo()"
+                    [disabled]="generando">
+              <i class="fas fa-cog" [class.fa-spin]="generando"></i>
+              {{ generando ? 'Generando...' : 'Generar' }}
+            </button>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="button" 
+                    class="btn btn-primary btn-block" 
+                    (click)="generarTodos()"
+                    [disabled]="generando">
+              <i class="fas fa-layer-group"></i>
+              Generar Todos
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AFPs Disponibles -->
+  <div class="row mb-3">
+    <div class="col-md-3" *ngFor="let afp of afps">
+      <div class="info-box">
+        <span class="info-box-icon bg-info">
+          <i class="fas fa-university"></i>
+        </span>
+        <div class="info-box-content">
+          <span class="info-box-text">{{afp.nombre}}</span>
+          <span class="info-box-number">Código: {{afp.codigo}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center p-5">
+    <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+    <p class="mt-3">Cargando historial...</p>
+  </div>
+
+  <!-- Historial de Archivos Generados -->
+  <div *ngIf="!loading" class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fas fa-history mr-2"></i>Historial de Archivos AFP NET
+        <span class="badge badge-primary ml-2">{{archivosGenerados.length}}</span>
+      </h3>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Periodo</th>
+              <th>AFP</th>
+              <th>Nombre del Archivo</th>
+              <th>Fecha Generación</th>
+              <th>Tamaño</th>
+              <th>Afiliados</th>
+              <th class="text-right">Total Aporte</th>
+              <th>Estado</th>
+              <th style="width: 150px;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let archivo of archivosGenerados; let i = index">
+              <td>{{i + 1}}</td>
+              <td><strong>{{archivo.periodo}}</strong></td>
+              <td>
+                <i class="fas fa-university text-primary mr-1"></i>
+                {{archivo.afp}}
+              </td>
+              <td>
+                <i class="fas fa-file-alt text-info mr-1"></i>
+                {{archivo.nombre_archivo}}
+              </td>
+              <td><small>{{formatDate(archivo.fecha_generacion)}}</small></td>
+              <td>{{archivo.tamanio}}</td>
+              <td>
+                <span class="badge badge-info">{{archivo.afiliados}}</span>
+              </td>
+              <td class="text-right">
+                <strong>{{formatCurrency(archivo.total_aporte)}}</strong>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getEstadoBadge(archivo.estado)">
+                  {{archivo.estado | titlecase}}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" 
+                          class="btn btn-success" 
+                          (click)="descargarArchivo(archivo)" 
+                          title="Descargar">
+                    <i class="fas fa-download"></i>
+                  </button>
+                  <button type="button" 
+                          class="btn btn-primary" 
+                          (click)="enviarAfp(archivo)" 
+                          title="Enviar a AFP"
+                          [disabled]="archivo.estado === 'enviado'">
+                    <i class="fas fa-paper-plane"></i>
+                  </button>
+                  <button type="button" 
+                          class="btn btn-info" 
+                          (click)="verDetalleArchivo(archivo)" 
+                          title="Ver Detalle">
+                    <i class="fas fa-info-circle"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="archivosGenerados.length === 0">
+              <td colspan="10" class="text-center p-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p>No se han generado archivos AFP NET</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+

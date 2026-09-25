@@ -1,0 +1,856 @@
+<div class="employee-form-container" [class.modal-form]="isModal">
+  <!-- Header (only show when not in modal) -->
+  <div class="form-header" *ngIf="!isModal">
+    <div class="header-content">
+      <h1 class="page-title">{{ getPageTitle() }}</h1>
+      <div class="header-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary"
+          (click)="onCancel()"
+          [disabled]="saving">
+          <i class="fas fa-times"></i>
+          Cancelar
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          form="serviciosForm"
+          [disabled]="saving || employeeForm.invalid">
+          <i class="fas fa-save" *ngIf="!saving"></i>
+          <i class="fas fa-spinner fa-spin" *ngIf="saving"></i>
+          {{ getSubmitButtonText() }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span>Cargando empleado...</span>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <form 
+    id="serviciosForm"
+    [formGroup]="employeeForm" 
+    (ngSubmit)="onSubmit()"
+    class="employee-form"
+    [class.tab-form]="useTabs"
+    *ngIf="!loading">
+    
+    <!-- Tab Navigation (when using tabs) -->
+    <ul class="nav nav-tabs" id="employeeTabs" role="tablist" *ngIf="useTabs">
+      <li class="nav-item" role="presentation">
+        <button 
+          class="nav-link" 
+          [class.active]="isTabActive('personal')"
+          id="personal-tab" 
+          data-bs-target="#personal" 
+          type="button" 
+          role="tab" 
+          aria-controls="personal" 
+          [attr.aria-selected]="isTabActive('personal')"
+          (click)="setActiveTab('personal')">
+          <i class="fas fa-user"></i>
+          Personal
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button 
+          class="nav-link" 
+          [class.active]="isTabActive('employment')"
+          id="employment-tab" 
+          data-bs-target="#employment" 
+          type="button" 
+          role="tab" 
+          aria-controls="employment" 
+          [attr.aria-selected]="isTabActive('employment')"
+          (click)="setActiveTab('employment')">
+          <i class="fas fa-briefcase"></i>
+          Laboral
+        </button>
+      </li>
+      <li class="nav-item" role="presentation" *ngIf="!isModal">
+        <button 
+          class="nav-link" 
+          [class.active]="isTabActive('pension')"
+          id="pension-tab" 
+          data-bs-target="#pension" 
+          type="button" 
+          role="tab" 
+          aria-controls="pension" 
+          [attr.aria-selected]="isTabActive('pension')"
+          (click)="setActiveTab('pension')">
+          <i class="fas fa-shield-alt"></i>
+          Previsional
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button 
+          class="nav-link" 
+          [class.active]="isTabActive('banking')"
+          id="banking-tab" 
+          data-bs-target="#banking" 
+          type="button" 
+          role="tab" 
+          aria-controls="banking" 
+          [attr.aria-selected]="isTabActive('banking')"
+          (click)="setActiveTab('banking')">
+          <i class="fas fa-university"></i>
+          Bancaria
+        </button>
+      </li>
+      <li class="nav-item" role="presentation" *ngIf="!isModal">
+        <button 
+          class="nav-link" 
+          [class.active]="isTabActive('benefits')"
+          id="benefits-tab" 
+          data-bs-target="#benefits" 
+          type="button" 
+          role="tab" 
+          aria-controls="benefits" 
+          [attr.aria-selected]="isTabActive('benefits')"
+          (click)="setActiveTab('benefits')">
+          <i class="fas fa-gift"></i>
+          Beneficios
+        </button>
+      </li>
+      <li class="nav-item" role="presentation" *ngIf="isEditMode">
+        <button 
+          class="nav-link" 
+          [class.active]="isTabActive('contracts')"
+          id="contracts-tab" 
+          data-bs-target="#contracts" 
+          type="button" 
+          role="tab" 
+          aria-controls="contracts" 
+          [attr.aria-selected]="isTabActive('contracts')"
+          (click)="setActiveTab('contracts')">
+          <i class="fas fa-file-contract"></i>
+          {{ isModal ? 'Ordenes de Servicio' : 'Contratos' }}
+        </button>
+      </li>
+    </ul>
+
+    <!-- Tab Content (when using tabs) -->
+    <div class="tab-content" id="employeeTabContent" *ngIf="useTabs">
+      
+      <!-- Personal Information Tab -->
+      <div class="tab-pane fade" [class.show]="isTabActive('personal')" [class.active]="isTabActive('personal')" id="personal" role="tabpanel" aria-labelledby="personal-tab">
+        <div class="form-section tab-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <i class="fas fa-user"></i>
+          Información Personal
+        </h2>
+      </div>
+      
+      <div class="form-grid">
+        <!-- DNI -->
+        <div class="form-group">
+          <label for="dni" class="form-label required">DNI</label>
+          <input 
+            type="text" 
+            id="dni"
+            class="form-control"
+            formControlName="dni"
+            placeholder="12345678"
+            maxlength="8"
+            [class.is-invalid]="hasFieldError('dni')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('dni')">
+            {{ getFieldError('dni') }}
+          </div>
+        </div>
+
+        <!-- RUC -->
+        <div class="form-group">
+          <label for="ruc" class="form-label">RUC</label>
+          <input 
+            type="text" 
+            id="ruc"
+            class="form-control"
+            formControlName="ruc"
+            placeholder="12345678901"
+            maxlength="11"
+            [class.is-invalid]="hasFieldError('ruc')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('ruc')">
+            {{ getFieldError('ruc') }}
+          </div>
+        </div>
+
+        <!-- First Name -->
+        <div class="form-group">
+          <label for="first_name" class="form-label required">Nombres</label>
+          <input 
+            type="text" 
+            id="first_name"
+            class="form-control"
+            formControlName="first_name"
+            placeholder="Nombres del empleado"
+            [class.is-invalid]="hasFieldError('first_name')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('first_name')">
+            {{ getFieldError('first_name') }}
+          </div>
+        </div>
+
+        <!-- Last Name -->
+        <div class="form-group">
+          <label for="last_name" class="form-label required">Apellidos</label>
+          <input 
+            type="text" 
+            id="last_name"
+            class="form-control"
+            formControlName="last_name"
+            placeholder="Apellidos del empleado"
+            [class.is-invalid]="hasFieldError('last_name')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('last_name')">
+            {{ getFieldError('last_name') }}
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <input 
+            type="email" 
+            id="email"
+            class="form-control"
+            formControlName="email"
+            placeholder="empleado@empresa.com"
+            [class.is-invalid]="hasFieldError('email')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('email')">
+            {{ getFieldError('email') }}
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div class="form-group">
+          <label for="phone" class="form-label">Teléfono</label>
+          <input 
+            type="tel" 
+            id="phone"
+            class="form-control"
+            formControlName="phone"
+            placeholder="987654321"
+            [class.is-invalid]="hasFieldError('phone')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('phone')">
+            {{ getFieldError('phone') }}
+          </div>
+        </div>
+
+        <!-- Birth Date -->
+        <div class="form-group">
+          <label for="birth_date" class="form-label">Fecha de Nacimiento</label>
+          <input 
+            type="date" 
+            id="birth_date"
+            class="form-control"
+            formControlName="birth_date"
+            [class.is-invalid]="hasFieldError('birth_date')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('birth_date')">
+            {{ getFieldError('birth_date') }}
+          </div>
+        </div>
+
+        <!-- Gender -->
+        <div class="form-group">
+          <label for="gender" class="form-label">Género</label>
+          <select 
+            id="gender"
+            class="form-control"
+            formControlName="gender"
+            [class.is-invalid]="hasFieldError('gender')">
+            <option *ngFor="let option of genderOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="hasFieldError('gender')">
+            {{ getFieldError('gender') }}
+          </div>
+        </div>
+
+        <!-- Marital Status -->
+        <div class="form-group">
+          <label for="marital_status" class="form-label">Estado Civil</label>
+          <select 
+            id="marital_status"
+            class="form-control"
+            formControlName="marital_status"
+            [class.is-invalid]="hasFieldError('marital_status')">
+            <option *ngFor="let option of maritalStatusOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="hasFieldError('marital_status')">
+            {{ getFieldError('marital_status') }}
+          </div>
+        </div>
+
+        <!-- Children Count -->
+        <div class="form-group">
+          <label for="children_count" class="form-label">Número de Hijos</label>
+          <input 
+            type="number" 
+            id="children_count"
+            class="form-control"
+            formControlName="children_count"
+            min="0"
+            max="20"
+            [class.is-invalid]="hasFieldError('children_count')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('children_count')">
+            {{ getFieldError('children_count') }}
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="form-group full-width">
+          <label for="address" class="form-label">Dirección</label>
+          <textarea 
+            id="address"
+            class="form-control"
+            formControlName="address"
+            placeholder="Dirección completa del empleado"
+            rows="2"
+            [class.is-invalid]="hasFieldError('address')"></textarea>
+          <div class="invalid-feedback" *ngIf="hasFieldError('address')">
+            {{ getFieldError('address') }}
+          </div>
+        </div>
+      </div>
+        </div>
+      </div>
+      
+      <!-- Employment Information Tab -->
+      <div class="tab-pane fade" [class.show]="isTabActive('employment')" [class.active]="isTabActive('employment')" id="employment" role="tabpanel" aria-labelledby="employment-tab">
+        <div class="form-section tab-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <i class="fas fa-briefcase"></i>
+          Información Laboral
+        </h2>
+      </div>
+      
+      <div class="form-grid">
+        <!-- Employee Code -->
+        <div class="form-group">
+          <label for="employee_code" class="form-label required">Código de Empleado</label>
+          <div class="input-group">
+            <input 
+              type="text" 
+              id="employee_code"
+              class="form-control"
+              formControlName="employee_code"
+              placeholder="EMP001"
+              [class.is-invalid]="hasFieldError('employee_code')">
+            <button 
+              type="button" 
+              class="btn btn-outline-secondary"
+              (click)="generateEmployeeCode()"
+              title="Generar código automático">
+              <i class="fas fa-magic"></i>
+            </button>
+          </div>
+          <div class="invalid-feedback" *ngIf="hasFieldError('employee_code')">
+            {{ getFieldError('employee_code') }}
+          </div>
+        </div>
+
+        <!-- Hire Date -->
+        <div class="form-group">
+          <label for="hire_date" class="form-label required">Fecha de Ingreso</label>
+          <input 
+            type="date" 
+            id="hire_date"
+            class="form-control"
+            formControlName="hire_date"
+            [class.is-invalid]="hasFieldError('hire_date')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('hire_date')">
+            {{ getFieldError('hire_date') }}
+          </div>
+        </div>
+
+        <!-- Department -->
+        <div class="form-group" *ngIf="!isModal">
+          <label for="department_id" class="form-label">Departamento</label>
+          <select 
+            id="department_id"
+            class="form-control"
+            formControlName="department_id"
+            [class.is-invalid]="hasFieldError('department_id')">
+            <option value="">Seleccionar departamento</option>
+            <option *ngFor="let dept of departments" [value]="dept.id">
+              {{ dept.name }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="hasFieldError('department_id')">
+            {{ getFieldError('department_id') }}
+          </div>
+        </div>
+
+        <!-- Position -->
+        <div class="form-group">
+          <label for="position_id" class="form-label">Cargo</label>
+          <select 
+            id="position_id"
+            class="form-control"
+            formControlName="position_id"
+            [class.is-invalid]="hasFieldError('position_id')">
+            <option value="">Seleccionar cargo</option>
+            <option *ngFor="let pos of positions" [value]="pos.id">
+              {{ pos.name }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="hasFieldError('position_id')">
+            {{ getFieldError('position_id') }}
+          </div>
+        </div>
+
+        <!-- Cost Center -->
+        <div class="form-group">
+          <label for="cost_center_id" class="form-label">Centro de Costo</label>
+          <select 
+            id="cost_center_id"
+            class="form-control"
+            formControlName="cost_center_id"
+            [class.is-invalid]="hasFieldError('cost_center_id')">
+            <option value="">Seleccionar centro de costo</option>
+            <option *ngFor="let cc of costCenters" [value]="cc.id">
+              {{ cc.name }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="hasFieldError('cost_center_id')">
+            {{ getFieldError('cost_center_id') }}
+          </div>
+        </div>
+
+        <!-- Labor Regime -->
+        <div class="form-group" *ngIf="!isModal">
+          <label for="labor_regime" class="form-label required">Régimen Laboral</label>
+          <select 
+            id="labor_regime"
+            class="form-control"
+            formControlName="labor_regime"
+            [class.is-invalid]="hasFieldError('labor_regime')">
+            <option *ngFor="let option of laborRegimeOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="hasFieldError('labor_regime')">
+            {{ getFieldError('labor_regime') }}
+          </div>
+        </div>
+
+        <!-- Base Salary -->
+        <div class="form-group">
+          <label for="base_salary" class="form-label required">Sueldo Base</label>
+          <div class="input-group">
+            <span class="input-group-text">S/</span>
+            <input 
+              type="number" 
+              id="base_salary"
+              class="form-control"
+              formControlName="base_salary"
+              placeholder="0.00"
+              step="0.01"
+              min="0"
+              [class.is-invalid]="hasFieldError('base_salary')">
+          </div>
+          <div class="invalid-feedback" *ngIf="hasFieldError('base_salary')">
+            {{ getFieldError('base_salary') }}
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+          <label for="status" class="form-label required">Estado</label>
+          <select 
+            id="status"
+            class="form-control"
+            formControlName="status"
+            [class.is-invalid]="hasFieldError('status')">
+            <option *ngFor="let option of statusOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="hasFieldError('status')">
+            {{ getFieldError('status') }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Termination Information (only if status is inactive) -->
+      <div class="termination-section" *ngIf="employeeForm.get('status')?.value === 'inactive'">
+        <div class="form-grid">
+          <!-- Termination Date -->
+          <div class="form-group">
+            <label for="termination_date" class="form-label required">Fecha de Cese</label>
+            <input 
+              type="date" 
+              id="termination_date"
+              class="form-control"
+              formControlName="termination_date"
+              [class.is-invalid]="hasFieldError('termination_date')">
+            <div class="invalid-feedback" *ngIf="hasFieldError('termination_date')">
+              {{ getFieldError('termination_date') }}
+            </div>
+          </div>
+
+          <!-- Termination Reason -->
+          <div class="form-group full-width">
+            <label for="termination_reason" class="form-label required">Motivo de Cese</label>
+            <textarea 
+              id="termination_reason"
+              class="form-control"
+              formControlName="termination_reason"
+              placeholder="Motivo del cese del empleado"
+              rows="2"
+              [class.is-invalid]="hasFieldError('termination_reason')"></textarea>
+            <div class="invalid-feedback" *ngIf="hasFieldError('termination_reason')">
+              {{ getFieldError('termination_reason') }}
+            </div>
+          </div>
+        </div>
+      </div>
+        </div>
+      </div>
+      
+      <!-- Pension Information Tab -->
+      <div class="tab-pane fade" [class.show]="isTabActive('pension')" [class.active]="isTabActive('pension')" id="pension" role="tabpanel" aria-labelledby="pension-tab" *ngIf="!isModal">
+        <div class="form-section tab-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <i class="fas fa-shield-alt"></i>
+          Información Previsional
+        </h2>
+      </div>
+      
+      <div class="form-grid">
+        <!-- Pension System -->
+        <div class="form-group">
+          <label for="pension_system" class="form-label required">Sistema de Pensiones</label>
+          <select 
+            id="pension_system"
+            class="form-control"
+            formControlName="pension_system"
+            [class.is-invalid]="hasFieldError('pension_system')">
+            <option *ngFor="let option of pensionSystemOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="hasFieldError('pension_system')">
+            {{ getFieldError('pension_system') }}
+          </div>
+        </div>
+
+        <!-- AFP (only if pension system is AFP) -->
+        <div class="form-group" *ngIf="employeeForm.get('pension_system')?.value === 'afp'">
+          <label for="afp_id" class="form-label required">AFP</label>
+          <select 
+            id="afp_id"
+            class="form-control"
+            formControlName="afp_id"
+            [class.is-invalid]="hasFieldError('afp_id')">
+            <option value="">Seleccionar AFP</option>
+            <option *ngFor="let afp of afps" [value]="afp.id">
+              {{ afp.name }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="hasFieldError('afp_id')">
+            {{ getFieldError('afp_id') }}
+          </div>
+        </div>
+
+        <!-- CUSPP (only if pension system is AFP) -->
+        <div class="form-group" *ngIf="employeeForm.get('pension_system')?.value === 'afp'">
+          <label for="cuspp" class="form-label required">CUSPP</label>
+          <input 
+            type="text" 
+            id="cuspp"
+            class="form-control"
+            formControlName="cuspp"
+            placeholder="123456789012"
+            maxlength="12"
+            [class.is-invalid]="hasFieldError('cuspp')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('cuspp')">
+            {{ getFieldError('cuspp') }}
+          </div>
+        </div>
+      </div>
+        </div>
+      </div>
+      
+      <!-- Banking Information Tab -->
+      <div class="tab-pane fade" [class.show]="isTabActive('banking')" [class.active]="isTabActive('banking')" id="banking" role="tabpanel" aria-labelledby="banking-tab">
+        <div class="form-section tab-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <i class="fas fa-university"></i>
+          Información Bancaria
+        </h2>
+      </div>
+      
+      <div class="form-grid">
+        <!-- Bank Name -->
+        <div class="form-group">
+          <label for="bank_name" class="form-label">Banco</label>
+          <input 
+            type="text" 
+            id="bank_name"
+            class="form-control"
+            formControlName="bank_name"
+            placeholder="Nombre del banco"
+            [class.is-invalid]="hasFieldError('bank_name')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('bank_name')">
+            {{ getFieldError('bank_name') }}
+          </div>
+        </div>
+
+        <!-- Account Type -->
+        <div class="form-group">
+          <label for="account_type" class="form-label">Tipo de Cuenta</label>
+          <select 
+            id="account_type"
+            class="form-control"
+            formControlName="account_type"
+            [class.is-invalid]="hasFieldError('account_type')">
+            <option *ngFor="let option of accountTypeOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="hasFieldError('account_type')">
+            {{ getFieldError('account_type') }}
+          </div>
+        </div>
+
+        <!-- Bank Account -->
+        <div class="form-group">
+          <label for="bank_account" class="form-label">Número de Cuenta</label>
+          <input 
+            type="text" 
+            id="bank_account"
+            class="form-control"
+            formControlName="bank_account"
+            placeholder="1234567890123456"
+            [class.is-invalid]="hasFieldError('bank_account')">
+          <div class="invalid-feedback" *ngIf="hasFieldError('bank_account')">
+            {{ getFieldError('bank_account') }}
+          </div>
+        </div>
+      </div>
+        </div>
+      </div>
+      
+      <!-- Benefits Tab -->
+      <div class="tab-pane fade" [class.show]="isTabActive('benefits')" [class.active]="isTabActive('benefits')" id="benefits" role="tabpanel" aria-labelledby="benefits-tab" *ngIf="!isModal">
+        <div class="form-section tab-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <i class="fas fa-gift"></i>
+          Beneficios
+        </h2>
+      </div>
+      
+      <div class="form-grid">
+        <!-- Family Allowance -->
+        <div class="form-group checkbox-group">
+          <div class="form-check">
+            <input 
+              type="checkbox" 
+              id="receives_family_allowance"
+              class="form-check-input"
+              formControlName="receives_family_allowance">
+            <label for="receives_family_allowance" class="form-check-label">
+              Recibe Asignación Familiar
+            </label>
+          </div>
+        </div>
+
+        <!-- Unionized -->
+        <div class="form-group checkbox-group">
+          <div class="form-check">
+            <input 
+              type="checkbox" 
+              id="is_unionized"
+              class="form-check-input"
+              formControlName="is_unionized">
+            <label for="is_unionized" class="form-check-label">
+              Sindicalizado
+            </label>
+          </div>
+        </div>
+
+        <!-- Life Insurance -->
+        <div class="form-group checkbox-group">
+          <div class="form-check">
+            <input 
+              type="checkbox" 
+              id="has_life_insurance"
+              class="form-check-input"
+              formControlName="has_life_insurance">
+            <label for="has_life_insurance" class="form-check-label">
+              Tiene Seguro de Vida
+            </label>
+          </div>
+        </div>
+      </div>
+        </div>
+      </div>
+
+      <!-- Contracts Tab (only in edit mode) -->
+      <div class="tab-pane fade" [class.show]="isTabActive('contracts')" [class.active]="isTabActive('contracts')" id="contracts" role="tabpanel" aria-labelledby="contracts-tab" *ngIf="isEditMode">
+        <div class="form-section tab-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fas fa-file-contract"></i>
+              {{ isModal ? 'Ordenes de Servicio' : 'Contratos' }}
+            </h2>
+            <button 
+              type="button" 
+              class="btn btn-primary btn-sm"
+              (click)="openContractModal()"
+              [disabled]="!employeeId">
+              <i class="fas fa-plus"></i>
+              {{ isModal ? 'Nueva Orden de Servicio' : 'Nuevo Contrato' }}
+            </button>
+          </div>
+
+          <!-- Loading State -->
+          <div class="loading-container" *ngIf="loadingContracts">
+            <div class="loading-spinner">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>Cargando contratos...</span>
+            </div>
+          </div>
+
+          <!-- Contracts DataTable -->
+          <div class="contracts-table-container" *ngIf="!loadingContracts && contracts.length > 0">
+            <div class="table-responsive">
+              <table id="contractsTable" class="table table-striped table-hover table-bordered table-fit-content">
+                <thead>
+                  <tr>
+                    <th>{{ isModal ? 'N° Orden de Servicio' : 'N° Contrato' }}</th>
+                    <th>Tipo</th>
+                    <th>Concepto</th>
+                    <th>Período</th>
+                    <th>Sueldo</th>
+                    <th>H. Sem</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let contract of contracts">
+                    <td>{{ contract.contract_number }}</td>
+                    <td>{{ contract.contract_type }}</td>
+                    <td>{{ contract.position?.name || 'Varios' }}</td>
+                    <td>
+                      {{ contract.start_date | date:'dd/MM/yyyy' }} 
+                      <span *ngIf="contract.end_date"> al {{ contract.end_date | date:'dd/MM/yyyy' }}</span>
+                    </td>
+                    <td class="text-end">S/ {{ contract.salary | number:'1.2-2' }}</td>
+                    <td>{{ contract.weekly_hours }}h</td>
+                    <td>
+                      <span class="badge" [ngClass]="getContractStatusClass(contract.status)">
+                        {{ getContractStatusLabel(contract.status) }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <div class="dropdown contract-actions-dropdown" (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                          (click)="toggleContractActions(contract.id, $event)"
+                          [attr.aria-expanded]="openActionsContractId === contract.id"
+                          aria-haspopup="true"
+                          title="Acciones">
+                          <i class="fas fa-ellipsis-v"></i> Acciones
+                        </button>
+                        <div
+                          class="dropdown-menu dropdown-menu-end shadow"
+                          [class.show]="openActionsContractId === contract.id">
+                          <button type="button" class="dropdown-item" (click)="generateContractWord(contract); closeContractActions()">
+                            <i class="fas fa-file-word text-primary mr-2"></i> Generar Word
+                          </button>
+                          <button type="button" class="dropdown-item edit-contract-btn" [attr.data-contract-id]="contract.id" (click)="editContract(contract); closeContractActions()">
+                            <i class="fas fa-edit text-info mr-2"></i> Editar
+                          </button>
+
+                          <button type="button" class="dropdown-item text-danger" (click)="deleteContract(contract); closeContractActions()">
+                            <i class="fas fa-trash mr-2"></i> Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state" *ngIf="!loadingContracts && contracts.length === 0">
+            <i class="fas fa-file-contract fa-3x"></i>
+            <p>No hay servicios registrados para este empleado</p>
+            <button 
+              type="button" 
+              class="btn btn-primary"
+              (click)="openContractModal()">
+              <i class="fas fa-plus"></i>
+              Crear primer servicio
+            </button>
+          </div>
+        </div>
+      </div>
+      
+    </div> <!-- End tab-content -->
+    
+    <!-- Modal Footer with Action Buttons (when using tabs) -->
+    <div class="modal-footer" *ngIf="useTabs && isModal">
+      <button 
+        type="button" 
+        class="btn btn-secondary"
+        (click)="onCancel()"
+        [disabled]="saving">
+        <i class="fas fa-times"></i>
+        Cancelar
+      </button>
+      <button 
+        type="submit" 
+        class="btn btn-primary"
+        [disabled]="saving || employeeForm.invalid">
+        <i class="fas fa-save" *ngIf="!saving"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="saving"></i>
+        {{ getSubmitButtonText() }}
+      </button>
+    </div>
+    
+    <!-- Original sections (when not using tabs) -->
+    <ng-container *ngIf="!useTabs">
+      <!-- Personal Information Section -->
+      <div class="form-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="fas fa-user"></i>
+            Información Personal
+          </h2>
+        </div>
+        <!-- Personal form fields would go here - keeping original structure -->
+      </div>
+      
+      <!-- Other sections would follow the same pattern -->
+    </ng-container>
+    
+  </form>
+</div>
+
+<!-- Contract Modal -->
+<app-servicios-contract-modal
+  [isVisible]="showContractModal"
+  [employeeId]="employeeId || undefined"
+  [contract]="contractModalData"
+  (modalClosed)="onContractModalClosed($event)">
+</app-servicios-contract-modal>

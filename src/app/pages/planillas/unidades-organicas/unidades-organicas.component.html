@@ -1,0 +1,418 @@
+<app-page-header title="Unidades Orgánicas" subtitle="Gestión de unidades orgánicas" [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Planillas'}, {label: 'Unidades Orgánicas'}]"></app-page-header>
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+              <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                <i class="fas fa-sitemap mr-1"></i> Listado de Unidades Orgánicas
+              </h3>
+              <ng-container *ngIf="cv.showExportButtons">
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"><i [class]="cv.excelBtnIcon"></i> {{ cv.excelBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"><i [class]="cv.pdfBtnIcon"></i> {{ cv.pdfBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass"><i [class]="cv.printBtnIcon"></i> {{ cv.printBtnLabel }}</button>
+              </ng-container>
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.exportBtnClass"><i [class]="cv.exportBtnIcon"></i> {{ cv.exportBtnLabel }}</button>
+            </div>
+            <div class="ms-auto flex-shrink-0">
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                <i [class]="cv.newBtnIcon"></i> Nueva Unidad
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabs Navigation -->
+          <div class="card-header pb-0 pt-2">
+            <ul class="nav nav-tabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button 
+                  class="nav-link" 
+                  [class.active]="activeTab === 'table'"
+                  (click)="switchTab('table')"
+                  type="button">
+                  <i class="fas fa-table me-1"></i>Vista de Tabla
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button 
+                  class="nav-link" 
+                  [class.active]="activeTab === 'tree'"
+                  (click)="switchTab('tree')"
+                  type="button">
+                  <i class="fas fa-sitemap me-1"></i>Estructura Organizacional
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button 
+                  class="nav-link" 
+                  [class.active]="activeTab === 'chart'"
+                  (click)="switchTab('chart')"
+                  type="button">
+                  <i class="fas fa-project-diagram me-1"></i>Organigrama
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card-body px-0 pt-3 pb-2">
+            
+            <!-- Tab Content: Tabla -->
+            <div *ngIf="activeTab === 'table'" class="table-responsive p-4">
+              <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize" class="w-100">
+                <thead>
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize">Código</th>
+                    <th [style.font-size]="cv.headerFontSize">Nombre</th>
+                    <th [style.font-size]="cv.headerFontSize">Descripción</th>
+                    <th [style.font-size]="cv.headerFontSize">Nivel</th>
+                    <th [style.font-size]="cv.headerFontSize">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let unidad of unidades">
+                    <td><span class="badge bg-dark">{{ unidad.code }}</span></td>
+                    <td><strong>{{ unidad.name }}</strong></td>
+                    <td>{{ unidad.description }}</td>
+                    <td class="text-center">
+                      <span class="badge" [ngClass]="{
+                        'bg-primary': unidad.level === 1,
+                        'bg-info': unidad.level === 2,
+                        'bg-success': unidad.level === 3,
+                        'bg-warning': unidad.level === 4
+                      }">
+                        Nivel {{ unidad.level }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <app-status-badge [status]="unidad.is_active"></app-status-badge>
+                    </td>
+                    <td class="text-center">
+                      <app-crud-actions [showView]="true" [showEdit]="true" [showDelete]="true" (onView)="openViewModal(unidad)" (onEdit)="openEditModal(unidad)" (onDelete)="confirmDelete(unidad)"></app-crud-actions>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Tab Content: Árbol Organizacional -->
+            <div *ngIf="activeTab === 'tree'" class="p-4">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="alert alert-info mb-0 flex-grow-1 me-3">
+                  <i class="fas fa-info-circle me-2"></i>
+                  <strong>Estructura Organizacional Jerárquica</strong> - Haz clic en los chevrons para expandir/colapsar
+                </div>
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-outline-primary" (click)="expandAll()" title="Expandir todo">
+                    <i class="fas fa-expand-alt me-1"></i>Expandir Todo
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary" (click)="collapseAll()" title="Colapsar todo">
+                    <i class="fas fa-compress-alt me-1"></i>Colapsar Todo
+                  </button>
+                </div>
+              </div>
+
+              <div *ngIf="organizationalTree.length === 0" class="text-center py-5">
+                <i class="fas fa-sitemap fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No hay unidades organizacionales para mostrar</p>
+              </div>
+
+              <div *ngIf="organizationalTree.length > 0" class="organizational-tree">
+                <ng-container *ngTemplateOutlet="treeNode; context: { nodes: organizationalTree, level: 0 }"></ng-container>
+              </div>
+
+              <!-- Template Recursivo para el Árbol -->
+              <ng-template #treeNode let-nodes="nodes" let-level="level">
+                <ul class="tree-list" [class.tree-root]="level === 0">
+                  <li *ngFor="let node of nodes" class="tree-item">
+                    <div class="tree-node" [style.margin-left.px]="level * 30">
+                      <div class="node-content">
+                        <span class="node-toggle" 
+                              *ngIf="node.children && node.children.length > 0"
+                              (click)="toggleNode(node)">
+                          <i class="fas fa-chevron-right chevron-icon" 
+                             [class.expanded]="node.expanded"></i>
+                        </span>
+                        <span class="node-toggle-placeholder" 
+                              *ngIf="!node.children || node.children.length === 0"></span>
+                        
+                        <span class="node-icon">
+                          <i class="fas" [ngClass]="{
+                            'fa-building': level === 0,
+                            'fa-sitemap': level === 1,
+                            'fa-layer-group': level === 2,
+                            'fa-folder': level > 2
+                          }"></i>
+                        </span>
+                        <span class="node-info">
+                          <strong class="node-name">{{ node.name }}</strong>
+                          <span class="badge bg-secondary ms-2">{{ node.code }}</span>
+                          <span class="badge ms-2" [ngClass]="node.is_active ? 'bg-success' : 'bg-secondary'">
+                            Nivel {{ node.level }}
+                          </span>
+                          <span *ngIf="!node.is_active" class="badge bg-warning ms-2">Inactivo</span>
+                          <span *ngIf="node.children && node.children.length > 0" class="text-muted ms-2">
+                            <small>({{ node.children.length }} sub-unidad{{ node.children.length !== 1 ? 'es' : '' }})</small>
+                          </span>
+                        </span>
+                        <span class="node-actions ms-auto">
+                          <button class="btn btn-info btn-sm" (click)="openViewModal(node)" title="Ver">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                          <button class="btn btn-warning btn-sm" (click)="openEditModal(node)" title="Editar">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                        </span>
+                      </div>
+                      <p *ngIf="node.description" class="node-description" [style.margin-left.px]="56">
+                        {{ node.description }}
+                      </p>
+                    </div>
+                    <!-- Hijos (solo si está expandido) -->
+                    <ng-container *ngIf="node.children && node.children.length > 0 && node.expanded">
+                      <div class="children-container">
+                        <ng-container *ngTemplateOutlet="treeNode; context: { nodes: node.children, level: level + 1 }"></ng-container>
+                      </div>
+                    </ng-container>
+                  </li>
+                </ul>
+              </ng-template>
+            </div>
+
+            <!-- Tab Content: Organigrama -->
+            <div *ngIf="activeTab === 'chart'" class="p-4">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="alert alert-info mb-0 flex-grow-1 me-3">
+                  <i class="fas fa-info-circle me-2"></i>
+                  <strong>Organigrama Corporativo</strong> - Haz clic en las tarjetas para ver/ocultar detalles
+                </div>
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-outline-primary" (click)="expandAllBoxes()" title="Mostrar todos los detalles">
+                    <i class="fas fa-expand-alt me-1"></i>Mostrar Detalles
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary" (click)="collapseAllBoxes()" title="Ocultar detalles">
+                    <i class="fas fa-compress-alt me-1"></i>Vista Compacta
+                  </button>
+                </div>
+              </div>
+
+              <div *ngIf="organizationalTree.length === 0" class="text-center py-5">
+                <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No hay datos para mostrar el organigrama</p>
+              </div>
+
+              <div *ngIf="organizationalTree.length > 0" class="org-chart-container">
+                <div class="org-chart">
+                  <ng-container *ngTemplateOutlet="orgChartNode; context: { nodes: organizationalTree, level: 0 }"></ng-container>
+                </div>
+              </div>
+
+              <!-- Template Recursivo para Organigrama -->
+              <ng-template #orgChartNode let-nodes="nodes" let-level="level">
+                <ul class="org-chart-list">
+                  <li *ngFor="let node of nodes; let isLast = last" class="org-chart-item">
+                    <div class="org-chart-box" 
+                         [class.level-0]="level === 0" 
+                         [class.level-1]="level === 1" 
+                         [class.level-2]="level === 2"
+                         [class.expanded]="node.detailsExpanded"
+                         (click)="toggleBoxDetails(node)">
+                      
+                      <!-- Vista Minimalista (Siempre visible) -->
+                      <div class="box-minimal">
+                        <div class="minimal-icon">
+                          <i class="fas" [ngClass]="{
+                            'fa-building': level === 0,
+                            'fa-users': level === 1,
+                            'fa-briefcase': level === 2,
+                            'fa-folder': level > 2
+                          }"></i>
+                        </div>
+                        <div class="minimal-info">
+                          <div class="unit-title">{{ node.name }}</div>
+                          <div class="unit-meta">
+                            <span class="code-badge">{{ node.code }}</span>
+                            <span class="level-badge">Nivel {{ node.level }}</span>
+                          </div>
+                        </div>
+                        <div class="expand-indicator">
+                          <i class="fas fa-chevron-down" [class.rotated]="node.detailsExpanded"></i>
+                        </div>
+                      </div>
+
+                      <!-- Detalles Expandidos (Visible solo al hacer click) -->
+                      <div class="box-details" *ngIf="node.detailsExpanded" [@slideDown]>
+                        <div class="details-divider"></div>
+                        
+                        <div class="manager-section">
+                          <div class="avatar-small">
+                            <i class="fas fa-user-tie"></i>
+                          </div>
+                          <div class="manager-info">
+                            <div class="manager-name">{{ getManagerForNode(node).name }}</div>
+                            <div class="manager-position">{{ getManagerForNode(node).position }}</div>
+                          </div>
+                        </div>
+
+                        <div class="additional-info" *ngIf="node.description">
+                          <div class="info-label">
+                            <i class="fas fa-info-circle me-1"></i>Descripción:
+                          </div>
+                          <div class="info-value">{{ node.description }}</div>
+                        </div>
+
+                        <div class="status-info">
+                          <span class="badge" [ngClass]="node.is_active ? 'bg-success' : 'bg-warning'">
+                            <i class="fas fa-circle me-1"></i>
+                            {{ node.is_active ? 'Activo' : 'Inactivo' }}
+                          </span>
+                          <span class="badge bg-info ms-2" *ngIf="node.children?.length > 0">
+                            <i class="fas fa-layer-group me-1"></i>
+                            {{ node.children.length }} sub-unidad{{ node.children.length !== 1 ? 'es' : '' }}
+                          </span>
+                        </div>
+
+                        <div class="box-actions">
+                          <button class="btn btn-sm btn-outline-info" (click)="openViewModal(node); $event.stopPropagation()" title="Ver detalles completos">
+                            <i class="fas fa-eye me-1"></i>Ver Detalles
+                          </button>
+                          <button class="btn btn-sm btn-outline-warning" (click)="openEditModal(node); $event.stopPropagation()" title="Editar">
+                            <i class="fas fa-edit me-1"></i>Editar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Hijos -->
+                    <ng-container *ngIf="node.children && node.children.length > 0">
+                      <ng-container *ngTemplateOutlet="orgChartNode; context: { nodes: node.children, level: level + 1 }"></ng-container>
+                    </ng-container>
+                  </li>
+                </ul>
+              </ng-template>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Crear/Editar -->
+<div class="modal fade" id="unidadModal" tabindex="-1" aria-hidden="true" #unidadModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title">
+          <i class="fas" [ngClass]="isEditMode ? 'fa-edit' : 'fa-plus'"></i>
+          {{ isEditMode ? 'Editar' : 'Nueva' }} Unidad Orgánica
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg">
+        <form [formGroup]="unidadForm">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Código <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="code" placeholder="UO-001">
+              <div class="text-danger small" *ngIf="unidadForm.get('code')?.invalid && unidadForm.get('code')?.touched">
+                Código es requerido
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Nivel <span class="text-danger">*</span></label>
+              <select class="form-select" [ngClass]="mc.inputSize" formControlName="level">
+                <option value="1">Nivel 1 - Gerencia General</option>
+                <option value="2">Nivel 2 - Gerencia</option>
+                <option value="3">Nivel 3 - Departamento</option>
+                <option value="4">Nivel 4 - Área</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Nombre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="name" placeholder="Nombre de la unidad">
+            <div class="text-danger small" *ngIf="unidadForm.get('name')?.invalid && unidadForm.get('name')?.touched">
+              Nombre es requerido
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Descripción</label>
+            <textarea class="form-control" [ngClass]="mc.inputSize" formControlName="description" rows="3" placeholder="Descripción de la unidad orgánica"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Unidad Padre (Opcional)</label>
+            <select class="form-select" [ngClass]="mc.inputSize" formControlName="parent_id">
+              <option [value]="null">-- Sin unidad padre --</option>
+              <option *ngFor="let u of unidades" [value]="u.id">
+                {{ u.code }} - {{ u.name }} (Nivel {{ u.level }})
+              </option>
+            </select>
+          </div>
+
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" formControlName="is_active" id="isActive">
+            <label class="form-check-label" for="isActive">
+              Activo
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeModal()"><i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}</button>
+        <button type="button" class="btn btn-sm" [ngClass]="mc.saveBtnClass" (click)="saveUnidad()" [disabled]="unidadForm.invalid || saving"><i [class]="mc.saveBtnIcon + ' mr-1'"></i> {{ isEditMode ? 'Actualizar' : mc.saveBtnLabel }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ver Detalles -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true" #viewModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detalles de Unidad Orgánica</h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeViewModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg" *ngIf="selectedUnidad">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Código:</strong>
+            <p class="mb-0">{{ selectedUnidad.code }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Nivel:</strong>
+            <p class="mb-0">Nivel {{ selectedUnidad.level }}</p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Nombre:</strong>
+            <p class="mb-0">{{ selectedUnidad.name }}</p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Descripción:</strong>
+            <p class="mb-0">{{ selectedUnidad.description || 'Sin descripción' }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Estado:</strong>
+            <p class="mb-0">
+              <app-status-badge [status]="selectedUnidad.is_active"></app-status-badge>
+            </p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Fecha de Creación:</strong>
+            <p class="mb-0">{{ selectedUnidad.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeViewModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

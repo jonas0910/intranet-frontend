@@ -1,0 +1,182 @@
+<div class="container-fluid">
+  
+  <!-- Header -->
+  <div class="row mb-3">
+    <div class="col-md-12">
+      <h2><i class="fas fa-minus-circle mr-2"></i>Reporte de Descuentos</h2>
+      <p class="text-muted">Consulta detallada de todos los descuentos aplicados en planillas</p>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card card-warning card-outline mb-3">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fas fa-filter mr-2"></i>Filtros de Búsqueda</h3>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Año</label>
+            <input type="number" class="form-control form-control-sm" 
+                   [(ngModel)]="filtros.anio" 
+                   (ngModelChange)="onFilterChange()">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Mes</label>
+            <select class="form-control form-control-sm" 
+                    [(ngModel)]="filtros.mes" 
+                    (ngModelChange)="onFilterChange()">
+              <option *ngFor="let mes of meses" [value]="mes.value">
+                {{mes.label}}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Tipo de Descuento</label>
+            <select class="form-control form-control-sm" 
+                    [(ngModel)]="filtros.tipo_descuento" 
+                    (ngModelChange)="onFilterChange()">
+              <option value="">Todos</option>
+              <option *ngFor="let tipo of tiposDescuento" [value]="tipo.value">
+                {{tipo.label}}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Empleado (DNI o Nombre)</label>
+            <input type="text" class="form-control form-control-sm" 
+                   [(ngModel)]="filtros.empleado" 
+                   (ngModelChange)="onFilterChange()"
+                   placeholder="Buscar...">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <div class="btn-group d-flex" role="group">
+              <button type="button" class="btn btn-success btn-sm" 
+                      (click)="exportarExcel()" 
+                      title="Exportar Excel">
+                <i class="fas fa-file-excel"></i> Excel
+              </button>
+              <button type="button" class="btn btn-info btn-sm" 
+                      (click)="exportarResumen()" 
+                      title="Resumen">
+                <i class="fas fa-chart-pie"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card de Resumen -->
+  <div class="row mb-3">
+    <div class="col-lg-3 col-6">
+      <div class="small-box bg-warning">
+        <div class="inner">
+          <h3>{{descuentos.length}}</h3>
+          <p>Descuentos Totales</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-minus-circle"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-6">
+      <div class="small-box bg-danger">
+        <div class="inner">
+          <h3>{{formatCurrency(getTotalDescuentos())}}</h3>
+          <p>Monto Total</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-dollar-sign"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center p-5">
+    <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+    <p class="mt-3">Cargando descuentos...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!loading && errorMessage" class="alert alert-danger mx-3 mt-3">
+    <i class="fas fa-exclamation-circle mr-2"></i>{{ errorMessage }}
+  </div>
+
+  <!-- Tabla de Descuentos -->
+  <div *ngIf="!loading" class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fas fa-table mr-2"></i>Descuentos Aplicados
+        <span class="badge badge-warning ml-2">{{descuentos.length}}</span>
+      </h3>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Empleado</th>
+              <th>DNI</th>
+              <th>Periodo</th>
+              <th>Tipo</th>
+              <th>Concepto</th>
+              <th class="text-right">%</th>
+              <th class="text-right">Monto</th>
+              <th>Observaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let desc of descuentos; let i = index">
+              <td>{{i + 1}}</td>
+              <td>{{desc.empleado.nombre}}</td>
+              <td>{{desc.empleado.documento}}</td>
+              <td>{{desc.periodo}}</td>
+              <td>
+                <i [class]="getDescuentoIcon(desc.tipo_descuento)" class="mr-1"></i>
+                {{desc.tipo_descuento}}
+              </td>
+              <td>{{desc.concepto}}</td>
+              <td class="text-right">
+                <span *ngIf="desc.porcentaje > 0">{{desc.porcentaje}}%</span>
+                <span *ngIf="desc.porcentaje === 0">-</span>
+              </td>
+              <td class="text-right">
+                <strong class="text-danger">{{formatCurrency(desc.monto)}}</strong>
+              </td>
+              <td><small>{{desc.observaciones}}</small></td>
+            </tr>
+            <tr *ngIf="descuentos.length === 0">
+              <td colspan="9" class="text-center p-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p>No se encontraron descuentos</p>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot *ngIf="descuentos.length > 0">
+            <tr class="bg-light">
+              <th colspan="7" class="text-right">TOTAL:</th>
+              <th class="text-right">{{formatCurrency(getTotalDescuentos())}}</th>
+              <th></th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+

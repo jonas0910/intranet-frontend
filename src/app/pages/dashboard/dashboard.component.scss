@@ -1,0 +1,316 @@
+/* AdminLTE 3.2.0 Dashboard Component Styles */
+
+/* Small box enhancements */
+.small-box {
+  transition: all 0.3s ease;
+}
+
+.small-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.small-box .icon {
+  transition: all 0.3s ease;
+}
+
+.small-box:hover .icon {
+  font-size: 95px;
+}
+
+/* Card enhancements */
+.card {
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Chart containers */
+.chart {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* Direct chat enhancements */
+.direct-chat-messages {
+  height: 250px;
+}
+
+.direct-chat-msg {
+  margin-bottom: 10px;
+}
+
+.direct-chat-text {
+  background: #d2d6de;
+  border: 1px solid #d2d6de;
+  border-radius: 5px;
+  color: #444;
+  margin: 5px 0 0 50px;
+  padding: 5px 10px;
+  position: relative;
+}
+
+.direct-chat-msg.right .direct-chat-text {
+  background: #007bff;
+  border-color: #007bff;
+  color: #fff;
+  margin-left: 0;
+  margin-right: 50px;
+}
+
+/* Gradient cards */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+}
+
+.bg-gradient-info {
+  background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%) !important;
+}
+
+.bg-gradient-success {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+}
+
+/* Calendar widget */
+#calendar {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  padding: 10px;
+}
+
+/* Map widget */
+#world-map {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+#world-map::before {
+  content: "🗺️ Mapa Mundial";
+  font-size: 18px;
+}
+
+/* Sparkline placeholders */
+#sparkline-1,
+#sparkline-2,
+#sparkline-3 {
+  height: 50px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+}
+
+#sparkline-1::before { content: "📊"; }
+#sparkline-2::before { content: "👥"; }
+#sparkline-3::before { content: "💰"; }
+
+/* Knob inputs */
+.knob {
+  margin: 10px 0;
+}
+
+/* Tab content */
+.tab-content {
+  padding: 10px 0;
+}
+
+.nav-pills .nav-link {
+  border-radius: 20px;
+}
+
+.nav-pills .nav-link.active {
+  background-color: #007bff;
+}
+
+/* Card tools */
+.card-tools .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  background: transparent;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  content: ">";
+  color: #6c757d;
+}
+
+/* Content header */
+.content-header {
+  padding: 15px 0;
+}
+
+.content-header h1 {
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+  .small-box .icon {
+    font-size: 60px;
+  }
+  
+  .small-box:hover .icon {
+    font-size: 65px;
+  }
+  
+  .direct-chat-messages {
+    height: 200px;
+  }
+  
+  .card-body {
+    padding: 1rem 0.5rem;
+  }
+}
+
+/* Loading states */
+.chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #6c757d;
+}
+
+.chart-loading::before {
+  content: "📊 Cargando gráfico...";
+  font-size: 16px;
+}
+
+/* Animation for small boxes */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.small-box.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Messages Widget Styles */
+.info-box.bg-gradient-purple {
+  background: linear-gradient(135deg, #9f7aea 0%, #667eea 100%);
+  color: white;
+  
+  .info-box-icon {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    position: relative;
+    
+    .pulse {
+      animation: pulse 1s infinite;
+      position: absolute;
+      top: -5px;
+      right: -5px;
+    }
+  }
+  
+  .info-box-content {
+    .info-box-text {
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 500;
+    }
+    
+    .info-box-number {
+      color: white;
+      font-weight: 700;
+    }
+    
+    .progress {
+      background-color: rgba(255, 255, 255, 0.2);
+      height: 4px;
+      
+      .progress-bar {
+        background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+      }
+    }
+    
+    .progress-description {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+  }
+}
+
+/* Purple Button Styles */
+.btn-purple {
+  background: linear-gradient(135deg, #9f7aea 0%, #667eea 100%);
+  border-color: #9f7aea;
+  color: white;
+  
+  &:hover {
+    background: linear-gradient(135deg, #8b5feb 0%, #5a67d8 100%);
+    border-color: #8b5feb;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(159, 122, 234, 0.3);
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 0.2rem rgba(159, 122, 234, 0.25);
+  }
+}
+
+/* Message Widget Animations */
+@keyframes messagePulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+  70% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+
+.info-box.bg-gradient-purple:hover {
+  animation: messagePulse 2s infinite;
+}
+
+/* Badge Enhancements */
+.badge.pulse {
+  animation: pulse 1s infinite;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .info-box.bg-gradient-purple {
+    .info-box-content {
+      padding: 0.75rem;
+      
+      .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+      }
+      
+      .badge {
+        font-size: 0.65rem;
+      }
+    }
+  }
+}

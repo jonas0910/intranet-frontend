@@ -1,0 +1,688 @@
+<!-- Content Header -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">
+          <i class="fas fa-users mr-2"></i>Gestión de Usuarios
+        </h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="#">Inicio</a></li>
+          <li class="breadcrumb-item"><a href="#">Administración</a></li>
+          <li class="breadcrumb-item active">Usuarios</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+  <div class="container-fluid form-container">
+    
+    <!-- Botones de Acción -->
+    <div class="row mb-3">
+      <div class="col-lg-8 col-md-7 col-sm-12">
+        <div class="btn-group-responsive">
+          <button type="button" class="btn btn-primary btn-sm mr-2 mb-2" (click)="openUserModal()">
+            <i class="fas fa-plus mr-1"></i><span class="d-none d-sm-inline">Nuevo </span>Usuario
+          </button>
+          <button type="button" class="btn btn-info btn-sm mr-2 mb-2" (click)="openEmpleadoModal()">
+            <i class="fas fa-user-plus mr-1"></i><span class="d-none d-sm-inline">Nuevo </span>Empleado
+          </button>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-5 col-sm-12 text-lg-right text-md-right">
+        <button type="button" class="btn btn-secondary btn-sm mb-2" (click)="loadUsuarios()">
+          <i class="fas fa-sync-alt mr-1"></i><span class="d-none d-sm-inline">Actualizar</span>
+        </button>
+      </div>
+    </div>
+
+
+
+    <!-- Loading Spinner -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Cargando...</span>
+      </div>
+      <p class="mt-2 text-muted">Cargando usuarios...</p>
+    </div>
+
+    <!-- DataTable de Usuarios -->
+    <div *ngIf="!loading" class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-list mr-1"></i>Lista de Usuarios
+        </h3>
+      </div>
+      <div class="card-body">
+        <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-bordered table-striped table-hover">
+          <thead>
+            <tr>
+              <th>Avatar</th>
+              <th>Nombre y Email</th>
+              <th>Cargo y Departamento</th>
+              <th>Roles</th>
+              <th>Estado</th>
+              <th>Último Acceso</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let usuario of usuarios">
+              <td class="text-center">
+                <div class="avatar-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" 
+                     style="width: 40px; height: 40px; border-radius: 50%; font-size: 16px; font-weight: bold;">
+                  {{ usuario.name.charAt(0).toUpperCase() }}
+                </div>
+              </td>
+              <td>
+                <div class="fw-semibold text-dark">{{ usuario.name }}</div>
+                <div class="text-muted small">
+                  <i class="fas fa-at me-1"></i>{{ usuario.username }}
+                </div>
+                <div class="text-muted small">
+                  <i class="fas fa-envelope me-1"></i>{{ usuario.email }}
+                </div>
+              </td>
+              <td>
+                <div *ngIf="usuario.empleado" class="fw-medium">{{ usuario.empleado.cargo }}</div>
+                <div *ngIf="usuario.empleado" class="text-muted small">{{ usuario.empleado.departamento }}</div>
+                <div *ngIf="!usuario.empleado" class="text-muted small">Sin empleado asociado</div>
+              </td>
+              <td>
+                <div class="d-flex flex-wrap gap-1">
+                  <span *ngFor="let rol of usuario.roles" 
+                        class="badge bg-primary rounded-pill px-2 py-1 small">
+                    {{ getRoleDisplayName(rol) }}
+                  </span>
+                </div>
+              </td>
+              <td class="text-center">
+                <span [class]="usuario.activo ? 'badge bg-success' : 'badge bg-secondary'">
+                  <i [class]="usuario.activo ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                  {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="text-muted small">
+                <div>
+                  <i class="fas fa-clock me-1"></i>
+                  {{ formatDate(usuario.ultimo_acceso || '') }}
+                </div>
+              </td>
+              <td class="text-center">
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-sm btn-outline-primary"
+                          (click)="openUserModal(usuario)"
+                          title="Editar usuario">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary"
+                          (click)="openSystemAccessModal(usuario)"
+                          title="Gestionar accesos a sistemas">
+                    <i class="fas fa-key"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-info"
+                          (click)="toggleUserStatus(usuario)"
+                          [title]="usuario.activo ? 'Desactivar usuario' : 'Activar usuario'">
+                    <i [class]="usuario.activo ? 'fas fa-user-times' : 'fas fa-user-check'"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger"
+                          (click)="openDeleteModal(usuario)"
+                          title="Eliminar usuario">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Modal de Usuario Minimalista -->
+<div class="modal fade" [class.show]="showUserModal" [style.display]="showUserModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-gradient-primary text-white border-0 py-3">
+        <h5 class="modal-title mb-0 fw-bold">
+          <i class="fas {{ selectedUser ? 'fa-user-edit' : 'fa-user-plus' }} me-2"></i>
+          {{ selectedUser ? 'Editar Usuario' : 'Nuevo Usuario' }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeModals()" aria-label="Close"></button>
+      </div>
+      <form [formGroup]="userForm" (ngSubmit)="saveUser()">
+        <div class="modal-body p-4">
+          <!-- Información Personal -->
+          <div class="row g-3 mb-4">
+            <div class="col-12">
+              <label class="form-label fw-semibold text-dark">
+                <i class="fas fa-user text-primary me-2"></i>Nombre Completo
+              </label>
+              <input type="text" class="form-control form-control-lg" 
+                     formControlName="name" 
+                     placeholder="Ingrese el nombre completo"
+                     [class.is-invalid]="userForm.get('name')?.invalid && userForm.get('name')?.touched"
+                     [class.is-valid]="userForm.get('name')?.valid && userForm.get('name')?.touched">
+              <div *ngIf="userForm.get('name')?.invalid && userForm.get('name')?.touched" 
+                   class="invalid-feedback">
+                <div *ngIf="userForm.get('name')?.errors?.['required']">
+                  <i class="fas fa-exclamation-circle me-1"></i>El nombre completo es obligatorio
+                </div>
+                <div *ngIf="userForm.get('name')?.errors?.['minlength']">
+                  <i class="fas fa-exclamation-circle me-1"></i>El nombre debe tener al menos 2 caracteres
+                </div>
+              </div>
+              <div *ngIf="userForm.get('name')?.valid && userForm.get('name')?.touched" 
+                   class="valid-feedback">
+                <i class="fas fa-check-circle me-1"></i>Nombre válido
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label fw-semibold text-dark">
+                <i class="fas fa-at text-primary me-2"></i>Usuario
+              </label>
+              <input type="text" class="form-control" 
+                     formControlName="username" 
+                     placeholder="nombre.usuario"
+                     [class.is-invalid]="userForm.get('username')?.invalid && userForm.get('username')?.touched"
+                     [class.is-valid]="userForm.get('username')?.valid && userForm.get('username')?.touched">
+              <div *ngIf="userForm.get('username')?.invalid && userForm.get('username')?.touched" 
+                   class="invalid-feedback">
+                <div *ngIf="userForm.get('username')?.errors?.['required']">
+                  <i class="fas fa-exclamation-circle me-1"></i>El nombre de usuario es obligatorio
+                </div>
+                <div *ngIf="userForm.get('username')?.errors?.['minlength']">
+                  <i class="fas fa-exclamation-circle me-1"></i>El nombre de usuario debe tener al menos 3 caracteres
+                </div>
+              </div>
+              <div *ngIf="userForm.get('username')?.valid && userForm.get('username')?.touched" 
+                   class="valid-feedback">
+                <i class="fas fa-check-circle me-1"></i>Nombre de usuario válido
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label fw-semibold text-dark">
+                <i class="fas fa-envelope text-primary me-2"></i>Email
+              </label>
+              <input type="email" class="form-control" 
+                     formControlName="email" 
+                     placeholder="usuario@empresa.com"
+                     [class.is-invalid]="userForm.get('email')?.invalid && userForm.get('email')?.touched"
+                     [class.is-valid]="userForm.get('email')?.valid && userForm.get('email')?.touched">
+              <div *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched" 
+                   class="invalid-feedback">
+                <div *ngIf="userForm.get('email')?.errors?.['required']">
+                  <i class="fas fa-exclamation-circle me-1"></i>El correo electrónico es obligatorio
+                </div>
+                <div *ngIf="userForm.get('email')?.errors?.['email']">
+                  <i class="fas fa-exclamation-circle me-1"></i>Ingrese un formato de correo válido
+                </div>
+              </div>
+              <div *ngIf="userForm.get('email')?.valid && userForm.get('email')?.touched" 
+                   class="valid-feedback">
+                <i class="fas fa-check-circle me-1"></i>Correo válido
+              </div>
+            </div>
+          </div>
+
+          <!-- Contraseña -->
+          <div class="mb-4" *ngIf="!selectedUser">
+            <label class="form-label fw-semibold text-dark">
+              <i class="fas fa-lock text-primary me-2"></i>Contraseña
+            </label>
+            <div class="input-group">
+              <input [type]="showPassword ? 'text' : 'password'" 
+                     class="form-control" 
+                     formControlName="password" 
+                     placeholder="Mínimo 6 caracteres"
+                     [class.is-invalid]="userForm.get('password')?.invalid && userForm.get('password')?.touched"
+                     [class.is-valid]="userForm.get('password')?.valid && userForm.get('password')?.touched">
+              <button type="button" class="btn btn-outline-secondary" 
+                      (click)="showPassword = !showPassword">
+                <i class="fas {{ showPassword ? 'fa-eye-slash' : 'fa-eye' }}"></i>
+              </button>
+            </div>
+            <div *ngIf="userForm.get('password')?.invalid && userForm.get('password')?.touched" 
+                 class="invalid-feedback">
+              <div *ngIf="userForm.get('password')?.errors?.['required']">
+                <i class="fas fa-exclamation-circle me-1"></i>La contraseña es obligatoria
+              </div>
+              <div *ngIf="userForm.get('password')?.errors?.['minlength']">
+                <i class="fas fa-exclamation-circle me-1"></i>La contraseña debe tener al menos 6 caracteres
+              </div>
+            </div>
+            <div *ngIf="userForm.get('password')?.valid && userForm.get('password')?.touched" 
+                 class="valid-feedback">
+              <i class="fas fa-check-circle me-1"></i>Contraseña válida
+            </div>
+            <div *ngIf="userForm.get('password')?.value && userForm.get('password')?.value.length > 0" 
+                 class="mt-2">
+              <div class="progress" style="height: 4px;">
+                <div class="progress-bar" 
+                     [class]="userForm.get('password')?.value.length < 6 ? 'bg-danger' : 
+                             userForm.get('password')?.value.length < 8 ? 'bg-warning' : 'bg-success'"
+                     [style.width.%]="Math.min(100, (userForm.get('password')?.value.length / 8) * 100)">
+                </div>
+              </div>
+              <small class="text-muted mt-1 d-block">
+                Fortaleza: 
+                <span [class]="userForm.get('password')?.value.length < 6 ? 'text-danger' : 
+                             userForm.get('password')?.value.length < 8 ? 'text-warning' : 'text-success'">
+                  {{ userForm.get('password')?.value.length < 6 ? 'Débil' : 
+                     userForm.get('password')?.value.length < 8 ? 'Media' : 'Fuerte' }}
+                </span>
+              </small>
+            </div>
+          </div>
+
+          <!-- Empleado y Estado -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold text-dark">
+                <i class="fas fa-id-badge text-primary me-2"></i>Empleado
+              </label>
+              <select class="form-select" formControlName="empleado_id">
+                <option value="">Sin empleado asociado</option>
+                <option *ngFor="let empleado of empleados" [value]="empleado.id">
+                  {{ empleado.nombre }} {{ empleado.apellido }} - {{ empleado.cargo }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="col-md-4 d-flex align-items-end">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" 
+                       id="userStatus" formControlName="activo">
+                <label class="form-check-label fw-semibold" for="userStatus">
+                  <i class="fas fa-toggle-on text-success me-1"></i>Activo
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Roles Simplificados -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-dark">
+              <i class="fas fa-shield-alt text-primary me-2"></i>Roles
+            </label>
+            <div class="d-flex flex-wrap gap-2">
+              <div *ngFor="let rol of roles" class="form-check">
+                <input class="form-check-input" type="checkbox" 
+                       [id]="'role_' + rol" 
+                       [checked]="userForm.get('roles')?.value?.includes(rol)"
+                       (change)="onRoleChange($event, rol)">
+                <label class="form-check-label" [for]="'role_' + rol">
+                  <span class="badge bg-primary rounded-pill px-3 py-2">
+                    {{ getRoleDisplayName(rol) }}
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer border-0 bg-light d-flex justify-content-between">
+          <button type="button" class="btn btn-light" (click)="closeModals()">
+            <i class="fas fa-times me-2"></i>Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary px-4" 
+                  [disabled]="userForm.invalid || saving">
+            <i class="fas {{ saving ? 'fa-spinner fa-spin' : 'fa-save' }} me-2"></i>
+            {{ saving ? 'Guardando...' : (selectedUser ? 'Actualizar' : 'Crear Usuario') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Empleado Modernizado -->
+<div class="modal fade" [class.show]="showEmpleadoModal" [style.display]="showEmpleadoModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-success text-white border-0">
+        <h5 class="modal-title mb-0">
+          <i class="fas fa-id-card mr-2"></i>
+          {{ selectedEmpleado ? 'Editar Empleado' : 'Nuevo Empleado' }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeModals()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form [formGroup]="empleadoForm" (ngSubmit)="saveEmpleado()">
+        <div class="modal-body p-4">
+          <!-- Información Personal -->
+          <div class="mb-4">
+            <h6 class="text-muted mb-3"><i class="fas fa-user mr-2"></i>Información Personal</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" class="form-control" id="nombre" formControlName="nombre" 
+                         placeholder="Nombre">
+                  <label for="nombre">Nombre *</label>
+                  <div *ngIf="empleadoForm.get('nombre')?.invalid && empleadoForm.get('nombre')?.touched" 
+                       class="invalid-feedback d-block">
+                    <i class="fas fa-exclamation-circle mr-1"></i>El nombre es requerido
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" class="form-control" id="apellido" formControlName="apellido" 
+                         placeholder="Apellido">
+                  <label for="apellido">Apellido *</label>
+                  <div *ngIf="empleadoForm.get('apellido')?.invalid && empleadoForm.get('apellido')?.touched" 
+                       class="invalid-feedback d-block">
+                    <i class="fas fa-exclamation-circle mr-1"></i>El apellido es requerido
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información Laboral -->
+          <div class="mb-4">
+            <h6 class="text-muted mb-3"><i class="fas fa-briefcase mr-2"></i>Información Laboral</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" class="form-control" id="cargo" formControlName="cargo" 
+                         placeholder="Cargo">
+                  <label for="cargo">Cargo *</label>
+                  <div *ngIf="empleadoForm.get('cargo')?.invalid && empleadoForm.get('cargo')?.touched" 
+                       class="invalid-feedback d-block">
+                    <i class="fas fa-exclamation-circle mr-1"></i>El cargo es requerido
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" class="form-control" id="departamento" formControlName="departamento" 
+                         placeholder="Departamento">
+                  <label for="departamento">Departamento *</label>
+                  <div *ngIf="empleadoForm.get('departamento')?.invalid && empleadoForm.get('departamento')?.touched" 
+                       class="invalid-feedback d-block">
+                    <i class="fas fa-exclamation-circle mr-1"></i>El departamento es requerido
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información de Contacto -->
+          <div class="mb-3">
+            <h6 class="text-muted mb-3"><i class="fas fa-address-book mr-2"></i>Información de Contacto</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="email" class="form-control" id="empleado-email" formControlName="email" 
+                         placeholder="Email">
+                  <label for="empleado-email">Email *</label>
+                  <div *ngIf="empleadoForm.get('email')?.invalid && empleadoForm.get('email')?.touched" 
+                       class="invalid-feedback d-block">
+                    <i class="fas fa-exclamation-circle mr-1"></i>Ingrese un email válido
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" class="form-control" id="telefono" formControlName="telefono" 
+                         placeholder="Teléfono">
+                  <label for="telefono">Teléfono</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer border-0 bg-light">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeModals()">
+            <i class="fas fa-times mr-1"></i>Cancelar
+          </button>
+          <button type="submit" class="btn btn-success" [disabled]="empleadoForm.invalid || saving">
+            <i class="fas {{ saving ? 'fa-spinner fa-spin' : 'fa-save' }} mr-1"></i>
+            {{ saving ? 'Guardando...' : 'Guardar Empleado' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación Modernizado -->
+<div class="modal fade" [class.show]="showDeleteModal" [style.display]="showDeleteModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-danger text-white border-0">
+        <h5 class="modal-title mb-0">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          Confirmar Eliminación
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeModals()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <div class="mb-3">
+          <i class="fas fa-user-times text-danger" style="font-size: 3rem;"></i>
+        </div>
+        <h6 class="mb-3">¿Está seguro de que desea eliminar este usuario?</h6>
+        <div class="alert alert-warning border-0" role="alert">
+          <strong>{{ userToDelete?.name }}</strong>
+        </div>
+        <p class="text-muted small mb-0">
+          <i class="fas fa-info-circle mr-1"></i>
+          Esta acción no se puede deshacer y eliminará permanentemente todos los datos asociados.
+        </p>
+      </div>
+      <div class="modal-footer border-0 bg-light justify-content-center">
+        <button type="button" class="btn btn-outline-secondary me-2" (click)="closeModals()">
+          <i class="fas fa-times mr-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-danger" (click)="deleteUser()" [disabled]="deleting">
+          <i class="fas {{ deleting ? 'fa-spinner fa-spin' : 'fa-trash' }} mr-1"></i>
+          {{ deleting ? 'Eliminando...' : 'Eliminar Usuario' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Accesos a Sistemas -->
+<div class="modal fade system-access-modal" [class.show]="showSystemAccessModal" [style.display]="showSystemAccessModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-gradient-info text-white border-0 py-3">
+        <h5 class="modal-title mb-0 fw-bold">
+          <i class="fas fa-key me-2"></i>
+          Accesos a Sistemas - {{ userForSystemAccess?.name }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeModals()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <!-- Verificación de permisos -->
+        <div *ngIf="!isSuperAdmin()" class="alert alert-warning border-0 shadow-sm mb-4">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle text-warning me-3" style="font-size: 1.5rem;"></i>
+            <div>
+              <h6 class="mb-1 fw-bold">Acceso Restringido</h6>
+              <p class="mb-0">Solo el Super Administrador puede gestionar accesos a sistemas integrados.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-3" *ngIf="isSuperAdmin()">
+          <div class="d-flex align-items-center mb-3">
+            <div class="me-3">
+              <i class="fas fa-user-circle text-info" style="font-size: 2.5rem;"></i>
+            </div>
+            <div>
+              <h6 class="mb-1 fw-bold">{{ userForSystemAccess?.name }}</h6>
+              <p class="text-muted mb-0">
+                <i class="fas fa-at me-1"></i>{{ userForSystemAccess?.username }} • 
+                <i class="fas fa-envelope me-1"></i>{{ userForSystemAccess?.email }}
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <hr class="my-4" *ngIf="isSuperAdmin()">
+        
+        <div class="row g-3" *ngIf="isSuperAdmin()">
+          <div class="col-12" *ngIf="loadingSystems" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando sistemas...</span>
+            </div>
+            <p class="mt-2 text-muted">Cargando sistemas disponibles...</p>
+          </div>
+          
+          <div class="col-12" *ngIf="loadingUserAccess" class="text-center">
+            <div class="spinner-border text-info" role="status">
+              <span class="visually-hidden">Cargando accesos...</span>
+            </div>
+            <p class="mt-2 text-muted">Cargando accesos del usuario...</p>
+          </div>
+          
+          <div class="col-12" *ngIf="!loadingSystems && availableSystems.length === 0" class="text-center">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              No hay sistemas integrados disponibles en este momento.
+            </div>
+          </div>
+          
+          <div class="col-12" *ngFor="let system of availableSystems">
+            <div class="system-card" [ngStyle]="getSystemCardStyles(system)">
+              <div class="system-header d-flex justify-content-between align-items-center">
+                <div class="system-info">
+                  <div class="d-flex align-items-center mb-2">
+                    <i [class]="getSystemIcon(system)" class="me-2 text-white"></i>
+                    <div class="system-name text-white fw-bold">{{ system.nombre }}</div>
+                    <span class="badge bg-light text-dark ms-2" *ngIf="system.activo">Activo</span>
+                    <span class="badge bg-secondary ms-2" *ngIf="!system.activo">Inactivo</span>
+                  </div>
+                  <div class="system-description text-white-50" *ngIf="system.descripcion">{{ system.descripcion }}</div>
+                  <div class="system-url text-white-50">
+                    <i class="fas fa-link me-1"></i>
+                    <a [href]="system.url_base" target="_blank" class="text-white-50">{{ system.url_base }}</a>
+                  </div>
+                </div>
+
+                <div class="system-actions">
+                  <button class="btn-toggle-menus btn-light"
+                          type="button"
+                          data-toggle="collapse"
+                          [attr.data-target]="'#menus_' + system.id"
+                          [attr.aria-expanded]="false"
+                          [attr.aria-controls]="'menus_' + system.id"
+                          [id]="'btn_menus_' + system.id"
+                          (click)="toggleChevron($event)">
+                    <i class="fas fa-list me-1"></i>
+                    Menús ({{ getSystemMenusCount(system.id) }})
+                    <i class="fas fa-chevron-down chevron-icon"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Menús del Sistema -->
+              <div class="system-menus">
+                <div class="collapse" [id]="'menus_' + system.id">
+                  <div class="menus-container">
+                    <div class="menus-title">
+                      <i class="fas fa-sitemap me-2"></i>
+                      Menús Disponibles
+                    </div>
+
+                    <div *ngIf="getSystemMenus(system.id).length === 0" class="no-menus-message">
+                      <div class="no-menus-icon">
+                        <i class="fas fa-info-circle"></i>
+                      </div>
+                      <div class="no-menus-text">
+                        No hay menús configurados para este sistema
+                      </div>
+                    </div>
+
+                    <div *ngIf="getSystemMenus(system.id).length > 0">
+                      <div class="menu-item d-flex align-items-center" 
+                           [ngClass]="getMenuClass(system, menu)"
+                           [ngStyle]="getMenuStyles(menu, system)"
+                           *ngFor="let menu of getSystemMenus(system.id)">
+                        <div class="menu-info">
+                          <div class="d-flex align-items-center mb-1">
+                            <i [class]="menu.icono || 'fas fa-bars'" class="me-2 text-secondary"></i>
+                            <div class="menu-name">{{ menu.nombre }}</div>
+                            <span class="badge bg-success ms-2" *ngIf="menu.activo">Activo</span>
+                            <span class="badge bg-secondary ms-2" *ngIf="!menu.activo">Inactivo</span>
+                          </div>
+                          <div class="menu-description" *ngIf="menu.descripcion">
+                            {{ menu.descripcion }}
+                          </div>
+                          <div class="menu-url">
+                            <i class="fas fa-link me-1"></i>
+                            {{ menu.ruta || menu.url }}
+                          </div>
+
+                          <div class="menu-status"
+                               [class.has-access]="hasMenuAccess(system.id, menu.id)"
+                               [class.no-access]="!hasMenuAccess(system.id, menu.id)">
+                            <i [class]="hasMenuAccess(system.id, menu.id) ? 'fas fa-check-circle' : 'fas fa-times-circle'" class="me-1"></i>
+                            {{ hasMenuAccess(system.id, menu.id) ? 'Acceso otorgado' : 'Sin acceso' }}
+                          </div>
+                        </div>
+
+                        <div class="menu-toggle ms-3">
+                          <div class="form-check form-switch">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   [id]="'menu_' + system.id + '_' + menu.id"
+                                   [checked]="hasMenuAccess(system.id, menu.id)"
+                                   (change)="toggleMenuAccess(system.id, menu.id)"
+                                   [disabled]="!menu.activo">
+                            <label class="form-check-label"
+                                   [for]="'menu_' + system.id + '_' + menu.id"
+                                   [class.text-success]="hasMenuAccess(system.id, menu.id)"
+                                   [class.text-muted]="!hasMenuAccess(system.id, menu.id)">
+                              {{ hasMenuAccess(system.id, menu.id) ? 'Activo' : 'Inactivo' }}
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-4 p-3 bg-light rounded">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle text-info me-2"></i>
+            <small class="text-muted">
+              Los cambios en los accesos se aplican inmediatamente. 
+              El usuario deberá cerrar sesión e iniciar sesión nuevamente para que los cambios surtan efecto.
+            </small>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer border-0 bg-light">
+        <button type="button" class="btn btn-secondary" (click)="closeModals()">
+          <i class="fas fa-times me-2"></i>Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div *ngIf="showUserModal || showEmpleadoModal || showDeleteModal || showSystemAccessModal" 
+     class="modal-backdrop fade show"></div>

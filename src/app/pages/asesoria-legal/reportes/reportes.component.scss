@@ -1,0 +1,28 @@
+.card.bg-primary .opacity-50,
+.card.bg-success .opacity-50,
+.card.bg-info .opacity-50,
+.card.bg-warning .opacity-50 { opacity: 0.6; }
+
+.tree-monitor {
+  .tree-node-user { border-left: 3px solid #dee2e6; padding-left: 0.5rem; }
+  .tree-user-header {
+    cursor: pointer;
+    padding: 0.4rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+    &:hover { background: #f8f9fa; }
+    .tree-toggle {
+      display: inline-block;
+      margin-right: 0.5rem;
+      transition: transform 0.2s;
+      &.rotated { transform: rotate(-90deg); }
+    }
+  }
+  .tree-user-children { margin-left: 1.5rem; margin-top: 0.25rem; }
+  .tree-user-children table { font-size: 0.9rem; }
+  .tree-expediente-row {
+    &.vencido { background: rgba(220, 53, 69, 0.08); border-left: 3px solid #dc3545; }
+    &.por-vencerse { background: rgba(255, 193, 7, 0.12); border-left: 3px solid #ffc107; }
+    &:hover { background: rgba(0, 123, 255, 0.06) !important; }
+  }
+}

@@ -1,0 +1,220 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-birthday-cake mr-1"></i>Gestión de Fotos de Aniversario</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor</a></li>
+          <li class="breadcrumb-item active">Fotos Aniversario</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Lista de Fotos de Aniversario</h3>
+        <div class="card-tools">
+          <a routerLink="/gestor-contenidos/fotos-aniversario/configurar" class="btn btn-warning btn-sm mr-2">
+            <i class="fas fa-cog mr-1"></i>Configurar Modal
+          </a>
+          <button class="btn btn-primary btn-sm" (click)="openCreate()">
+            <i class="fas fa-plus mr-1"></i>Nueva Foto
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="text-center py-5" *ngIf="loading">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+        </div>
+
+        <div class="row" *ngIf="!loading">
+          <div class="col-md-4 mb-3" *ngFor="let foto of fotos">
+            <div class="card h-100">
+              <img *ngIf="getImagenUrl(foto)" [src]="getImagenUrl(foto)" class="card-img-top" [alt]="foto.titulo"
+                   style="height: 250px; object-fit: cover;">
+              <div *ngIf="!getImagenUrl(foto)" class="bg-secondary d-flex align-items-center justify-content-center" style="height: 250px;">
+                <i class="fas fa-image fa-3x text-white-50"></i>
+              </div>
+              <div class="card-body">
+                <h5 class="card-title">{{ foto.titulo }}</h5>
+                <p class="card-text text-muted small">{{ foto.descripcion | slice:0:80 }}{{ (foto.descripcion?.length || 0) > 80 ? '...' : '' }}</p>
+                <div class="mb-2">
+                  <span class="badge badge-primary mr-1" *ngIf="foto.anio">
+                    <i class="fas fa-calendar mr-1"></i>{{ foto.anio }}
+                  </span>
+                  <span class="badge badge-info mr-1" *ngIf="foto.fecha">{{ foto.fecha | date:'dd/MM/yyyy' }}</span>
+                  <span class="badge badge-secondary mr-1">Orden: {{ foto.orden }}</span>
+                  <span class="badge" [ngClass]="foto.activo ? 'badge-success' : 'badge-danger'">
+                    {{ foto.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                  <span class="badge badge-warning ml-1" *ngIf="foto.es_anuncio">
+                    <i class="fas fa-bullhorn mr-1"></i>Anuncio
+                  </span>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="btn-group w-100">
+                  <button type="button" class="btn btn-sm" [ngClass]="foto.activo ? 'btn-warning' : 'btn-success'"
+                          (click)="toggleEstado(foto)" title="Cambiar estado">
+                    <i class="fas" [ngClass]="foto.activo ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="openEdit(foto)">
+                    <i class="fas fa-edit mr-1"></i>Editar
+                  </button>
+                  <button type="button" class="btn btn-sm btn-danger" (click)="delete(foto.id)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12" *ngIf="fotos.length === 0">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle mr-1"></i>No hay fotos de aniversario creadas.
+              <a href="javascript:void(0)" (click)="openCreate()">Crear la primera foto</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer" *ngIf="lastPage > 1">
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="page <= 1">
+              <a class="page-link" href="javascript:void(0)" (click)="goPage(page - 1)">Anterior</a>
+            </li>
+            <li class="page-item disabled"><span class="page-link">Pág. {{ page }} / {{ lastPage }}</span></li>
+            <li class="page-item" [class.disabled]="page >= lastPage">
+              <a class="page-link" href="javascript:void(0)" (click)="goPage(page + 1)">Siguiente</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Crear/Editar -->
+<div class="modal fade show d-block" *ngIf="showModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ editing ? 'Editar' : 'Nueva' }} Foto de Aniversario</h5>
+        <button type="button" class="close" (click)="showModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Título <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="form.titulo" placeholder="Título descriptivo" required>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Nombre de la Actividad</label>
+              <input type="text" class="form-control" [(ngModel)]="form.nombre_actividad" placeholder="Ej: Ceremonia de Juramentación">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="form.descripcion" placeholder="Describe el evento o momento"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Año</label>
+              <input type="number" class="form-control" [(ngModel)]="form.anio" min="1900" max="2100">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Fecha del Evento</label>
+              <input type="date" class="form-control" [(ngModel)]="form.fecha">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Orden</label>
+              <input type="number" class="form-control" [(ngModel)]="form.orden" min="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Imagen Principal <span class="text-danger" *ngIf="!editing">*</span></label>
+          <div class="input-group mb-2">
+            <input type="text" class="form-control" [(ngModel)]="form.imagen" placeholder="Subir o pegar URL" readonly>
+            <div class="input-group-append">
+              <label class="btn btn-primary mb-0">
+                <i class="fas fa-upload mr-1"></i>Subir
+                <input type="file" accept="image/*" class="d-none" (change)="subirImagen($event, 'imagen')">
+              </label>
+            </div>
+          </div>
+          <small class="form-text text-muted">Formatos: JPG, PNG, GIF, WEBP. Máx: 10MB</small>
+          <div *ngIf="uploadingImagen" class="mt-2"><i class="fas fa-spinner fa-spin mr-1"></i>Subiendo...</div>
+          <img *ngIf="form.imagen && !uploadingImagen" [src]="getPreviewUrl(form.imagen)" class="img-thumbnail mt-2 d-block" style="max-height:150px">
+        </div>
+
+        <div class="form-group">
+          <label>Miniatura (Opcional)</label>
+          <div class="input-group mb-2">
+            <input type="text" class="form-control" [(ngModel)]="form.imagen_thumbnail" placeholder="Subir o pegar URL" readonly>
+            <div class="input-group-append">
+              <label class="btn btn-secondary mb-0">
+                <i class="fas fa-upload mr-1"></i>Subir
+                <input type="file" accept="image/*" class="d-none" (change)="subirImagen($event, 'imagen_thumbnail')">
+              </label>
+            </div>
+          </div>
+          <small class="form-text text-muted">Imagen optimizada para vista previa. Máx: 5MB</small>
+          <div *ngIf="uploadingThumbnail" class="mt-2"><i class="fas fa-spinner fa-spin mr-1"></i>Subiendo...</div>
+          <img *ngIf="form.imagen_thumbnail && !uploadingThumbnail" [src]="getPreviewUrl(form.imagen_thumbnail)" class="img-thumbnail mt-2 d-block" style="max-height:100px">
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Fecha Inicio (Vigencia)</label>
+              <input type="date" class="form-control" [(ngModel)]="form.fecha_inicio">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Fecha Fin (Vigencia)</label>
+              <input type="date" class="form-control" [(ngModel)]="form.fecha_fin">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="fotoActivo" [(ngModel)]="form.activo">
+                <label class="custom-control-label" for="fotoActivo">Activo (se mostrará en la galería)</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="fotoAnuncio" [(ngModel)]="form.es_anuncio">
+                <label class="custom-control-label" for="fotoAnuncio"><strong>Es Anuncio</strong> (Boton Flotante)</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="showModal = false">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="save()">
+          <i class="fas fa-save mr-1"></i>{{ editing ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

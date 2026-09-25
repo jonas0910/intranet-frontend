@@ -1,0 +1,450 @@
+<app-system-layout
+  [title]="soloMisTickets ? 'Mis tickets' : 'Gestión de tickets'"
+  [subtitle]="soloMisTickets ? 'Tus solicitudes y plazo de respuesta. «Conversación» con soporte.' : 'Crear tickets, asignar personal de soporte, monitorear plazo (días/horas/min) y editar o eliminar.'"
+  [breadcrumbs]="soloMisTickets ? [{label: 'Inicio', url: '/'}, {label: 'Helpdesk', url: '/helpdesk'}, {label: 'Mis tickets'}] : [{label: 'Inicio', url: '/'}, {label: 'Helpdesk', url: '/helpdesk'}, {label: 'Gestión de tickets'}]"
+  subsystem="helpdesk">
+
+  <div class="mb-3 d-flex flex-wrap align-items-center gap-2">
+    <button type="button" class="btn" [ngClass]="cv.newBtnClass" (click)="openNuevoTicketModal()">
+      <i class="fas fa-plus mr-1"></i> Nuevo ticket
+    </button>
+    <a routerLink="/helpdesk" class="btn btn-outline-secondary">Volver al portal</a>
+    <span *ngIf="puedeGestionarTickets && !soloMisTickets" class="small text-muted ml-md-2">
+      <i class="fas fa-clock mr-1"></i> SLA según prioridad: crítica 8h · alta 24h · media 72h · baja 120h (plazo automático al crear; editable).
+    </span>
+  </div>
+
+  <!-- Modal: Nuevo ticket (patrón CRUD) -->
+  <ng-template #nuevoTicketModal let-modal>
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.padding]="mc.headerPadding" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title" [style.font-size]="mc.headerFontSize">
+          <i [class]="mc.headerIcon + ' mr-2'"></i>{{ mc.titleAdd }} ticket
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" aria-label="Cerrar" (click)="cancelNuevoTicketModal()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg" [style.padding]="mc.formPadding">
+        <div class="form-group mb-3">
+          <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">Título <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="nuevoTicket.titulo" placeholder="Resumen del problema" />
+        </div>
+        <div class="form-group mb-3">
+          <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">Descripción <span class="text-danger">*</span></label>
+          <textarea class="form-control" [ngClass]="mc.inputSize" rows="5" [(ngModel)]="nuevoTicket.descripcion" placeholder="Detalla tu consulta o incidencia"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">Prioridad</label>
+              <select class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="nuevoTicket.prioridad">
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+                <option value="critica">Crítica</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">Categoría</label>
+              <input type="text" class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="nuevoTicket.categoria" placeholder="Ej. Equipo, Accesos, Software" />
+            </div>
+          </div>
+        </div>
+        <div class="row" *ngIf="puedeGestionarTickets">
+          <div class="col-md-6">
+            <div class="form-group mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">
+                <i class="fas fa-user-headset mr-1"></i> Asignar a soporte (opcional)
+              </label>
+              <select class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="nuevoTicket.asignado_a">
+                <option [ngValue]="null">— Sin asignar —</option>
+                <option *ngFor="let u of usuariosSoporte" [ngValue]="u.id">{{ u.name }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">Fecha límite (opcional)</label>
+              <input type="datetime-local" class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="nuevoTicket.fecha_limite" />
+              <small class="text-muted">Vacío = plazo automático según prioridad.</small>
+            </div>
+          </div>
+        </div>
+        <div class="form-group mb-3">
+          <app-multi-file-upload
+            [(files)]="archivosNuevoTicket"
+            [label]="'Evidencias (opcional)'"
+            [hint]="'Arrastra imágenes o documentos. Máx. 10 MB por archivo. PDF, Word, Excel e imágenes.'"
+            [maxFiles]="20"
+            [maxSizeMb]="10"
+            zoneClass="border border-primary"
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
+          </app-multi-file-upload>
+        </div>
+      </div>
+      <div class="modal-footer" [style.background]="mc.footerBg" [style.border-bottom-left-radius.px]="mc.borderRadius" [style.border-bottom-right-radius.px]="mc.borderRadius">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="cancelNuevoTicketModal()">
+          <i [class]="mc.cancelBtnIcon + ' mr-1'"></i>{{ mc.cancelBtnLabel }}
+        </button>
+        <button type="button" class="btn btn-sm" [ngClass]="mc.saveBtnClass" (click)="saveNuevoTicket()" [disabled]="savingTicket || !nuevoTicket.titulo.trim() || !nuevoTicket.descripcion.trim()">
+          <span *ngIf="savingTicket" class="spinner-border spinner-border-sm mr-1"></span>
+          <i *ngIf="!savingTicket" [class]="mc.saveBtnIcon + ' mr-1'"></i>{{ mc.saveBtnLabel }}
+        </button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Modal: Editar ticket (patrón CRUD + multi adjuntos) -->
+  <ng-template #editarTicketModal let-modal>
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.padding]="mc.headerPadding" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title" [style.font-size]="mc.headerFontSize">
+          <i class="fas fa-edit mr-2"></i>{{ mc.titleEdit }} ticket
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" aria-label="Cerrar" (click)="cancelEditTicketModal()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg" [style.padding]="mc.formPadding">
+        <div *ngIf="loadingEditTicket" class="text-center py-4">
+          <div class="spinner-border text-primary"></div>
+          <p class="mt-2 text-muted small">Cargando adjuntos...</p>
+        </div>
+        <ng-container *ngIf="editTicket && !loadingEditTicket">
+          <div class="form-group mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">Título <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="editTicket.titulo" placeholder="Resumen del problema" />
+          </div>
+          <div class="form-group mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">Descripción <span class="text-danger">*</span></label>
+            <textarea class="form-control" [ngClass]="mc.inputSize" rows="5" [(ngModel)]="editTicket.descripcion" placeholder="Detalla tu consulta o incidencia"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">Prioridad</label>
+                <select class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="editTicket.prioridad">
+                  <option value="baja">Baja</option>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                  <option value="critica">Crítica</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">Categoría</label>
+                <input type="text" class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="editTicket.categoria" placeholder="Ej. Equipo, Accesos, Software" />
+              </div>
+            </div>
+          </div>
+          <div class="row border-top pt-3" *ngIf="puedeGestionarTickets && editTicket">
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">Asignado a</label>
+                <select class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="editTicket.asignado_a">
+                  <option [ngValue]="null">— Sin asignar —</option>
+                  <option *ngFor="let u of usuariosSoporte" [ngValue]="u.id">{{ u.name }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">Fecha límite</label>
+                <input type="datetime-local" class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="editTicket.fecha_limite" />
+              </div>
+            </div>
+          </div>
+          <div class="form-group mb-3 border-top pt-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.margin-bottom]="mc.labelMarginBottom" [style.font-size]="cv.labelFontSize">
+              <i class="fas fa-images mr-1"></i> Adjuntos actuales
+            </label>
+            <p class="small text-muted mb-2" *ngIf="!editTicket.archivos_adjuntos?.length">Sin archivos adjuntos al crear el ticket.</p>
+            <div *ngIf="adjuntosEditVisibles.length > 0" class="d-flex flex-wrap gap-2 mb-2">
+              <ng-container *ngFor="let adj of adjuntosEditVisibles">
+                <div class="border rounded p-2 d-flex align-items-center position-relative" style="max-width: 220px;">
+                  <a *ngIf="esImagenNombre(adj.nombre)" [href]="adj.url" target="_blank" class="mr-2">
+                    <img [src]="adj.url" [alt]="adj.nombre" class="img-thumbnail" style="width: 56px; height: 56px; object-fit: cover;" />
+                  </a>
+                  <span *ngIf="!esImagenNombre(adj.nombre)" class="mr-2"><i class="fas fa-file-alt text-muted fa-2x"></i></span>
+                  <span class="small text-truncate flex-grow-1" [title]="adj.nombre">{{ adj.nombre }}</span>
+                  <button type="button" class="btn btn-sm btn-outline-danger ml-1" (click)="marcarEliminarAdjuntoEdit(adj.path)" title="Quitar adjunto">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </ng-container>
+            </div>
+            <div *ngIf="adjuntosEliminarEdit.length > 0" class="small text-warning mb-2">
+              <i class="fas fa-info-circle mr-1"></i>{{ adjuntosEliminarEdit.length }} adjunto(s) se eliminarán al guardar.
+              <button type="button" class="btn btn-link btn-sm p-0 align-baseline" (click)="adjuntosEliminarEdit = []">Deshacer eliminaciones</button>
+            </div>
+          </div>
+          <div class="form-group mb-0">
+            <app-multi-file-upload
+              [(files)]="archivosEditTicket"
+              [label]="'Añadir imágenes o documentos'"
+              [hint]="'Arrastra o elige archivos. Se guardarán al pulsar Actualizar. Máx. 10 MB c/u.'"
+              [maxFiles]="20"
+              [maxSizeMb]="10"
+              zoneClass="border border-info"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
+            </app-multi-file-upload>
+          </div>
+        </ng-container>
+      </div>
+      <div class="modal-footer" [style.background]="mc.footerBg" [style.border-bottom-left-radius.px]="mc.borderRadius" [style.border-bottom-right-radius.px]="mc.borderRadius">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="cancelEditTicketModal()">
+          <i [class]="mc.cancelBtnIcon + ' mr-1'"></i>{{ mc.cancelBtnLabel }}
+        </button>
+        <button type="button" class="btn btn-sm" [ngClass]="mc.saveBtnClass" (click)="saveEditTicket()"
+          [disabled]="savingEdit || loadingEditTicket || !editTicket || !editTicket.titulo.trim() || !editTicket.descripcion.trim()">
+          <span *ngIf="savingEdit" class="spinner-border spinner-border-sm mr-1"></span>
+          <i *ngIf="!savingEdit" [class]="mc.saveBtnIcon + ' mr-1'"></i> Actualizar
+        </button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Modal: Ver detalles del ticket (galería de imágenes visible) -->
+  <ng-template #verTicketModal let-modal>
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div *ngIf="loadingViewTicket" class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText">
+        <h5 class="modal-title"><i class="fas fa-eye mr-2"></i>Visualizar ticket</h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="cancelVerTicketModal()">&times;</button>
+      </div>
+      <div *ngIf="loadingViewTicket" class="modal-body text-center py-5" [style.background]="mc.bodyBg">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Cargando detalle e imágenes…</p>
+      </div>
+      <ng-container *ngIf="!loadingViewTicket && viewTicket">
+        <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.padding]="mc.headerPadding" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+          <h5 class="modal-title" [style.font-size]="mc.headerFontSize">
+            <i class="fas fa-eye mr-2"></i>{{ viewTicket.numero_ticket }} - {{ viewTicket.titulo }}
+          </h5>
+          <button type="button" class="close" [style.color]="mc.headerText" aria-label="Cerrar" (click)="cancelVerTicketModal()">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" [style.background]="mc.bodyBg" [style.padding]="mc.formPadding">
+          <div class="mb-3">
+            <span class="badge mr-2" [ngClass]="badgeEstado(viewTicket.estado)">{{ viewTicket.estado }}</span>
+            <span class="badge mr-2" [ngClass]="badgePrioridad(viewTicket.prioridad)">{{ viewTicket.prioridad }}</span>
+            <span class="text-muted" [style.font-size]="cv.fontSize">{{ viewTicket.categoria }}</span>
+          </div>
+          <p class="small text-muted mb-2" [style.font-size]="cv.fontSize">
+            Solicitante: {{ viewTicket.solicitante?.name || '-' }}
+            <span class="ml-2" *ngIf="viewTicket.asignado">| Asignado a: {{ viewTicket.asignado?.name }}</span>
+            <span class="ml-2">| {{ formatDateTime(viewTicket.created_at) }}</span>
+          </p>
+          <p class="mb-3" [style.font-size]="cv.fontSize" style="white-space: pre-wrap;">{{ viewTicket.descripcion }}</p>
+
+          <!-- Galería: imágenes del ticket (alta y legible) -->
+          <div class="mb-4" *ngIf="adjuntosImagenesIniciales().length > 0">
+            <label class="font-weight-bold d-block mb-2" [style.font-size]="cv.labelFontSize">
+              <i class="fas fa-images text-primary mr-1"></i> Imágenes adjuntas ({{ adjuntosImagenesIniciales().length }})
+            </label>
+            <div class="row">
+              <div class="col-sm-6 col-md-4 mb-3" *ngFor="let adj of adjuntosImagenesIniciales(); let i = index">
+                <div class="card h-100 border shadow-sm">
+                  <a [href]="urlAdjunto(adj)" target="_blank" rel="noopener" class="d-block bg-light text-center p-2" style="min-height: 160px;">
+                    <img [src]="urlAdjunto(adj)" [alt]="adj.nombre" class="img-fluid rounded"
+                      style="max-height: 220px; width: 100%; object-fit: contain;"
+                      loading="lazy" />
+                  </a>
+                  <div class="card-footer py-1 px-2 small text-truncate" [title]="adj.nombre">
+                    <a [href]="urlAdjunto(adj)" target="_blank" rel="noopener">{{ adj.nombre }}</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p *ngIf="adjuntosImagenesIniciales().length === 0 && adjuntosNoImagenIniciales().length === 0" class="small text-muted mb-2">
+            <i class="fas fa-paperclip mr-1"></i>Sin adjuntos en la solicitud inicial.
+          </p>
+
+          <!-- Otros adjuntos (PDF, etc.) -->
+          <div *ngIf="adjuntosNoImagenIniciales().length > 0" class="mb-3">
+            <label class="small font-weight-bold" [style.font-size]="cv.labelFontSize">Otros adjuntos</label>
+            <div class="d-flex flex-wrap gap-2 mt-1">
+              <a *ngFor="let adj of adjuntosNoImagenIniciales()" [href]="urlAdjunto(adj)" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-paperclip mr-1"></i>{{ adj.nombre }}
+              </a>
+            </div>
+          </div>
+
+          <!-- Historial completo: diálogo usuaria / soporte (ej. TK-000009) -->
+          <div class="border-top pt-3 mt-2">
+            <h6 class="font-weight-bold mb-3" [style.font-size]="cv.labelFontSize">
+              <i class="fas fa-history text-primary mr-1"></i>
+              Historial del ticket
+              <span class="badge badge-light border ml-1">{{ comentariosHistorial().length }} mensaje(s)</span>
+            </h6>
+            <div *ngIf="comentariosHistorial().length === 0" class="alert alert-light border small mb-0">
+              Aún no hay respuestas en este ticket. El historial aparecerá cuando solicitante o soporte escriban en «Gestionar».
+            </div>
+            <div *ngFor="let c of comentariosHistorial()" class="mb-3 pb-3 border-bottom"
+              [class.bg-light]="c.es_interno" [class.rounded]="c.es_interno" [class.p-2]="c.es_interno">
+              <div class="d-flex flex-wrap align-items-center mb-1">
+                <strong class="small mr-2">{{ c.creador?.name || 'Usuario' }}</strong>
+                <span class="small text-muted">{{ formatDateTime(c.created_at) }}</span>
+                <span class="badge badge-warning ml-2" *ngIf="c.es_interno" title="Visible solo para soporte en gestión">Nota interna</span>
+              </div>
+              <p class="mb-2 mb-0 small" [style.font-size]="cv.fontSize" style="white-space: pre-wrap;">{{ c.comentario }}</p>
+              <div *ngIf="c.archivos_adjuntos?.length" class="d-flex flex-wrap gap-2 mt-2">
+                <ng-container *ngFor="let adj of c.archivos_adjuntos">
+                  <a *ngIf="esImagenAdjunto(adj)" [href]="urlAdjunto(adj)" target="_blank" rel="noopener" class="d-inline-block">
+                    <img [src]="urlAdjunto(adj)" [alt]="adj.nombre" class="img-thumbnail rounded" style="max-height: 100px; max-width: 140px; object-fit: cover;" loading="lazy" />
+                  </a>
+                  <a *ngIf="!esImagenAdjunto(adj)" [href]="urlAdjunto(adj)" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">{{ adj.nombre }}</a>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" [style.background]="mc.footerBg" [style.border-bottom-left-radius.px]="mc.borderRadius" [style.border-bottom-right-radius.px]="mc.borderRadius">
+          <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="cancelVerTicketModal()">
+            <i class="fas fa-times mr-1"></i>{{ mc.cancelBtnLabel }}
+          </button>
+          <button type="button" class="btn btn-sm btn-primary" (click)="irAGestionarTicket(viewTicket)">
+            <i class="fas fa-external-link-alt mr-1"></i> Ir a gestionar
+          </button>
+        </div>
+      </ng-container>
+    </div>
+  </ng-template>
+
+  <div *ngIf="!loading && !soloMisTickets && puedeGestionarTickets" class="card mb-2 border-info">
+    <div class="card-body py-2 small">
+      <strong><i class="fas fa-tasks mr-1"></i> Gestión:</strong>
+      cree tickets, asigne responsable en «Asignar» o al crear/editar; el plazo (días, horas, minutos) se actualiza cada 30 s hasta la fecha límite.
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+    <p class="mt-2 text-muted">Cargando tickets...</p>
+  </div>
+
+  <div *ngIf="!loading && tickets.length === 0" class="alert alert-info">
+    <i class="fas fa-info-circle mr-2"></i>No hay tickets que coincidan con los filtros. <button type="button" class="btn btn-link p-0 align-baseline" (click)="openNuevoTicketModal()">Crear uno</button>
+  </div>
+
+  <div *ngIf="!loading && tickets.length > 0" class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap" [style.background]="cv.tableHeaderBg" [style.color]="cv.tableHeaderColor" [style.border-radius]="cv.cardBorderRadius + 'px ' + cv.cardBorderRadius + 'px 0 0'">
+      <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+        <i class="fas fa-ticket-alt mr-1"></i> Listado de tickets
+      </h3>
+      <a class="btn btn-sm" [ngClass]="cv.newBtnClass" (click)="openNuevoTicketModal()">
+        <i class="fas fa-plus mr-1"></i> Nuevo ticket
+      </a>
+    </div>
+    <div class="card-body p-0">
+      <!-- Filtros -->
+      <div class="p-3 border-bottom" [style.background]="cv.tableHeaderBg" [style.--ds-filter-input-font-size]="cv.filterInputFontSize">
+        <div class="row align-items-center">
+          <div class="col-md-3 mb-2 mb-md-0">
+            <select class="form-control" [ngClass]="cv.filterInputSize" [style.font-size]="cv.filterInputFontSize" [(ngModel)]="filtros.estado" (ngModelChange)="aplicarFiltros()">
+              <option value="">Estado: Todos</option>
+              <option value="abierto">Abierto</option>
+              <option value="en_proceso">En proceso</option>
+              <option value="pendiente_usuario">Pendiente usuario</option>
+              <option value="resuelto">Resuelto</option>
+              <option value="cerrado">Cerrado</option>
+            </select>
+          </div>
+          <div class="col-md-3 mb-2 mb-md-0">
+            <select class="form-control" [ngClass]="cv.filterInputSize" [style.font-size]="cv.filterInputFontSize" [(ngModel)]="filtros.prioridad" (ngModelChange)="aplicarFiltros()">
+              <option value="">Prioridad: Todas</option>
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="critica">Crítica</option>
+            </select>
+          </div>
+          <div class="col-md-3 mb-2 mb-md-0">
+            <input type="text" class="form-control" [ngClass]="cv.filterInputSize" [style.font-size]="cv.filterInputFontSize" placeholder="Categoría" [(ngModel)]="filtros.categoria" (keyup.enter)="aplicarFiltros()">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-sm btn-outline-primary w-100" (click)="aplicarFiltros()">
+              <i class="fas fa-filter mr-1"></i> Filtrar
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize" class="table table-bordered table-hover mb-0 w-100">
+          <thead [style.background]="cv.tableHeaderBg" [style.color]="cv.tableHeaderColor">
+            <tr>
+              <th [style.font-size]="cv.headerFontSize">Nº</th>
+              <th [style.font-size]="cv.headerFontSize">Título</th>
+              <th [style.font-size]="cv.headerFontSize">Estado</th>
+              <th [style.font-size]="cv.headerFontSize">Prioridad</th>
+              <th [style.font-size]="cv.headerFontSize">Plazo / SLA</th>
+              <th [style.font-size]="cv.headerFontSize">Categoría</th>
+              <th [style.font-size]="cv.headerFontSize">Solicitante</th>
+              <th [style.font-size]="cv.headerFontSize">Asignar</th>
+              <th [style.font-size]="cv.headerFontSize">Alta</th>
+              <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of tickets">
+              <td>{{ t.numero_ticket }}</td>
+              <td>{{ t.titulo }}</td>
+              <td><span class="badge" [ngClass]="badgeEstado(t.estado)">{{ t.estado }}</span></td>
+              <td><span class="badge" [ngClass]="badgePrioridad(t.prioridad)">{{ t.prioridad }}</span></td>
+              <td class="small" [ngClass]="textoPlazo(t).clase">
+                <span class="d-block">{{ textoPlazo(t).linea1 }}</span>
+                <span class="d-block">{{ textoPlazo(t).linea2 }}</span>
+                <span class="text-muted font-weight-normal" *ngIf="fechaLimiteEfectiva(t) && !plazoCerrado(t)" style="font-size: 0.75rem;">
+                  Límite: {{ formatDateTime(fechaLimiteEfectiva(t)!.toISOString()) }}
+                </span>
+              </td>
+              <td>{{ t.categoria || '-' }}</td>
+              <td>{{ t.solicitante?.name || '-' }}</td>
+              <td style="min-width: 140px;">
+                <select *ngIf="puedeGestionarTickets && !soloMisTickets" class="form-control form-control-sm" [value]="t.asignado_a || ''" (change)="asignarEnLinea(t, $any($event.target).value)">
+                  <option value="">— Sin asignar —</option>
+                  <option *ngFor="let u of usuariosSoporte" [value]="u.id">{{ u.name }}</option>
+                </select>
+                <span *ngIf="soloMisTickets || !puedeGestionarTickets">{{ t.asignado?.name || '—' }}</span>
+              </td>
+              <td>{{ formatDate(t.created_at) }}</td>
+              <td class="text-center">
+                <div class="d-flex flex-wrap align-items-center justify-content-center gap-1">
+                  <a [routerLink]="['/helpdesk/tickets', t.id]" class="btn btn-sm btn-primary" title="Conversación">
+                    <i class="fas fa-comments"></i>
+                  </a>
+                  <button *ngIf="puedeEditarTickets" type="button" class="btn btn-sm btn-outline-warning" title="Editar" (click)="openEditTicketModal(t)">
+                    <i class="fas fa-pencil-alt"></i>
+                  </button>
+                  <button *ngIf="puedeEliminarTickets" type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" (click)="confirmDelete(t)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" title="Ver detalle" (click)="verTicket(t)">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center" *ngIf="meta.last_page >= 1" [ngClass]="cv.paginationSize">
+      <small *ngIf="cv.showRecordCount">{{ meta.total }} registro(s) · Página {{ meta.current_page }} de {{ meta.last_page }}</small>
+      <small *ngIf="!cv.showRecordCount">Página {{ meta.current_page }} de {{ meta.last_page }}</small>
+      <div>
+        <button class="btn btn-sm btn-outline-secondary mr-1" [disabled]="meta.current_page <= 1" (click)="cambiarPagina(meta.current_page - 1)">
+          <i class="fas fa-chevron-left mr-1"></i> Anterior
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="meta.current_page >= meta.last_page" (click)="cambiarPagina(meta.current_page + 1)">
+          Siguiente <i class="fas fa-chevron-right ml-1"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</app-system-layout>

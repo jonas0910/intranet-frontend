@@ -1,0 +1,70 @@
+<div
+  class="toast-list position-fixed"
+  [class.toast-list--top-right]="(tc.position || 'top-right') === 'top-right'"
+  [class.toast-list--top-left]="tc.position === 'top-left'"
+  [class.toast-list--bottom-right]="tc.position === 'bottom-right'"
+  [class.toast-list--bottom-left]="tc.position === 'bottom-left'"
+  [class.toast-list--top-center]="tc.position === 'top-center'"
+  [class.toast-list--bottom-center]="tc.position === 'bottom-center'"
+  [class.toast-list--top-full-width]="tc.position === 'top-full-width'"
+  [class.toast-list--bottom-full-width]="tc.position === 'bottom-full-width'"
+  style="z-index: 9999;">
+  <div
+    *ngFor="let toast of normalToasts"
+    [@toastIn]="{ value: toast.id, params: getToastAnimationParams(toast) }"
+    class="toast-item"
+    [style.border-left-color]="getBorderColor(toast.type)"
+    [style.border-radius.px]="toastBorderRadius"
+    [style.width.px]="toastWidth"
+    [style.max-width.px]="toastMaxWidth"
+    [style.opacity]="toastOpacity"
+    [style.--toast-duration]="toast.autoClose ? (toast.duration + 'ms') : '0ms'"
+    [style.--toast-color]="getHeaderBg(toast.type)"
+    [style.--toast-text]="getHeaderText(toast.type)"
+    role="alert">
+    <div class="toast-item__header"
+         [style.background]="getHeaderBg(toast.type)"
+         [style.color]="getHeaderText(toast.type)">
+      <i [class]="getIconClass(toast.type)" class="toast-item__icon"></i>
+      <span class="toast-item__title">{{ toast.title }}</span>
+      <button type="button" class="toast-item__close" (click)="removeToast(toast.id)" aria-label="Cerrar">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="toast-item__body">
+      {{ toast.message }}
+    </div>
+    <div *ngIf="toast.autoClose" class="toast-item__progress" aria-hidden="true"></div>
+  </div>
+</div>
+
+<!-- Toast de comunicado: centrado, ancho, texto con desplazamiento horizontal -->
+<div
+  *ngIf="broadcastToasts.length > 0"
+  class="toast-list toast-list--center position-fixed"
+  style="z-index: 10000;">
+  <div
+    *ngFor="let toast of broadcastToasts"
+    [@toastIn]="{ value: toast.id, params: getToastAnimationParams(toast) }"
+    class="toast-item toast-item--broadcast"
+    [style.border-left-color]="getBorderColor(toast.type)"
+    [style.border-radius.px]="toastBorderRadius"
+    [style.--toast-duration]="toast.autoClose ? (toast.duration + 'ms') : '0ms'"
+    [style.--toast-color]="getHeaderBg(toast.type)"
+    [style.--toast-text]="getHeaderText(toast.type)"
+    role="alert">
+    <div class="toast-item__header"
+         [style.background]="getHeaderBg(toast.type)"
+         [style.color]="getHeaderText(toast.type)">
+      <i [class]="getIconClass(toast.type)" class="toast-item__icon"></i>
+      <span class="toast-item__title">{{ toast.title }}</span>
+      <button type="button" class="toast-item__close" (click)="removeToast(toast.id)" aria-label="Cerrar">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="toast-item__body toast-item__body--marquee">
+      <span class="toast-item__marquee-text">{{ toast.message }}</span>
+    </div>
+    <div *ngIf="toast.autoClose" class="toast-item__progress" aria-hidden="true"></div>
+  </div>
+</div>

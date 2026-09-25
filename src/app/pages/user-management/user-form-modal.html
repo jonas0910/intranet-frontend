@@ -1,0 +1,323 @@
+<!-- Modal de Usuario -->
+<div class="modal fade" id="userModal" [class.show]="showUserModal" [style.display]="showUserModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-gradient-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-user mr-2"></i>{{ isEditing ? 'Editar Usuario' : 'Agregar Usuario' }}
+        </h5>
+        <button type="button" class="close text-white" (click)="closeUserModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Tabs de Gestión -->
+        <ul class="nav nav-tabs" id="userTabs" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="basic-tab" data-toggle="tab" href="#basic" role="tab">
+              <i class="fas fa-user mr-1"></i>Información Básica
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="roles-tab" data-toggle="tab" href="#roles" role="tab">
+              <i class="fas fa-shield-alt mr-1"></i>Roles y Permisos
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="systems-tab" data-toggle="tab" href="#systems" role="tab">
+              <i class="fas fa-server mr-1"></i>Sistemas Asignados
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="menus-tab" data-toggle="tab" href="#menus" role="tab">
+              <i class="fas fa-bars mr-1"></i>Menús Asignados
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="attributes-tab" data-toggle="tab" href="#attributes" role="tab">
+              <i class="fas fa-cogs mr-1"></i>Atributos
+            </a>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="userTabsContent">
+          
+          <!-- Tab Información Básica -->
+          <div class="tab-pane fade show active" id="basic" role="tabpanel">
+            <div class="row mt-3">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="name">Nombre Completo *</label>
+                  <input type="text" class="form-control" id="name" [(ngModel)]="currentUser.name" name="name" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="email">Email *</label>
+                  <input type="email" class="form-control" id="email" [(ngModel)]="currentUser.email" name="email" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="password">Contraseña {{ isEditing ? '(dejar vacío para mantener actual)' : '*' }}</label>
+                  <input type="password" class="form-control" id="password" [(ngModel)]="currentUser.password" name="password" [required]="!isEditing">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="department">Departamento</label>
+                  <select class="form-control" id="department" [(ngModel)]="currentUser.department_id" name="department">
+                    <option value="">Seleccionar departamento</option>
+                    <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.nombre }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="position">Cargo</label>
+                  <input type="text" class="form-control" id="position" [(ngModel)]="currentUser.position" name="position">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="phone">Teléfono</label>
+                  <input type="text" class="form-control" id="phone" [(ngModel)]="currentUser.phone" name="phone">
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="active" [(ngModel)]="currentUser.activo" name="active">
+                    <label class="form-check-label" for="active">Usuario Activo</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="admin" [(ngModel)]="currentUser.is_admin" name="admin">
+                    <label class="form-check-label" for="admin">Administrador</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Roles y Permisos -->
+          <div class="tab-pane fade" id="roles" role="tabpanel">
+            <div class="row mt-3">
+              <div class="col-12">
+                <h6 class="text-primary mb-3">
+                  <i class="fas fa-shield-alt mr-1"></i>Asignación de Roles
+                </h6>
+                <div class="row">
+                  <div class="col-md-6" *ngFor="let role of availableRoles">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" 
+                             [id]="'role_' + role.id" 
+                             [value]="role.id"
+                             [checked]="isRoleAssigned(role.id)"
+                             (change)="toggleRole(role.id, $event)">
+                      <label class="form-check-label" [for]="'role_' + role.id">
+                        <strong>{{ role.name }}</strong>
+                        <br>
+                        <small class="text-muted">{{ role.description }}</small>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row mt-4">
+              <div class="col-12">
+                <h6 class="text-success mb-3">
+                  <i class="fas fa-key mr-1"></i>Permisos Directos
+                </h6>
+                <div class="row">
+                  <div class="col-md-4" *ngFor="let permission of availablePermissions">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" 
+                             [id]="'perm_' + permission.id" 
+                             [value]="permission.id"
+                             [checked]="isPermissionAssigned(permission.id)"
+                             (change)="togglePermission(permission.id, $event)">
+                      <label class="form-check-label" [for]="'perm_' + permission.id">
+                        {{ permission.name }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Sistemas Asignados -->
+          <div class="tab-pane fade" id="systems" role="tabpanel">
+            <div class="row mt-3">
+              <div class="col-12">
+                <h6 class="text-info mb-3">
+                  <i class="fas fa-server mr-1"></i>Sistemas Disponibles
+                </h6>
+                <div class="row">
+                  <div class="col-md-6" *ngFor="let system of availableSystems">
+                    <div class="card card-outline card-info mb-2">
+                      <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div>
+                            <h6 class="mb-1">
+                              <i [class]="system.icono" class="mr-1"></i>
+                              {{ system.nombre }}
+                            </h6>
+                            <small class="text-muted">{{ system.descripcion }}</small>
+                          </div>
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   [id]="'system_' + system.id" 
+                                   [value]="system.id"
+                                   [checked]="isSystemAssigned(system.id)"
+                                   (change)="toggleSystem(system.id, $event)">
+                            <label class="form-check-label" [for]="'system_' + system.id">
+                              Asignar
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Menús Asignados -->
+          <div class="tab-pane fade" id="menus" role="tabpanel">
+            <div class="row mt-3">
+              <div class="col-12">
+                <h6 class="text-warning mb-3">
+                  <i class="fas fa-bars mr-1"></i>Menús por Sistema
+                </h6>
+                
+                <div *ngFor="let system of assignedSystemsList">
+                  <div class="card card-outline card-warning mb-3">
+                    <div class="card-header">
+                      <h6 class="card-title">
+                        <i [class]="system.icono" class="mr-1"></i>{{ system.nombre }}
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-md-6" *ngFor="let menu of getSystemMenus(system.id)">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   [id]="'menu_' + menu.id" 
+                                   [value]="menu.id"
+                                   [checked]="isMenuAssigned(menu.id)"
+                                   (change)="toggleMenu(menu.id, $event)">
+                            <label class="form-check-label" [for]="'menu_' + menu.id">
+                              <i [class]="menu.icono" class="mr-1"></i>
+                              {{ menu.nombre }}
+                              <br>
+                              <small class="text-muted">{{ menu.ruta }}</small>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Atributos -->
+          <div class="tab-pane fade" id="attributes" role="tabpanel">
+            <div class="row mt-3">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="employee_id">ID Empleado</label>
+                  <input type="text" class="form-control" id="employee_id" [(ngModel)]="currentUser.employee_id" name="employee_id">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="cost_center">Centro de Costo</label>
+                  <select class="form-control" id="cost_center" [(ngModel)]="currentUser.cost_center_id" name="cost_center">
+                    <option value="">Seleccionar centro de costo</option>
+                    <option *ngFor="let cc of costCenters" [value]="cc.id">{{ cc.nombre }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="hire_date">Fecha de Ingreso</label>
+                  <input type="date" class="form-control" id="hire_date" [(ngModel)]="currentUser.hire_date" name="hire_date">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="salary">Salario</label>
+                  <input type="number" class="form-control" id="salary" [(ngModel)]="currentUser.salary" name="salary" step="0.01">
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="work_schedule">Horario de Trabajo</label>
+                  <select class="form-control" id="work_schedule" [(ngModel)]="currentUser.work_schedule" name="work_schedule">
+                    <option value="">Seleccionar horario</option>
+                    <option value="full_time">Tiempo Completo</option>
+                    <option value="part_time">Medio Tiempo</option>
+                    <option value="flexible">Flexible</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="emergency_contact">Contacto de Emergencia</label>
+                  <input type="text" class="form-control" id="emergency_contact" [(ngModel)]="currentUser.emergency_contact" name="emergency_contact">
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-12">
+                <div class="form-group">
+                  <label for="notes">Notas Adicionales</label>
+                  <textarea class="form-control" id="notes" [(ngModel)]="currentUser.notes" name="notes" rows="3"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeUserModal()">
+          <i class="fas fa-times mr-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="saveUser()" [disabled]="loading">
+          <i class="fas fa-save mr-1"></i>{{ isEditing ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop del Modal -->
+<div class="modal-backdrop fade show" *ngIf="showUserModal"></div>

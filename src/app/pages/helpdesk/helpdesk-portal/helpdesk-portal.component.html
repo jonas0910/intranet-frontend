@@ -1,0 +1,56 @@
+<app-system-layout
+  title="Helpdesk"
+  subtitle="Soporte técnico y base de conocimientos"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Helpdesk'}]"
+  subsystem="helpdesk">
+
+  <div class="row mb-4">
+    <div class="col-md-6 col-lg-4 mb-3">
+      <div class="small-box bg-primary">
+        <div class="inner">
+          <h3><i class="fas fa-ticket-alt"></i></h3>
+          <p>Mis tickets</p>
+        </div>
+        <a routerLink="/helpdesk/mis-tickets" class="small-box-footer">
+          Ver mis tickets y conversar <i class="fas fa-arrow-circle-right"></i>
+        </a>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4 mb-3">
+      <div class="small-box bg-info">
+        <div class="inner">
+          <h3><i class="fas fa-book"></i></h3>
+          <p>Base de conocimientos</p>
+        </div>
+        <a routerLink="/helpdesk/base-conocimientos" class="small-box-footer">
+          Consultar artículos <i class="fas fa-arrow-circle-right"></i>
+        </a>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4 mb-3">
+      <div class="small-box bg-success">
+        <div class="inner">
+          <h3><i class="fas fa-plus-circle"></i></h3>
+          <p>Nuevo ticket</p>
+        </div>
+        <a routerLink="/helpdesk/tickets/nuevo" class="small-box-footer">
+          Abrir solicitud <i class="fas fa-arrow-circle-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0"><i class="fas fa-info-circle mr-2"></i>¿Cómo funciona?</h5>
+    </div>
+    <div class="card-body">
+      <p class="mb-2">Desde aquí puedes:</p>
+      <ul>
+        <li><strong>Registrar un ticket</strong> cuando necesites soporte (equipo, acceso, software, etc.).</li>
+        <li><strong>Consultar la base de conocimientos</strong> para resolver casos frecuentes sin esperar respuesta.</li>
+        <li><strong>Seguir el estado de tus tickets</strong> y agregar comentarios.</li>
+      </ul>
+    </div>
+  </div>
+</app-system-layout>

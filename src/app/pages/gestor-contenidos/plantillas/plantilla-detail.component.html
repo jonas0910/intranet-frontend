@@ -1,0 +1,183 @@
+<!-- Content Header -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0" *ngIf="plantilla">
+          <i [ngClass]="plantilla.icono || 'fas fa-file-alt'" class="mr-2"></i>{{ plantilla.nombre }}
+        </h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/plantillas">Plantillas</a></li>
+          <li class="breadcrumb-item active">{{ plantilla?.nombre || 'Detalle' }}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <div class="text-center py-5" *ngIf="loading"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+
+    <div class="row" *ngIf="!loading && plantilla">
+      <!-- LEFT -->
+      <div class="col-lg-8">
+        <!-- Información Principal -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-info-circle mr-1"></i>Información de la Plantilla</h3>
+            <div class="card-tools">
+              <a [routerLink]="['/gestor-contenidos/plantillas', plantilla.id, 'editar']" class="btn btn-primary btn-sm mr-1">
+                <i class="fas fa-edit mr-1"></i>Editar
+              </a>
+              <a routerLink="/gestor-contenidos/plantillas" class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left mr-1"></i>Volver
+              </a>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <strong><i class="fas fa-tag mr-1"></i>Nombre:</strong>
+                <p class="text-muted">{{ plantilla.nombre }}</p>
+              </div>
+              <div class="col-md-6">
+                <strong><i class="fas fa-link mr-1"></i>Slug:</strong>
+                <p class="text-muted"><code>{{ plantilla.slug }}</code></p>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <strong><i class="fas fa-folder mr-1"></i>Categoría:</strong>
+                <p><span class="badge" [ngClass]="getCategoriaBadge(plantilla.categoria)">{{ plantilla.categoria | titlecase }}</span></p>
+              </div>
+              <div class="col-md-6">
+                <strong><i class="fas fa-layer-group mr-1"></i>Nivel:</strong>
+                <p>
+                  <span class="badge" [ngClass]="getNivelBadge(plantilla.nivel)">
+                    <i *ngIf="plantilla.nivel === 'avanzado'" class="fas fa-star mr-1"></i>{{ plantilla.nivel | titlecase }}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <strong><i class="fas fa-eye mr-1"></i>Vista Blade:</strong>
+                <p class="text-muted"><code>{{ plantilla.vista }}</code></p>
+              </div>
+              <div class="col-md-6">
+                <strong><i class="fas fa-toggle-on mr-1"></i>Estado:</strong>
+                <p>
+                  <span *ngIf="plantilla.activa" class="badge badge-success"><i class="fas fa-check mr-1"></i>Activa</span>
+                  <span *ngIf="!plantilla.activa" class="badge badge-secondary"><i class="fas fa-times mr-1"></i>Inactiva</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <strong><i class="fas fa-align-left mr-1"></i>Descripción:</strong>
+              <p class="text-muted">{{ plantilla.descripcion || 'Sin descripción' }}</p>
+            </div>
+
+            <!-- Características -->
+            <div class="mb-3">
+              <strong><i class="fas fa-check-circle mr-1"></i>Características:</strong>
+              <div class="mt-2">
+                <span *ngIf="plantilla.sidebar_habilitado" class="badge badge-light mr-1"><i class="fas fa-columns mr-1"></i>Sidebar</span>
+                <span *ngIf="plantilla.permite_galeria" class="badge badge-light mr-1"><i class="fas fa-images mr-1"></i>Galería</span>
+                <span *ngIf="plantilla.permite_tablas" class="badge badge-light mr-1"><i class="fas fa-table mr-1"></i>Tablas</span>
+                <span *ngIf="plantilla.permite_formularios" class="badge badge-light mr-1"><i class="fas fa-wpforms mr-1"></i>Formularios</span>
+                <span *ngIf="plantilla.es_dinamica" class="badge badge-primary mr-1"><i class="fas fa-database mr-1"></i>Contenido Dinámico</span>
+                <span *ngIf="!plantilla.sidebar_habilitado && !plantilla.permite_galeria && !plantilla.permite_tablas && !plantilla.permite_formularios && !plantilla.es_dinamica"
+                      class="text-muted">Ninguna</span>
+              </div>
+            </div>
+
+            <!-- Componentes -->
+            <div class="mb-3" *ngIf="getComponentes().length > 0">
+              <strong><i class="fas fa-puzzle-piece mr-1"></i>Componentes:</strong>
+              <ul class="mt-2">
+                <li *ngFor="let c of getComponentes()"><code>{{ c }}</code></li>
+              </ul>
+            </div>
+
+            <!-- Campos Personalizados -->
+            <div class="mb-3" *ngIf="getCamposPersonalizados().length > 0">
+              <strong><i class="fas fa-cogs mr-1"></i>Campos Personalizados:</strong>
+              <table class="table table-sm table-bordered mt-2">
+                <thead><tr><th>Campo</th><th>Tipo</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let cp of getCamposPersonalizados()">
+                    <td><code>{{ cp.campo }}</code></td>
+                    <td><span class="badge badge-info">{{ cp.tipo }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Páginas usando esta plantilla -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-file-alt mr-1"></i>Páginas usando esta Plantilla</h3>
+          </div>
+          <div class="card-body">
+            <div *ngIf="paginasUsando > 0" class="alert alert-info">
+              <i class="fas fa-info-circle mr-1"></i>{{ paginasUsando }} página(s) están usando esta plantilla.
+            </div>
+            <div *ngIf="paginasUsando === 0" class="alert alert-info">
+              <i class="fas fa-info-circle mr-1"></i>Ninguna página está usando esta plantilla actualmente.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="col-lg-4">
+        <!-- Preview (renderizado HTML desde portal) -->
+        <div class="card">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-desktop mr-1"></i>Vista Previa</h3></div>
+          <div class="card-body p-0">
+            <iframe [src]="getPreviewIframeUrl()" class="w-100 border-0" style="min-height: 500px;" title="Preview de {{ plantilla.nombre }}"></iframe>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="card">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-tools mr-1"></i>Acciones</h3></div>
+          <div class="card-body">
+            <a [routerLink]="['/gestor-contenidos/plantillas', plantilla.id, 'editar']" class="btn btn-primary btn-block">
+              <i class="fas fa-edit mr-1"></i>Editar Plantilla
+            </a>
+            <button class="btn btn-warning btn-block mt-2" (click)="duplicar()">
+              <i class="fas fa-copy mr-1"></i>Duplicar Plantilla
+            </button>
+            <button *ngIf="paginasUsando === 0" class="btn btn-danger btn-block mt-2" (click)="eliminar()">
+              <i class="fas fa-trash mr-1"></i>Eliminar Plantilla
+            </button>
+            <button *ngIf="paginasUsando > 0" class="btn btn-danger btn-block mt-2" disabled title="No se puede eliminar porque está en uso">
+              <i class="fas fa-lock mr-1"></i>No se puede Eliminar
+            </button>
+          </div>
+        </div>
+
+        <!-- Información Técnica -->
+        <div class="card">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-info mr-1"></i>Información Técnica</h3></div>
+          <div class="card-body">
+            <p><strong>ID:</strong> {{ plantilla.id }}</p>
+            <p><strong>Orden:</strong> {{ plantilla.orden }}</p>
+            <p><strong>Creado:</strong> {{ plantilla.created_at }}</p>
+            <p><strong>Actualizado:</strong> {{ plantilla.updated_at }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

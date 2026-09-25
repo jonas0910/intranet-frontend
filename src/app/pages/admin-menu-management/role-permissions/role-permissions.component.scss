@@ -1,0 +1,605 @@
+// Role Permissions - Patrón Design System
+.form-container {
+  padding: var(--container-fluid-padding, 1rem);
+}
+
+// Pestañas principales
+.role-tabs-card {
+  overflow: hidden;
+}
+
+.role-main-nav {
+  gap: 0.35rem;
+
+  .nav-link {
+    border-radius: 0.5rem;
+    color: #495057;
+    background: #f8f9fa;
+    border: 1px solid transparent;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+    &:hover:not(.active) {
+      background: #e9ecef;
+      border-color: #dee2e6;
+    }
+
+    &.active {
+      background: #fff;
+      color: #007bff;
+      border-color: #007bff;
+      box-shadow: 0 2px 8px rgba(0, 123, 255, 0.12);
+    }
+  }
+
+  .tab-icon {
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+
+  .tab-label {
+    font-size: 0.95rem;
+  }
+
+  .tab-desc {
+    font-size: 0.78rem;
+    line-height: 1.25;
+    margin-top: 0.15rem;
+  }
+}
+
+.matrix-scroll {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.menus-rol-table {
+  max-height: 65vh;
+  overflow: auto;
+}
+
+/* Menús por rol: mismo enfoque que crear acceso (chevron + árbol por subsistema) */
+.menus-rol-search {
+  max-width: 280px;
+}
+
+// Modal permisos: pestañas Spatie + accesos_usuarios
+.permission-modal-body {
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+}
+
+.permission-modal-tree {
+  max-height: 42vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.permission-modal-table {
+  font-size: 0.8125rem;
+
+  tbody tr.table-primary td {
+    background-color: rgba(0, 123, 255, 0.08);
+  }
+
+  tbody tr:hover td {
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+
+  tbody tr.table-primary:hover td {
+    background-color: rgba(0, 123, 255, 0.12);
+  }
+}
+
+.menus-rol-subsistemas {
+  max-height: 68vh;
+  overflow-y: auto;
+  padding-right: 4px;
+
+  .subsistema-card {
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+
+  .subsistema-header {
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .subsistema-chevron {
+    min-width: 2rem;
+    text-align: center;
+  }
+
+  .menu-main {
+    transition: background 0.15s ease;
+    border-bottom: 1px solid #e9ecef;
+
+    &:hover {
+      background-color: #f8f9fa !important;
+    }
+
+    &.bg-light {
+      background-color: #e9ecef !important;
+    }
+
+    /** Sustituye el antiguo borde azul (border-primary): solo un fondo muy suave si está en plantilla */
+    &.menu-main--en-plantilla {
+      background-color: rgba(40, 167, 69, 0.06);
+    }
+
+    &.bg-light.menu-main--en-plantilla {
+      background-color: rgba(40, 167, 69, 0.1) !important;
+    }
+  }
+
+  .chevron-menu-btn {
+    min-width: 34px;
+  }
+
+  .submenus-container {
+    border-left-color: #ced4da !important;
+  }
+
+  .menus-rol-permisos {
+    gap: 0.15rem;
+  }
+}
+
+.sticky-head th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 1px 0 #dee2e6;
+}
+
+.matrix-col-permiso {
+  min-width: 220px;
+}
+
+.matrix-col-modulo {
+  min-width: 140px;
+}
+
+.permission-category {
+  .perm-check {
+    border: 1px solid transparent;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .perm-check-on {
+    background: rgba(40, 167, 69, 0.08);
+    border-color: rgba(40, 167, 69, 0.35);
+  }
+}
+
+.font-monospace {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.elevation-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card-outline {
+  border-top: 3px solid #007bff;
+}
+
+.card-outline.card-primary {
+  border-top-color: #007bff;
+}
+
+.card-outline.card-info {
+  border-top-color: #17a2b8;
+}
+
+.card-outline.card-success {
+  border-top-color: #28a745;
+}
+
+.card-outline.card-warning {
+  border-top-color: #ffc107;
+}
+
+.card-outline.card-danger {
+  border-top-color: #dc3545;
+}
+
+// Badge Styles
+.badge {
+  display: inline-block;
+  padding: 0.25em 0.4em;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+}
+
+.badge-primary {
+  color: #fff;
+  background-color: #007bff;
+}
+
+.badge-info {
+  color: #fff;
+  background-color: #17a2b8;
+}
+
+.badge-success {
+  color: #fff;
+  background-color: #28a745;
+}
+
+.badge-warning {
+  color: #212529;
+  background-color: #ffc107;
+}
+
+.badge-danger {
+  color: #fff;
+  background-color: #dc3545;
+}
+
+.badge-secondary {
+  color: #fff;
+  background-color: #6c757d;
+}
+
+.badge-sm {
+  font-size: 0.75em;
+}
+
+// Modal Styles
+.modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1050;
+  display: none;
+  overflow: hidden;
+  outline: 0;
+}
+
+.modal.show {
+  display: block;
+}
+
+/** Modal “Permisos”: flex en el overlay para centrar el diálogo (los estilos locales de .modal-dialog margin pisan solo el centrado BS). */
+.permission-modal-root.modal.show {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.permission-modal-root .modal-dialog {
+  margin: 0 auto;
+  max-height: calc(100vh - 1rem);
+  pointer-events: none;
+}
+
+.permission-modal-root .modal-content {
+  max-height: calc(100vh - 1rem);
+  pointer-events: auto;
+}
+
+.modal-dialog {
+  position: relative;
+  width: auto;
+  margin: 0.5rem;
+  pointer-events: none;
+}
+
+.modal-lg {
+  max-width: 800px;
+}
+
+.modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  pointer-events: auto;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.3rem;
+  outline: 0;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  border-top-left-radius: 0.3rem;
+  border-top-right-radius: 0.3rem;
+}
+
+.modal-title {
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.modal-body {
+  position: relative;
+  flex: 1 1 auto;
+  padding: 1rem;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 1rem;
+  border-top: 1px solid #dee2e6;
+  border-bottom-right-radius: 0.3rem;
+  border-bottom-left-radius: 0.3rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1040;
+  background-color: #000;
+  opacity: 0.5;
+}
+
+.modal-backdrop.fade {
+  opacity: 0;
+}
+
+.modal-backdrop.show {
+  opacity: 0.5;
+}
+
+.close {
+  float: right;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #000;
+  text-shadow: 0 1px 0 #fff;
+  opacity: 0.5;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #000;
+  text-decoration: none;
+  opacity: 0.75;
+}
+
+.close:focus {
+  outline: 0;
+}
+
+// Form Styles
+.form-check {
+  position: relative;
+  display: block;
+  padding-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.form-check-input {
+  position: absolute;
+  margin-top: 0.3rem;
+  margin-left: -1.25rem;
+}
+
+.form-check-label {
+  margin-bottom: 0;
+  color: #495057;
+  cursor: pointer;
+}
+
+// Description Block
+.description-block {
+  padding: 15px;
+  text-align: center;
+}
+
+.description-percentage {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.description-header {
+  margin: 10px 0 5px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.description-text {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.border-right {
+  border-right: 1px solid #dee2e6;
+}
+
+.text-green {
+  color: #28a745 !important;
+}
+
+.text-blue {
+  color: #007bff !important;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+// Button Styles
+.btn {
+  display: inline-block;
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid transparent;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 0.25rem;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  color: #fff;
+  background-color: #0056b3;
+  border-color: #004085;
+}
+
+.btn-secondary {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  color: #fff;
+  background-color: #545b62;
+  border-color: #4e555b;
+}
+
+.btn-success {
+  color: #fff;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover:not(:disabled) {
+  color: #fff;
+  background-color: #1e7e34;
+  border-color: #1c7430;
+}
+
+.btn-info {
+  color: #fff;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.btn-info:hover:not(:disabled) {
+  color: #fff;
+  background-color: #117a8b;
+  border-color: #10707f;
+}
+
+.btn-warning {
+  color: #212529;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+
+.btn-warning:hover:not(:disabled) {
+  color: #212529;
+  background-color: #e0a800;
+  border-color: #d39e00;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+
+.btn-block {
+  display: block;
+  width: 100%;
+}
+
+.btn-group {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.btn-group .btn {
+  margin-right: 2px;
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+// Spinner
+.fa-spin {
+  animation: fa-spin 2s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(359deg);
+  }
+}
+
+// Utility Classes
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.float-sm-right {
+  float: right;
+}
+
+@media (min-width: 576px) {
+  .float-sm-right {
+    float: right;
+  }
+}
+
+// Matriz menú fijo (modal permisos)
+.sidebar-matrix-card .sidebar-matrix-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-matrix-op-checkbox--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

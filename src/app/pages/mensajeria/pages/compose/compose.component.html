@@ -1,0 +1,140 @@
+<!-- Contenido del compose -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h3 class="card-title">
+      <i class="fas fa-edit mr-2"></i>
+      {{ isConversationMode ? 'Responder en Conversación' : 'Redactar Mensaje' }}
+    </h3>
+    <button class="btn btn-secondary btn-sm" (click)="onCancel()">
+      <i class="fas fa-times"></i> Cancelar
+    </button>
+  </div>
+  <div class="card-body">
+    <!-- Conversation Context Alert -->
+    <div *ngIf="isConversationMode" class="alert alert-success">
+      <i class="fas fa-comments mr-2"></i>
+      <strong>Modo Conversación:</strong> 
+      Respondiendo a "{{ conversationTitle }}"
+      <span class="badge badge-light ml-2">ID: {{ conversationId }}</span>
+    </div>
+    
+    <!-- Regular Compose Alert -->
+    <div *ngIf="!isConversationMode" class="alert alert-info">
+      <i class="fas fa-info-circle mr-2"></i>
+      Redacte un nuevo mensaje. Complete todos los campos requeridos.
+    </div>
+    
+    <form [formGroup]="composeForm" (ngSubmit)="onSubmit()">
+      <div class="form-group" *ngIf="!isConversationMode">
+        <label for="recipients">Para:</label>
+        
+        <!-- Selected Recipients -->
+        <div class="selected-recipients mb-2" *ngIf="selectedRecipients.length > 0">
+          <span class="badge badge-pill badge-primary me-1 mb-1" 
+                *ngFor="let recipient of selectedRecipients; let i = index">
+            <i class="fas fa-user"></i>
+            {{ recipient.name }}
+            <button type="button" 
+                    class="btn-close btn-close-white ms-1" 
+                    (click)="removeRecipient(i)"
+                    aria-label="Eliminar">
+              <i class="fas fa-times"></i>
+            </button>
+          </span>
+        </div>
+
+        <!-- Recipient Search Input -->
+        <div class="position-relative">
+          <input type="text" 
+                 class="form-control" 
+                 id="recipientSearch" 
+                 formControlName="recipientSearch"
+                 placeholder="Buscar usuarios..."
+                 autocomplete="off">
+
+          <!-- Search Suggestions -->
+          <div class="recipient-suggestions" 
+               *ngIf="showUserSuggestions && filteredRecipients.length > 0">
+            <div class="list-group">
+              <button type="button" 
+                      class="list-group-item list-group-item-action"
+                      *ngFor="let user of filteredRecipients"
+                      (click)="addRecipient(user)">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-user me-2"></i>
+                  <div>
+                    <div class="fw-bold">{{ user.name }}</div>
+                    <small class="text-muted">{{ user.email }}</small>
+                    <small class="text-muted" *ngIf="user.department">
+                      - {{ user.department }}
+                    </small>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <small class="form-text text-muted">
+          Busque y seleccione los destinatarios del mensaje
+        </small>
+      </div>
+      
+      <div class="form-group" *ngIf="isConversationMode">
+        <label for="recipients">Destinatarios:</label>
+        <input type="text" 
+               class="form-control" 
+               id="recipients" 
+               [formControl]="conversationRecipientsControl"
+               placeholder="Conversación existente">
+        <small class="form-text text-muted">Los participantes de la conversación recibirán el mensaje</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="subject">Asunto:</label>
+        <input type="text" 
+               class="form-control" 
+               id="subject" 
+               formControlName="subject"
+               placeholder="Asunto del mensaje">
+      </div>
+      
+      <div class="form-group">
+        <label for="content">Mensaje:</label>
+        <textarea class="form-control" 
+                  id="content" 
+                  rows="10" 
+                  formControlName="content"
+                  placeholder="Escriba su mensaje aquí..."></textarea>
+        <small class="form-text text-muted" *ngIf="composeForm.get('content')?.value">
+          {{ composeForm.get('content')?.value?.length }} caracteres
+        </small>
+      </div>
+      
+      <div class="form-group">
+        <button type="submit" 
+                class="btn btn-primary mr-2" 
+                [disabled]="sending || !isFormValid()">
+          <i class="fas fa-spinner fa-spin mr-1" *ngIf="sending"></i>
+          <i class="fas fa-paper-plane mr-1" *ngIf="!sending"></i>
+          {{ sending ? 'Enviando...' : 'Enviar Mensaje' }}
+        </button>
+        
+        <button type="button" 
+                class="btn btn-secondary mr-2" 
+                [disabled]="sending">
+          <i class="fas fa-save mr-1"></i>
+          Guardar Borrador
+        </button>
+        
+        <button type="button" 
+                class="btn btn-outline-secondary" 
+                (click)="onCancel()"
+                [disabled]="sending">
+          <i class="fas fa-arrow-left mr-1"></i>
+          {{ isConversationMode ? 'Volver a Conversaciones' : 'Cancelar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

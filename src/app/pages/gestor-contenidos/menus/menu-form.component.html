@@ -1,0 +1,187 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0"><i class="fas fa-bars"></i> {{ editMode ? 'Editar' : 'Nuevo' }} Menú</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/menus">Menús</a></li>
+          <li class="breadcrumb-item active">{{ editMode ? 'Editar' : 'Nuevo' }}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Datos del Menú</h3>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <div class="form-group">
+                  <label>Nombre <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" [(ngModel)]="menu.nombre" placeholder="Ej: Servicios" required>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Ubicación</label>
+                  <select class="form-control" [(ngModel)]="menu.ubicacion">
+                    <option value="principal">Menú Principal</option>
+                    <option value="footer">Menú Footer</option>
+                    <option value="lateral">Menú Lateral</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Tipo de Enlace</label>
+                  <select class="form-control" [(ngModel)]="menu.tipo" (ngModelChange)="onTipoChange()">
+                    <option value="pagina">Página Interna</option>
+                    <option value="url">URL Manual</option>
+                    <option value="enlace_externo">Enlace Externo</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Target</label>
+                  <select class="form-control" [(ngModel)]="menu.target">
+                    <option value="_self">Misma ventana (_self)</option>
+                    <option value="_blank">Nueva ventana (_blank)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Página Interna -->
+            <div class="form-group" *ngIf="menu.tipo === 'pagina'">
+              <label>Página Interna</label>
+              <select class="form-control" [(ngModel)]="menu.pagina_id">
+                <option [ngValue]="null">-- Seleccionar Página --</option>
+                <option *ngFor="let p of paginas" [ngValue]="p.id">{{ p.titulo }} ({{ p.slug }})</option>
+              </select>
+              <small class="text-muted">La URL se generará automáticamente a partir del slug de la página</small>
+            </div>
+
+            <!-- URL Manual -->
+            <div *ngIf="menu.tipo !== 'pagina'">
+              <div class="form-group">
+                <label>URL</label>
+                <input type="text" class="form-control" [(ngModel)]="menu.url"
+                       placeholder="Ej: /servicios o https://ejemplo.com">
+                <small class="text-muted">Debe empezar con /, http:// o https://</small>
+              </div>
+
+              <!-- Rutas Sugeridas -->
+              <div class="form-group">
+                <label>Rutas Sugeridas</label>
+                <div>
+                  <button *ngFor="let r of rutasSugeridas" type="button"
+                          class="btn btn-outline-secondary btn-sm mr-1 mb-1"
+                          (click)="usarRutaSugerida(r.ruta)"
+                          [class.btn-primary]="menu.url === r.ruta"
+                          [class.btn-outline-secondary]="menu.url !== r.ruta">
+                    {{ r.nombre }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Icono (Font Awesome)</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i [class]="menu.icono || 'fas fa-link'"></i></span>
+                    </div>
+                    <input type="text" class="form-control" [(ngModel)]="menu.icono" placeholder="fas fa-home">
+                  </div>
+                  <small class="text-muted">
+                    Busca iconos en: <a href="https://fontawesome.com/icons" target="_blank">fontawesome.com</a>
+                  </small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Menú Padre (opcional)</label>
+                  <select class="form-control" [(ngModel)]="menu.parent_id">
+                    <option [ngValue]="null">-- Ninguno (raíz) --</option>
+                    <option *ngFor="let m of menusPadre" [ngValue]="m.id">{{ m.nombre }} ({{ m.ubicacion }})</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Orden</label>
+                  <input type="number" class="form-control" [(ngModel)]="menu.orden" min="0">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Estado</label>
+                  <div class="custom-control custom-switch mt-2">
+                    <input type="checkbox" class="custom-control-input" id="menuActivo" [(ngModel)]="menu.activo">
+                    <label class="custom-control-label" for="menuActivo">
+                      {{ menu.activo ? 'Activo' : 'Inactivo' }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer d-flex justify-content-between">
+            <a routerLink="/gestor-contenidos/menus" class="btn btn-default">
+              <i class="fas fa-arrow-left mr-1"></i> Volver a Menús
+            </a>
+            <button class="btn btn-primary" (click)="guardar()" [disabled]="saving || !menu.nombre?.trim()">
+              <i class="fas" [ngClass]="saving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+              {{ saving ? 'Guardando...' : (editMode ? 'Actualizar Menú' : 'Crear Menú') }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card card-info">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-eye"></i> Vista Previa</h3>
+          </div>
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3 p-2 border rounded">
+              <i [class]="(menu.icono || 'fas fa-link') + ' mr-2 text-primary'" style="font-size:1.3em"></i>
+              <div>
+                <strong>{{ menu.nombre || '(Sin nombre)' }}</strong>
+                <br>
+                <small class="text-muted">{{ menu.url || '(Sin URL)' }}</small>
+              </div>
+            </div>
+            <table class="table table-sm table-borderless mb-0">
+              <tr><td class="text-muted">Ubicación:</td><td>{{ menu.ubicacion }}</td></tr>
+              <tr><td class="text-muted">Tipo:</td><td>{{ menu.tipo }}</td></tr>
+              <tr><td class="text-muted">Target:</td><td>{{ menu.target }}</td></tr>
+              <tr><td class="text-muted">Estado:</td>
+                <td><span class="badge" [ngClass]="menu.activo ? 'badge-success' : 'badge-danger'">{{ menu.activo ? 'Activo' : 'Inactivo' }}</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

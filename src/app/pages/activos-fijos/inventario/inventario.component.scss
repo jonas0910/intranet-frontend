@@ -1,0 +1,109 @@
+.progress {
+  border-radius: 0.25rem;
+  overflow: hidden;
+
+  .progress-bar {
+    transition: width 0.6s ease;
+  }
+}
+
+.info-box {
+  min-height: 80px;
+
+  .info-box-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .info-box-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+}
+
+// Tabla (font-size/padding controlado por Design System)
+.table {
+  thead th {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    vertical-align: middle;
+  }
+}
+
+.badge-pill {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.small-box {
+  .inner {
+    h3 {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    p {
+      font-size: 0.9rem;
+      margin-bottom: 0;
+    }
+  }
+
+  .icon {
+    i {
+      font-size: 4rem;
+      opacity: 0.3;
+    }
+  }
+}
+
+// Alertas flotantes
+.alert.position-fixed {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// Input de escaneo
+.input-group-lg {
+  .form-control {
+    font-size: 1.25rem;
+    font-weight: bold;
+    text-transform: uppercase;
+
+    &:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+    }
+  }
+}
+
+// Tabs personalizados
+.nav-tabs {
+  .nav-link {
+    cursor: pointer;
+
+    &:hover {
+      border-color: #dee2e6 #dee2e6 #fff;
+    }
+
+    &.active {
+      font-weight: 600;
+    }
+  }
+}

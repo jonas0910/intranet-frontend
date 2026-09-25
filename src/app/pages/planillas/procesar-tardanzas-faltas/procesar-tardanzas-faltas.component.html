@@ -1,0 +1,587 @@
+<!-- Page Header -->
+<app-page-header
+  title="Procesar Tardanzas y Faltas"
+  subtitle="Registro, consulta y cálculo de descuentos por asistencia"
+  [breadcrumbs]="breadcrumbs">
+</app-page-header>
+
+<section class="content">
+  <div class="container-fluid">
+    
+    <!-- Statistics Cards (kept from original) -->
+    <div class="row mb-3" *ngIf="statistics">
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-success">
+          <div class="inner">
+            <h3>{{ statistics.total_records || 0 }}</h3>
+            <p>Total Registros</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+          <div class="inner">
+            <h3>{{ statistics.by_status['late'] || 0 }}</h3>
+            <p>Tardanzas</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-clock"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+          <div class="inner">
+            <h3>{{ statistics.by_status['absent'] || 0 }}</h3>
+            <p>Faltas</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-times-circle"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+          <div class="inner">
+            <h3>{{ statistics.total_late_minutes || 0 }}</h3>
+            <p>Minutos Tardanza</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-hourglass-half"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        <!-- Main Card with Descuentos Design + Design System -->
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-primary card-outline'">
+          
+          <!-- Header Area with Title and Tabs -->
+          <div class="border-bottom bg-white px-3 pt-2 pb-0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
+                <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                  <i class="fas fa-clipboard-list mr-1"></i> Gestión de Asistencias
+                </h3>
+              </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs" role="tablist">
+              <li class="nav-item">
+                <button class="nav-link" [class.active]="activeTab === 'registro'" (click)="setActiveTab('registro')">
+                  <i class="fas fa-user-check mr-1"></i> Registro Rápido
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link" [class.active]="activeTab === 'consulta'" (click)="setActiveTab('consulta')">
+                  <i class="fas fa-list mr-1"></i> Consultar Asistencias
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link" [class.active]="activeTab === 'calcular'" (click)="setActiveTab('calcular')">
+                  <i class="fas fa-calculator mr-1"></i> Calcular Descuentos
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link" [class.active]="activeTab === 'importar'" (click)="setActiveTab('importar')">
+                  <i class="fas fa-file-import mr-1"></i> Importar Datos
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link" [class.active]="activeTab === 'justificar'" (click)="setActiveTab('justificar')">
+                  <i class="fas fa-clipboard-check mr-1"></i> Justificar
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link" [class.active]="activeTab === 'debug'" (click)="setActiveTab('debug')">
+                  <i class="fas fa-bug mr-1"></i> Debug
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Card Body with Tab Content -->
+          <div class="card-body p-0">
+            
+            <!-- TAB: REGISTRO RÁPIDO -->
+            <div *ngIf="activeTab === 'registro'" class="p-4 fade-in">
+              <div class="alert alert-light border">
+                <h5 class="text-primary"><i class="fas fa-user-clock mr-2"></i>Registro de Entrada/Salida</h5>
+                <hr>
+                <form (ngSubmit)="registerQuickAttendance()">
+                  <div class="row align-items-end">
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label small">Empleado *</label>
+                      <select class="form-control" [(ngModel)]="quickEmployee" name="quickEmployee" required>
+                        <option [ngValue]="null">Seleccione empleado...</option>
+                        <option *ngFor="let emp of employees" [ngValue]="emp">{{ emp.employee_code }} - {{ emp.first_name }} {{ emp.last_name }}</option>
+                      </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label small">Tipo *</label>
+                      <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="registrationType" id="typeEntry" value="entry" [(ngModel)]="registrationType">
+                        <label class="btn btn-outline-success" for="typeEntry"><i class="fas fa-sign-in-alt mr-1"></i> Entrada</label>
+
+                        <input type="radio" class="btn-check" name="registrationType" id="typeExit" value="exit" [(ngModel)]="registrationType">
+                        <label class="btn btn-outline-danger" for="typeExit"><i class="fas fa-sign-out-alt mr-1"></i> Salida</label>
+                      </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                      <label class="form-label small">Hora *</label>
+                      <input type="time" class="form-control text-center" [(ngModel)]="quickTime" name="quickTime" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <button type="submit" class="btn btn-block"
+                        [class.btn-success]="registrationType === 'entry'"
+                        [class.btn-danger]="registrationType === 'exit'"
+                        [disabled]="loading || !quickEmployee">
+                        <i class="fas" [class.fa-sign-in-alt]="registrationType === 'entry'" [class.fa-sign-out-alt]="registrationType === 'exit'" [class.fa-spinner]="loading" [class.fa-pulse]="loading"></i>
+                        <span *ngIf="!loading">{{ registrationType === 'entry' ? 'Registrar Entrada' : 'Registrar Salida' }}</span>
+                        <span *ngIf="loading">Registrando...</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+                <div class="alert alert-info mt-3 mb-0" *ngIf="quickEmployee">
+                  <strong>{{ quickEmployee.employee_code }}</strong> · {{ quickEmployee.first_name }} {{ quickEmployee.last_name }}
+                  <span *ngIf="quickEmployee.department"> · {{ quickEmployee.department.name }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: CONSULTAR ASISTENCIAS -->
+            <div *ngIf="activeTab === 'consulta'" class="p-4 fade-in">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h6 class="text-primary mb-0"><i class="fas fa-list me-2"></i>Historial de Asistencias</h6>
+                  <small class="text-muted">Total registros: {{ attendances.length }}</small>
+                </div>
+                <div>
+                  <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+                    <i class="fas fa-times mr-1"></i> Limpiar filtros
+                  </button>
+                </div>
+              </div>
+
+              <div class="row g-2 mb-3 align-items-end bg-light p-3 rounded border">
+                <div class="col-md-3">
+                  <label class="form-label small">Empleado</label>
+                  <select class="form-control form-control-sm" [(ngModel)]="selectedEmployee">
+                    <option [ngValue]="null">Todos</option>
+                    <option *ngFor="let emp of employees" [ngValue]="emp">{{ emp.employee_code }} - {{ emp.first_name }} {{ emp.last_name }}</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small">Fecha Inicio</label>
+                  <input type="date" class="form-control form-control-sm" [(ngModel)]="filterStartDate">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small">Fecha Fin</label>
+                  <input type="date" class="form-control form-control-sm" [(ngModel)]="filterEndDate">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small">Estado</label>
+                  <select class="form-control form-control-sm" [(ngModel)]="filterStatus">
+                    <option value="">Todos</option>
+                    <option value="present">Presente</option>
+                    <option value="late">Tardanza</option>
+                    <option value="absent">Falta</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <button class="btn btn-primary btn-sm btn-block" (click)="applyFilters()">
+                    <i class="fas fa-search mr-1"></i> Buscar
+                  </button>
+                </div>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-bordered table-hover w-100" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize">
+                  <thead class="bg-light">
+                    <tr>
+                      <th [style.font-size]="cv.headerFontSize">Fecha</th>
+                      <th [style.font-size]="cv.headerFontSize">Empleado</th>
+                      <th [style.font-size]="cv.headerFontSize">Entrada</th>
+                      <th [style.font-size]="cv.headerFontSize">Salida</th>
+                      <th [style.font-size]="cv.headerFontSize">Estado</th>
+                      <th [style.font-size]="cv.headerFontSize">Tardanza</th>
+                      <th [style.font-size]="cv.headerFontSize">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="loadingAttendances">
+                      <td colspan="7" class="text-center py-4">
+                        <app-loading-spinner [loading]="true" message="Cargando asistencias..."></app-loading-spinner>
+                      </td>
+                    </tr>
+                    <tr *ngIf="!loadingAttendances && paginatedAttendances.length === 0">
+                      <td colspan="7" class="text-center py-4 text-muted">
+                        No se encontraron registros.
+                      </td>
+                    </tr>
+                    <tr *ngFor="let att of paginatedAttendances">
+                      <td>{{ formatDate(att.date) }}</td>
+                      <td>
+                        <strong>{{ att.employee?.employee_code }}</strong><br>
+                        <small>{{ att.employee?.first_name }} {{ att.employee?.last_name }}</small>
+                      </td>
+                      <td>
+                        <div *ngIf="att.actual_entry_time">{{ formatTime(att.actual_entry_time) }}</div>
+                        <div *ngIf="!att.actual_entry_time" class="text-muted">-</div>
+                      </td>
+                      <td>
+                        <div *ngIf="att.actual_exit_time">{{ formatTime(att.actual_exit_time) }}</div>
+                        <div *ngIf="!att.actual_exit_time" class="text-muted">-</div>
+                      </td>
+                      <td>
+                        <span class="badge" [ngClass]="getStatusBadgeClass(att.status)">{{ getStatusLabel(att.status) }}</span>
+                      </td>
+                      <td>
+                        <span *ngIf="att.late_minutes > 0" class="text-danger font-weight-bold">{{ att.late_minutes }} min</span>
+                        <span *ngIf="att.late_minutes === 0" class="text-success">-</span>
+                      </td>
+                      <td>
+                         <button class="btn btn-xs btn-info" title="Ver detalle" (click)="openViewDetail(att)"><i class="fas fa-eye"></i></button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
+              <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="attendances.length > 0">
+                <small class="text-muted">Mostrando {{ displayStartConsulta }} a {{ displayEndConsulta }} de {{ attendances.length }} registros</small>
+                <nav aria-label="Page navigation">
+                  <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" [class.disabled]="pageConsulta === 1">
+                      <button class="page-link" (click)="setPageConsulta(pageConsulta - 1)">Anterior</button>
+                    </li>
+                    <li class="page-item" *ngFor="let p of pageNumbersConsulta" [class.active]="pageConsulta === p">
+                      <button class="page-link" (click)="setPageConsulta(p)">{{ p }}</button>
+                    </li>
+                    <li class="page-item" [class.disabled]="pageConsulta === totalPagesConsulta">
+                      <button class="page-link" (click)="setPageConsulta(pageConsulta + 1)">Siguiente</button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
+
+            <!-- TAB: CALCULAR DESCUENTOS -->
+            <div *ngIf="activeTab === 'calcular'" class="p-4 fade-in">
+              <h6 class="text-warning mb-3"><i class="fas fa-calculator me-2"></i>Cálculo de Descuentos</h6>
+              
+              <div *ngIf="!calculationResult" class="card bg-light border-warning mb-3">
+                <div class="card-body">
+                  <form (ngSubmit)="calculateDiscounts()">
+                    <div class="row">
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label small font-weight-bold">Empleado *</label>
+                        <select class="form-control" [(ngModel)]="selectedEmployee" name="calcEmployee" required>
+                          <option [ngValue]="null">Seleccione empleado...</option>
+                          <option *ngFor="let emp of employees" [ngValue]="emp">{{ emp.employee_code }} - {{ emp.first_name }} {{ emp.last_name }}</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label small font-weight-bold">Período *</label>
+                        <select class="form-control" [(ngModel)]="selectedPeriod" name="calcPeriod" required>
+                          <option [ngValue]="null">Seleccione período...</option>
+                          <option *ngFor="let period of periods" [ngValue]="period">{{ getPeriodLabel(period) }}</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4 d-flex align-items-end mb-3">
+                        <button type="submit" class="btn btn-warning w-100" [disabled]="calculating || !selectedEmployee || !selectedPeriod">
+                          <i class="fas" [class.fa-calculator]="!calculating" [class.fa-spinner]="calculating" [class.fa-pulse]="calculating"></i>
+                          <span *ngIf="!calculating"> Calcular Descuentos</span>
+                          <span *ngIf="calculating"> Calculando...</span>
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Resultado del cálculo -->
+              <div *ngIf="calculationResult">
+                <div class="d-flex justify-content-between mb-3">
+                  <h5 class="text-dark">Resultados del Cálculo</h5>
+                  <button class="btn btn-outline-secondary btn-sm" (click)="clearCalculation()">
+                    <i class="fas fa-arrow-left mr-1"></i> Nuevo Cálculo
+                  </button>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-4 mb-3">
+                    <div class="card h-100 border-primary">
+                      <div class="card-header bg-primary text-white py-2">
+                        <h6 class="mb-0"><i class="fas fa-user mr-2"></i>Información</h6>
+                      </div>
+                      <div class="card-body">
+                        <dl class="row mb-0">
+                          <dt class="col-sm-5">Código:</dt>
+                          <dd class="col-sm-7">{{ calculationResult.employee?.code }}</dd>
+                          
+                          <dt class="col-sm-5">Nombre:</dt>
+                          <dd class="col-sm-7">{{ calculationResult.employee?.full_name }}</dd>
+                          
+                          <dt class="col-sm-5">Dpto:</dt>
+                          <dd class="col-sm-7">{{ calculationResult.employee?.department }}</dd>
+                          
+                          <dt class="col-sm-5">Salario:</dt>
+                          <dd class="col-sm-7">{{ formatCurrency(calculationResult.monthly_salary || calculationResult.employee?.base_salary || 0) }}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-8 mb-3">
+                    <div class="card h-100 border-info">
+                      <div class="card-header bg-info text-white py-2">
+                        <h6 class="mb-0"><i class="fas fa-chart-bar mr-2"></i>Resumen</h6>
+                      </div>
+                      <div class="card-body">
+                        <div class="row text-center">
+                          <div class="col-md-3 col-6 mb-3">
+                            <h3 class="mb-0">{{ calculationResult.summary?.total_days || 0 }}</h3>
+                            <small class="text-muted">Total Días</small>
+                          </div>
+                          <div class="col-md-3 col-6 mb-3">
+                            <h3 class="mb-0 text-success">{{ calculationResult.summary?.present_days || 0 }}</h3>
+                            <small class="text-muted">Presente</small>
+                          </div>
+                          <div class="col-md-3 col-6 mb-3">
+                            <h3 class="mb-0 text-warning">{{ calculationResult.summary?.late_days || 0 }}</h3>
+                            <small class="text-muted">Tardanzas</small>
+                          </div>
+                          <div class="col-md-3 col-6 mb-3">
+                            <h3 class="mb-0 text-danger">{{ calculationResult.summary?.absent_days || 0 }}</h3>
+                            <small class="text-muted">Faltas</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card border-warning">
+                  <div class="card-header bg-warning py-2">
+                    <h6 class="mb-0 text-dark"><i class="fas fa-money-bill-wave mr-2"></i>Descuentos Aplicables</h6>
+                  </div>
+                  <div class="card-body p-0 table-responsive">
+                    <table class="table table-bordered mb-0">
+                      <thead class="bg-light">
+                        <tr>
+                          <th>Concepto</th>
+                          <th class="text-center">Cantidad</th>
+                          <th class="text-right">Monto</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngIf="(calculationResult.discounts?.late_discounts?.total || 0) > 0">
+                          <td>
+                            <strong>Descuento por Tardanzas</strong><br>
+                            <small class="text-muted">{{ calculationResult.discounts?.late_discounts?.total_minutes }} minutos</small>
+                          </td>
+                          <td class="text-center">{{ calculationResult.discounts?.late_discounts?.count }}</td>
+                          <td class="text-right text-danger"><strong>- {{ formatCurrency(calculationResult.discounts?.late_discounts?.total || 0) }}</strong></td>
+                        </tr>
+                        <tr *ngIf="(calculationResult.discounts?.absence_discounts?.total || 0) > 0">
+                          <td><strong>Descuento por Faltas</strong></td>
+                          <td class="text-center">{{ calculationResult.discounts?.absence_discounts?.count }}</td>
+                          <td class="text-right text-danger"><strong>- {{ formatCurrency(calculationResult.discounts?.absence_discounts?.total || 0) }}</strong></td>
+                        </tr>
+                      </tbody>
+                      <tfoot class="bg-light">
+                        <tr>
+                          <td colspan="2" class="text-right"><strong>Total Descuentos:</strong></td>
+                          <td class="text-right text-danger"><h4><strong>- {{ formatCurrency(calculationResult.discounts?.total_discount || 0) }}</strong></h4></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: IMPORTAR DATOS -->
+            <div *ngIf="activeTab === 'importar'" class="p-4 fade-in">
+              <h6 class="text-info mb-3"><i class="fas fa-file-import me-2"></i>Importación Masiva</h6>
+              
+              <div class="card border-info mb-3">
+                <div class="card-body">
+                  <div class="alert alert-info small mb-3">
+                    <strong>Instrucciones:</strong> Descargue la plantilla CSV, complete los datos y suba el archivo.
+                    Columnas requeridas: <code>employee_id, date, scheduled_entry_time, scheduled_exit_time, status</code>.
+                  </div>
+                  
+                  <div class="form-group mb-3">
+                    <label class="form-label font-weight-bold">Archivo CSV</label>
+                    <input type="file" class="form-control" accept=".csv,text/csv" (change)="onImportFileSelected($event)">
+                  </div>
+                  
+                  <button class="btn btn-success" [disabled]="!importFile || importing" (click)="importAttendancesFromFile()">
+                    <i class="fas" [class.fa-upload]="!importing" [class.fa-spinner]="importing" [class.fa-pulse]="importing"></i>
+                    {{ importing ? 'Importando...' : 'Importar Asistencias' }}
+                  </button>
+                </div>
+              </div>
+
+              <div *ngIf="importResult" class="mt-3">
+                <div class="alert alert-success" *ngIf="importResult.imported_count > 0">
+                  Se importaron <strong>{{ importResult.imported_count }}</strong> registros correctamente.
+                </div>
+                <div class="alert alert-warning" *ngIf="importResult.errors && importResult.errors.length > 0">
+                  <strong>Errores encontrados:</strong>
+                  <ul class="mb-0 small mt-2">
+                    <li *ngFor="let err of importResult.errors | slice:0:10">Fila {{ err.row || '-' }}: {{ err.error || err }}</li>
+                    <li *ngIf="importResult.errors.length > 10">... y {{ importResult.errors.length - 10 }} más.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: JUSTIFICAR -->
+            <div *ngIf="activeTab === 'justificar'" class="p-4 fade-in">
+              <h6 class="text-success mb-3"><i class="fas fa-clipboard-check me-2"></i>Justificación de Inasistencias/Tardanzas</h6>
+              
+              <div class="row g-2 mb-3 align-items-end">
+                <div class="col-md-4">
+                  <label class="form-label small">Empleado</label>
+                  <select class="form-control form-control-sm" [(ngModel)]="selectedEmployee" (change)="loadPendingJustifications()">
+                    <option [ngValue]="null">Todos</option>
+                    <option *ngFor="let emp of employees" [ngValue]="emp">{{ emp.employee_code }} - {{ emp.first_name }} {{ emp.last_name }}</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small">Fecha Inicio</label>
+                  <input type="date" class="form-control form-control-sm" [(ngModel)]="filterStartDate" (change)="loadPendingJustifications()">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small">Fecha Fin</label>
+                  <input type="date" class="form-control form-control-sm" [(ngModel)]="filterEndDate" (change)="loadPendingJustifications()">
+                </div>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-sm table-striped table-hover border" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize">
+                  <thead class="bg-success text-white">
+                    <tr>
+                      <th [style.font-size]="cv.headerFontSize">Fecha</th>
+                      <th [style.font-size]="cv.headerFontSize">Empleado</th>
+                      <th [style.font-size]="cv.headerFontSize">Estado</th>
+                      <th [style.font-size]="cv.headerFontSize">Min. Tarde</th>
+                      <th [style.font-size]="cv.headerFontSize">Justificación</th>
+                      <th [style.font-size]="cv.headerFontSize">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="pendingJustifications.length === 0">
+                      <td colspan="6" class="text-center py-4 text-muted">No hay pendientes de justificación</td>
+                    </tr>
+                    <tr *ngFor="let att of pendingJustifications">
+                      <td>{{ formatDate(att.date) }}</td>
+                      <td>
+                        <strong>{{ att.employee?.employee_code }}</strong><br>
+                        <small>{{ att.employee?.first_name }} {{ att.employee?.last_name }}</small>
+                      </td>
+                      <td><span class="badge" [ngClass]="getStatusBadgeClass(att.status)">{{ getStatusLabel(att.status) }}</span></td>
+                      <td class="text-center">{{ att.late_minutes || 0 }}</td>
+                      <td>
+                        <div *ngIf="selectedAttendanceForJustify?.id !== att.id; else justifyForm">
+                          <span class="text-muted font-italic">Pendiente</span>
+                        </div>
+                        <ng-template #justifyForm>
+                          <input type="text" class="form-control form-control-sm" [(ngModel)]="justificationText" placeholder="Motivo...">
+                        </ng-template>
+                      </td>
+                      <td>
+                        <button *ngIf="selectedAttendanceForJustify?.id !== att.id" class="btn btn-sm btn-outline-success" (click)="openJustify(att)">
+                          Justificar
+                        </button>
+                        <div *ngIf="selectedAttendanceForJustify?.id === att.id" class="btn-group btn-group-sm">
+                          <button class="btn btn-success" [disabled]="submittingJustification || !justificationText.trim()" (click)="submitJustification()">
+                            <i class="fas fa-check"></i>
+                          </button>
+                          <button class="btn btn-secondary" (click)="selectedAttendanceForJustify = null">
+                            <i class="fas fa-times"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- TAB: DEBUG -->
+            <div *ngIf="activeTab === 'debug'" class="p-4 fade-in">
+              <div class="alert alert-info">
+                <strong>DEBUG MODE</strong><br>
+                Si ves esto, el diseño de pestañas está funcionando correctamente.
+              </div>
+              <pre>{{ { activeTab: activeTab, employees: employees.length, periods: periods.length } | json }}</pre>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Ver detalle de asistencia -->
+<div class="modal fade" id="viewAttendanceModal" tabindex="-1" aria-hidden="true" #viewAttendanceModal>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title"><i class="fas fa-eye me-2"></i>Detalle de Asistencia</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeViewDetail()" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedAttendanceForView">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Fecha</dt>
+          <dd class="col-sm-8">{{ formatDate(selectedAttendanceForView.date) }}</dd>
+
+          <dt class="col-sm-4">Empleado</dt>
+          <dd class="col-sm-8">
+            <strong>{{ selectedAttendanceForView.employee?.employee_code }}</strong>
+            {{ selectedAttendanceForView.employee?.first_name }} {{ selectedAttendanceForView.employee?.last_name }}
+          </dd>
+
+          <dt class="col-sm-4">Entrada programada</dt>
+          <dd class="col-sm-8">{{ formatTime(selectedAttendanceForView.scheduled_entry_time) }}</dd>
+
+          <dt class="col-sm-4">Salida programada</dt>
+          <dd class="col-sm-8">{{ formatTime(selectedAttendanceForView.scheduled_exit_time) }}</dd>
+
+          <dt class="col-sm-4">Entrada real</dt>
+          <dd class="col-sm-8">{{ formatTime(selectedAttendanceForView.actual_entry_time) || '-' }}</dd>
+
+          <dt class="col-sm-4">Salida real</dt>
+          <dd class="col-sm-8">{{ formatTime(selectedAttendanceForView.actual_exit_time) || '-' }}</dd>
+
+          <dt class="col-sm-4">Estado</dt>
+          <dd class="col-sm-8"><span class="badge" [ngClass]="getStatusBadgeClass(selectedAttendanceForView.status)">{{ getStatusLabel(selectedAttendanceForView.status) }}</span></dd>
+
+          <dt class="col-sm-4">Minutos tardanza</dt>
+          <dd class="col-sm-8">{{ selectedAttendanceForView.late_minutes }} min</dd>
+
+          <dt class="col-sm-4" *ngIf="selectedAttendanceForView.early_departure_minutes">Min. salida anticipada</dt>
+          <dd class="col-sm-8" *ngIf="selectedAttendanceForView.early_departure_minutes">{{ selectedAttendanceForView.early_departure_minutes }} min</dd>
+
+          <dt class="col-sm-4">Justificado</dt>
+          <dd class="col-sm-8">{{ selectedAttendanceForView.is_justified ? 'Sí' : 'No' }}</dd>
+        </dl>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeViewDetail()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

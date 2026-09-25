@@ -1,0 +1,646 @@
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="mb-1 fw-light">
+            <i class="fas fa-edit text-primary me-2"></i>
+            {{ isEditing ? 'Editar' : 'Crear' }} Patrón de Diseño
+          </h2>
+          <p class="text-muted mb-0 small">
+            {{ isEditing ? 'Modificar patrón existente' : 'Crear nuevo patrón de sistema' }}
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary btn-sm" (click)="togglePreview()">
+            <i class="fas fa-eye me-1"></i>
+            {{ previewMode ? 'Ocultar' : 'Vista Previa' }}
+          </button>
+          <button class="btn btn-outline-info btn-sm" (click)="exportPatron()" [disabled]="patronForm.invalid">
+            <i class="fas fa-download me-1"></i>
+            Exportar
+          </button>
+          <label class="btn btn-outline-warning btn-sm mb-0">
+            <i class="fas fa-upload me-1"></i>
+            Importar
+            <input type="file" accept=".json" (change)="importPatron($event)" style="display: none;">
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" style="width: 2rem; height: 2rem;" role="status">
+      <span class="sr-only">Cargando...</span>
+    </div>
+    <p class="mt-3 text-muted small">Cargando patrón...</p>
+  </div>
+
+  <!-- Formulario Principal -->
+  <form [formGroup]="patronForm" *ngIf="!loading && !previewMode">
+    <div class="row">
+      <!-- Columna Principal -->
+      <div class="col-lg-8">
+        
+        <!-- Información Básica -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-info-circle me-2"></i>
+              Información Básica
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <!-- ID -->
+              <div class="col-md-6">
+                <label class="form-label">ID del Patrón *</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" formControlName="id" 
+                         [class.is-invalid]="isFieldInvalid('id')"
+                         placeholder="ej: sistema_rrhh">
+                  <button class="btn btn-outline-secondary" type="button" (click)="generateId()">
+                    <i class="fas fa-magic"></i>
+                  </button>
+                </div>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('id')">
+                  {{ getFieldError('id') }}
+                </div>
+              </div>
+
+              <!-- Código -->
+              <div class="col-md-6">
+                <label class="form-label">Código *</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" formControlName="codigo" 
+                         [class.is-invalid]="isFieldInvalid('codigo')"
+                         placeholder="ej: RRHH">
+                  <button class="btn btn-outline-secondary" type="button" (click)="generateCode()">
+                    <i class="fas fa-magic"></i>
+                  </button>
+                </div>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('codigo')">
+                  {{ getFieldError('codigo') }}
+                </div>
+              </div>
+
+              <!-- Nombre -->
+              <div class="col-12">
+                <label class="form-label">Nombre del Sistema *</label>
+                <input type="text" class="form-control" formControlName="nombre" 
+                       [class.is-invalid]="isFieldInvalid('nombre')"
+                       placeholder="ej: Sistema de Recursos Humanos">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('nombre')">
+                  {{ getFieldError('nombre') }}
+                </div>
+              </div>
+
+              <!-- Descripción -->
+              <div class="col-12">
+                <label class="form-label">Descripción *</label>
+                <textarea class="form-control" formControlName="descripcion" rows="3"
+                          [class.is-invalid]="isFieldInvalid('descripcion')"
+                          placeholder="Descripción detallada del sistema..."></textarea>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('descripcion')">
+                  {{ getFieldError('descripcion') }}
+                </div>
+              </div>
+
+              <!-- Categoría y Prioridad -->
+              <div class="col-md-6">
+                <label class="form-label">Categoría *</label>
+                <select class="form-select" formControlName="categoria" 
+                        [class.is-invalid]="isFieldInvalid('categoria')">
+                  <option value="">Seleccionar categoría</option>
+                  <option *ngFor="let categoria of categorias" [value]="categoria">
+                    {{ categoria | titlecase }}
+                  </option>
+                </select>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('categoria')">
+                  {{ getFieldError('categoria') }}
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Prioridad *</label>
+                <select class="form-select" formControlName="prioridad" 
+                        [class.is-invalid]="isFieldInvalid('prioridad')">
+                  <option value="">Seleccionar prioridad</option>
+                  <option *ngFor="let prioridad of prioridades" [value]="prioridad">
+                    {{ prioridad | titlecase }}
+                  </option>
+                </select>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('prioridad')">
+                  {{ getFieldError('prioridad') }}
+                </div>
+              </div>
+
+              <!-- Estado por defecto -->
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="estado_default">
+                  <label class="form-check-label">
+                    Activo por defecto
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Keywords del Sistema -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+              <i class="fas fa-tags me-2"></i>
+              Palabras Clave del Sistema
+            </h5>
+          </div>
+          <div class="card-body">
+            <p class="text-muted small mb-3">
+              Agrega palabras clave que describan las funcionalidades principales del sistema
+            </p>
+            
+            <div formArrayName="keywords">
+              <div *ngFor="let keyword of keywordsArray.controls; let i = index" class="row g-2 mb-2">
+                <div class="col-md-10">
+                  <input type="text" class="form-control" [formControlName]="i"
+                         placeholder="ej: empleados, nóminas, capacitación">
+                </div>
+                <div class="col-md-2">
+                  <button type="button" class="btn btn-outline-danger btn-sm w-100" 
+                          (click)="removeKeyword(i)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <button type="button" class="btn btn-outline-primary btn-sm" (click)="addKeyword()">
+                <i class="fas fa-plus me-1"></i>
+                Agregar Palabra Clave
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuración SSO -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-shield-alt me-2"></i>
+              Configuración SSO
+            </h5>
+          </div>
+          <div class="card-body" formGroupName="sso_config">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="habilitado">
+                  <label class="form-check-label">
+                    SSO Habilitado
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="force">
+                  <label class="form-check-label">
+                    Forzar SSO
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Provider SSO</label>
+                <select class="form-select" formControlName="provider">
+                  <option *ngFor="let provider of providersSSO" [value]="provider">
+                    {{ provider | uppercase }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuración del Sistema -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-cogs me-2"></i>
+              Configuración del Sistema
+            </h5>
+          </div>
+          <div class="card-body" formGroupName="configuracion">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">URL Base *</label>
+                <input type="url" class="form-control" formControlName="url_base" 
+                       [class.is-invalid]="isFieldInvalid('configuracion.url_base')"
+                       placeholder="https://sistema.empresa.com">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('configuracion.url_base')">
+                  {{ getFieldError('configuracion.url_base') }}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Timeout (ms) *</label>
+                <input type="number" class="form-control" formControlName="timeout" 
+                       [class.is-invalid]="isFieldInvalid('configuracion.timeout')"
+                       min="1000" max="120000">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('configuracion.timeout')">
+                  {{ getFieldError('configuracion.timeout') }}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Reintentos *</label>
+                <input type="number" class="form-control" formControlName="retry_attempts" 
+                       [class.is-invalid]="isFieldInvalid('configuracion.retry_attempts')"
+                       min="0" max="10">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('configuracion.retry_attempts')">
+                  {{ getFieldError('configuracion.retry_attempts') }}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check mt-4">
+                  <input class="form-check-input" type="checkbox" formControlName="cache_enabled">
+                  <label class="form-check-label">
+                    Cache Habilitado
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gestión de Menús -->
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-warning text-dark">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">
+                <i class="fas fa-sitemap me-2"></i>
+                Gestión de Menús
+              </h5>
+              <button type="button" class="btn btn-success btn-sm" (click)="addMenu()">
+                <i class="fas fa-plus me-1"></i>
+                Agregar Menú
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div formArrayName="menus">
+              <div *ngFor="let menu of menusArray.controls; let menuIndex = index" 
+                   [formGroupName]="menuIndex" class="menu-item mb-4 p-3 border rounded">
+                
+                <!-- Header del Menú -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Menú {{ menuIndex + 1 }}
+                  </h6>
+                  <button type="button" class="btn btn-danger btn-sm" (click)="removeMenu(menuIndex)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+
+                <!-- Campos del Menú -->
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">ID del Menú *</label>
+                    <input type="text" class="form-control" formControlName="id" 
+                           [class.is-invalid]="isFieldInvalid('menus.' + menuIndex + '.id')"
+                           placeholder="ej: menu_empleados">
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('menus.' + menuIndex + '.id')">
+                      {{ getFieldError('menus.' + menuIndex + '.id') }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Código *</label>
+                    <input type="text" class="form-control" formControlName="codigo" 
+                           [class.is-invalid]="isFieldInvalid('menus.' + menuIndex + '.codigo')"
+                           placeholder="ej: empleados">
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('menus.' + menuIndex + '.codigo')">
+                      {{ getFieldError('menus.' + menuIndex + '.codigo') }}
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" class="form-control" formControlName="nombre" 
+                           [class.is-invalid]="isFieldInvalid('menus.' + menuIndex + '.nombre')"
+                           placeholder="ej: Gestión de Empleados">
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('menus.' + menuIndex + '.nombre')">
+                      {{ getFieldError('menus.' + menuIndex + '.nombre') }}
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Descripción *</label>
+                    <textarea class="form-control" formControlName="descripcion" rows="2"
+                              [class.is-invalid]="isFieldInvalid('menus.' + menuIndex + '.descripcion')"
+                              placeholder="Descripción del menú..."></textarea>
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('menus.' + menuIndex + '.descripcion')">
+                      {{ getFieldError('menus.' + menuIndex + '.descripcion') }}
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Icono *</label>
+                    <select class="form-select" formControlName="icono">
+                      <option *ngFor="let icono of iconosDisponibles" [value]="icono">
+                        <i [class]="icono"></i> {{ icono }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Orden *</label>
+                    <input type="number" class="form-control" formControlName="orden" 
+                           [class.is-invalid]="isFieldInvalid('menus.' + menuIndex + '.orden')"
+                           min="1">
+                    <div class="invalid-feedback" *ngIf="isFieldInvalid('menus.' + menuIndex + '.orden')">
+                      {{ getFieldError('menus.' + menuIndex + '.orden') }}
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-check mt-4">
+                      <input class="form-check-input" type="checkbox" formControlName="estado_default">
+                      <label class="form-check-label">
+                        Activo por defecto
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Keywords del Menú -->
+                <div class="mt-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0">Palabras Clave del Menú</label>
+                    <button type="button" class="btn btn-outline-warning btn-sm" 
+                            (click)="addKeywordToMenu(menuIndex)">
+                      <i class="fas fa-plus me-1"></i>
+                      Agregar Palabra Clave
+                    </button>
+                  </div>
+                  <div formArrayName="keywords">
+                    <div *ngFor="let keyword of getMenuKeywordsArray(menuIndex).controls; let keywordIndex = index" 
+                         class="input-group mb-2">
+                      <input type="text" class="form-control" [formControlName]="keywordIndex"
+                             placeholder="ej: personal, contratos, historial">
+                      <button type="button" class="btn btn-outline-danger" 
+                              (click)="removeKeywordFromMenu(menuIndex, keywordIndex)">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Permisos del Menú -->
+                <div class="mt-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0">Permisos Requeridos</label>
+                    <button type="button" class="btn btn-outline-primary btn-sm" 
+                            (click)="addPermisoToMenu(menuIndex)">
+                      <i class="fas fa-plus me-1"></i>
+                      Agregar Permiso
+                    </button>
+                  </div>
+                  <div formArrayName="permisos_requeridos">
+                    <div *ngFor="let permiso of getMenusArray(menuIndex).controls; let permisoIndex = index" 
+                         class="input-group mb-2">
+                      <input type="text" class="form-control" [formControlName]="permisoIndex"
+                             placeholder="ej: sistema.empleados.read">
+                      <button type="button" class="btn btn-outline-danger" 
+                              (click)="removePermisoFromMenu(menuIndex, permisoIndex)">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Submenús -->
+                <div class="mt-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0">Submenús</label>
+                    <button type="button" class="btn btn-outline-success btn-sm" 
+                            (click)="addSubmenu(menuIndex)">
+                      <i class="fas fa-plus me-1"></i>
+                      Agregar Submenú
+                    </button>
+                  </div>
+                  <div formArrayName="submenus">
+                    <div *ngFor="let submenu of getSubmenusArray(menuIndex).controls; let submenuIndex = index" 
+                         [formGroupName]="submenuIndex" class="submenu-item p-3 border rounded mb-2">
+                      
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Submenú {{ submenuIndex + 1 }}</h6>
+                        <button type="button" class="btn btn-danger btn-sm" 
+                                (click)="removeSubmenu(menuIndex, submenuIndex)">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+
+                      <div class="row g-2">
+                        <div class="col-md-3">
+                          <label class="form-label">ID *</label>
+                          <input type="text" class="form-control" formControlName="id" 
+                                 placeholder="ej: submenu_lista">
+                        </div>
+                        <div class="col-md-3">
+                          <label class="form-label">Código *</label>
+                          <input type="text" class="form-control" formControlName="codigo" 
+                                 placeholder="ej: lista">
+                        </div>
+                        <div class="col-md-3">
+                          <label class="form-label">Nombre *</label>
+                          <input type="text" class="form-control" formControlName="nombre" 
+                                 placeholder="ej: Lista de Empleados">
+                        </div>
+                        <div class="col-md-3">
+                          <label class="form-label">Icono</label>
+                          <select class="form-select" formControlName="icono">
+                            <option *ngFor="let icono of iconosDisponibles" [value]="icono">
+                              <i [class]="icono"></i> {{ icono }}
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="row g-2 mt-2">
+                        <div class="col-12">
+                          <label class="form-label">Descripción</label>
+                          <textarea class="form-control" formControlName="descripcion" rows="2"
+                                    placeholder="Descripción del submenú..."></textarea>
+                        </div>
+                      </div>
+
+                      <!-- Permisos del Submenú -->
+                      <div class="mt-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <label class="form-label mb-0">Permisos</label>
+                          <button type="button" class="btn btn-outline-primary btn-sm" 
+                                  (click)="addPermisoToSubmenu(menuIndex, submenuIndex)">
+                            <i class="fas fa-plus me-1"></i>
+                            Agregar
+                          </button>
+                        </div>
+                        <div formArrayName="permisos">
+                          <div *ngFor="let permiso of getSubmenuPermisosArray(menuIndex, submenuIndex).controls; let permisoIndex = index" 
+                               class="input-group mb-1">
+                            <input type="text" class="form-control" [formControlName]="permisoIndex"
+                                   placeholder="ej: sistema.empleados.read">
+                            <button type="button" class="btn btn-outline-danger" 
+                                    (click)="removePermisoFromSubmenu(menuIndex, submenuIndex, permisoIndex)">
+                              <i class="fas fa-times"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mensaje cuando no hay menús -->
+            <div *ngIf="menusArray.length === 0" class="text-center py-4">
+              <i class="fas fa-sitemap fa-2x text-muted mb-3"></i>
+              <p class="text-muted">No hay menús configurados</p>
+              <button type="button" class="btn btn-primary" (click)="addMenu()">
+                <i class="fas fa-plus me-1"></i>
+                Agregar Primer Menú
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna Lateral -->
+      <div class="col-lg-4">
+        
+        <!-- Vista Previa -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-eye me-2"></i>
+              Vista Previa
+            </h5>
+          </div>
+          <div class="card-body">
+            <div *ngIf="patronForm.valid; else invalidForm" class="preview-content">
+              <h6>{{ patronForm.get('nombre')?.value || 'Nombre del Sistema' }}</h6>
+              <p class="text-muted small">{{ patronForm.get('descripcion')?.value || 'Descripción...' }}</p>
+              
+              <div class="mb-2">
+                <span class="badge bg-primary me-1">{{ patronForm.get('categoria')?.value || 'Categoría' }}</span>
+                <span class="badge bg-info">{{ patronForm.get('prioridad')?.value || 'Prioridad' }}</span>
+              </div>
+              
+              <div class="mb-2">
+                <small class="text-muted">
+                  <i class="fas fa-link me-1"></i>
+                  {{ patronForm.get('configuracion.url_base')?.value || 'URL no configurada' }}
+                </small>
+              </div>
+              
+              <div class="mb-2">
+                <small class="text-muted">
+                  <i class="fas fa-sitemap me-1"></i>
+                  {{ menusArray.length }} menús configurados
+                </small>
+              </div>
+              
+              <div *ngIf="patronForm.get('sso_config.habilitado')?.value" class="mb-2">
+                <span class="badge bg-success">
+                  <i class="fas fa-shield-alt me-1"></i>
+                  SSO Habilitado
+                </span>
+              </div>
+            </div>
+            <ng-template #invalidForm>
+              <div class="text-center text-muted">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                <p class="small">Completa el formulario para ver la vista previa</p>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-cogs me-2"></i>
+              Acciones
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <button type="button" class="btn btn-primary" (click)="savePatron()" 
+                      [disabled]="saving || patronForm.invalid">
+                <i class="fas fa-save me-1" [class.fa-spin]="saving"></i>
+                {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }} Patrón
+              </button>
+              
+              <button type="button" class="btn btn-outline-secondary" (click)="cancel()">
+                <i class="fas fa-times me-1"></i>
+                Cancelar
+              </button>
+              
+              <button type="button" class="btn btn-outline-info" (click)="exportPatron()" 
+                      [disabled]="patronForm.invalid">
+                <i class="fas fa-download me-1"></i>
+                Exportar JSON
+              </button>
+              
+              <label class="btn btn-outline-warning mb-0">
+                <i class="fas fa-upload me-1"></i>
+                Importar JSON
+                <input type="file" accept=".json" (change)="importPatron($event)" style="display: none;">
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ayuda -->
+        <div class="card border-0 shadow-sm mt-4">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">
+              <i class="fas fa-question-circle me-2"></i>
+              Ayuda
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="small text-muted">
+              <p><strong>ID:</strong> Identificador único del patrón (solo letras, números y guiones bajos)</p>
+              <p><strong>Código:</strong> Código corto del sistema (máximo 6 caracteres)</p>
+              <p><strong>URL Base:</strong> URL principal del sistema externo</p>
+              <p><strong>Permisos:</strong> Formato: sistema.modulo.accion (ej: rrhh.empleados.read)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Vista Previa Completa -->
+  <div *ngIf="previewMode && !loading" class="preview-container">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3>Vista Previa del Patrón</h3>
+          <button class="btn btn-outline-secondary" (click)="togglePreview()">
+            <i class="fas fa-edit me-1"></i>
+            Volver al Editor
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="getPreviewData(); else noPreviewData" class="preview-pattern">
+      <!-- Aquí iría la vista previa completa del patrón -->
+      <pre class="bg-light p-3 rounded">{{ getPreviewData() | json }}</pre>
+    </div>
+    <ng-template #noPreviewData>
+      <div class="text-center py-5">
+        <i class="fas fa-exclamation-triangle fa-2x text-muted mb-3"></i>
+        <p class="text-muted">Completa el formulario para ver la vista previa</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

@@ -1,0 +1,317 @@
+<!-- AdminLTE 3.2.0 Menu Hierarchy -->
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">🌳 Jerarquía de Menús</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin-menu-management">Administrador</a></li>
+            <li class="breadcrumb-item active">Jerarquía</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+<section class="content">
+  <div class="container-fluid form-container">
+      
+      <!-- Controls Bar -->
+      <div class="row mb-3">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="btn-group">
+                    <button class="btn btn-primary" (click)="expandAll()">
+                      <i class="fas fa-expand-arrows-alt"></i> Expandir Todo
+                    </button>
+                    <button class="btn btn-secondary" (click)="collapseAll()">
+                      <i class="fas fa-compress-arrows-alt"></i> Colapsar Todo
+                    </button>
+                  </div>
+                </div>
+                <div class="col-md-6 text-right">
+                  <div class="btn-group">
+                    <button 
+                      class="btn btn-outline-primary" 
+                      [class.active]="viewMode === 'tree'"
+                      (click)="switchViewMode('tree')">
+                      <i class="fas fa-sitemap"></i> Vista Árbol
+                    </button>
+                    <button 
+                      class="btn btn-outline-primary" 
+                      [class.active]="viewMode === 'list'"
+                      (click)="switchViewMode('list')">
+                      <i class="fas fa-list"></i> Vista Lista
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="row mb-3">
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>{{ getTotalItems() }}</h3>
+              <p>Total de Menús</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-sitemap"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>{{ getActiveItems() }}</h3>
+              <p>Menús Activos</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3>{{ getInactiveItems() }}</h3>
+              <p>Menús Inactivos</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-times-circle"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-danger">
+            <div class="inner">
+              <h3>{{ menuHierarchy.length }}</h3>
+              <p>Menús Principales</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-layer-group"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tree View -->
+      <div class="row" *ngIf="viewMode === 'tree'">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-sitemap"></i> Estructura Jerárquica
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="tree-container">
+                <div *ngFor="let item of menuHierarchy" class="tree-item">
+                  <app-tree-node 
+                    [item]="item" 
+                    [expandedItems]="expandedItems"
+                    [selectedItem]="selectedItem"
+                    (toggleExpanded)="toggleExpanded($event)"
+                    (selectItem)="selectItem($event)">
+                  </app-tree-node>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Details Panel -->
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-info-circle"></i> Detalles del Menú
+              </h3>
+            </div>
+            <div class="card-body">
+              <div *ngIf="selectedItem; else noSelection">
+                <div class="info-group">
+                  <label>Nombre:</label>
+                  <p><strong>{{ selectedItem.name }}</strong></p>
+                </div>
+                
+                <div class="info-group">
+                  <label>URL:</label>
+                  <p><code>{{ selectedItem.url }}</code></p>
+                </div>
+                
+                <div class="info-group">
+                  <label>Icono:</label>
+                  <p><i [ngClass]="selectedItem.icon"></i> {{ selectedItem.icon }}</p>
+                </div>
+                
+                <div class="info-group">
+                  <label>Nivel:</label>
+                  <p><span [ngClass]="'badge ' + getLevelClass(selectedItem.level)">{{ selectedItem.level }}</span></p>
+                </div>
+                
+                <div class="info-group">
+                  <label>Orden:</label>
+                  <p>{{ selectedItem.order }}</p>
+                </div>
+                
+                <div class="info-group">
+                  <label>Estado:</label>
+                  <p>
+                    <span [ngClass]="'badge ' + getStatusClass(selectedItem.active)">
+                      {{ getStatusText(selectedItem.active) }}
+                    </span>
+                  </p>
+                </div>
+                
+                <div class="info-group">
+                  <label>Módulo:</label>
+                  <p>
+                    <span [ngClass]="'badge ' + getModuleClass(selectedItem.module)">
+                      {{ selectedItem.module }}
+                    </span>
+                  </p>
+                </div>
+                
+                <div class="info-group">
+                  <label>Submenús:</label>
+                  <p>{{ selectedItem.children.length }} elementos</p>
+                </div>
+              </div>
+              
+              <ng-template #noSelection>
+                <div class="text-center text-muted">
+                  <i class="fas fa-mouse-pointer fa-3x mb-3"></i>
+                  <p>Selecciona un menú para ver sus detalles</p>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- List View -->
+      <div class="row" *ngIf="viewMode === 'list'">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-list"></i> Lista Jerárquica
+              </h3>
+            </div>
+            <div class="card-body table-responsive p-0">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Nivel</th>
+                    <th>Nombre</th>
+                    <th>URL</th>
+                    <th>Icono</th>
+                    <th>Módulo</th>
+                    <th>Orden</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of getFlatList()" [ngClass]="getLevelClass(item.level)">
+                    <td>
+                      <span [ngClass]="'badge ' + getLevelClass(item.level)">
+                        Nivel {{ item.level }}
+                      </span>
+                    </td>
+                    <td>
+                      <span [style.margin-left.px]="item.level * 20">
+                        <i [ngClass]="item.icon"></i>
+                        {{ item.name }}
+                      </span>
+                    </td>
+                    <td><code>{{ item.url }}</code></td>
+                    <td>
+                      <i [ngClass]="item.icon"></i>
+                      <small class="text-muted">{{ item.icon }}</small>
+                    </td>
+                    <td>
+                      <span [ngClass]="'badge ' + getModuleClass(item.module)">
+                        {{ item.module }}
+                      </span>
+                    </td>
+                    <td>{{ item.order }}</td>
+                    <td>
+                      <span [ngClass]="'badge ' + getStatusClass(item.active)">
+                        {{ getStatusText(item.active) }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="btn-group">
+                        <button class="btn btn-sm btn-info" (click)="selectItem(item)">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<!-- Tree Node Component Template -->
+<ng-template #treeNodeTemplate let-item="item" let-expandedItems="expandedItems" let-selectedItem="selectedItem">
+  <div class="tree-node" [ngClass]="{'selected': selectedItem?.id === item.id}">
+    <div class="tree-node-content" (click)="selectItem(item)">
+      <span class="tree-toggle" *ngIf="item.children.length > 0" (click)="toggleExpanded(item); $event.stopPropagation()">
+        <i [ngClass]="isExpanded(item) ? 'fas fa-chevron-down' : 'fas fa-chevron-right'"></i>
+      </span>
+      <span class="tree-toggle-placeholder" *ngIf="item.children.length === 0"></span>
+      
+      <span class="tree-icon">
+        <i [ngClass]="getItemIcon(item)"></i>
+      </span>
+      
+      <span class="tree-label">{{ item.name }}</span>
+      
+      <span class="tree-badges">
+        <span [ngClass]="'badge badge-sm ' + getModuleClass(item.module)">
+          {{ item.module }}
+        </span>
+        <span [ngClass]="'badge badge-sm ' + getStatusClass(item.active)">
+          {{ getStatusText(item.active) }}
+        </span>
+      </span>
+    </div>
+    
+    <div class="tree-children" *ngIf="item.children.length > 0 && isExpanded(item)">
+      <div *ngFor="let child of item.children" class="tree-child">
+        <ng-container *ngTemplateOutlet="treeNodeTemplate; context: {item: child, expandedItems: expandedItems, selectedItem: selectedItem}"></ng-container>
+      </div>
+    </div>
+  </div>
+</ng-template>

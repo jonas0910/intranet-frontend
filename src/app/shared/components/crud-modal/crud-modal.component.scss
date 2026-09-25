@@ -1,0 +1,37 @@
+.cm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ds-modal-header-padding, 14px 20px);
+}
+
+.cm-title {
+  margin: 0;
+  font-size: var(--ds-modal-header-title-size, 1rem);
+  font-weight: 600;
+}
+
+.cm-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.8;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.cm-body {
+  padding: 20px;
+}
+
+.cm-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 20px;
+  border-top: 1px solid #e9ecef;
+}

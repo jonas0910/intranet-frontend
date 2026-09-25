@@ -1,0 +1,650 @@
+<!-- Content Header (Page header) -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0"><i class="fas fa-lock mr-2"></i>Cierres de Periodo</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/">Inicio</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestion-documental">Gestión Documental</a></li>
+          <li class="breadcrumb-item active">Cierres</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+  <div class="container-fluid">
+    
+      <!-- Estadísticas Rápidas -->
+      <div class="row mb-3">
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>{{getEstadisticas().total}}</h3>
+              <p>Total Cierres</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-folder"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3>{{getEstadisticas().pendientes}}</h3>
+              <p>Pendientes</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-clock"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>{{getEstadisticas().cerrados}}</h3>
+              <p>Cerrados</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-lock"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-danger">
+            <div class="inner">
+              <h3>{{getEstadisticas().rechazados}}</h3>
+              <p>Rechazados</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-times-circle"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Filtros</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Estado</label>
+                <select class="form-control" [(ngModel)]="filtros.estado" (ngModelChange)="onFilterChange()">
+                  <option value="">Todos</option>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="validado">Validado</option>
+                  <option value="cerrado">Cerrado</option>
+                  <option value="rechazado">Rechazado</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Año</label>
+                <input type="number" class="form-control" [(ngModel)]="filtros.anio" (ngModelChange)="onFilterChange()">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Tipo Periodo</label>
+                <select class="form-control" [(ngModel)]="filtros.tipo_periodo" (ngModelChange)="onFilterChange()">
+                  <option value="">Todos</option>
+                  <option *ngFor="let tipo of tiposPeriodo" [value]="tipo.value">{{tipo.label}}</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>&nbsp;</label>
+                <button type="button" class="btn btn-primary btn-block" (click)="openCreateModal()">
+                  <i class="fas fa-plus mr-2"></i> Nuevo Cierre
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información de Acciones -->
+      <div class="alert alert-info">
+        <h5><i class="fas fa-info-circle mr-2"></i>Acciones Disponibles por Estado:</h5>
+        <p class="mb-2"><small>Haz clic en el botón 👁️ para ver el <strong>modal de detalles completos</strong> con cronología y estadísticas</small></p>
+        <div class="row">
+          <div class="col-md-3">
+            <strong class="text-warning">🟡 Pendiente:</strong>
+            <ul class="mb-0">
+              <li>👁️ Ver detalles (modal)</li>
+              <li>✏️ Editar</li>
+              <li>✅ Aprobar</li>
+              <li>❌ Rechazar</li>
+            </ul>
+          </div>
+          <div class="col-md-3">
+            <strong class="text-primary">🔵 Validado:</strong>
+            <ul class="mb-0">
+              <li>👁️ Ver detalles (modal)</li>
+              <li>❌ Rechazar</li>
+            </ul>
+          </div>
+          <div class="col-md-3">
+            <strong class="text-success">🟢 Cerrado:</strong>
+            <ul class="mb-0">
+              <li>👁️ Ver detalles (modal)</li>
+              <li>🔄 Reabrir (excepcional)</li>
+            </ul>
+          </div>
+          <div class="col-md-3">
+            <strong class="text-danger">🔴 Rechazado:</strong>
+            <ul class="mb-0">
+              <li>👁️ Ver detalles (modal)</li>
+              <li>📝 Solo consulta</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de Cierres -->
+      <div class="card">
+        <div class="card-body table-responsive p-0">
+          <div *ngIf="loading" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+          </div>
+
+          <table *ngIf="!loading" class="table table-hover">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Periodo</th>
+                <th>Estado</th>
+                <th>Documentos</th>
+                <th>Tamaño</th>
+                <th>Fecha Solicitud</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let cierre of cierres">
+                <td><strong>{{cierre.codigo}}</strong></td>
+                <td>
+                  {{cierre.tipo_periodo | titlecase}}<br>
+                  <small class="text-muted">{{cierre.anio}}{{cierre.mes ? '-' + cierre.mes : ''}}</small>
+                </td>
+                <td><span class="badge" [ngClass]="getEstadoBadgeClass(cierre.estado)">{{cierre.estado | titlecase}}</span></td>
+                <td>{{cierre.total_documentos}}</td>
+                <td>{{formatFileSize(cierre.total_tamano_bytes)}}</td>
+                <td>{{formatDate(cierre.fecha_solicitud)}}</td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <!-- Ver detalles siempre visible -->
+                    <button type="button" class="btn btn-info" 
+                            (click)="verDetalleCierre(cierre)" title="Ver detalles">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    
+                    <!-- Editar (solo si está pendiente) -->
+                    <button *ngIf="cierre.estado === 'pendiente'" type="button" class="btn btn-primary" 
+                            (click)="openEditModal(cierre)" title="Editar cierre">
+                      <i class="fas fa-edit"></i> Editar
+                    </button>
+                    
+                    <!-- Aprobar (solo si está pendiente) -->
+                    <button *ngIf="cierre.estado === 'pendiente'" type="button" class="btn btn-success" 
+                            (click)="aprobarCierre(cierre)" title="Aprobar cierre">
+                      <i class="fas fa-check"></i> Aprobar
+                    </button>
+                    
+                    <!-- Rechazar (solo si está pendiente o validado) -->
+                    <button *ngIf="cierre.estado === 'pendiente' || cierre.estado === 'validado'" 
+                            type="button" class="btn btn-danger" 
+                            (click)="rechazarCierre(cierre)" title="Rechazar cierre">
+                      <i class="fas fa-times"></i> Rechazar
+                    </button>
+                    
+                    <!-- Reabrir (solo si está cerrado y necesita corrección) -->
+                    <button *ngIf="cierre.estado === 'cerrado'" type="button" class="btn btn-warning" 
+                            (click)="reabrirCierre(cierre)" title="Reabrir cierre">
+                      <i class="fas fa-undo"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="cierres.length === 0">
+                <td colspan="7" class="text-center p-4">No se encontraron cierres</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+  </div>
+</section>
+
+<!-- Modal Crear/Editar Cierre -->
+<div class="modal" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header" [class.bg-primary]="!isEditMode" [class.bg-warning]="isEditMode" class="text-white">
+        <h4 class="modal-title">
+          <i [class]="isEditMode ? 'fas fa-edit' : 'fas fa-plus'" class="mr-2"></i>
+          {{isEditMode ? 'Editar Cierre' : 'Crear Nuevo Cierre'}}
+        </h4>
+        <button type="button" class="close text-white" (click)="closeModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Información del Periodo -->
+        <fieldset class="border p-3 mb-3">
+          <legend class="w-auto px-2" style="font-size: 1rem;">
+            <i class="fas fa-calendar mr-2"></i>Periodo del Cierre
+          </legend>
+          
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Tipo de Periodo *</label>
+                <select class="form-control" [(ngModel)]="modalData.tipo_periodo" [disabled]="isEditMode">
+                  <option *ngFor="let tipo of tiposPeriodo" [value]="tipo.value">{{tipo.label}}</option>
+                </select>
+                <small class="form-text text-muted" *ngIf="isEditMode">
+                  <i class="fas fa-lock"></i> No se puede cambiar en edición
+                </small>
+              </div>
+            </div>
+            
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Año *</label>
+                <input type="number" class="form-control" [(ngModel)]="modalData.anio" 
+                       [disabled]="isEditMode" min="2020" max="2099">
+                <small class="form-text text-muted" *ngIf="isEditMode">
+                  <i class="fas fa-lock"></i> No se puede cambiar en edición
+                </small>
+              </div>
+            </div>
+            
+            <div class="col-md-4" *ngIf="modalData.tipo_periodo === 'mensual'">
+              <div class="form-group">
+                <label>Mes *</label>
+                <select class="form-control" [(ngModel)]="modalData.mes" [disabled]="isEditMode">
+                  <option [ngValue]="1">Enero</option>
+                  <option [ngValue]="2">Febrero</option>
+                  <option [ngValue]="3">Marzo</option>
+                  <option [ngValue]="4">Abril</option>
+                  <option [ngValue]="5">Mayo</option>
+                  <option [ngValue]="6">Junio</option>
+                  <option [ngValue]="7">Julio</option>
+                  <option [ngValue]="8">Agosto</option>
+                  <option [ngValue]="9">Septiembre</option>
+                  <option [ngValue]="10">Octubre</option>
+                  <option [ngValue]="11">Noviembre</option>
+                  <option [ngValue]="12">Diciembre</option>
+                </select>
+                <small class="form-text text-muted" *ngIf="isEditMode">
+                  <i class="fas fa-lock"></i> No se puede cambiar en edición
+                </small>
+              </div>
+            </div>
+            
+            <div class="col-md-4" *ngIf="modalData.tipo_periodo === 'trimestral'">
+              <div class="form-group">
+                <label>Trimestre *</label>
+                <select class="form-control" [(ngModel)]="modalData.trimestre" [disabled]="isEditMode">
+                  <option [ngValue]="1">Trimestre 1 (Ene-Mar)</option>
+                  <option [ngValue]="2">Trimestre 2 (Abr-Jun)</option>
+                  <option [ngValue]="3">Trimestre 3 (Jul-Sep)</option>
+                  <option [ngValue]="4">Trimestre 4 (Oct-Dic)</option>
+                </select>
+                <small class="form-text text-muted" *ngIf="isEditMode">
+                  <i class="fas fa-lock"></i> No se puede cambiar en edición
+                </small>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Alcance del Cierre -->
+        <fieldset class="border p-3 mb-3">
+          <legend class="w-auto px-2" style="font-size: 1rem;">
+            <i class="fas fa-building mr-2"></i>Alcance
+          </legend>
+          
+          <div class="form-group">
+            <label>Área</label>
+            <select class="form-control" [(ngModel)]="modalData.area_id">
+              <option [ngValue]="undefined">Todas las áreas</option>
+              <option *ngFor="let area of areas" [ngValue]="area.id">{{area.nombre}}</option>
+            </select>
+            <small class="form-text text-muted">
+              <i class="fas fa-info-circle"></i> Deja en "Todas las áreas" para un cierre general
+            </small>
+          </div>
+        </fieldset>
+
+        <!-- Controles de Gestión -->
+        <fieldset class="border p-3 mb-3">
+          <legend class="w-auto px-2" style="font-size: 1rem;">
+            <i class="fas fa-cog mr-2"></i>Controles de Gestión
+          </legend>
+          
+          <div class="form-group">
+            <label>Responsable de Validación</label>
+            <input type="text" class="form-control" [(ngModel)]="modalData.responsable_validacion" 
+                   placeholder="Nombre del responsable que validará el cierre">
+            <small class="form-text text-muted">
+              <i class="fas fa-user-check"></i> Nombre de la persona que revisará y validará
+            </small>
+          </div>
+
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="requiere_backup" 
+                   [(ngModel)]="modalData.requiere_backup">
+            <label class="form-check-label" for="requiere_backup">
+              <i class="fas fa-database mr-2"></i>Requiere backup del periodo
+            </label>
+            <small class="form-text text-muted">
+              Al aprobar, se generará un respaldo de todos los documentos del periodo
+            </small>
+          </div>
+        </fieldset>
+
+        <!-- Observaciones y Notas -->
+        <fieldset class="border p-3">
+          <legend class="w-auto px-2" style="font-size: 1rem;">
+            <i class="fas fa-sticky-note mr-2"></i>Observaciones
+          </legend>
+          
+          <div class="form-group">
+            <label>Observaciones y Notas</label>
+            <textarea class="form-control" [(ngModel)]="modalData.observaciones" rows="4"
+                      placeholder="Ingrese observaciones, instrucciones especiales o notas sobre este cierre..."></textarea>
+            <small class="form-text text-muted">
+              Máximo 1000 caracteres
+            </small>
+          </div>
+        </fieldset>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">
+          <i class="fas fa-times mr-2"></i>Cancelar
+        </button>
+        <button type="button" class="btn" [class.btn-primary]="!isEditMode" [class.btn-warning]="isEditMode" (click)="onSubmitCierre()">
+          <i [class]="isEditMode ? 'fas fa-save' : 'fas fa-plus'" class="mr-2"></i>
+          {{isEditMode ? 'Actualizar Cierre' : 'Crear Cierre'}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showModal" *ngIf="showModal"></div>
+
+<!-- Modal Ver Detalles del Cierre -->
+<div class="modal" [class.show]="showDetalleModal" [style.display]="showDetalleModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h4 class="modal-title">
+          <i class="fas fa-folder-open mr-2"></i>Detalles del Cierre
+        </h4>
+        <button type="button" class="close text-white" (click)="closeDetalleModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" *ngIf="cierreDetalle">
+        
+        <!-- Header con código y estado -->
+        <div class="row mb-4">
+          <div class="col-md-8">
+            <h3 class="mb-1">
+              <i class="fas fa-barcode mr-2"></i>{{cierreDetalle.codigo}}
+            </h3>
+            <p class="text-muted mb-0">
+              <i class="fas fa-calendar mr-2"></i>{{getPeriodoCompleto(cierreDetalle)}}
+            </p>
+          </div>
+          <div class="col-md-4 text-right">
+            <h2>
+              <span class="badge" [ngClass]="getEstadoBadgeClass(cierreDetalle.estado)">
+                {{cierreDetalle.estado | titlecase}}
+              </span>
+            </h2>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Columna Izquierda -->
+          <div class="col-md-6">
+            
+            <!-- Información del Periodo -->
+            <div class="card mb-3">
+              <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-calendar-alt mr-2"></i>Periodo
+                </h5>
+              </div>
+              <div class="card-body">
+                <dl class="row mb-0">
+                  <dt class="col-sm-5">Tipo:</dt>
+                  <dd class="col-sm-7">
+                    <span class="badge badge-info">{{cierreDetalle.tipo_periodo | titlecase}}</span>
+                  </dd>
+                  
+                  <dt class="col-sm-5">Año:</dt>
+                  <dd class="col-sm-7">{{cierreDetalle.anio}}</dd>
+                  
+                  <dt class="col-sm-5" *ngIf="cierreDetalle.mes">Mes:</dt>
+                  <dd class="col-sm-7" *ngIf="cierreDetalle.mes">{{getNombreMes(cierreDetalle.mes)}}</dd>
+                  
+                  <dt class="col-sm-5" *ngIf="cierreDetalle.trimestre">Trimestre:</dt>
+                  <dd class="col-sm-7" *ngIf="cierreDetalle.trimestre">T{{cierreDetalle.trimestre}}</dd>
+                  
+                  <dt class="col-sm-5">Fecha Inicio:</dt>
+                  <dd class="col-sm-7">{{formatDate(cierreDetalle.fecha_inicio)}}</dd>
+                  
+                  <dt class="col-sm-5">Fecha Fin:</dt>
+                  <dd class="col-sm-7">{{formatDate(cierreDetalle.fecha_fin)}}</dd>
+                </dl>
+              </div>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="card mb-3">
+              <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-chart-bar mr-2"></i>Estadísticas
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="row text-center">
+                  <div class="col-6">
+                    <div class="info-box bg-light">
+                      <span class="info-box-icon bg-info"><i class="fas fa-file-alt"></i></span>
+                      <div class="info-box-content">
+                        <span class="info-box-text">Documentos</span>
+                        <span class="info-box-number">{{cierreDetalle.total_documentos}}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="info-box bg-light">
+                      <span class="info-box-icon bg-warning"><i class="fas fa-database"></i></span>
+                      <div class="info-box-content">
+                        <span class="info-box-text">Tamaño</span>
+                        <span class="info-box-number" style="font-size: 1rem;">
+                          {{formatFileSize(cierreDetalle.total_tamano_bytes)}}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="card mb-3" *ngIf="cierreDetalle.observaciones">
+              <div class="card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-sticky-note mr-2"></i>Observaciones
+                </h5>
+              </div>
+              <div class="card-body">
+                <p class="mb-0">{{cierreDetalle.observaciones}}</p>
+              </div>
+            </div>
+
+            <!-- Motivo de Rechazo -->
+            <div class="card mb-3" *ngIf="cierreDetalle.motivo_rechazo">
+              <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-exclamation-triangle mr-2"></i>Motivo de Rechazo
+                </h5>
+              </div>
+              <div class="card-body">
+                <p class="mb-0">{{cierreDetalle.motivo_rechazo}}</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Columna Derecha -->
+          <div class="col-md-6">
+            
+            <!-- Alcance -->
+            <div class="card mb-3">
+              <div class="card-header bg-warning">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-building mr-2"></i>Alcance
+                </h5>
+              </div>
+              <div class="card-body">
+                <dl class="row mb-0">
+                  <dt class="col-sm-4">Área:</dt>
+                  <dd class="col-sm-8">
+                    <span [class]="cierreDetalle.area_id ? 'badge badge-primary' : 'badge badge-secondary'">
+                      {{getNombreArea(cierreDetalle.area_id)}}
+                    </span>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+
+            <!-- Cronología -->
+            <div class="card mb-3">
+              <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-history mr-2"></i>Cronología
+                </h5>
+              </div>
+              <div class="card-body">
+                <ul class="timeline timeline-sm">
+                  <li class="time-label">
+                    <span class="bg-info">Solicitud</span>
+                  </li>
+                  <li>
+                    <i class="fas fa-clock bg-info"></i>
+                    <div class="timeline-item">
+                      <span class="time"><i class="fas fa-calendar mr-1"></i>{{formatDate(cierreDetalle.fecha_solicitud)}}</span>
+                      <h3 class="timeline-header">Cierre solicitado</h3>
+                    </div>
+                  </li>
+                  
+                  <li *ngIf="cierreDetalle.fecha_validacion" class="time-label">
+                    <span class="bg-primary">Validación</span>
+                  </li>
+                  <li *ngIf="cierreDetalle.fecha_validacion">
+                    <i class="fas fa-check-circle bg-primary"></i>
+                    <div class="timeline-item">
+                      <span class="time"><i class="fas fa-calendar mr-1"></i>{{formatDate(cierreDetalle.fecha_validacion)}}</span>
+                      <h3 class="timeline-header">Cierre validado</h3>
+                    </div>
+                  </li>
+                  
+                  <li *ngIf="cierreDetalle.fecha_cierre" class="time-label">
+                    <span class="bg-success">Cierre</span>
+                  </li>
+                  <li *ngIf="cierreDetalle.fecha_cierre">
+                    <i class="fas fa-lock bg-success"></i>
+                    <div class="timeline-item">
+                      <span class="time"><i class="fas fa-calendar mr-1"></i>{{formatDate(cierreDetalle.fecha_cierre)}}</span>
+                      <h3 class="timeline-header">Cierre ejecutado</h3>
+                      <div class="timeline-body" *ngIf="cierreDetalle.hash_consolidado">
+                        <small><i class="fas fa-fingerprint mr-1"></i>Hash: {{cierreDetalle.hash_consolidado.substring(0, 16)}}...</small>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Información Técnica -->
+            <div class="card mb-3" *ngIf="cierreDetalle.hash_consolidado || cierreDetalle.ruta_backup">
+              <div class="card-header bg-dark text-white">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-cog mr-2"></i>Información Técnica
+                </h5>
+              </div>
+              <div class="card-body">
+                <dl class="row mb-0">
+                  <dt class="col-sm-4" *ngIf="cierreDetalle.hash_consolidado">Hash SHA-256:</dt>
+                  <dd class="col-sm-8" *ngIf="cierreDetalle.hash_consolidado">
+                    <code style="font-size: 0.75rem;">{{cierreDetalle.hash_consolidado}}</code>
+                  </dd>
+                  
+                  <dt class="col-sm-4" *ngIf="cierreDetalle.ruta_backup">Ruta Backup:</dt>
+                  <dd class="col-sm-8" *ngIf="cierreDetalle.ruta_backup">
+                    <small><i class="fas fa-folder mr-1"></i>{{cierreDetalle.ruta_backup}}</small>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDetalleModal()">
+          <i class="fas fa-times mr-2"></i>Cerrar
+        </button>
+        
+        <!-- Botones de acción según estado -->
+        <button *ngIf="cierreDetalle && cierreDetalle.estado === 'pendiente'" 
+                type="button" class="btn btn-primary" 
+                (click)="closeDetalleModal(); openEditModal(cierreDetalle)">
+          <i class="fas fa-edit mr-2"></i>Editar
+        </button>
+        
+        <button *ngIf="cierreDetalle && cierreDetalle.estado === 'pendiente'" 
+                type="button" class="btn btn-success" 
+                (click)="closeDetalleModal(); aprobarCierre(cierreDetalle)">
+          <i class="fas fa-check mr-2"></i>Aprobar
+        </button>
+        
+        <button *ngIf="cierreDetalle && (cierreDetalle.estado === 'pendiente' || cierreDetalle.estado === 'validado')" 
+                type="button" class="btn btn-danger" 
+                (click)="closeDetalleModal(); rechazarCierre(cierreDetalle)">
+          <i class="fas fa-times mr-2"></i>Rechazar
+        </button>
+        
+        <button *ngIf="cierreDetalle && cierreDetalle.estado === 'cerrado'" 
+                type="button" class="btn btn-warning" 
+                (click)="closeDetalleModal(); reabrirCierre(cierreDetalle)">
+          <i class="fas fa-undo mr-2"></i>Reabrir
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showDetalleModal" *ngIf="showDetalleModal"></div>
+

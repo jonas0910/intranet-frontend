@@ -1,0 +1,1237 @@
+<app-system-layout [title]="'Movimientos y Control'" [subtitle]="'Gestión de movimientos y traslados de activos'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Activos Fijos', url: '/activos-fijos'}, {label: 'Movimientos'}]"
+  [subsystem]="'activos-fijos'">
+
+
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'traslados'" (click)="setActiveTab('traslados')" role="tab">
+        <i class="fas fa-people-arrows mr-1"></i>Traslados de Activos
+        <span class="badge badge-warning ml-2" *ngIf="traslados.length > 0">{{traslados.length}}</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'movimientos'" (click)="setActiveTab('movimientos')" role="tab">
+        <i class="fas fa-list mr-1"></i>Movimientos Individuales
+      </a>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+
+    <!-- ========== TAB: MOVIMIENTOS INDIVIDUALES ========== -->
+    <div class="tab-pane fade" [class.show]="activeTab === 'movimientos'" [class.active]="activeTab === 'movimientos'">
+
+      <!-- Card de Movimientos con Design System -->
+      <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-success'"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-list mr-1"></i> Historial de Movimientos
+            </h3>
+            <span class="badge"
+              [ngClass]="cv.cardOutlineColor ? 'bg-' + cv.cardOutlineColor.replace('card-', '') : 'badge-info'"
+              *ngIf="cv.showRecordCount">{{paginacion.total}}</span>
+            <button class="btn btn-sm btn-outline-info ml-1 px-2" *ngIf="cv.collapsibleFilters"
+              (click)="isFiltersCollapsed = !isFiltersCollapsed"
+              [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'" style="height: 24px; line-height: 1;">
+              <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+            </button>
+            <ng-container *ngIf="cv.showExportButtons">
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'"
+                (click)="onExportExcel()">
+                <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{ cv.excelBtnLabel || 'Excel' }}
+              </button>
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'"
+                (click)="onExportPdf()">
+                <i [class]="(cv.pdfBtnIcon || 'fas fa-file-pdf') + ' mr-1'"></i> {{ cv.pdfBtnLabel || 'PDF' }}
+              </button>
+            </ng-container>
+          </div>
+          <div class="ms-auto flex-shrink-0">
+            <button type="button" class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-primary'"
+              (click)="abrirModalCrear()">
+              <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> Nuevo Movimiento
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros colapsables -->
+        <div class="border-bottom bg-light overflow-hidden" [style.max-height]="isFiltersCollapsed ? '0px' : '500px'"
+          [style.padding]="isFiltersCollapsed ? '0px' : '0.5rem'"
+          style="transition: max-height 0.3s ease, padding 0.3s ease;">
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="mb-1 ds-crud-label">Buscar</label>
+              <input type="text" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.search"
+                (ngModelChange)="onFilterChange()" placeholder="Código, descripción...">
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Tipo</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.tipo_movimiento"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todos</option>
+                <option *ngFor="let tipo of tiposMovimiento" [value]="tipo.value">{{tipo.label}}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Desde</label>
+              <input type="date" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.fecha_desde"
+                (ngModelChange)="onFilterChange()">
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Hasta</label>
+              <input type="date" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.fecha_hasta"
+                (ngModelChange)="onFilterChange()">
+            </div>
+            <div class="col-md-1">
+              <label class="mb-1 ds-crud-label">Por pág</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.per_page"
+                (ngModelChange)="onFilterChange()" [disabled]="loading">
+                <option *ngFor="let size of cv.pageSizeOptions" [ngValue]="size">{{size}}</option>
+              </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-sm btn-outline-secondary btn-block" (click)="limpiarFiltros()">
+                <i class="fas fa-redo mr-1"></i> Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card-body px-0 pt-0 pb-2">
+          <div class="table-responsive p-2">
+            <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" [ngClass]="cv.tableClasses"
+              class="table mb-0 w-100 ds-crud-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th>Activo</th>
+                  <th>Desde</th>
+                  <th>Hacia</th>
+                  <th>Motivo</th>
+                  <th style="width: 120px;" class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let movimiento of movimientos; let i = index">
+                  <td>{{(paginacion.currentPage - 1) * paginacion.perPage + i + 1}}</td>
+                  <td>
+                    <span class="badge badge-{{getTipoMovimientoConfig(movimiento.tipo_movimiento).color}}">
+                      <i class="fas {{getTipoMovimientoConfig(movimiento.tipo_movimiento).icon}} mr-1"></i>
+                      {{getTipoMovimientoConfig(movimiento.tipo_movimiento).label}}
+                    </span>
+                  </td>
+                  <td>{{formatDate(movimiento.fecha_movimiento)}}</td>
+                  <td>
+                    <strong>{{movimiento.activo?.codigo_patrimonial}}</strong>
+                    <br>
+                    <small class="text-muted">{{movimiento.activo?.descripcion}}</small>
+                  </td>
+                  <td>{{movimiento.unidad_organica_origen?.name || movimiento.ubicacion_origen?.nombre || '-'}}</td>
+                  <td>{{movimiento.unidad_organica_destino?.name || movimiento.ubicacion_destino?.nombre || '-'}}</td>
+                  <td>
+                    <small>{{movimiento.motivo || '-'}}</small>
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                      <button type="button" class="btn" [ngClass]="cv.viewBtnClass || 'btn-info'"
+                        (click)="abrirModalVer(movimiento.id)">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button type="button" class="btn" [ngClass]="cv.editBtnClass || 'btn-warning'"
+                        (click)="abrirModalEditar(movimiento.id)">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="btn" [ngClass]="cv.deleteBtnClass || 'btn-danger'"
+                        (click)="abrirModalEliminar(movimiento.id)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="movimientos.length === 0">
+                  <td colspan="8" class="text-center p-5">
+                    <i class="fas fa-inbox fa-4x text-muted mb-3 d-block"></i>
+                    <p class="text-muted">No se encontraron movimientos</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Paginación DS -->
+        <div class="card-footer clearfix" *ngIf="paginacion.lastPage > 1">
+          <div class="row">
+            <div class="col-sm-12 col-md-5">
+              <div class="dataTables_info" style="font-size: var(--ds-font-size);">
+                Mostrando {{ paginacion.from || 1 }} a {{ paginacion.to || 0 }} de {{ paginacion.total }} registros
+              </div>
+            </div>
+            <div class="col-sm-12 col-md-7">
+              <ul class="pagination m-0 float-right" [ngClass]="cv.paginationSize || 'pagination-sm'">
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage > 1 && onPageChange(1)">«</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage > 1 && onPageChange(paginacion.currentPage - 1)">‹</a>
+                </li>
+                <li class="page-item" *ngFor="let page of getPagesArray()"
+                  [class.active]="page === paginacion.currentPage" [class.disabled]="page === '...'">
+                  <a class="page-link" href="javascript:void(0)" (click)="page !== '...' && onPageChange(+page)">{{ page
+                    }}</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage < paginacion.lastPage && onPageChange(paginacion.currentPage + 1)">›</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage < paginacion.lastPage && onPageChange(paginacion.lastPage)">»</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========== TAB: TRASLADOS DE ACTIVOS ========== -->
+    <div class="tab-pane fade" [class.show]="activeTab === 'traslados'" [class.active]="activeTab === 'traslados'">
+
+      <!-- Card de Traslados con Design System -->
+      <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-success'"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+
+        <!-- Toolbar Traslados -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-people-arrows mr-1"></i> Historial de Traslados
+            </h3>
+            <span class="badge"
+              [ngClass]="cv.cardOutlineColor ? 'bg-' + cv.cardOutlineColor.replace('card-', '') : 'badge-info'">{{traslados.length}}</span>
+          </div>
+          <div class="ms-auto flex-shrink-0">
+            <button type="button" class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-success'"
+              (click)="abrirModalNuevoTraslado()">
+              <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> Nuevo Traslado
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body px-0 pt-0 pb-2">
+          <div class="table-responsive p-2">
+            <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Código</th>
+                  <th>Fecha</th>
+                  <th>Unidad orgánica Origen</th>
+                  <th>Unidad orgánica Destino</th>
+                  <th>Responsable Origen</th>
+                  <th>Responsable Destino</th>
+                  <th>Motivo</th>
+                  <th>Activos</th>
+                  <th class="text-right">Valor Total</th>
+                  <th>Estado</th>
+                  <th style="width: 220px;" class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let traslado of traslados; let i = index">
+                  <td>{{i + 1}}</td>
+                  <td>
+                    <strong class="text-primary">{{traslado.codigo}}</strong>
+                  </td>
+                  <td>{{formatDate(traslado.fecha_traslado)}}</td>
+                  <td>
+                    <i class="fas fa-building mr-1 text-danger"></i>
+                    <small>{{traslado.unidad_organica_origen?.name || '-'}}</small>
+                  </td>
+                  <td>
+                    <i class="fas fa-building mr-1 text-success"></i>
+                    <small>{{traslado.unidad_organica_destino?.name || '-'}}</small>
+                  </td>
+                  <td>
+                    <i class="fas fa-user-minus mr-1 text-muted"></i>
+                    <small>{{traslado.responsable_origen?.name}}</small>
+                  </td>
+                  <td>
+                    <i class="fas fa-user-plus mr-1 text-muted"></i>
+                    <small>{{traslado.responsable_destino?.name}}</small>
+                  </td>
+                  <td>
+                    <small>{{getMotivoLabel(traslado.motivo)}}</small>
+                  </td>
+                  <td>
+                    <span class="badge badge-secondary">
+                      {{traslado.total_activos}} activos
+                    </span>
+                  </td>
+                  <td class="text-right">
+                    <strong>{{formatCurrency(traslado.valor_total)}}</strong>
+                  </td>
+                  <td>
+                    <span class="badge badge-pill" [ngClass]="getEstadoTrasladoBadge(traslado.estado)">
+                      {{formatEstadoTraslado(traslado.estado)}}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                      <button type="button" class="btn btn-info" (click)="verDetalleTraslado(traslado.id)"
+                        title="Ver Detalle">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button type="button" class="btn btn-success" *ngIf="traslado.estado === 'pendiente'"
+                        (click)="aprobarTraslado(traslado.id)" title="Aprobar">
+                        <i class="fas fa-check"></i>
+                      </button>
+                      <button type="button" class="btn btn-danger" *ngIf="traslado.estado === 'pendiente'"
+                        (click)="rechazarTraslado(traslado.id)" title="Rechazar">
+                        <i class="fas fa-times"></i>
+                      </button>
+                      <button type="button" class="btn btn-warning" *ngIf="traslado.estado === 'aprobado'"
+                        (click)="completarTraslado(traslado.id)" title="Completar Traslado">
+                        <i class="fas fa-arrow-right"></i>
+                      </button>
+                      <button type="button" class="btn btn-secondary" (click)="imprimirNotaTraslado(traslado)"
+                        title="Imprimir Nota de Traslado">
+                        <i class="fas fa-print"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="traslados.length === 0">
+                  <td colspan="12" class="text-center p-5">
+                    <i class="fas fa-inbox fa-4x text-muted mb-3 d-block"></i>
+                    <p class="text-muted">No hay traslados registrados</p>
+                    <button class="btn btn-primary" (click)="abrirModalNuevoTraslado()">
+                      <i class="fas fa-plus mr-1"></i>Crear Primer Traslado
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</app-system-layout>
+
+<!-- ==================== MODALES DE MOVIMIENTOS ==================== -->
+
+<!-- Modal Crear/Editar Movimiento -->
+<div class="modal fade" id="modalMovimiento" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-exchange-alt mr-2"></i>
+          {{modoModal === 'crear' ? 'Nuevo Movimiento' : 'Editar Movimiento'}}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Tipo de Movimiento <span class="text-danger">*</span></label>
+                <select class="form-control ds-select2" [(ngModel)]="movimientoSeleccionado.tipo_movimiento" name="tipo_movimiento"
+                  required>
+                  <option *ngFor="let tipo of tiposMovimiento" [value]="tipo.value">
+                    {{tipo.label}}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Fecha <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" [(ngModel)]="movimientoSeleccionado.fecha_movimiento"
+                  name="fecha_movimiento" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Activo <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="fas fa-search text-muted"></i></span>
+              </div>
+              <select class="form-control ds-select2" [(ngModel)]="movimientoSeleccionado.activo_id" name="activo_id" required>
+                <option value="">Buscar activo por código o descripción...</option>
+                <option *ngFor="let activo of activos" [value]="activo.id">
+                  {{activo.codigo_patrimonial}} - {{activo.descripcion}}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Ubicación Origen (Unidad orgánica)</label>
+                <select class="form-control ds-select2" [(ngModel)]="movimientoSeleccionado.unidad_organica_origen_id"
+                  name="unidad_organica_origen_id">
+                  <option value="">Seleccione unidad orgánica</option>
+                  <option *ngFor="let uo of unidadesOrganicas" [value]="uo.id ?? ''">
+                    {{uo.code}} - {{uo.name}}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Ubicación Destino (Unidad orgánica)</label>
+                <select class="form-control ds-select2" [(ngModel)]="movimientoSeleccionado.unidad_organica_destino_id"
+                  name="unidad_organica_destino_id">
+                  <option value="">Seleccione unidad orgánica</option>
+                  <option *ngFor="let uo of unidadesOrganicas" [value]="uo.id ?? ''">
+                    {{uo.code}} - {{uo.name}}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Motivo <span class="text-danger">*</span></label>
+            <textarea class="form-control" rows="3" [(ngModel)]="movimientoSeleccionado.motivo" name="motivo"
+              required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Observaciones</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="movimientoSeleccionado.observaciones"
+              name="observaciones"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Documento de Respaldo</label>
+            <input type="text" class="form-control" [(ngModel)]="movimientoSeleccionado.documento_respaldo"
+              name="documento_respaldo" placeholder="Ej: OF-001-2024">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="guardarMovimiento()">
+          <i class="fas fa-save mr-1"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODALES DE TRASLADOS ==================== -->
+
+<!-- Modal Detalle del Traslado (crear / editar / ver) - Maestro detalle -->
+<div class="modal fade" id="modalDetalleTraslado" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-alt mr-2"></i>
+          {{ modoTrasladoModal === 'nuevo' ? 'Nuevo Traslado de Activos' : (modoTrasladoModal === 'editar' ? 'Editar
+          Traslado' : 'Detalle del Traslado') }}
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Pestañas: Datos del traslado | Detalle de bienes -->
+        <ul class="nav nav-tabs mb-3" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="tabTrasladoModal === 'cabecera'" (click)="tabTrasladoModal = 'cabecera'"
+              role="tab">
+              <i class="fas fa-file-alt mr-1"></i>Datos del traslado
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="tabTrasladoModal === 'detalle'" (click)="tabTrasladoModal = 'detalle'"
+              role="tab">
+              <i class="fas fa-list mr-1"></i>Detalle de bienes
+              <span class="badge badge-secondary ml-1"
+                *ngIf="trasladoSeleccionado?.total_activos">{{trasladoSeleccionado?.total_activos}}</span>
+            </a>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+          <!-- ========== PESTAÑA: DATOS DEL TRASLADO ========== -->
+          <div class="tab-pane" [class.show]="tabTrasladoModal === 'cabecera'"
+            [class.active]="tabTrasladoModal === 'cabecera'">
+
+            <!-- MODO NUEVO: formulario cabecera -->
+            <ng-container *ngIf="modoTrasladoModal === 'nuevo'">
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle mr-2"></i>
+                Complete la información del traslado. Luego use la pestaña "Detalle de bienes" para agregar los activos.
+              </div>
+              <form>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>Fecha del Traslado <span class="text-danger">*</span></label>
+                      <input type="date" class="form-control" [(ngModel)]="nuevoTraslado.fecha_traslado"
+                        name="fecha_traslado" required>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>Motivo <span class="text-danger">*</span></label>
+                      <select class="form-control ds-select2" [(ngModel)]="nuevoTraslado.motivo" name="motivo" required>
+                        <option value="cese_funciones">Cese de Funciones</option>
+                        <option value="cambio_cargo">Cambio de Cargo</option>
+                        <option value="rotacion_personal">Rotación de Personal</option>
+                        <option value="reorganizacion">Reorganización</option>
+                        <option value="transferencia_area">Transferencia de Área</option>
+                        <option value="otro">Otro</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>Unidad orgánica Origen (Desde) <span class="text-danger">*</span></label>
+                      <select class="form-control ds-select2" [(ngModel)]="nuevoTraslado.unidad_organica_origen_id"
+                        name="unidad_organica_origen_id" required>
+                        <option value="">Seleccione unidad orgánica</option>
+                        <option *ngFor="let uo of unidadesOrganicas" [value]="uo.id ?? ''">{{uo.code}} - {{uo.name}}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>Unidad orgánica Destino (Hacia) <span class="text-danger">*</span></label>
+                      <select class="form-control ds-select2" [(ngModel)]="nuevoTraslado.unidad_organica_destino_id"
+                        name="unidad_organica_destino_id" required>
+                        <option value="">Seleccione unidad orgánica</option>
+                        <option *ngFor="let uo of unidadesOrganicas" [value]="uo.id ?? ''">{{uo.code}} - {{uo.name}}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>Responsable Origen (Entrega) <span class="text-danger">*</span></label>
+                      <select class="form-control ds-select2" [(ngModel)]="nuevoTraslado.responsable_origen_id"
+                        name="responsable_origen_id" required>
+                        <option value="">Buscar responsable...</option>
+                        <option *ngFor="let usuario of usuarios" [value]="usuario.id">{{usuario.name}}</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>Responsable Destino (Recibe) <span class="text-danger">*</span></label>
+                      <select class="form-control ds-select2" [(ngModel)]="nuevoTraslado.responsable_destino_id"
+                        name="responsable_destino_id" required>
+                        <option value="">Buscar responsable...</option>
+                        <option *ngFor="let usuario of usuarios" [value]="usuario.id">{{usuario.name}}</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Descripción del Motivo</label>
+                  <textarea class="form-control" rows="2" [(ngModel)]="nuevoTraslado.descripcion_motivo"
+                    name="descripcion_motivo"></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Documento de Sustento</label>
+                  <input type="text" class="form-control" [(ngModel)]="nuevoTraslado.documento_sustento"
+                    name="documento_sustento" placeholder="Ej: RESOLUCIÓN N° 001-2025">
+                </div>
+                <div class="form-group">
+                  <label>Observaciones</label>
+                  <textarea class="form-control" rows="2" [(ngModel)]="nuevoTraslado.observaciones"
+                    name="observaciones"></textarea>
+                </div>
+              </form>
+            </ng-container>
+
+            <!-- MODO EDITAR / VER: cabecera -->
+            <ng-container *ngIf="trasladoSeleccionado && modoTrasladoModal !== 'nuevo'">
+              <!-- Cabecera editable (solo si estado pendiente) -->
+              <ng-container *ngIf="trasladoSeleccionado.estado === 'pendiente'">
+                <div class="alert alert-light border mb-3">
+                  <strong><i class="fas fa-edit mr-2"></i>Datos del traslado (puede editar)</strong>
+                </div>
+                <form>
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>Código</label>
+                        <input type="text" class="form-control bg-light" [value]="trasladoSeleccionado.codigo" readonly>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>Fecha <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" [(ngModel)]="trasladoSeleccionado.fecha_traslado"
+                          name="fecha_traslado" required>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>Motivo <span class="text-danger">*</span></label>
+                        <select class="form-control ds-select2" [(ngModel)]="trasladoSeleccionado.motivo" name="motivo" required>
+                          <option value="cese_funciones">Cese de Funciones</option>
+                          <option value="cambio_cargo">Cambio de Cargo</option>
+                          <option value="rotacion_personal">Rotación de Personal</option>
+                          <option value="reorganizacion">Reorganización</option>
+                          <option value="transferencia_area">Transferencia de Área</option>
+                          <option value="otro">Otro</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>Estado</label>
+                        <span class="badge badge-pill p-2 d-block mt-2"
+                          [ngClass]="getEstadoTrasladoBadge(trasladoSeleccionado.estado)">
+                          {{formatEstadoTraslado(trasladoSeleccionado.estado)}}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label>Unidad orgánica Origen <span class="text-danger">*</span></label>
+                        <select class="form-control ds-select2" [(ngModel)]="trasladoSeleccionado.unidad_organica_origen_id"
+                          name="uo_origen">
+                          <option *ngFor="let uo of unidadesOrganicas" [value]="uo.id ?? ''">{{uo.code}} - {{uo.name}}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label>Unidad orgánica Destino <span class="text-danger">*</span></label>
+                        <select class="form-control ds-select2" [(ngModel)]="trasladoSeleccionado.unidad_organica_destino_id"
+                          name="uo_destino">
+                          <option *ngFor="let uo of unidadesOrganicas" [value]="uo.id ?? ''">{{uo.code}} - {{uo.name}}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label>Responsable Origen <span class="text-danger">*</span></label>
+                        <select class="form-control ds-select2" [(ngModel)]="trasladoSeleccionado.responsable_origen_id"
+                          name="resp_origen">
+                          <option *ngFor="let usuario of usuarios" [value]="usuario.id">{{usuario.name}}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label>Responsable Destino <span class="text-danger">*</span></label>
+                        <select class="form-control ds-select2" [(ngModel)]="trasladoSeleccionado.responsable_destino_id"
+                          name="resp_destino">
+                          <option *ngFor="let usuario of usuarios" [value]="usuario.id">{{usuario.name}}</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Descripción del Motivo</label>
+                    <textarea class="form-control" rows="2" [(ngModel)]="trasladoSeleccionado.descripcion_motivo"
+                      name="descripcion_motivo"></textarea>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label>Documento de Sustento</label>
+                        <input type="text" class="form-control" [(ngModel)]="trasladoSeleccionado.documento_sustento"
+                          name="documento_sustento">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label>Observaciones</label>
+                        <textarea class="form-control" rows="2" [(ngModel)]="trasladoSeleccionado.observaciones"
+                          name="observaciones"></textarea>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </ng-container>
+
+              <!-- Cabecera solo lectura (estado no pendiente) -->
+              <ng-container *ngIf="trasladoSeleccionado.estado !== 'pendiente'">
+                <div class="row mb-3">
+                  <div class="col-md-3">
+                    <h6><i class="fas fa-barcode mr-2"></i>Código</h6>
+                    <p class="text-primary"><strong>{{trasladoSeleccionado.codigo}}</strong></p>
+                  </div>
+                  <div class="col-md-3">
+                    <h6><i class="fas fa-calendar mr-2"></i>Fecha</h6>
+                    <p>{{formatDate(trasladoSeleccionado.fecha_traslado)}}</p>
+                  </div>
+                  <div class="col-md-3">
+                    <h6><i class="fas fa-tag mr-2"></i>Motivo</h6>
+                    <p>{{getMotivoLabel(trasladoSeleccionado.motivo)}}</p>
+                  </div>
+                  <div class="col-md-3">
+                    <h6><i class="fas fa-flag mr-2"></i>Estado</h6>
+                    <span class="badge badge-pill p-2" [ngClass]="getEstadoTrasladoBadge(trasladoSeleccionado.estado)">
+                      {{formatEstadoTraslado(trasladoSeleccionado.estado)}}
+                    </span>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <div class="card bg-light">
+                      <div class="card-body">
+                        <h6><i class="fas fa-building mr-2 text-danger"></i>Unidad Origen</h6>
+                        <p class="mb-0"><strong>{{trasladoSeleccionado.unidad_organica_origen?.name || '-'}}</strong>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card bg-light">
+                      <div class="card-body">
+                        <h6><i class="fas fa-building mr-2 text-success"></i>Unidad Destino</h6>
+                        <p class="mb-0"><strong>{{trasladoSeleccionado.unidad_organica_destino?.name || '-'}}</strong>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <h6><i class="fas fa-user-minus mr-2"></i>Responsable Origen</h6>
+                    <p class="mb-0"><strong>{{trasladoSeleccionado.responsable_origen?.name}}</strong></p>
+                  </div>
+                  <div class="col-md-6">
+                    <h6><i class="fas fa-user-plus mr-2"></i>Responsable Destino</h6>
+                    <p class="mb-0"><strong>{{trasladoSeleccionado.responsable_destino?.name}}</strong></p>
+                  </div>
+                </div>
+                <div class="row" *ngIf="trasladoSeleccionado.estado !== 'pendiente'">
+                  <div class="col-md-4">
+                    <div class="info-box bg-primary">
+                      <span class="info-box-icon"><i class="fas fa-boxes"></i></span>
+                      <div class="info-box-content">
+                        <span class="info-box-text">Total Activos</span>
+                        <span class="info-box-number">{{trasladoSeleccionado.total_activos}}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="info-box bg-success">
+                      <span class="info-box-icon"><i class="fas fa-dollar-sign"></i></span>
+                      <div class="info-box-content">
+                        <span class="info-box-text">Valor Total</span>
+                        <span class="info-box-number">{{formatCurrency(trasladoSeleccionado.valor_total)}}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+              <div class="row mt-4"
+                *ngIf="trasladoSeleccionado.descripcion_motivo || trasladoSeleccionado.documento_sustento">
+                <div class="col-md-6" *ngIf="trasladoSeleccionado.descripcion_motivo">
+                  <h6><i class="fas fa-comment mr-2"></i>Descripción</h6>
+                  <p class="bg-light p-3 rounded">{{trasladoSeleccionado.descripcion_motivo}}</p>
+                </div>
+                <div class="col-md-6" *ngIf="trasladoSeleccionado.documento_sustento">
+                  <h6><i class="fas fa-file mr-2"></i>Documento de Sustento</h6>
+                  <p class="bg-light p-3 rounded">{{trasladoSeleccionado.documento_sustento}}</p>
+                </div>
+              </div>
+              <div class="row mt-4" *ngIf="trasladoSeleccionado.fecha_aprobacion">
+                <div class="col-md-12">
+                  <div class="alert" [ngClass]="{
+                'alert-info': trasladoSeleccionado.estado === 'aprobado',
+                'alert-danger': trasladoSeleccionado.estado === 'rechazado',
+                'alert-success': trasladoSeleccionado.estado === 'completado'
+              }">
+                    <h6><i class="fas fa-user-check mr-2"></i>
+                      {{trasladoSeleccionado.estado === 'aprobado' ? 'Aprobado' : trasladoSeleccionado.estado ===
+                      'rechazado' ? 'Rechazado' : 'Completado'}} por:</h6>
+                    <p class="mb-0"><strong>{{trasladoSeleccionado.aprobador?.name}}</strong></p>
+                    <p class="mb-0">Fecha: {{formatDate(trasladoSeleccionado.fecha_aprobacion)}}</p>
+                    <p class="mb-0" *ngIf="trasladoSeleccionado.comentario_aprobacion"><strong>Comentario:</strong>
+                      {{trasladoSeleccionado.comentario_aprobacion}}</p>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+
+          </div>
+          <!-- ========== PESTAÑA: DETALLE DE BIENES ========== -->
+          <div class="tab-pane" [class.show]="tabTrasladoModal === 'detalle'"
+            [class.active]="tabTrasladoModal === 'detalle'">
+
+            <!-- Modo nuevo: mensaje para crear primero -->
+            <ng-container *ngIf="modoTrasladoModal === 'nuevo'">
+              <div class="alert alert-secondary">
+                <i class="fas fa-box-open mr-2"></i>Guarde el traslado desde la pestaña "Datos del traslado" para poder
+                agregar bienes aquí.
+              </div>
+            </ng-container>
+
+            <!-- Modo editar/ver: tabla de bienes -->
+            <ng-container *ngIf="trasladoSeleccionado && modoTrasladoModal !== 'nuevo'">
+              <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th>#</th>
+                      <th>Código Patrimonial</th>
+                      <th>Descripción</th>
+                      <th class="text-right">Valor</th>
+                      <th>Condición</th>
+                      <th>Ubicación</th>
+                      <th *ngIf="trasladoSeleccionado.estado === 'pendiente'" style="width: 80px;">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let detalle of trasladoSeleccionado.detalles; let i = index">
+                      <td>{{i + 1}}</td>
+                      <td><strong>{{detalle.codigo_patrimonial}}</strong></td>
+                      <td>{{detalle.descripcion_activo}}</td>
+                      <td class="text-right">{{formatCurrency(detalle.valor_actual)}}</td>
+                      <td>
+                        <span class="badge badge-sm" [ngClass]="{
+                      'badge-success': detalle.condicion === 'bueno',
+                      'badge-warning': detalle.condicion === 'regular',
+                      'badge-danger': detalle.condicion === 'malo'
+                    }">
+                          {{detalle.condicion | titlecase}}
+                        </span>
+                      </td>
+                      <td>{{detalle.ubicacion_origen?.nombre}}</td>
+                      <td *ngIf="trasladoSeleccionado.estado === 'pendiente'" class="text-center">
+                        <button class="btn btn-sm btn-danger"
+                          (click)="eliminarActivoTraslado(trasladoSeleccionado.id, detalle.id)">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr *ngIf="!trasladoSeleccionado.detalles || trasladoSeleccionado.detalles.length === 0">
+                      <td [attr.colspan]="trasladoSeleccionado.estado === 'pendiente' ? 7 : 6" class="text-center p-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-2 d-block"></i>
+                        <p class="text-muted mb-2">No hay bienes en este traslado</p>
+                        <button class="btn btn-sm btn-primary" *ngIf="trasladoSeleccionado.estado === 'pendiente'"
+                          (click)="agregarMasActivosDesdeDetalle(trasladoSeleccionado)">
+                          <i class="fas fa-plus mr-1"></i>Agregar bienes
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </ng-container>
+
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cerrar
+        </button>
+        <!-- Modo nuevo: crear traslado -->
+        <button type="button" class="btn btn-success" *ngIf="modoTrasladoModal === 'nuevo'" (click)="crearTraslado()">
+          <i class="fas fa-save mr-1"></i>Crear Traslado
+        </button>
+        <!-- Modo editar: guardar cabecera y agregar bienes -->
+        <ng-container *ngIf="trasladoSeleccionado && modoTrasladoModal === 'editar'">
+          <button type="button" class="btn btn-primary" (click)="agregarMasActivosDesdeDetalle(trasladoSeleccionado)">
+            <i class="fas fa-plus mr-1"></i>Agregar bienes
+          </button>
+          <button type="button" class="btn btn-primary" (click)="guardarCabeceraTraslado()">
+            <i class="fas fa-save mr-1"></i>Guardar cabecera
+          </button>
+          <button type="button" class="btn btn-success" *ngIf="trasladoSeleccionado.total_activos > 0"
+            (click)="aprobarDesdeDetalle(trasladoSeleccionado.id)">
+            <i class="fas fa-check mr-1"></i>Aprobar Traslado
+          </button>
+          <button type="button" class="btn btn-warning" *ngIf="trasladoSeleccionado.estado === 'aprobado'"
+            (click)="completarDesdeDetalle(trasladoSeleccionado.id)">
+            <i class="fas fa-arrow-right mr-1"></i>Completar Traslado
+          </button>
+        </ng-container>
+        <!-- Modo ver: solo imprimir -->
+        <button type="button" class="btn btn-outline-dark"
+          *ngIf="trasladoSeleccionado && (modoTrasladoModal === 'ver' || modoTrasladoModal === 'editar')"
+          (click)="imprimirNotaTraslado(trasladoSeleccionado)">
+          <i class="fas fa-print mr-1"></i>Imprimir Nota
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modalAgregarActivos" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+        [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title">
+          <i class="fas fa-boxes mr-2"></i>Seleccionar Activos para Trasladar
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" *ngIf="trasladoSeleccionado" [style.background]="mc.bodyBg">
+
+        <div class="alert alert-success mb-3">
+          <div class="row">
+            <div class="col-md-12">
+              <strong>Traslado:</strong> {{trasladoSeleccionado.codigo}} <br>
+              <strong>Unidad origen:</strong> {{trasladoSeleccionado.unidad_organica_origen?.name || '-'}}
+              <i class="fas fa-arrow-right mx-2"></i>
+              <strong>Unidad destino:</strong> {{trasladoSeleccionado.unidad_organica_destino?.name || '-'}} <br>
+              <strong>De (responsable):</strong> {{trasladoSeleccionado.responsable_origen?.name}}
+              <i class="fas fa-arrow-right mx-2"></i>
+              <strong>Para (responsable):</strong> {{trasladoSeleccionado.responsable_destino?.name}}
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <button class="btn btn-sm btn-primary mr-2" (click)="seleccionarTodosActivos()">
+              <i class="fas fa-check-double mr-1"></i>Seleccionar Todos
+            </button>
+            <button class="btn btn-sm btn-secondary" (click)="deseleccionarTodosActivos()">
+              <i class="fas fa-times mr-1"></i>Deseleccionar Todos
+            </button>
+            <span class="ml-3">
+              <i class="fas fa-boxes mr-1"></i>
+              Seleccionados: <strong class="text-primary">{{activosSeleccionados.length}}</strong>
+            </span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-hover">
+            <thead class="thead-light">
+              <tr>
+                <th style="width: 50px;">
+                  <input type="checkbox"
+                    [checked]="activosSeleccionados.length === activosDisponibles.length && activosDisponibles.length > 0"
+                    (change)="activosSeleccionados.length === activosDisponibles.length ? deseleccionarTodosActivos() : seleccionarTodosActivos()">
+                </th>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Categoría</th>
+                <th>Ubicación</th>
+                <th class="text-right">Valor</th>
+                <th>Condición</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let activo of activosDisponibles">
+                <td>
+                  <input type="checkbox" [checked]="activosSeleccionados.includes(activo.id)"
+                    (change)="toggleActivoSeleccionado(activo.id)">
+                </td>
+                <td><strong>{{activo.codigo_patrimonial}}</strong></td>
+                <td>{{activo.descripcion}}</td>
+                <td>{{activo.categoria?.nombre}}</td>
+                <td>{{activo.ubicacion?.nombre}}</td>
+                <td class="text-right">{{formatCurrency(activo.valor_neto)}}</td>
+                <td>
+                  <span class="badge badge-sm" [ngClass]="{
+                    'badge-success': activo.condicion === 'bueno',
+                    'badge-warning': activo.condicion === 'regular',
+                    'badge-danger': activo.condicion === 'malo',
+                    'badge-secondary': activo.condicion === 'obsoleto'
+                  }">
+                    {{activo.condicion | titlecase}}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="activosDisponibles.length === 0">
+                <td colspan="7" class="text-center p-5">
+                  <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
+                  <p class="text-muted">El responsable de origen no tiene activos asignados</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-success" (click)="agregarActivosAlTraslado()"
+          [disabled]="activosSeleccionados.length === 0">
+          <i class="fas fa-plus-circle mr-1"></i>Agregar {{activosSeleccionados.length}} Activo(s)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalle del Traslado -->
+<div class="modal fade" id="modalDetalleTraslado" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-alt mr-2"></i>Detalle del Traslado
+        </h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" *ngIf="trasladoSeleccionado">
+
+        <!-- Información de Cabecera -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <h6><i class="fas fa-barcode mr-2"></i>Código</h6>
+            <p class="text-primary"><strong>{{trasladoSeleccionado.codigo}}</strong></p>
+          </div>
+          <div class="col-md-3">
+            <h6><i class="fas fa-calendar mr-2"></i>Fecha</h6>
+            <p>{{formatDate(trasladoSeleccionado.fecha_traslado)}}</p>
+          </div>
+          <div class="col-md-3">
+            <h6><i class="fas fa-tag mr-2"></i>Motivo</h6>
+            <p>{{getMotivoLabel(trasladoSeleccionado.motivo)}}</p>
+          </div>
+          <div class="col-md-3">
+            <h6><i class="fas fa-flag mr-2"></i>Estado</h6>
+            <span class="badge badge-pill p-2" [ngClass]="getEstadoTrasladoBadge(trasladoSeleccionado.estado)">
+              {{formatEstadoTraslado(trasladoSeleccionado.estado)}}
+            </span>
+          </div>
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6><i class="fas fa-building mr-2 text-danger"></i>Unidad orgánica Origen (Desde)</h6>
+                <p class="mb-0"><strong>{{trasladoSeleccionado.unidad_organica_origen?.name || '-'}}</strong></p>
+                <small class="text-muted"
+                  *ngIf="trasladoSeleccionado.unidad_organica_origen?.code">{{trasladoSeleccionado.unidad_organica_origen?.code}}</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6><i class="fas fa-building mr-2 text-success"></i>Unidad orgánica Destino (Hacia)</h6>
+                <p class="mb-0"><strong>{{trasladoSeleccionado.unidad_organica_destino?.name || '-'}}</strong></p>
+                <small class="text-muted"
+                  *ngIf="trasladoSeleccionado.unidad_organica_destino?.code">{{trasladoSeleccionado.unidad_organica_destino?.code}}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6><i class="fas fa-user-minus mr-2 text-danger"></i>Responsable Origen (Entrega)</h6>
+                <p class="mb-0"><strong>{{trasladoSeleccionado.responsable_origen?.name}}</strong></p>
+                <small class="text-muted">{{trasladoSeleccionado.responsable_origen?.email}}</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6><i class="fas fa-user-plus mr-2 text-success"></i>Responsable Destino (Recibe)</h6>
+                <p class="mb-0"><strong>{{trasladoSeleccionado.responsable_destino?.name}}</strong></p>
+                <small class="text-muted">{{trasladoSeleccionado.responsable_destino?.email}}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <div class="info-box bg-primary">
+              <span class="info-box-icon"><i class="fas fa-boxes"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text">Total de Activos</span>
+                <span class="info-box-number">{{trasladoSeleccionado.total_activos}}</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="info-box bg-success">
+              <span class="info-box-icon"><i class="fas fa-dollar-sign"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text">Valor Total</span>
+                <span class="info-box-number">{{formatCurrency(trasladoSeleccionado.valor_total)}}</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="info-box" [ngClass]="{
+              'bg-warning': trasladoSeleccionado.estado === 'pendiente',
+              'bg-info': trasladoSeleccionado.estado === 'aprobado',
+              'bg-success': trasladoSeleccionado.estado === 'completado',
+              'bg-danger': trasladoSeleccionado.estado === 'rechazado'
+            }">
+              <span class="info-box-icon"><i class="fas fa-flag"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text">Estado</span>
+                <span class="info-box-number">{{formatEstadoTraslado(trasladoSeleccionado.estado)}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr>
+
+        <!-- Lista de Activos incluidos -->
+        <h6 class="mb-3"><i class="fas fa-list mr-2"></i>Activos Incluidos en el Traslado</h6>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered">
+            <thead class="thead-dark">
+              <tr>
+                <th>#</th>
+                <th>Código Patrimonial</th>
+                <th>Descripción</th>
+                <th class="text-right">Valor</th>
+                <th>Condición</th>
+                <th>Ubicación</th>
+                <th *ngIf="trasladoSeleccionado.estado === 'pendiente'" style="width: 80px;">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let detalle of trasladoSeleccionado.detalles; let i = index">
+                <td>{{i + 1}}</td>
+                <td><strong>{{detalle.codigo_patrimonial}}</strong></td>
+                <td>{{detalle.descripcion_activo}}</td>
+                <td class="text-right">{{formatCurrency(detalle.valor_actual)}}</td>
+                <td>
+                  <span class="badge badge-sm" [ngClass]="{
+                    'badge-success': detalle.condicion === 'bueno',
+                    'badge-warning': detalle.condicion === 'regular',
+                    'badge-danger': detalle.condicion === 'malo'
+                  }">
+                    {{detalle.condicion | titlecase}}
+                  </span>
+                </td>
+                <td>{{detalle.ubicacion_origen?.nombre}}</td>
+                <td *ngIf="trasladoSeleccionado.estado === 'pendiente'" class="text-center">
+                  <button class="btn btn-sm btn-danger"
+                    (click)="eliminarActivoTraslado(trasladoSeleccionado.id, detalle.id)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="!trasladoSeleccionado.detalles || trasladoSeleccionado.detalles.length === 0">
+                <td [attr.colspan]="trasladoSeleccionado.estado === 'pendiente' ? 7 : 6" class="text-center p-4">
+                  <i class="fas fa-inbox fa-3x text-muted mb-2 d-block"></i>
+                  <p class="text-muted mb-2">No hay activos agregados a este traslado</p>
+                  <button class="btn btn-sm btn-primary" *ngIf="trasladoSeleccionado.estado === 'pendiente'"
+                    (click)="agregarMasActivosDesdeDetalle(trasladoSeleccionado)">
+                    <i class="fas fa-plus mr-1"></i>Agregar Activos
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="row mt-4"
+          *ngIf="trasladoSeleccionado.descripcion_motivo || trasladoSeleccionado.documento_sustento">
+          <div class="col-md-6" *ngIf="trasladoSeleccionado.descripcion_motivo">
+            <h6><i class="fas fa-comment mr-2"></i>Descripción</h6>
+            <p class="bg-light p-3 rounded">{{trasladoSeleccionado.descripcion_motivo}}</p>
+          </div>
+          <div class="col-md-6" *ngIf="trasladoSeleccionado.documento_sustento">
+            <h6><i class="fas fa-file mr-2"></i>Documento de Sustento</h6>
+            <p class="bg-light p-3 rounded">{{trasladoSeleccionado.documento_sustento}}</p>
+          </div>
+        </div>
+
+        <!-- Aprobación/Rechazo -->
+        <div class="row mt-4" *ngIf="trasladoSeleccionado.fecha_aprobacion">
+          <div class="col-md-12">
+            <div class="alert" [ngClass]="{
+              'alert-info': trasladoSeleccionado.estado === 'aprobado',
+              'alert-danger': trasladoSeleccionado.estado === 'rechazado',
+              'alert-success': trasladoSeleccionado.estado === 'completado'
+            }">
+              <h6>
+                <i class="fas fa-user-check mr-2"></i>
+                {{trasladoSeleccionado.estado === 'aprobado' ? 'Aprobado' : trasladoSeleccionado.estado === 'rechazado'
+                ? 'Rechazado' : 'Completado'}} por:
+              </h6>
+              <p class="mb-0"><strong>{{trasladoSeleccionado.aprobador?.name}}</strong></p>
+              <p class="mb-0">Fecha: {{formatDate(trasladoSeleccionado.fecha_aprobacion)}}</p>
+              <p class="mb-0" *ngIf="trasladoSeleccionado.comentario_aprobacion">
+                <strong>Comentario:</strong> {{trasladoSeleccionado.comentario_aprobacion}}
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cerrar
+        </button>
+        <button type="button" class="btn btn-primary"
+          *ngIf="trasladoSeleccionado && trasladoSeleccionado.estado === 'pendiente'"
+          (click)="agregarMasActivosDesdeDetalle(trasladoSeleccionado)">
+          <i class="fas fa-plus mr-1"></i>Agregar Más Activos
+        </button>
+        <button type="button" class="btn btn-success"
+          *ngIf="trasladoSeleccionado && trasladoSeleccionado.estado === 'pendiente' && trasladoSeleccionado.total_activos > 0"
+          (click)="aprobarDesdeDetalle(trasladoSeleccionado.id)">
+          <i class="fas fa-check mr-1"></i>Aprobar Traslado
+        </button>
+        <button type="button" class="btn btn-warning"
+          *ngIf="trasladoSeleccionado && trasladoSeleccionado.estado === 'aprobado'"
+          (click)="completarDesdeDetalle(trasladoSeleccionado.id)">
+          <i class="fas fa-arrow-right mr-1"></i>Completar Traslado
+        </button>
+        <button type="button" class="btn btn-outline-dark" (click)="imprimirNotaTraslado(trasladoSeleccionado)">
+          <i class="fas fa-print mr-1"></i>Imprimir Nota
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

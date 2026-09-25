@@ -1,0 +1,558 @@
+// AdminLTE Color Palette
+$primary: #3c8dbc;
+$success: #00a65a;
+$info: #00c0ef;
+$warning: #f39c12;
+$danger: #dd4b39;
+$secondary: #6c757d;
+$light-blue: #3c8dbc;
+$navy: #001f3f;
+$teal: #39cccc;
+
+// Modal de Contratos - Tamaño Extra Grande (FORZADO)
+.modal-contract {
+  max-width: 95% !important;
+  width: 1600px !important;
+  
+  @media (min-width: 1800px) {
+    width: 1800px !important;
+    max-width: 90% !important;
+  }
+  
+  @media (max-width: 1600px) {
+    width: 90vw !important;
+  }
+  
+  @media (max-width: 768px) {
+    width: 95vw !important;
+    margin: 0.5rem !important;
+  }
+}
+
+.modal {
+  z-index: 1050 !important;
+  
+  &.show {
+    display: block !important;
+    animation: fadeIn 0.3s ease-out;
+  }
+}
+
+.modal-backdrop {
+  z-index: 1040 !important;
+  
+  &.show {
+    opacity: 0.5 !important;
+    background-color: rgba(0, 31, 63, 0.5) !important; // Navy AdminLTE
+  }
+}
+
+.modal-content {
+  border-radius: 4px;
+  border: none;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  background: linear-gradient(135deg, $light-blue 0%, darken($light-blue, 10%) 100%) !important;
+  color: white !important;
+  border-bottom: 2px solid darken($light-blue, 15%) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0 !important;
+  min-height: 44px;
+
+  .modal-title {
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    display: flex;
+    align-items: center;
+
+    i {
+      font-size: 1rem !important;
+      margin-right: 0.4rem;
+    }
+  }
+
+  .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+    font-size: 0.75rem;
+    padding: 0.35rem;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+.modal-body {
+  padding: 0.75rem 1rem !important;
+  max-height: calc(100vh - 160px) !important;
+  overflow-y: auto;
+  background-color: #ecf0f5 !important; // AdminLTE light background
+  
+  @media (max-width: 768px) {
+    padding: 0.5rem !important;
+  }
+}
+
+.modal-footer {
+  border-top: 3px solid #e9ecef;
+  padding: 0.5rem 1rem;
+  background-color: #fff;
+  border-radius: 0 0 4px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0.5rem;
+    
+    .btn {
+      width: 100%;
+    }
+  }
+}
+
+// Form Sections - AdminLTE Style (UNIFORME) - Compacto
+.form-section {
+  background: white !important;
+  border-left: 3px solid $light-blue !important;
+  border-radius: 0 !important;
+  padding: 0.6rem 0.85rem !important;
+  margin-bottom: 0.6rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &:nth-child(1) {
+    border-left-color: $light-blue;
+    
+    .section-title i {
+      color: $light-blue;
+    }
+  }
+
+  &:nth-child(2) {
+    border-left-color: $success;
+    
+    .section-title i {
+      color: $success;
+    }
+  }
+
+  &:nth-child(3) {
+    border-left-color: $info;
+    
+    .section-title i {
+      color: $info;
+    }
+  }
+
+  &:nth-child(4) {
+    border-left-color: $warning;
+    
+    .section-title i {
+      color: $warning;
+    }
+  }
+
+  .section-title {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    margin-bottom: 0.5rem !important;
+    padding-bottom: 0.4rem !important;
+    border-bottom: 1px solid #e8e8e8 !important;
+    display: flex;
+    align-items: center;
+
+    i {
+      margin-right: 0.4rem !important;
+      font-size: 0.9rem !important;
+      width: 20px;
+      text-align: center;
+    }
+  }
+}
+
+// Form Controls - AdminLTE Style (UNIFORME) - Tipografía reducida
+.form-label {
+  font-weight: 600 !important;
+  color: #444 !important;
+  font-size: 0.75rem !important;
+  margin-bottom: 0.25rem !important;
+  display: flex;
+  align-items: center;
+
+  &.required::after {
+    content: ' *';
+    color: $danger;
+    font-weight: bold;
+    margin-left: 2px;
+    font-size: 0.75rem;
+  }
+
+  i {
+    font-size: 0.75rem !important;
+    margin-right: 0.3rem;
+    width: 16px;
+    text-align: center;
+  }
+}
+
+.form-control,
+.form-select {
+  padding: 0.35rem 0.5rem !important;
+  border: 1px solid #d2d6de !important;
+  border-radius: 3px !important;
+  font-size: 0.8rem !important;
+  transition: all 0.2s ease;
+  background-color: #fff !important;
+  height: auto !important;
+  min-height: 30px !important;
+  font-weight: 400 !important;
+
+  &:focus {
+    outline: none !important;
+    border-color: $light-blue !important;
+    border-width: 1px !important;
+    box-shadow: 0 0 0 0.2rem rgba(60, 141, 188, 0.15) !important;
+    background-color: #fff !important;
+  }
+
+  &:hover:not(:focus):not(:disabled) {
+    border-color: lighten($light-blue, 20%) !important;
+  }
+
+  &.is-invalid {
+    border-color: $danger !important;
+    border-width: 1px !important;
+    background-color: #fff5f5 !important;
+    
+    &:focus {
+      box-shadow: 0 0 0 0.2rem rgba(221, 75, 57, 0.15) !important;
+    }
+  }
+
+  &:disabled {
+    background-color: #f4f6f9 !important;
+    opacity: 0.9;
+    cursor: not-allowed;
+  }
+}
+
+.form-select {
+  cursor: pointer !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%233c8dbc' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: right 1rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 20px 15px !important;
+  padding-right: 3.5rem !important;
+}
+
+textarea.form-control {
+  min-height: 56px !important;
+  resize: vertical;
+  line-height: 1.4 !important;
+  font-size: 0.8rem !important;
+}
+
+.invalid-feedback {
+  display: block !important;
+  color: $danger !important;
+  font-size: 0.7rem !important;
+  margin-top: 0.15rem !important;
+  font-weight: 400 !important;
+  
+  &:before {
+    content: '⚠ ';
+    margin-right: 2px;
+    font-size: 0.7rem;
+  }
+}
+
+small.text-muted {
+  font-size: 0.7rem !important;
+  display: block;
+  margin-top: 0.15rem;
+}
+
+// Input Group - AdminLTE Style (compacto)
+.input-group {
+  display: flex;
+  align-items: stretch;
+
+  .input-group-text {
+    background-color: #f4f6f9;
+    border: 1px solid #d2d6de;
+    border-right: none;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+    color: #555;
+    border-radius: 3px 0 0 3px;
+    font-weight: 700;
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .form-control {
+    border-radius: 0 3px 3px 0;
+
+    &:focus {
+      border-color: $light-blue;
+    }
+  }
+
+  .btn {
+    border-radius: 0 3px 3px 0;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+    
+    &.btn-outline-secondary {
+      border-color: #d2d6de;
+      color: #555;
+      background-color: #fff;
+      
+      &:hover {
+        background-color: $light-blue;
+        border-color: $light-blue;
+        color: white;
+      }
+    }
+  }
+}
+
+// Checkboxes - AdminLTE Style (compacto)
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.5rem !important;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+  background-color: #f9f9f9 !important;
+  border: 1px solid #e9ecef !important;
+
+  &:hover {
+    background-color: lighten($light-blue, 48%) !important;
+    border-color: $light-blue !important;
+  }
+
+  .form-check-input {
+    width: 14px !important;
+    height: 14px !important;
+    margin: 0;
+    cursor: pointer;
+    accent-color: $light-blue;
+    border: 1px solid #d2d6de !important;
+
+    &:checked {
+      border-color: $light-blue !important;
+      background-color: $light-blue !important;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 0.2rem rgba(60, 141, 188, 0.15) !important;
+    }
+  }
+
+  .form-check-label {
+    font-weight: 500 !important;
+    color: #444 !important;
+    cursor: pointer;
+    margin: 0;
+    font-size: 0.75rem !important;
+  }
+}
+
+// File Upload - AdminLTE Style (compacto)
+.file-upload-container {
+  .form-control[type="file"] {
+    padding: 0.35rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    
+    &::file-selector-button {
+      padding: 0.35rem 0.6rem;
+      margin-right: 0.6rem;
+      font-size: 0.75rem;
+      background-color: $light-blue;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background-color: darken($light-blue, 8%);
+      }
+    }
+  }
+  
+  .file-preview {
+    margin-top: 0.5rem;
+    
+    .alert {
+      margin-bottom: 0;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      background-color: lighten($info, 45%);
+      border-left: 4px solid $info;
+      border-radius: 3px;
+
+      i {
+        font-size: 1rem;
+        color: $info;
+      }
+      
+      span {
+        font-weight: 600;
+        color: #555;
+      }
+      
+      .btn-danger {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+      }
+    }
+  }
+}
+
+// Buttons - AdminLTE Style (compacto)
+.btn {
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 3px !important;
+  font-weight: 500 !important;
+  font-size: 0.8rem !important;
+  border: none !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 30px;
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  i {
+    font-size: 0.8rem !important;
+  }
+
+  &.btn-primary {
+    background-color: $light-blue !important;
+    color: white !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+
+    &:hover:not(:disabled) {
+      background-color: darken($light-blue, 10%) !important;
+    }
+  }
+
+  &.btn-info {
+    background-color: $info !important;
+    color: white !important;
+
+    &:hover:not(:disabled) {
+      background-color: darken($info, 10%) !important;
+    }
+  }
+
+  &.btn-success {
+    background-color: $success !important;
+    color: white !important;
+
+    &:hover:not(:disabled) {
+      background-color: darken($success, 10%) !important;
+    }
+  }
+
+  &.btn-secondary {
+    background-color: $secondary !important;
+    color: white !important;
+
+    &:hover:not(:disabled) {
+      background-color: darken($secondary, 10%) !important;
+    }
+  }
+
+  &.btn-danger {
+    background-color: $danger !important;
+    color: white !important;
+
+    &:hover:not(:disabled) {
+      background-color: darken($danger, 10%) !important;
+    }
+  }
+
+  &.btn-sm {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+    min-height: 26px;
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .modal-dialog {
+    margin: 0.5rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .form-section {
+    padding: 1rem;
+  }
+
+  .row.g-3 {
+    --bs-gutter-x: 0.75rem;
+    --bs-gutter-y: 0.75rem;
+  }
+}
+
+// Loading state
+.saving-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border-radius: 12px;
+
+  .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: #667eea;
+  }
+}
+

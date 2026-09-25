@@ -1,0 +1,14 @@
+.modal {
+  &.show {
+    display: block !important;
+  }
+}
+
+.modal-backdrop.show {
+  opacity: 0.5;
+}
+
+.badge {
+  font-size: 0.8rem;
+  padding: 0.3em 0.6em;
+}

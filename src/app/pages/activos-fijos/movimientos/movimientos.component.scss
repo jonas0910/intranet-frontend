@@ -1,0 +1,31 @@
+// Tabla (font-size/padding controlado por Design System)
+.table {
+  thead th {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    vertical-align: middle;
+  }
+}
+
+// Pestañas en modal de traslado
+#modalDetalleTraslado {
+  .nav-tabs .nav-link {
+    cursor: pointer;
+    border-radius: 0.25rem 0.25rem 0 0;
+  }
+  .tab-content {
+    min-height: 200px;
+  }
+}
+
+.badge {
+  font-size: 0.8rem;
+}
+
+.btn-group-sm>.btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}

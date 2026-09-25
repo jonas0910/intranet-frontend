@@ -1,0 +1,149 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0 text-dark font-weight-bold"><i class="fas fa-file-invoice mr-2 text-muted"></i>Páginas del Portal</h1>
+        <p class="text-muted small">Gestione las secciones estáticas y dinámicas del sitio institucional.</p>
+      </div>
+      <div class="col-sm-6 text-right d-flex align-items-center justify-content-end">
+        <a routerLink="/gestor-contenidos/paginas/crear" class="btn btn-cms-primary shadow-sm">
+          <i class="fas fa-plus-circle mr-2"></i>Nueva Página
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+
+    <div class="card cms-card card-outline">
+      <div class="card-header pb-0 border-0 bg-white">
+        <h3 class="card-title font-weight-bold text-cms-primary"><i class="fas fa-filter mr-2"></i>Filtros de Búsqueda</h3>
+      </div>
+
+      <!-- Filters Section -->
+      <div class="card-body cms-form pt-2">
+        <div class="row align-items-end">
+          <div class="col-md-3">
+            <div class="form-group mb-md-0">
+              <label><i class="fas fa-tags mr-1"></i>Filtrar por Tipo</label>
+              <select class="form-control custom-select" [(ngModel)]="filtroTipo" (change)="cargar()">
+                <option value="">— Todo —</option>
+                <option value="pagina">Página Estándar</option>
+                <option value="landing">Página de Aterrizaje</option>
+                <option value="seccion">Sección de Sitio</option>
+                <option value="servicios">Ficha de Servicio</option>
+                <option value="notarios">Directorio Notarial</option>
+                <option value="documentos">Repositorio Documental</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group mb-md-0">
+              <label><i class="fas fa-toggle-on mr-1"></i>Estado Actual</label>
+              <select class="form-control custom-select" [(ngModel)]="filtroEstado" (change)="cargar()">
+                <option value="">— Todo —</option>
+                <option value="1">Activa / Pública</option>
+                <option value="0">Inactiva / Oculta</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6 text-right">
+            <button class="btn btn-light border btn-sm px-3" (click)="filtroTipo=''; filtroEstado=''; cargar()">
+              <i class="fas fa-undo mr-1"></i>Limpiar Filtros
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body p-0 mt-3">
+        <!-- Loading -->
+        <div *ngIf="loading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2 text-muted">Consultando estructura de páginas...</p>
+        </div>
+
+        <!-- Table -->
+        <div *ngIf="!loading && paginas.length > 0" class="table-responsive">
+          <table class="cms-premium-table mb-0">
+            <thead>
+              <tr>
+                <th style="width:50px">ID</th>
+                <th>Nombre y Título de Página</th>
+                <th>Enlace (Ruta)</th>
+                <th>Clasificación</th>
+                <th>Esqueleto / Plantilla</th>
+                <th>Visibilidad</th>
+                <th class="text-center">Prioridad</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of paginas">
+                <td class="text-muted small">#{{ p.id }}</td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="icon-indicator mr-2">
+                       <i class="fas fa-file-alt text-primary opacity-50"></i>
+                    </div>
+                    <a [routerLink]="['/gestor-contenidos/paginas', p.id, 'editar']" class="text-dark font-weight-bold">
+                      {{ p.titulo }}
+                    </a>
+                  </div>
+                </td>
+                <td><code class="text-indigo bg-light px-2 py-1 rounded">/{{ p.slug }}</code></td>
+                <td>
+                  <span class="badge badge-pill badge-light border px-3" [ngClass]="getTipoBadge(p.tipo)">{{ p.tipo | uppercase }}</span>
+                </td>
+                <td><span class="text-muted"><i class="fas fa-th-large mr-1 opacity-50"></i>{{ p.plantilla?.nombre || 'Predeterminada' }}</span></td>
+                <td>
+                  <span class="badge w-100 py-2" [ngClass]="getStatusBadge(p.activa)">
+                    {{ p.activa ? 'PÚBLICA' : 'OCULTA' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="badge badge-light border-0 text-muted">{{ p.orden }}</span>
+                </td>
+                <td class="text-right">
+                  <div class="btn-group shadow-sm">
+                    <a [routerLink]="['/gestor-contenidos/paginas', p.id, 'editar']" class="btn btn-sm btn-white text-info" title="Editar">
+                      <i class="fas fa-pen"></i>
+                    </a>
+                    <button type="button" class="btn btn-sm btn-white text-danger" title="Eliminar" (click)="eliminar(p.id)">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty state -->
+        <div *ngIf="!loading && paginas.length === 0" class="text-center py-5 border-top">
+          <div class="mb-3 opacity-25">
+            <i class="fas fa-file-circle-xmark fa-4x"></i>
+          </div>
+          <h5 class="text-muted font-weight-bold">No se encontraron páginas</h5>
+          <p class="text-muted small">No hay registros que coincidan con los criterios de búsqueda actuales.</p>
+          <a routerLink="/gestor-contenidos/paginas/crear" class="btn btn-cms-primary mt-2">
+            <i class="fas fa-plus mr-1"></i>Crear Nueva Página
+          </a>
+        </div>
+      </div>
+      <div class="card-footer bg-white border-top py-3">
+        <span class="text-muted small">Gestión optimizada para múltiples dispositivos.</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .text-indigo { color: #6610f2; }
+  .btn-white { background: #fff; border: 1px solid #e2e8f0; }
+  .btn-white:hover { background: #f8fafc; border-color: #cbd5e1; }
+  .text-cms-primary { color: #1a3a5f; }
+  .icon-indicator { width: 30px; height: 30px; background: #f1f5f9; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+</style>

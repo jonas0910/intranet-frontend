@@ -1,0 +1,384 @@
+<app-system-layout [title]="'Personal de Limpieza Pública'" [subtitle]="'Gestión del personal operativo de limpieza'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Limpieza Pública', url: '/limpieza-publica'}, {label: 'Personal'}]"
+  [subsystem]="'limpieza-publica'">
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-primary'"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+        
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-broom mr-1"></i> Listado de Personal
+            </h3>
+            <span class="badge bg-primary">{{ paginacion.total }} registros</span>
+            <ng-container *ngIf="cv.showExportButtons">
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'" (click)="onExportExcel()">
+                <i class="fas fa-file-excel mr-1"></i> Excel
+              </button>
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'" (click)="onExportPdf()">
+                <i class="fas fa-file-pdf mr-1"></i> PDF
+              </button>
+            </ng-container>
+          </div>
+          <div class="ms-auto flex-shrink-0">
+            <button type="button" class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-primary'" (click)="openCreate()">
+              <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> Nuevo Personal
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="p-3 border-bottom bg-light">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label mb-1 ds-crud-label">Buscar</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" placeholder="Código, nombre o DNI..."
+                  [(ngModel)]="filtros.search" (input)="onFilterChange()">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label mb-1 ds-crud-label">Estado</label>
+              <select class="form-control form-control-sm" [(ngModel)]="filtros.status" (change)="onFilterChange()">
+                <option value="">Todos</option>
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label mb-1 ds-crud-label">Por página</label>
+              <select class="form-control form-control-sm" [(ngModel)]="filtros.per_page" (change)="onFilterChange()">
+                <option *ngFor="let size of [10, 20, 50]" [ngValue]="size">{{size}}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-outline-secondary btn-sm w-100" (click)="limpiarFiltros()">
+                <i class="fas fa-times mr-1"></i> Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card-body p-0">
+          <div *ngIf="loading" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+            <p class="text-muted">Cargando personal...</p>
+          </div>
+
+          <div class="table-responsive" *ngIf="!loading">
+            <table class="table table-hover table-striped mb-0" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize">
+              <thead class="bg-light">
+                <tr>
+                  <th [style.font-size]="cv.headerFontSize">Código</th>
+                  <th [style.font-size]="cv.headerFontSize">DNI</th>
+                  <th [style.font-size]="cv.headerFontSize">Nombre Completo</th>
+                  <th [style.font-size]="cv.headerFontSize">Teléfono</th>
+                  <th [style.font-size]="cv.headerFontSize">F. Ingreso</th>
+                  <th [style.font-size]="cv.headerFontSize" class="text-center">Estado</th>
+                  <th [style.font-size]="cv.headerFontSize" class="text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let persona of personal">
+                  <td><strong class="text-primary">{{ persona.codigo }}</strong></td>
+                  <td>{{ persona.dni }}</td>
+                  <td>
+                    <div>
+                      <strong class="d-block">{{ persona.nombres }} {{ persona.apellidos }}</strong>
+                      <small class="text-muted" *ngIf="persona.email">
+                        <i class="fas fa-envelope mr-1"></i>{{ persona.email }}
+                      </small>
+                    </div>
+                    <span *ngIf="persona.is_planilla" class="badge badge-primary ml-1 small">Planilla</span>
+                  </td>
+                  <td>{{ persona.telefono || '-' }}</td>
+                  <td>{{ persona.fecha_ingreso | date:'dd/MM/yyyy' }}</td>
+                  <td class="text-center">
+                    <app-status-badge [status]="persona.estado === 'activo'"></app-status-badge>
+                  </td>
+                  <td class="text-right">
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-info" (click)="openView(persona)" title="Ver Detalle">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="btn btn-warning" (click)="openEdit(persona)" title="Editar" [disabled]="persona.is_planilla">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-danger" (click)="delete(persona)" title="Eliminar" [disabled]="persona.is_planilla">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div *ngIf="personal.length === 0" class="text-center py-5">
+              <i class="fas fa-users fa-2x text-muted mb-3"></i>
+              <h6 class="text-muted">No se encontró personal</h6>
+              <p class="text-muted small">Ajusta los filtros o registra un nuevo trabajador.</p>
+              <button class="btn btn-sm btn-primary" (click)="openCreate()">
+                <i class="fas fa-plus mr-1"></i> Nuevo Personal
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paginación -->
+        <div class="card-footer py-2 d-flex flex-wrap align-items-center justify-content-between" *ngIf="!loading && personal.length > 0">
+          <div class="text-muted small">
+            Mostrando {{ (paginacion.currentPage - 1) * paginacion.perPage + 1 }} a
+            {{ Math.min(paginacion.currentPage * paginacion.perPage, paginacion.total) }} de {{ paginacion.total }}
+            registros
+          </div>
+          <nav>
+            <ul class="pagination pagination-sm mb-0" *ngIf="paginacion.lastPage > 1">
+              <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                <button class="page-link" (click)="onPageChange(paginacion.currentPage - 1)" [disabled]="paginacion.currentPage === 1">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+              </li>
+              <li class="page-item" *ngFor="let page of getPaginationPages()" [class.active]="page === paginacion.currentPage" [class.disabled]="page === -1">
+                <button class="page-link" (click)="page !== -1 && onPageChange(page)">
+                  {{ page === -1 ? '...' : page }}
+                </button>
+              </li>
+              <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                <button class="page-link" (click)="onPageChange(paginacion.currentPage + 1)" [disabled]="paginacion.currentPage === paginacion.lastPage">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-system-layout>
+
+<!-- Modal CRUD / Ver Detalle -->
+<div class="modal fade" id="modalLpPersonal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content overflow-hidden" [style.border-radius.px]="cv.cardBorderRadius">
+      <div class="modal-header text-white" [style.background-color]="isViewMode ? '#17a2b8' : (isEdit ? '#ffc107' : mc.headerBg)">
+        <h5 class="modal-title">
+          <i class="fas" [ngClass]="isViewMode ? 'fa-id-card' : (isEdit ? 'fa-edit' : 'fa-plus-circle')"></i>
+          {{ isViewMode ? 'Detalle del Personal' : (isEdit ? 'Editar Personal' : 'Registrar Nuevo Personal') }}
+        </h5>
+        <button type="button" class="close text-white" (click)="closeModal()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      
+      <form (ngSubmit)="save()" #lpPersonalForm="ngForm">
+        <div class="modal-body p-0" style="background-color: #f4f6f9;">
+          <!-- Tabs Navigation -->
+          <ul class="nav nav-tabs px-3 pt-2 bg-white border-bottom" id="lpPersonalTabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active font-weight-bold" id="info-tab" data-toggle="tab" href="#info" role="tab" (click)="activeTab = 'info'">
+                <i class="fas fa-info-circle mr-1"></i> Datos Principales
+              </a>
+            </li>
+            <li class="nav-item" *ngIf="!isViewMode && personalSeleccionado?.id">
+              <a class="nav-link font-weight-bold" id="contracts-tab" data-toggle="tab" href="#contracts" role="tab" (click)="activeTab = 'contracts'; loadContracts()">
+                <i class="fas fa-file-contract mr-1"></i> Contratos / Órdenes
+              </a>
+            </li>
+            <!-- Show contracts tab in view mode if there is an ID -->
+            <li class="nav-item" *ngIf="isViewMode && personalSeleccionado?.id">
+              <a class="nav-link font-weight-bold" id="contracts-tab" data-toggle="tab" href="#contracts" role="tab" (click)="activeTab = 'contracts'; loadContracts()">
+                <i class="fas fa-file-contract mr-1"></i> Contratos / Órdenes
+              </a>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="lpPersonalTabsContent">
+            <!-- Tab: Información General -->
+            <div class="tab-pane fade show active p-4" id="info" role="tabpanel">
+              <div class="card card-outline card-primary shadow-sm mb-0">
+                <div class="card-body">
+              <div class="row">
+                <!-- Identificación -->
+                <div class="col-md-12 mb-3">
+                  <h6 class="text-primary font-weight-bold border-bottom pb-2 mb-3">
+                    <i class="fas fa-user mr-1"></i> Información Personal
+                  </h6>
+                  <p *ngIf="!isViewMode && !isEdit" class="small text-muted mb-0">
+                    <i class="fas fa-info-circle mr-1"></i> El personal creado en este módulo se registra como <strong>Tipo Servicio / Externo</strong>.
+                  </p>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">DNI <span *ngIf="!isViewMode" class="text-danger">*</span></label>
+                    <input type="text" class="form-control" [(ngModel)]="formulario.dni" name="dni" placeholder="12345678" maxlength="8" [readonly]="isViewMode" required>
+                  </div>
+                </div>
+
+                <div class="col-md-3 mb-3" *ngIf="isViewMode">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Código (Generado)</label>
+                    <input type="text" class="form-control" [(ngModel)]="formulario.codigo" name="codigo" placeholder="Auto-generado" [readonly]="true">
+                  </div>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Fecha de Ingreso <span *ngIf="!isViewMode" class="text-danger">*</span></label>
+                    <input type="date" class="form-control" [(ngModel)]="formulario.fecha_ingreso" name="fecha_ingreso" [readonly]="isViewMode" required>
+                  </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Estado</label>
+                    <select class="form-control" [(ngModel)]="formulario.status" name="status" [attr.disabled]="isViewMode ? '' : null">
+                      <option value="activo">Activo</option>
+                      <option value="inactivo">Inactivo</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Nombres <span *ngIf="!isViewMode" class="text-danger">*</span></label>
+                    <input type="text" class="form-control" [(ngModel)]="formulario.nombres" name="nombres" [readonly]="isViewMode" required>
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Apellidos <span *ngIf="!isViewMode" class="text-danger">*</span></label>
+                    <input type="text" class="form-control" [(ngModel)]="formulario.apellidos" name="apellidos" [readonly]="isViewMode" required>
+                  </div>
+                </div>
+
+                <!-- Contacto -->
+                <div class="col-md-12 mb-3 mt-2">
+                  <h6 class="text-info font-weight-bold border-bottom pb-2 mb-3">
+                    <i class="fas fa-address-book mr-1"></i> Datos de Contacto
+                  </h6>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Teléfono</label>
+                    <input type="text" class="form-control" [(ngModel)]="formulario.telefono" name="telefono" placeholder="999888777" [readonly]="isViewMode">
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Email</label>
+                    <input type="email" class="form-control" [(ngModel)]="formulario.email" name="email" placeholder="personal@Notaria.gob.pe" [readonly]="isViewMode">
+                  </div>
+                </div>
+
+                <div class="col-md-12 mb-0">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Dirección</label>
+                    <input type="text" class="form-control" [(ngModel)]="formulario.direccion" name="direccion" [readonly]="isViewMode">
+                  </div>
+                </div>
+                  </div><!-- /row -->
+                </div><!-- /card-body -->
+              </div><!-- /card-outline -->
+            </div><!-- /tab-pane -->
+
+            <!-- Tab: Contratos / Órdenes -->
+            <div class="tab-pane fade p-4" id="contracts" role="tabpanel">
+              <div class="card card-outline card-info shadow-sm mb-0">
+                <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                  <h6 class="card-title text-info font-weight-bold mb-0">
+                    <i class="fas fa-history mr-1"></i> Historial de Contratos / Órdenes de Servicio
+                  </h6>
+                  <button *ngIf="!isViewMode" type="button" class="btn btn-sm btn-info shadow-sm" (click)="openContractModal()">
+                    <i class="fas fa-plus mr-1"></i> Nuevo Contrato
+                  </button>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive" *ngIf="!loadingContracts && contracts.length > 0">
+                    <table class="table table-hover table-striped mb-0 small">
+                      <thead class="bg-light">
+                        <tr>
+                          <th>N° Orden / Contrato</th>
+                          <th>Periodo</th>
+                          <th class="text-right">Monto</th>
+                          <th>Estado</th>
+                          <th *ngIf="!isViewMode" class="text-center">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let contract of contracts">
+                          <td class="font-weight-bold">{{ contract.contract_number }}</td>
+                          <td>
+                            <div class="d-flex flex-column">
+                              <span><i class="fas fa-calendar-alt mr-1 text-muted"></i> {{ contract.start_date | date: 'dd/MM/yyyy' }}</span>
+                              <small class="text-muted"><i class="fas fa-calendar-check mr-1"></i> {{ contract.end_date ? (contract.end_date | date: 'dd/MM/yyyy') : 'Indefinido' }}</small>
+                            </div>
+                          </td>
+                          <td class="text-right font-weight-bold text-dark">S/ {{ contract.salary | number: '1.2-2' }}</td>
+                          <td>
+                            <span class="badge" [ngClass]="getContractStatusClass(contract.status)">
+                              {{ contract.status | uppercase }}
+                            </span>
+                          </td>
+                          <td *ngIf="!isViewMode" class="text-center">
+                            <div class="btn-group btn-group-sm">
+                              <button type="button" class="btn btn-outline-info" (click)="editContract(contract)" title="Editar">
+                                <i class="fas fa-edit"></i>
+                              </button>
+                              <button type="button" class="btn btn-outline-danger" (click)="deleteContract(contract)" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Empty State -->
+                  <div class="text-center py-5 text-muted" *ngIf="!loadingContracts && contracts.length === 0">
+                    <i class="fas fa-file-signature fa-3x mb-3 opacity-50"></i>
+                    <h6>No hay contratos registrados</h6>
+                    <p class="small mb-0 text-muted">Haga clic en "Nuevo Contrato" para asignar un periodo y monto.</p>
+                  </div>
+
+                  <!-- Loading State -->
+                  <div class="text-center py-5" *ngIf="loadingContracts">
+                    <i class="fas fa-spinner fa-spin fa-2x text-info"></i>
+                    <p class="mt-2 text-muted small">Cargando contratos...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer bg-light border-top">
+          <button type="button" class="btn btn-secondary shadow-sm px-4" (click)="closeModal()">
+            <i class="fas fa-times mr-1"></i> {{ isViewMode ? 'Cerrar' : 'Cancelar' }}
+          </button>
+          <button *ngIf="!isViewMode && activeTab === 'info'" type="submit" class="btn shadow-sm px-4" [ngClass]="isEdit ? 'btn-warning' : 'btn-primary'" [disabled]="lpPersonalForm.invalid || saving">
+            <i class="fas" [ngClass]="saving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{ saving ? 'Guardando...' : (isEdit ? 'Actualizar Personal' : 'Registrar Personal') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Service Modal (Limpieza Pública) -->
+<app-service-modal-lp
+  [isVisible]="showContractModal"
+  [employeeId]="personalSeleccionado?.id"
+  [contract]="contractModalData"
+  (modalClosed)="onContractModalClosed($event)">
+</app-service-modal-lp>

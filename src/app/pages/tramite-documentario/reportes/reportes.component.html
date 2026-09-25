@@ -1,0 +1,123 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-chart-bar mr-2"></i>Reportes y Estadísticas</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/tramite-documentario/dashboard">Inicio</a></li>
+          <li class="breadcrumb-item active">Reportes</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+
+    <!-- Selector de Área -->
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <label>Área</label>
+            <select class="form-control" [(ngModel)]="areaSeleccionada" (change)="cambiarArea()">
+              <option *ngFor="let a of areas" [ngValue]="a.id">{{ a.nombre }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="text-center py-4"><i class="fas fa-spinner fa-spin fa-3x text-primary"></i></div>
+
+    <ng-container *ngIf="!loading">
+      <!-- Resumen por Estados -->
+      <div class="row">
+        <div class="col-lg-3 col-6">
+          <div class="info-box"><span class="info-box-icon bg-info"><i class="fas fa-file-alt"></i></span>
+            <div class="info-box-content"><span class="info-box-text">Total</span><span class="info-box-number">{{ resumen.stats?.total || 0 }}</span></div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="info-box"><span class="info-box-icon bg-warning"><i class="fas fa-clock"></i></span>
+            <div class="info-box-content"><span class="info-box-text">Pendientes</span><span class="info-box-number">{{ resumen.stats?.pendientes || 0 }}</span></div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="info-box"><span class="info-box-icon bg-primary"><i class="fas fa-sync"></i></span>
+            <div class="info-box-content"><span class="info-box-text">En Proceso</span><span class="info-box-number">{{ resumen.stats?.en_proceso || 0 }}</span></div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="info-box"><span class="info-box-icon bg-success"><i class="fas fa-check"></i></span>
+            <div class="info-box-content"><span class="info-box-text">Atendidos</span><span class="info-box-number">{{ resumen.stats?.atendidos || 0 }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteo por Estado -->
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="card card-primary card-outline">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-chart-pie mr-2"></i>Distribución por Estado</h3></div>
+            <div class="card-body p-0">
+              <table class="table table-striped">
+                <thead><tr><th>Estado</th><th>Cantidad</th></tr></thead>
+                <tbody>
+                  <tr *ngIf="resumen.conteo_estados?.registrado"><td><span class="badge badge-secondary">Registrado</span></td><td>{{ resumen.conteo_estados.registrado }}</td></tr>
+                  <tr *ngIf="resumen.conteo_estados?.derivado"><td><span class="badge badge-info">Derivado</span></td><td>{{ resumen.conteo_estados.derivado }}</td></tr>
+                  <tr *ngIf="resumen.conteo_estados?.en_proceso"><td><span class="badge badge-info">En Proceso</span></td><td>{{ resumen.conteo_estados.en_proceso }}</td></tr>
+                  <tr *ngIf="resumen.conteo_estados?.observado"><td><span class="badge badge-warning">Observado</span></td><td>{{ resumen.conteo_estados.observado }}</td></tr>
+                  <tr *ngIf="resumen.conteo_estados?.atendido"><td><span class="badge badge-success">Atendido</span></td><td>{{ resumen.conteo_estados.atendido }}</td></tr>
+                  <tr *ngIf="resumen.conteo_estados?.rechazado"><td><span class="badge badge-danger">Rechazado</span></td><td>{{ resumen.conteo_estados.rechazado }}</td></tr>
+                  <tr *ngIf="resumen.conteo_estados?.archivado"><td><span class="badge badge-dark">Archivado</span></td><td>{{ resumen.conteo_estados.archivado }}</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documentos Vencidos -->
+        <div class="col-lg-6">
+          <div class="card card-danger card-outline">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-exclamation-triangle mr-2"></i>Documentos Vencidos ({{ tramitesVencidos.length }})</h3></div>
+            <div class="card-body p-0" style="max-height:400px;overflow-y:auto">
+              <table class="table table-striped" *ngIf="tramitesVencidos.length > 0">
+                <thead><tr><th>Expediente</th><th>Asunto</th><th>Fecha Límite</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let t of tramitesVencidos">
+                    <td><a [routerLink]="['/tramite-documentario/detalle', t.id]"><strong>{{ t.numero_expediente }}</strong></a></td>
+                    <td class="text-truncate" style="max-width:200px">{{ t.asunto }}</td>
+                    <td class="text-danger">{{ t.fecha_limite }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div *ngIf="tramitesVencidos.length === 0" class="text-center p-4 text-muted">
+                <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                <p>No hay documentos vencidos</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen Área -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-building mr-2"></i>Resumen del Área</h3></div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3"><div class="info-box bg-gradient-info"><span class="info-box-icon"><i class="fas fa-inbox"></i></span><div class="info-box-content"><span class="info-box-text">Pendientes de Recibir</span><span class="info-box-number">{{ resumen.pendientes_recibir || 0 }}</span></div></div></div>
+                <div class="col-md-3"><div class="info-box bg-gradient-success"><span class="info-box-icon"><i class="fas fa-sync"></i></span><div class="info-box-content"><span class="info-box-text">En Proceso</span><span class="info-box-number">{{ resumen.en_proceso_mi_area || 0 }}</span></div></div></div>
+                <div class="col-md-3"><div class="info-box bg-gradient-warning"><span class="info-box-icon"><i class="fas fa-share"></i></span><div class="info-box-content"><span class="info-box-text">Derivados sin Recibir</span><span class="info-box-number">{{ resumen.derivados_sin_recibir || 0 }}</span></div></div></div>
+                <div class="col-md-3"><div class="info-box bg-gradient-danger"><span class="info-box-icon"><i class="fas fa-exclamation-triangle"></i></span><div class="info-box-content"><span class="info-box-text">Vencidos Global</span><span class="info-box-number">{{ resumen.vencidos_global || 0 }}</span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

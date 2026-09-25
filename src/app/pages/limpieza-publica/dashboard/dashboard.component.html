@@ -1,0 +1,200 @@
+<app-system-layout [title]="'Dashboard - Limpieza Pública'"
+    [subtitle]="'Estadísticas operaciones y gestión de residuos'"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Limpieza Pública', url: '/limpieza-publica'}, {label: 'Dashboard'}]"
+    [subsystem]="'limpieza-publica'">
+
+    <div *ngIf="loading" class="text-center p-5">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="sr-only">Cargando...</span>
+        </div>
+        <p class="mt-3 text-muted fw-medium">Cargando estadísticas de limpieza...</p>
+    </div>
+
+    <div *ngIf="!loading">
+        <!-- KPIs - Tarjetas modernas -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-6 mb-3" *ngFor="let stat of mainStats">
+                <div class="card card-kpi elevation-2 h-100 {{ stat.colorClass }}">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-0 font-weight-bold">{{ formatNumber(stat.value) }}</h3>
+                            <p class="mb-0 small opacity-80" style="opacity: 0.8; font-weight: 500;">{{ stat.label }}
+                            </p>
+                            <a [routerLink]="stat.link" class="btn btn-sm btn-link p-0 mt-2 text-white opacity-50"
+                                style="opacity: 0.7; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Gestionar <i class="fas fa-chevron-right ml-1" style="font-size: 0.6rem;"></i>
+                            </a>
+                        </div>
+                        <div class="kpi-icon">
+                            <i [class]="stat.icon + ' fa-2x'"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Gráfico de Evolución de Recolección -->
+            <div class="col-lg-8 mb-4">
+                <div class="card elevation-2 h-100 border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title font-weight-bold mb-0">
+                                <i class="fas fa-chart-line text-primary mr-2"></i>Evolución de Recolección (7 días)
+                            </h5>
+                            <span class="badge badge-light p-2 text-muted small">KG por día</span>
+                        </div>
+                    </div>
+                    <div class="card-body px-4 pb-4" style="position: relative; height: 320px;">
+                        <canvas id="chartEvolucion"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico de Distribución por Residuo -->
+            <div class="col-lg-4 mb-4">
+                <div class="card elevation-2 h-100 border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <h5 class="card-title font-weight-bold mb-0">
+                            <i class="fas fa-recycle text-success mr-2"></i>Tipos de Residuos
+                        </h5>
+                    </div>
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center p-4"
+                        style="position: relative; height: 320px;">
+                        <canvas id="chartResiduos"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Estado de Alertas -->
+            <div class="col-lg-4 mb-4">
+                <div class="card elevation-2 h-100 border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <h5 class="card-title font-weight-bold mb-0">
+                            <i class="fas fa-shield-alt text-danger mr-2"></i>Estado de Alertas
+                        </h5>
+                    </div>
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center p-4"
+                        style="position: relative; height: 300px;">
+                        <canvas id="chartAlertas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Sectores -->
+            <div class="col-lg-4 mb-4">
+                <div class="card elevation-2 h-100 border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <h5 class="card-title font-weight-bold mb-0">
+                            <i class="fas fa-map-marked-alt text-warning mr-2"></i>Sectores con mayor carga
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div *ngFor="let s of topSectores" class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="font-weight-bold text-dark small">{{ s.nombre }}</span>
+                                <span class="text-muted small">{{ formatNumber(s.total_kg) }} kg</span>
+                            </div>
+                            <div class="progress progress-sm rounded-pill bg-light" style="height: 10px;">
+                                <div class="progress-bar bg-warning shadow-sm"
+                                    [style.width.%]="(s.total_kg / maxTotalKg) * 100"></div>
+                            </div>
+                        </div>
+                        <div *ngIf="topSectores.length === 0" class="text-center py-5 text-muted">
+                            <i class="fas fa-layer-group fa-3x mb-3 opacity-20"></i>
+                            <p class="small">No hay datos por sector.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen Informativo / Acceso a Registro -->
+            <div class="col-lg-4 mb-4">
+                <div class="card elevation-2 bg-primary border-0 h-100 overflow-hidden shadow-lg">
+                    <div class="card-body text-white text-center d-flex flex-column justify-content-center p-4">
+                        <h6 class="text-uppercase mb-4 font-weight-bold"
+                            style="letter-spacing: 1.5px; opacity: 0.8; font-size: 0.7rem;">
+                            CONTROL OPERATIVO
+                        </h6>
+
+                        <div class="bg-white-10 p-4 rounded-xl mb-4 shadow-sm"
+                            style="background: rgba(255,255,255,0.12); border-radius: 15px;">
+                            <i class="fas fa-user-clock fa-2x mb-3"></i>
+                            <h4 class="font-weight-bold mb-1">Jornada Laboral</h4>
+                            <p class="mb-0 small text-white-50">Gestiona las horas trabajadas y productividad del
+                                personal.</p>
+                        </div>
+
+                        <div class="mt-2">
+                            <a class="btn btn-light btn-lg rounded-pill px-5 shadow-sm font-weight-bold text-primary"
+                                style="font-size: 0.9rem;" routerLink="/limpieza-publica/registro-trabajo">
+                                Registrar Trabajo
+                            </a>
+                        </div>
+
+                        <p class="mt-4 mb-0 small opacity-50 italic">
+                            <i class="fas fa-info-circle mr-1"></i> Actualizado hace un momento
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accesos rápidos -->
+        <h5 class="mb-4 mt-2 font-weight-bold text-dark">
+            <i class="fas fa-th-large mr-2 text-primary"></i>Gestión Directa
+        </h5>
+        <div class="row mb-4">
+            <div class="col-md-3 col-6 mb-3">
+                <a routerLink="/limpieza-publica/monitoreo"
+                    class="card card-acceso text-decoration-none text-dark h-100 rounded-lg shadow-sm border-0">
+                    <div class="card-body text-center py-4">
+                        <div class="rounded-circle bg-primary-light d-inline-flex p-3 mb-3"
+                            style="background: rgba(0, 123, 255, 0.1);">
+                            <i class="fas fa-map-marker-alt fa-2x text-primary"></i>
+                        </div>
+                        <h6 class="mb-0 font-weight-bold">Monitoreo GPS</h6>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <a routerLink="/limpieza-publica/recoleccion"
+                    class="card card-acceso text-decoration-none text-dark h-100 rounded-lg shadow-sm border-0">
+                    <div class="card-body text-center py-4">
+                        <div class="rounded-circle bg-success-light d-inline-flex p-3 mb-3"
+                            style="background: rgba(40, 167, 69, 0.1);">
+                            <i class="fas fa-truck-loading fa-2x text-success"></i>
+                        </div>
+                        <h6 class="mb-0 font-weight-bold">Control Recojo</h6>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <a routerLink="/limpieza-publica/alertas"
+                    class="card card-acceso text-decoration-none text-dark h-100 rounded-lg shadow-sm border-0">
+                    <div class="card-body text-center py-4">
+                        <div class="rounded-circle bg-danger-light d-inline-flex p-3 mb-3"
+                            style="background: rgba(220, 53, 69, 0.1);">
+                            <i class="fas fa-bell fa-2x text-danger"></i>
+                        </div>
+                        <h6 class="mb-0 font-weight-bold">Gestión de Tipos</h6>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <a routerLink="/limpieza-publica/elementos"
+                    class="card card-acceso text-decoration-none text-dark h-100 rounded-lg shadow-sm border-0">
+                    <div class="card-body text-center py-4">
+                        <div class="rounded-circle bg-warning-light d-inline-flex p-3 mb-3"
+                            style="background: rgba(255, 193, 7, 0.1);">
+                            <i class="fas fa-trash fa-2x text-warning"></i>
+                        </div>
+                        <h6 class="mb-0 font-weight-bold">Mobiliario Urbano</h6>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</app-system-layout>

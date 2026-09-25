@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Test Dropdown Fix - Intranet</title>
+    
+    <!-- Bootstrap 4 CSS -->
+    <link rel="stylesheet" href="src/assets/css/vendor/bootstrap.min.css">
+    <!-- AdminLTE CSS -->
+    <link rel="stylesheet" href="src/assets/css/adminlte.min.css">
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .main-header {
+            background: #343a40;
+        }
+        
+        .main-header .navbar-brand {
+            color: white;
+        }
+        
+        .main-header .nav-link {
+            color: rgba(255,255,255,.8);
+        }
+        
+        .main-header .nav-link:hover {
+            color: white;
+        }
+        
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-dark bg-dark">
+        
+        <!-- Logo/Brand -->
+        <a href="#" class="navbar-brand">
+            <img src="https://via.placeholder.com/150x40/343a40/ffffff?text=Test" alt="AdminLTE Logo" class="brand-image" style="height: 33px; margin-left: 0.5rem;">
+        </a>
+
+        <!-- Navbar -->
+        <ul class="navbar-nav ml-auto">
+            
+            <!-- Messages Dropdown -->
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#" role="button">
+                    <i class="far fa-comments"></i>
+                    <span class="badge badge-danger navbar-badge">3</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    <a href="#" class="dropdown-item">
+                        <!-- Message Start -->
+                        <div class="media">
+                            <img src="https://via.placeholder.com/128x128" alt="User Avatar" class="img-size-50 mr-3 img-circle">
+                            <div class="media-body">
+                                <h3 class="dropdown-item-title">
+                                    Usuario Ejemplo
+                                    <span class="float-right text-sm text-danger"><i class="fas fa-star"></i></span>
+                                </h3>
+                                <p class="text-sm">Un mensaje de prueba</p>
+                                <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 horas atrás</p>
+                            </div>
+                        </div>
+                        <!-- Message End -->
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item">
+                        <!-- Message Start -->
+                        <div class="media">
+                            <img src="https://via.placeholder.com/128x128" alt="User Avatar" class="img-size-50 mr-3 img-circle">
+                            <div class="media-body">
+                                <h3 class="dropdown-item-title">
+                                    Brad Diesel
+                                    <span class="float-right text-sm text-warning"><i class="fas fa-star"></i></span>
+                                </h3>
+                                <p class="text-sm">Call me whenever you can...</p>
+                                <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 horas atrás</p>
+                            </div>
+                        </div>
+                        <!-- Message End -->
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-file mr-2"></i> 3 nuevos reportes
+                        <span class="float-right text-muted text-sm">2 mins</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item dropdown-footer">Ver Todos los Mensajes</a>
+                </div>
+            </li>
+            
+            <!-- Notifications Dropdown -->
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#" role="button">
+                    <i class="far fa-bell"></i>
+                    <span class="badge badge-warning navbar-badge">15</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    <span class="dropdown-item dropdown-header">15 Notificaciones</span>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-envelope mr-2"></i> 4 nuevos mensajes
+                        <span class="float-right text-muted text-sm">3 mins</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-users mr-2"></i> 8 solicitudes de conexión
+                        <span class="float-right text-muted text-sm">12 hours</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-file mr-2"></i> 3 nuevos reportes
+                        <span class="float-right text-muted text-sm">2 days</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item dropdown-footer">Ver Todas las Notificaciones</a>
+                </div>
+            </li>
+            
+            <!-- User menu dropdown -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                    <span class="hidden-md">Usuario Demo</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-user mr-2"></i> Mi Perfil
+                    </a>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-cog mr-2"></i> Configuración
+                    </a>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-file mr-2"></i> Actividad
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+                    </a>
+                </div>
+            </li>
+            
+            <!-- Full Screen Button -->
+            <li class="nav-item">
+                <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Content -->
+    <div class="content-wrapper">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Test Dropdown Fix</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="#">Inicio</a></li>
+                            <li class="breadcrumb-item active">Dropdown Test</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>🧪 Test Dropdown Fix</h5>
+                                <p>Esta página prueba que los dropdowns del navbar funcionen correctamente.</p>
+                                
+                                <div class="alert alert-info">
+                                    <h5><i class="icon fas fa-info"></i> Instrucciones:</h5>
+                                    <ol>
+                                        <li>Haz clic en <strong>el ícono de comentarios</strong> 🔽 - debería mostrar el dropdown de mensajes</li>
+                                        <li>Haz clic en <strong>el ícono de notificaciones</strong> 🔔 - debería mostrar el dropdown de notificaciones</li>
+                                        <li>Haz clic en <strong>"Usuario Demo"</strong> 🔽 - debería mostrar el menú de usuario</li>
+                                    </ol>
+                                </div>
+                                
+                                <div class="alert alert-success mt-3">
+                                    <h5><i class="icon fas fa-check"></i> ✅ Si funciona:</h5>
+                                    <ul>
+                                        <li>Los dropdowns se abren al hacer clic</li>
+                                        <li>Los dropdowns se cierran al hacer clic fuera</li>
+                                        <li>Un dropdown se cierra cuando abres otro</li>
+                                        <li>No hay errores en la consola del navegador</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="alert alert-warning mt-3">
+                                    <h5><i class="icon fas fa-exclamation-triangle"></i> ⚠️ Si no funciona:</h5>
+                                    <ul>
+                                        <li>Verifica que Bootstrap JS se está cargando</li>
+                                        <li>Verifica que jQuery está disponible</li>
+                                        <li>Revisa la consola del navegador por errores</li>
+                                        <li>Asegúrate de que los scripts se ejecuten después del DOM</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- jQuery -->
+    <script src="src/assets/js/vendor/jquery.min.js"></script>
+    <!-- Bootstrap 4 JavaScript -->
+    <script src="src/assets/js/vendor/bootstrap.bundle.min.js"></script>
+
+    <!-- Script de inicialización -->
+    <script>
+        $(document).ready(function() {
+            console.log('✅ Test Dropdown Fix - jQuery cargado:', typeof $ !== 'undefined');
+            console.log('✅ Test Dropdown Fix - Bootstrap disponible:', typeof $.fn.dropdown !== 'undefined');
+            
+            // Inicializar todos los dropdowns
+            $('.dropdown-toggle').dropdown();
+            
+            console.log('✅ Dropdowns inicializados');
+            
+            // Log de eventos para debugging
+            $('.dropdown-toggle').on('click', function() {
+                console.log('🖱️ Dropdown clicked:', $(this).text().trim() || $(this).find('i').attr('class'));
+            });
+            
+            $('.dropdown-menu').on('shown.bs.dropdown', function() {
+                console.log('📋 Dropdown opened');
+            });
+            
+            $('.dropdown-menu').on('hidden.bs.dropdown', function() {
+                console.log('📋 Dropdown closed');
+            });
+        });
+    </script>
+
+</body>
+</html>

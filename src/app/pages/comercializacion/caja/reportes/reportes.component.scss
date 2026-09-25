@@ -1,0 +1,14 @@
+.ds-crud-table {
+    & th {
+        background-color: var(--ds-table-header-bg) !important;
+        color: var(--ds-table-header-color) !important;
+        font-size: var(--ds-label-font-size);
+        padding: var(--ds-cell-padding-y) var(--ds-cell-padding-x);
+    }
+
+    & td {
+        font-size: var(--ds-font-size);
+        padding: var(--ds-cell-padding-y) var(--ds-cell-padding-x);
+        vertical-align: middle;
+    }
+}

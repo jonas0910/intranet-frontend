@@ -1,0 +1,35 @@
+<div class="tree-node" [ngClass]="{'selected': isSelected()}">
+  <div class="tree-node-content" (click)="onSelectItem()">
+    <span class="tree-toggle" *ngIf="item.children.length > 0" (click)="onToggleExpanded($event)">
+      <i [ngClass]="isExpanded() ? 'fas fa-chevron-down' : 'fas fa-chevron-right'"></i>
+    </span>
+    <span class="tree-toggle-placeholder" *ngIf="item.children.length === 0"></span>
+    
+    <span class="tree-icon">
+      <i [ngClass]="getItemIcon()"></i>
+    </span>
+    
+    <span class="tree-label">{{ item.name }}</span>
+    
+    <span class="tree-badges">
+      <span [ngClass]="'badge badge-sm ' + getModuleClass()">
+        {{ item.module }}
+      </span>
+      <span [ngClass]="'badge badge-sm ' + getStatusClass()">
+        {{ getStatusText() }}
+      </span>
+    </span>
+  </div>
+  
+  <div class="tree-children" *ngIf="item.children.length > 0 && isExpanded()">
+    <div *ngFor="let child of item.children" class="tree-child">
+      <app-tree-node 
+        [item]="child" 
+        [expandedItems]="expandedItems"
+        [selectedItem]="selectedItem"
+        (toggleExpanded)="toggleExpanded.emit($event)"
+        (selectItem)="selectItem.emit($event)">
+      </app-tree-node>
+    </div>
+  </div>
+</div>

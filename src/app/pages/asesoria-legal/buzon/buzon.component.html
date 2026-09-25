@@ -1,0 +1,57 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-inbox mr-2"></i>Buzón de Entrada</h1><small class="text-muted">Documentos derivados a Asesoría Legal - Convertir en caso legal</small></div>
+      <div class="col-sm-6"><ol class="breadcrumb float-sm-right"><li class="breadcrumb-item"><a routerLink="/asesoria-legal">Asesoría Jurídica</a></li><li class="breadcrumb-item active">Buzón</li></ol></div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Documentos pendientes de convertir en caso legal <span class="badge badge-info">{{ items.length }}</span></h3>
+        <small class="text-muted d-block mt-1">Solo puede crear caso legal cuando el documento esté <strong>Recibido</strong> en Trámite Documentario.</small>
+      </div>
+      <div class="card-body p-0">
+        <div *ngIf="loading" class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div>
+        <div *ngIf="!loading && items.length === 0" class="text-center py-5 text-muted"><i class="fas fa-inbox fa-3x mb-3"></i><p>No hay documentos pendientes</p></div>
+        <table *ngIf="!loading && items.length > 0" class="table table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th>Expediente STD</th>
+              <th>Asunto</th>
+              <th>Remitente</th>
+              <th>Área Origen</th>
+              <th>Estado</th>
+              <th>Recepción</th>
+              <th>Fecha</th>
+              <th width="140">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of items">
+              <td><a [routerLink]="['/tramite-documentario/detalle', t.id]" target="_blank"><strong>{{ t.numero_expediente }}</strong></a></td>
+              <td class="text-truncate" style="max-width:250px" [title]="t.asunto">{{ t.asunto }}</td>
+              <td>{{ t.remitente_nombre || '-' }}</td>
+              <td>{{ t.area_origen_nombre || '-' }}</td>
+              <td><span class="badge" [ngClass]="getEstadoClass(t.estado)">{{ t.estado }}</span></td>
+              <td>
+                <span class="badge" [ngClass]="estaRecibido(t) ? 'badge-success' : 'badge-warning'" [title]="estaRecibido(t) ? 'Recibido el ' + (t.recibido_at | date:'dd/MM/yyyy HH:mm') : 'Pendiente de recibir en Trámite Documentario'">
+                  {{ estaRecibido(t) ? 'Recibido' : 'Pendiente' }}
+                </span>
+              </td>
+              <td><small>{{ t.created_at | date:'dd/MM/yyyy' }}</small></td>
+              <td>
+                <button class="btn btn-primary btn-sm" (click)="crearCaso(t)" [disabled]="processing || !estaRecibido(t)" [title]="estaRecibido(t) ? 'Convertir en caso legal' : 'Debe recibir el documento en Trámite Documentario primero'">
+                  <i class="fas fa-gavel mr-1"></i>Crear Caso Legal
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

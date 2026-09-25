@@ -1,0 +1,745 @@
+/* ============================================
+   FACEBOOK-STYLE NAVBAR
+   ============================================ */
+
+:host ::ng-deep .fb-navbar {
+  background-color: #1877f2 !important;
+  border-bottom: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 8px !important;
+}
+
+.fb-nav-icon {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 0.95rem !important;
+  padding: 6px 10px !important;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+
+  &:hover {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+.fb-nav-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 0.8rem !important;
+  font-weight: 500;
+  padding: 6px 10px !important;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+
+  &:hover,
+  &.fb-active {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+.fb-user-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px;
+  padding: 3px 8px 3px 3px !important;
+  border-radius: 18px;
+  transition: background 0.15s ease;
+  text-decoration: none !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  &::after {
+    display: none !important;
+  }
+}
+
+.fb-avatar {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.fb-username {
+  color: #fff !important;
+  font-size: 0.78rem;
+  font-weight: 500;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fb-caret {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 0.7rem;
+}
+
+.fb-dropdown {
+  min-width: 280px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  padding: 0 !important;
+  margin-top: 6px !important;
+  overflow: hidden !important;
+  z-index: 1060 !important;
+}
+
+/* Cabecera azul del menú de usuario */
+.user-dropdown-header {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-dropdown-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.user-dropdown-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-dropdown-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-dropdown-role {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  margin-bottom: 0.15rem;
+}
+
+.user-dropdown-department {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  opacity: 0.92;
+  margin-bottom: 0.35rem;
+  min-width: 0;
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  i {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    opacity: 0.95;
+  }
+}
+
+.user-dropdown-badge-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #fff;
+
+  i {
+    font-size: 0.7rem;
+    opacity: 0.95;
+  }
+}
+
+/* Ítems del menú con iconos coloreados */
+.user-dropdown-item {
+  display: flex !important;
+  align-items: center;
+  font-size: 0.9rem !important;
+  padding: 0.6rem 1rem !important;
+  border-bottom: 1px solid #f0f0f0;
+
+  .user-dropdown-icon {
+    width: 22px;
+    text-align: center;
+    margin-right: 0.65rem;
+    font-size: 0.9rem;
+  }
+
+  .user-dropdown-icon-profile {
+    color: #3b82f6;
+  }
+
+  .user-dropdown-icon-settings {
+    color: #14b8a6;
+  }
+
+  .user-dropdown-icon-messages {
+    color: #22c55e;
+  }
+
+  .user-dropdown-icon-notifications {
+    color: #eab308;
+  }
+
+  .user-dropdown-icon-online {
+    color: #22c55e;
+    font-size: 0.5rem;
+  }
+
+  .user-dropdown-icon-logout {
+    color: #dc2626;
+  }
+
+  .user-dropdown-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    margin-left: auto;
+  }
+
+  .badge-messages {
+    background: #14b8a6;
+  }
+
+  .badge-notifications {
+    background: #eab308;
+    color: #1f2937;
+  }
+
+  .user-dropdown-time {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-left: auto;
+  }
+}
+
+.user-dropdown-item-online {
+  cursor: default;
+  pointer-events: none;
+}
+
+.user-dropdown-item-logout {
+  border-bottom: none !important;
+}
+
+.fb-dd-item {
+  font-size: 0.82rem !important;
+  padding: 8px 14px !important;
+  color: #1c1e21 !important;
+  transition: background 0.12s ease;
+
+  i {
+    width: 18px;
+    text-align: center;
+    margin-right: 8px;
+    color: #606770;
+    font-size: 0.85rem;
+  }
+
+  &:hover {
+    background: #f2f3f5 !important;
+    transform: none !important;
+  }
+}
+
+.fb-dd-logout {
+  color: #e4002b !important;
+  border-top: 1px solid #e4e6eb;
+  margin-top: 4px;
+  padding-top: 10px !important;
+
+  i {
+    color: #e4002b !important;
+  }
+
+  &:hover {
+    background: #fff0f0 !important;
+  }
+}
+
+:host ::ng-deep .navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+  padding: 4px 8px !important;
+  font-size: 0.85rem;
+
+  &:hover {
+    color: #fff !important;
+  }
+}
+
+.navbar-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 0.55rem !important;
+  font-weight: 600;
+  padding: 1px 4px !important;
+  min-width: 14px;
+  height: 14px;
+  line-height: 12px;
+  border-radius: 7px;
+  animation: none !important;
+}
+
+/* ============================================
+   SIDEBAR - ESTILO ADMINLTE LIMPIO
+   ============================================ */
+
+/* Brand link */
+:host ::ng-deep .brand-link {
+  height: 42px;
+  padding: 0 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+  .brand-text {
+    font-size: 0.9rem;
+
+    b {
+      font-weight: 700;
+    }
+  }
+}
+
+/* Search input */
+.form-control-sidebar {
+  background-color: #242526 !important;
+  border: 1px solid #3a3b3c !important;
+  color: #e4e6eb !important;
+  border-radius: 4px !important;
+  font-size: 0.8rem !important;
+
+  &::placeholder {
+    color: #8a8d91 !important;
+    opacity: 1;
+  }
+
+  &:focus {
+    background-color: #242526 !important;
+    border-color: #1877f2 !important;
+    color: #fff !important;
+    box-shadow: none !important;
+  }
+}
+
+.btn-sidebar {
+  background-color: #242526 !important;
+  border: 1px solid #3a3b3c !important;
+  color: #8a8d91 !important;
+
+  &:hover {
+    color: #e4e6eb !important;
+  }
+}
+
+/* ============================================
+   NAV SIDEBAR - COHERENCIA VISUAL ADMINLTE
+   ============================================ */
+
+:host ::ng-deep {
+
+  /* Section headers */
+  .nav-header {
+    color: #8a8d91 !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    padding: 1rem 1rem 0.5rem !important;
+  }
+
+  /* Base nav-link - consistent size */
+  .nav-sidebar>.nav-item>.nav-link {
+    font-size: 0.875rem !important;
+    font-weight: 400 !important;
+    color: #b0b3b8 !important;
+    padding: 0.5rem 0.75rem !important;
+    margin: 1px 0.5rem !important;
+    border-radius: 4px !important;
+    transition: background-color 0.15s ease, color 0.15s ease !important;
+
+    .nav-icon {
+      font-size: 0.85rem !important;
+      width: 1.6rem !important;
+      text-align: center !important;
+      margin-right: 0.5rem !important;
+      color: #8a8d91 !important;
+    }
+
+    p {
+      font-size: 0.875rem !important;
+      font-weight: 400 !important;
+      margin: 0 !important;
+    }
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.08) !important;
+      color: #e4e6eb !important;
+
+      .nav-icon {
+        color: #e4e6eb !important;
+      }
+    }
+
+    &.active {
+      background-color: rgba(24, 119, 242, 0.2) !important;
+      color: #4599ff !important;
+      font-weight: 500 !important;
+
+      .nav-icon {
+        color: #4599ff !important;
+      }
+    }
+  }
+
+  /* Arrow icon rotation */
+  .nav-sidebar .fas.fa-angle-left.right {
+    position: absolute !important;
+    right: 0.75rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    font-size: 0.75rem !important;
+    color: #8a8d91 !important;
+    transition: transform 0.2s ease !important;
+  }
+
+  .nav-item.menu-open>.nav-link>p>.fas.fa-angle-left.right {
+    transform: translateY(-50%) rotate(-90deg) !important;
+  }
+
+  /* ---- TREEVIEW LEVELS ---- */
+
+  // === TREE LINE VARIABLES ===
+  $tree-line-color: var(--ds-tree-line-color, rgba(255, 255, 255, 0.15));
+  $tree-line-width: 1px;
+  $tree-branch-length: var(--ds-tree-branch-length, 8px);
+  $show-tree-lines: var(--ds-show-tree-lines, block);
+
+  /* Level 1 treeview (sub-items of systems) */
+  .nav-treeview {
+    background-color: transparent !important;
+    position: relative !important;
+
+    // Pseudo-líneas decorativas para conectar sub-menús
+    >.nav-item {
+      position: relative !important;
+
+      // Línea Vertical
+      &::before {
+        display: var(--ds-show-tree-lines, block) !important;
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: var(--ds-tree-level-1-offset, 1.6rem) !important;
+        width: 1px !important;
+        height: 100% !important;
+        background-color: var(--ds-tree-line-color, rgba(255, 255, 255, 0.15)) !important;
+        z-index: 5 !important;
+      }
+
+      // Línea Horizontal (Rama)
+      &::after {
+        display: var(--ds-show-tree-lines, block) !important;
+        content: "" !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: var(--ds-tree-level-1-offset, 1.6rem) !important;
+        width: var(--ds-tree-branch-length, 8px) !important;
+        height: 1px !important;
+        background-color: var(--ds-tree-line-color, rgba(255, 255, 255, 0.15)) !important;
+        z-index: 5 !important;
+      }
+
+      // For items that have sub-treeviews, move the branch to the nav-link center
+      &.menu-open::after,
+      &:has(> .nav-treeview)::after {
+        top: calc(0.4rem + 0.6em) !important;
+      }
+
+      // Last item: vertical line stops at the center (L-shape)
+      &:last-child::before {
+        height: 50% !important;
+      }
+
+      // Last item with sub-treeview
+      &:last-child.menu-open::before,
+      &:last-child:has(> .nav-treeview)::before {
+        height: calc(0.4rem + 0.6em) !important;
+      }
+    }
+
+    >.nav-item>.nav-link {
+      font-size: 0.82rem !important;
+      font-weight: 400 !important;
+      color: #b0b3b8 !important;
+      padding: 0.4rem 0.75rem 0.4rem calc(var(--ds-tree-level-1-offset, 1.6rem) + var(--ds-tree-branch-length, 8px) - 0.1rem) !important;
+      margin: 0 0.5rem !important;
+      border-radius: 4px !important;
+      position: relative !important;
+
+      .nav-icon {
+        font-size: 0.55rem !important;
+        width: 1.2rem !important;
+        margin-right: 0.4rem !important;
+        color: #6c757d !important;
+        position: relative !important;
+        z-index: 2 !important;
+      }
+
+      p {
+        font-size: 0.82rem !important;
+        font-weight: 400 !important;
+      }
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.06) !important;
+        color: #e4e6eb !important;
+
+        .nav-icon {
+          color: #b0b3b8 !important;
+        }
+      }
+
+      &.active {
+        background-color: rgba(24, 119, 242, 0.15) !important;
+        color: #4599ff !important;
+
+        .nav-icon {
+          color: #4599ff !important;
+        }
+      }
+    }
+
+    /* Level 2 treeview (nested sub-menus) */
+    .nav-treeview {
+      >.nav-item {
+        position: relative !important;
+
+        &::before {
+          display: var(--ds-show-tree-lines, block) !important;
+          content: "" !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: var(--ds-tree-level-2-offset, 2.35rem) !important;
+          width: 1px !important;
+          height: 100% !important;
+          background-color: var(--ds-tree-line-color, rgba(255, 255, 255, 0.15)) !important;
+          z-index: 5 !important;
+        }
+
+        &::after {
+          display: var(--ds-show-tree-lines, block) !important;
+          content: "" !important;
+          position: absolute !important;
+          top: 50% !important;
+          left: var(--ds-tree-level-2-offset, 2.35rem) !important;
+          width: var(--ds-tree-branch-length, 8px) !important;
+          height: 1px !important;
+          background-color: var(--ds-tree-line-color, rgba(255, 255, 255, 0.15)) !important;
+          z-index: 5 !important;
+        }
+
+        &.menu-open::after,
+        &:has(> .nav-treeview)::after {
+          top: calc(0.4rem + 0.55em) !important;
+        }
+
+        &:last-child::before {
+          height: 50% !important;
+        }
+
+        &:last-child.menu-open::before,
+        &:last-child:has(> .nav-treeview)::before {
+          height: calc(0.4rem + 0.55em) !important;
+        }
+      }
+
+      >.nav-item>.nav-link {
+        padding-left: calc(var(--ds-tree-level-2-offset, 2.35rem) + var(--ds-tree-branch-length, 8px) - 0.15rem) !important;
+        font-size: 0.8rem !important;
+
+        .nav-icon {
+          font-size: 0.45rem !important;
+          width: 1rem !important;
+          position: relative !important;
+          z-index: 2 !important;
+        }
+
+        p {
+          font-size: 0.8rem !important;
+        }
+      }
+    }
+
+    /* Level 3 treeview */
+    .nav-treeview .nav-treeview {
+      >.nav-item {
+        position: relative !important;
+
+        &::before {
+          display: var(--ds-show-tree-lines, block) !important;
+          content: "" !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: var(--ds-tree-level-3-offset, 3.1rem) !important;
+          width: 1px !important;
+          height: 100% !important;
+          background-color: var(--ds-tree-line-color, rgba(255, 255, 255, 0.15)) !important;
+          z-index: 5 !important;
+        }
+
+        &::after {
+          display: var(--ds-show-tree-lines, block) !important;
+          content: "" !important;
+          position: absolute !important;
+          top: 50% !important;
+          left: var(--ds-tree-level-3-offset, 3.1rem) !important;
+          width: var(--ds-tree-branch-length, 8px) !important;
+          height: 1px !important;
+          background-color: var(--ds-tree-line-color, rgba(255, 255, 255, 0.15)) !important;
+          z-index: 5 !important;
+        }
+
+        &:last-child::before {
+          height: 50% !important;
+        }
+      }
+
+      >.nav-item>.nav-link {
+        padding-left: calc(var(--ds-tree-level-3-offset, 3.1rem) + var(--ds-tree-branch-length, 8px) - 0.15rem) !important;
+        font-size: 0.78rem !important;
+
+        .nav-icon {
+          font-size: 0.4rem !important;
+          width: 0.8rem !important;
+          position: relative !important;
+          z-index: 2 !important;
+        }
+
+        p {
+          font-size: 0.78rem !important;
+        }
+      }
+    }
+  }
+
+  /* ngbCollapse overrides for AdminLTE */
+  .sidebar .nav-treeview {
+    overflow: hidden !important;
+
+    &.collapse:not(.show) {
+      display: none !important;
+    }
+
+    &.collapsing {
+      display: block !important;
+      height: 0 !important;
+      overflow: hidden !important;
+      transition: height 0.25s ease !important;
+    }
+
+    &.collapse.show {
+      display: block !important;
+    }
+  }
+
+  /* Menu open state - parent item */
+  .nav-item.menu-open>.nav-link {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #e4e6eb !important;
+
+    .nav-icon {
+      color: #e4e6eb !important;
+    }
+  }
+
+  /* Disabled menu items */
+  .nav-link.disabled {
+    color: #6c757d !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+
+    &:hover {
+      background-color: transparent !important;
+    }
+  }
+}
+
+/* Compact dropdown scrollbar */
+.dropdown-menu {
+  max-height: 360px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #bec3c9;
+    border-radius: 2px;
+  }
+}
+
+/* Dropdown animation */
+.dropdown-menu {
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sidebar dropdown overrides */
+.sidebar .dropdown-menu {
+  position: static !important;
+  float: none;
+  width: 100%;
+  margin-top: 0;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.sidebar .dropdown-item {
+  color: #b0b3b8;
+  padding: 0.5rem 1rem 0.5rem 2rem;
+  border: none;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #e4e6eb;
+    transform: none;
+  }
+}

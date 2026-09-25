@@ -1,0 +1,600 @@
+<!-- Content Header -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">
+          <i class="fas fa-shield-alt mr-2"></i>Gestión Profesional de Permisos de Menús
+        </h1>
+        <p class="text-muted mb-0">Administra permisos específicos de menús por rol y usuario</p>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a [routerLink]="['/dashboard']">Inicio</a></li>
+          <li class="breadcrumb-item"><a [routerLink]="['/admin-menu-management']">Administración</a></li>
+          <li class="breadcrumb-item active">Permisos de Menús</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+  <div class="container-fluid form-container">
+    
+    <!-- Estadísticas -->
+    <div class="row mb-4" *ngIf="!loading">
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+          <div class="inner">
+            <h3>{{ menuPermissions.length }}</h3>
+            <p>Total Permisos</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-key"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-success">
+          <div class="inner">
+            <h3>{{ activeMenuPermissionsCount }}</h3>
+            <p>Permisos Activos</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+          <div class="inner">
+            <h3>{{ menus.length }}</h3>
+            <p>Menús</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-bars"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+          <div class="inner">
+            <h3>{{ roles.length + users.length }}</h3>
+            <p>Roles + Usuarios</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-users"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controles principales -->
+    <div class="row mb-3">
+      <div class="col-lg-8 col-md-7 col-sm-12">
+        <div class="btn-group-responsive">
+          <button type="button" class="btn btn-primary btn-sm mr-2 mb-2" (click)="openPermissionModal()">
+            <i class="fas fa-plus mr-1"></i>Nuevo Permiso
+          </button>
+          <button type="button" class="btn btn-info btn-sm mr-2 mb-2" (click)="openBulkModal()" [disabled]="selectedPermissions.length === 0">
+            <i class="fas fa-tasks mr-1"></i>Acciones Masivas
+          </button>
+          <button type="button" class="btn btn-success btn-sm mr-2 mb-2" (click)="exportPermissions()">
+            <i class="fas fa-download mr-1"></i>Exportar
+          </button>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-5 col-sm-12">
+        <div class="row">
+          <div class="col-md-6">
+            <select class="form-control form-control-sm" [(ngModel)]="permissionTypeFilter" (change)="onFilterChange()">
+              <option value="all">Todos los Tipos</option>
+              <option value="role">Por Rol</option>
+              <option value="user">Por Usuario</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <div class="input-group input-group-sm">
+              <input type="text" class="form-control" placeholder="Buscar permisos..." 
+                     [(ngModel)]="searchQuery" (input)="onSearchChange()">
+              <div class="input-group-append">
+                <span class="input-group-text">
+                  <i class="fas fa-search"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros avanzados -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h6 class="card-title mb-0">
+              <i class="fas fa-filter mr-1"></i>Filtros Avanzados
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <label>Menú:</label>
+                <select class="form-control form-control-sm" [(ngModel)]="menuFilter" (change)="onFilterChange()">
+                  <option value="all">Todos los Menús</option>
+                  <option *ngFor="let menu of menus" [value]="menu.id">{{ menu.display_name }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label>Rol:</label>
+                <select class="form-control form-control-sm" [(ngModel)]="roleFilter" (change)="onFilterChange()">
+                  <option value="all">Todos los Roles</option>
+                  <option *ngFor="let role of roles" [value]="role.id">{{ role.display_name }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label>Usuario:</label>
+                <select class="form-control form-control-sm" [(ngModel)]="userFilter" (change)="onFilterChange()">
+                  <option value="all">Todos los Usuarios</option>
+                  <option *ngFor="let user of users" [value]="user.id">{{ user.name }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label>Estado:</label>
+                <select class="form-control form-control-sm" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+                  <option value="all">Todos los Estados</option>
+                  <option value="active">Activos</option>
+                  <option value="inactive">Inactivos</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selector de vista -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-outline-primary" 
+                  [class.active]="currentView === 'matrix'" (click)="setView('matrix')">
+            <i class="fas fa-th mr-1"></i>Vista Matriz
+          </button>
+          <button type="button" class="btn btn-outline-info" 
+                  [class.active]="currentView === 'list'" (click)="setView('list')">
+            <i class="fas fa-list mr-1"></i>Vista Lista
+          </button>
+          <button type="button" class="btn btn-outline-success" 
+                  [class.active]="currentView === 'hierarchy'" (click)="setView('hierarchy')">
+            <i class="fas fa-sitemap mr-1"></i>Vista Jerarquía
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Cargando...</span>
+      </div>
+      <p class="mt-2">Cargando permisos de menús...</p>
+    </div>
+
+    <!-- Vista Matriz -->
+    <div *ngIf="!loading && currentView === 'matrix'" class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-th mr-1"></i>Matriz de Permisos por Menú y Rol
+          <span class="badge badge-info ml-2">{{ filteredPermissions.length }}</span>
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover">
+            <thead>
+              <tr>
+                <th>Menú</th>
+                <th *ngFor="let role of roles" class="text-center">
+                  {{ role.display_name }}
+                  <br>
+                  <small class="text-muted">{{ role.users_count }} usuarios</small>
+                </th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let menu of menus">
+                <td>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-bars me-2 text-primary"></i>
+                    <div>
+                      <strong>{{ menu.display_name }}</strong>
+                      <br>
+                      <small class="text-muted">{{ menu.url }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td *ngFor="let role of roles" class="text-center">
+                  <div class="btn-group-vertical btn-group-sm">
+                    <span class="badge badge-sm mb-1" 
+                          [class.badge-success]="hasPermission(menu.id, role.id, 'can_view')"
+                          [class.badge-secondary]="!hasPermission(menu.id, role.id, 'can_view')">
+                      <i class="fas fa-eye"></i> Ver
+                    </span>
+                    <span class="badge badge-sm mb-1" 
+                          [class.badge-info]="hasPermission(menu.id, role.id, 'can_create')"
+                          [class.badge-secondary]="!hasPermission(menu.id, role.id, 'can_create')">
+                      <i class="fas fa-plus"></i> Crear
+                    </span>
+                    <span class="badge badge-sm mb-1" 
+                          [class.badge-warning]="hasPermission(menu.id, role.id, 'can_edit')"
+                          [class.badge-secondary]="!hasPermission(menu.id, role.id, 'can_edit')">
+                      <i class="fas fa-edit"></i> Editar
+                    </span>
+                    <span class="badge badge-sm mb-1" 
+                          [class.badge-danger]="hasPermission(menu.id, role.id, 'can_delete')"
+                          [class.badge-secondary]="!hasPermission(menu.id, role.id, 'can_delete')">
+                      <i class="fas fa-trash"></i> Eliminar
+                    </span>
+                    <span class="badge badge-sm" 
+                          [class.badge-primary]="hasPermission(menu.id, role.id, 'can_manage')"
+                          [class.badge-secondary]="!hasPermission(menu.id, role.id, 'can_manage')">
+                      <i class="fas fa-cogs"></i> Gestionar
+                    </span>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-primary" 
+                            (click)="openPermissionModal()" title="Gestionar Permisos">
+                      <i class="fas fa-key"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista Lista -->
+    <div *ngIf="!loading && currentView === 'list'" class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-list mr-1"></i>Lista de Permisos de Menús
+          <span class="badge badge-info ml-2">{{ filteredPermissions.length }}</span>
+        </h3>
+        <div class="card-tools">
+          <button type="button" class="btn btn-tool" (click)="refreshDataTable()" title="Actualizar">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" 
+               class="table table-bordered table-striped table-hover">
+          <thead>
+            <tr>
+              <th class="text-center" style="width: 50px;">
+                <input type="checkbox" [checked]="selectAll" (change)="toggleSelectAll()">
+              </th>
+              <th>Menú</th>
+              <th class="text-center">Tipo</th>
+              <th>Rol/Usuario</th>
+              <th class="text-center">Ver</th>
+              <th class="text-center">Crear</th>
+              <th class="text-center">Editar</th>
+              <th class="text-center">Eliminar</th>
+              <th class="text-center">Gestionar</th>
+              <th class="text-center">Estado</th>
+              <th>Creado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+
+    <!-- Vista Jerarquía -->
+    <div *ngIf="!loading && currentView === 'hierarchy'" class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-sitemap mr-1"></i>Jerarquía de Permisos de Menús
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="tree-view">
+          <div *ngFor="let menu of menus" class="tree-item">
+            <div class="tree-node">
+              <i class="fas fa-bars text-primary me-2"></i>
+              <strong>{{ menu.display_name }}</strong>
+              <span class="badge badge-info ms-2">{{ getMenuPermissionsCount(menu.id) }} permisos</span>
+            </div>
+            <div class="tree-children ms-4">
+              <div *ngFor="let permission of getMenuPermissions(menu.id)" class="tree-item">
+                <div class="tree-node">
+                  <i [class]="getPermissionIcon('can_view')" 
+                     [class.text-success]="permission.can_view"
+                     [class.text-secondary]="!permission.can_view"></i>
+                  <span class="ms-2">
+                    {{ permission.permission_type === 'role' ? getRoleName(permission.role_id!) : getUserName(permission.user_id!) }}
+                  </span>
+                  <div class="permission-badges ms-2">
+                    <span class="badge badge-sm" 
+                          [class.badge-success]="permission.can_view"
+                          [class.badge-secondary]="!permission.can_view">Ver</span>
+                    <span class="badge badge-sm" 
+                          [class.badge-info]="permission.can_create"
+                          [class.badge-secondary]="!permission.can_create">Crear</span>
+                    <span class="badge badge-sm" 
+                          [class.badge-warning]="permission.can_edit"
+                          [class.badge-secondary]="!permission.can_edit">Editar</span>
+                    <span class="badge badge-sm" 
+                          [class.badge-danger]="permission.can_delete"
+                          [class.badge-secondary]="!permission.can_delete">Eliminar</span>
+                    <span class="badge badge-sm" 
+                          [class.badge-primary]="permission.can_manage"
+                          [class.badge-secondary]="!permission.can_manage">Gestionar</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Modal de Permiso -->
+<div class="modal fade" [class.show]="showPermissionModal" [style.display]="showPermissionModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-key mr-2"></i>
+          {{ selectedPermission ? 'Editar Permiso de Menú' : 'Nuevo Permiso de Menú' }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closePermissionModal()"></button>
+      </div>
+      <form [formGroup]="permissionForm" (ngSubmit)="savePermission()">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="menuSelect">Menú *</label>
+                <select class="form-control" id="menuSelect" formControlName="menu_id">
+                  <option value="">Seleccionar menú...</option>
+                  <option *ngFor="let menu of menus" [value]="menu.id">
+                    {{ menu.display_name }} ({{ menu.url }})
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="permissionType">Tipo de Permiso *</label>
+                <select class="form-control" id="permissionType" formControlName="permission_type" 
+                        (change)="onPermissionTypeChange()">
+                  <option value="role">Por Rol</option>
+                  <option value="user">Por Usuario</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="roleSelect">Rol</label>
+                <select class="form-control" id="roleSelect" formControlName="role_id">
+                  <option value="">Seleccionar rol...</option>
+                  <option *ngFor="let role of roles" [value]="role.id">
+                    {{ role.display_name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="userSelect">Usuario</label>
+                <select class="form-control" id="userSelect" formControlName="user_id">
+                  <option value="">Seleccionar usuario...</option>
+                  <option *ngFor="let user of users" [value]="user.id">
+                    {{ user.name }} ({{ user.email }})
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Permisos Específicos</label>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="canView" formControlName="can_view">
+                  <label class="form-check-label" for="canView">
+                    <i class="fas fa-eye text-info mr-1"></i>
+                    <strong>Ver</strong> - Puede ver el menú
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="canCreate" formControlName="can_create">
+                  <label class="form-check-label" for="canCreate">
+                    <i class="fas fa-plus text-success mr-1"></i>
+                    <strong>Crear</strong> - Puede crear elementos
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="canEdit" formControlName="can_edit">
+                  <label class="form-check-label" for="canEdit">
+                    <i class="fas fa-edit text-warning mr-1"></i>
+                    <strong>Editar</strong> - Puede editar elementos
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="canDelete" formControlName="can_delete">
+                  <label class="form-check-label" for="canDelete">
+                    <i class="fas fa-trash text-danger mr-1"></i>
+                    <strong>Eliminar</strong> - Puede eliminar elementos
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="canManage" formControlName="can_manage">
+                  <label class="form-check-label" for="canManage">
+                    <i class="fas fa-cogs text-primary mr-1"></i>
+                    <strong>Gestionar</strong> - Control total del menú
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="canExport" formControlName="can_export">
+                  <label class="form-check-label" for="canExport">
+                    <i class="fas fa-download text-secondary mr-1"></i>
+                    <strong>Exportar</strong> - Puede exportar datos
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="isActive" formControlName="is_active">
+              <label class="form-check-label" for="isActive">
+                Permiso Activo
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closePermissionModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="permissionForm.invalid || saving">
+            <i class="fas fa-save mr-1" *ngIf="!saving"></i>
+            <i class="fas fa-spinner fa-spin mr-1" *ngIf="saving"></i>
+            {{ saving ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Eliminación -->
+<div class="modal fade" [class.show]="showDeleteModal" [style.display]="showDeleteModal ? 'block' : 'none'">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Confirmar Eliminación
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showDeleteModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro de que deseas eliminar este permiso de menú?</p>
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="showDeleteModal = false">Cancelar</button>
+        <button type="button" class="btn btn-danger" (click)="confirmDelete()" [disabled]="saving">
+          <i class="fas fa-trash mr-1" *ngIf="!saving"></i>
+          <i class="fas fa-spinner fa-spin mr-1" *ngIf="saving"></i>
+          {{ saving ? 'Eliminando...' : 'Eliminar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Acciones Masivas -->
+<div class="modal fade" [class.show]="showBulkModal" [style.display]="showBulkModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-tasks mr-2"></i>Acciones Masivas
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeBulkModal()"></button>
+      </div>
+      <form [formGroup]="bulkPermissionForm" (ngSubmit)="bulkUpdatePermissions()">
+        <div class="modal-body">
+          <p>Seleccionados: <strong>{{ selectedPermissions.length }}</strong> permisos</p>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="bulkPermissionType">Tipo de Permiso</label>
+                <select class="form-control" id="bulkPermissionType" formControlName="permission_type">
+                  <option value="role">Por Rol</option>
+                  <option value="user">Por Usuario</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="bulkRoleSelect">Rol</label>
+                <select class="form-control" id="bulkRoleSelect" formControlName="role_id">
+                  <option value="">Seleccionar rol...</option>
+                  <option *ngFor="let role of roles" [value]="role.id">
+                    {{ role.display_name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Permisos a Aplicar</label>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="bulkCanView" formControlName="can_view">
+                  <label class="form-check-label" for="bulkCanView">Ver</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="bulkCanCreate" formControlName="can_create">
+                  <label class="form-check-label" for="bulkCanCreate">Crear</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="bulkCanEdit" formControlName="can_edit">
+                  <label class="form-check-label" for="bulkCanEdit">Editar</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="bulkCanDelete" formControlName="can_delete">
+                  <label class="form-check-label" for="bulkCanDelete">Eliminar</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="bulkCanManage" formControlName="can_manage">
+                  <label class="form-check-label" for="bulkCanManage">Gestionar</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="bulkIsActive" formControlName="is_active">
+                  <label class="form-check-label" for="bulkIsActive">Activo</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeBulkModal()">Cancelar</button>
+          <button type="submit" class="btn btn-info">
+            <i class="fas fa-save mr-1"></i>Actualizar Masivamente
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

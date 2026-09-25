@@ -1,0 +1,21 @@
+// Tabla (font-size/padding controlado por Design System)
+.table {
+  thead th {
+    font-weight: 600;
+  }
+
+  tbody td {
+    vertical-align: middle;
+  }
+}
+
+.alert-success {
+  h5 {
+    margin-bottom: 15px;
+  }
+
+  h4 {
+    color: #155724;
+    font-weight: bold;
+  }
+}

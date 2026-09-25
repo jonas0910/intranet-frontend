@@ -1,0 +1,312 @@
+<div class="card">
+  <div class="card-header">
+    <div class="row align-items-center">
+      <div class="col">
+        <h3 class="card-title">
+          <i class="fas fa-shield-alt text-primary mr-2"></i>
+          Gestión de Accesos - Migrada a ngx-bootstrap
+        </h3>
+      </div>
+      <div class="col-auto">
+        <!-- Dropdown migrado a ngx-bootstrap -->
+        <div class="dropdown" dropdown>
+          <button class="btn btn-outline-secondary dropdown-toggle" 
+                  type="button" 
+                  dropdownToggle
+                  tooltip="Acciones adicionales"
+                  placement="bottom">
+            <i class="fas fa-cog mr-1"></i>
+            Acciones
+          </button>
+          <div class="dropdown-menu" *dropdownMenu>
+            <button class="dropdown-item" type="button" (click)="onDropdownAction('export')">
+              <i class="fas fa-download mr-2"></i>
+              Exportar datos
+            </button>
+            <button class="dropdown-item" type="button" (click)="onDropdownAction('print')">
+              <i class="fas fa-print mr-2"></i>
+              Imprimir lista
+            </button>
+            <button class="dropdown-item" type="button" (click)="onDropdownAction('refresh')">
+              <i class="fas fa-sync-alt mr-2"></i>
+              Actualizar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card-body">
+    
+    <!-- Info Alert -->
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle mr-2"></i>
+      <strong>Componente migrado:</strong> Este componente fue migrado completamente de jQuery a ngx-bootstrap.
+      <ul class="mt-2 mb-0">
+        <li><strong>Dropdowns:</strong> Usan <code>BsDropdownModule</code> y directivas <code>dropdownToggle</code></li>
+        <li><strong>Modals:</strong> Usan <code>BsModalService</code> y <code>ModalModule</code></li>
+        <li><strong>Tooltips:</strong> Usan <code>TooltipModule</code> y directiva <code>tooltip</code></li>
+      </ul>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="row mb-3">
+      <div class="col">
+        <button type="button" 
+                class="btn btn-success" 
+                (click)="openCreateModal()"
+                [disabled]="isLoading">
+          <i class="fas fa-plus mr-1"></i>
+          Crear Nuevo Acceso
+        </button>
+        
+        <span class="ml-3" *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin mr-1"></i>
+          Procesando...
+        </span>
+      </div>
+    </div>
+    
+    <!-- Data Table -->
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered table-hover">
+        <thead class="thead-dark">
+          <tr>
+            <th width="10%">ID</th>
+            <th width="25%">Nombre</th>
+            <th width="40%">Descripción</th>
+            <th width="15%">Estado</th>
+            <th width="10%">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items">
+            <td class="text-center">{{ item.id }}</td>
+            <td>
+              <strong>{{ item.name }}</strong>
+            </td>
+            <td>{{ item.description }}</td>
+            <td>
+              <span [class]="getStatusClass(item.status)">
+                {{ item.status }}
+              </span>
+            </td>
+            <td>
+              <div class="btn-group" role="group">
+                <button type="button" 
+                        class="btn btn-sm btn-outline-warning"
+                        (click)="openEditModal(item)"
+                        tooltip="Editar acceso"
+                        placement="top">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" 
+                        class="btn btn-sm btn-outline-danger"
+                        (click)="openDeleteModal(item)"
+                        tooltip="Eliminar acceso"
+                        placement="top">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+  </div>
+</div>
+
+<!-- Create Modal - ngx-bootstrap Template -->
+<div class="modal fade" bsModal #createModal="bs-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      
+      <form [formGroup<｜tool▁call▁begin｜>="createForm" (ngSubmit)="createItem()">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-plus-circle text-success mr-2"></i>
+            Crear Nuevo Acceso
+          </h5>
+          <button type="button" 
+                  class="btn-close" 
+                  aria-label="Close" 
+                  (click)="onCancelCreate()">
+            <span>&times;</span>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="createName">
+                  Nombre del Acceso *
+                </label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="createName"
+                  formControlName="name"
+                  placeholder="Ej: Acceso RRHH Completo"
+                  [class.is-invalid]="createForm.get('name')?.invalid && createForm.get('name')?.touched">
+                <div class="invalid-feedback" 
+                     *ngIf="createForm.get('name')?.invalid && createForm.get('name')?.touched">
+                  El nombre es requerido y debe tener al menos 3 caracteres.
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="createStatus">Estado *</label>
+                <select class="form-control" 
+                        id="createStatus" 
+                        formControlName="status">
+                  <option *ngFor="let status of statusOptions" [value]="status.value">
+                    {{ status.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="createDescription">
+                  Descripción *
+                </label>
+                <textarea 
+                  class="form-control" 
+                  id="createDescription"
+                  formControlName="description"
+                  rows="3"
+                  placeholder="Describe los permisos y alcance de este acceso..."
+                  [class.is-invalid]="createForm.get('description')?.invalid && createForm.get('description')?.touched">
+                </textarea>
+                <div class="invalid-feedback" 
+                     *ngIf="createForm.get('description')?.invalid && createForm.get('description')?.touched">
+                  La descripción es requerida.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" 
+                  class="btn btn-secondary" 
+                  (click)="onCancelCreate()"
+                  [disabled]="isLoading">
+            Cancelar
+          </button>
+          <button type="submit" 
+                  class="btn btn-success"
+                  [disabled]="createForm.invalid || isLoading">
+            <i class="fas fa-save mr-1"></i>
+            Crear Acceso
+          </button>
+        </div>
+      </form>
+      
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal - ngx-bootstrap Template -->
+<div class="modal fade" bsModal #editModal="bs-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      
+      <form [formGroup<｜tool▁sep｜>"editForm" (ngSubmit)="updateItem()">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-edit text-warning mr-2"></i>
+            Editar Acceso: {{ selectedItem?.name }}
+          </h5>
+          <button type="button" 
+                  class="btn-close" 
+                  aria-label="Close" 
+                  (click)="onCancelEdit()">
+            <span>&times;</span>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="editName">
+                  Nombre del Acceso *
+                </label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="editName"
+                  formControlName="name"
+                  [class.is-invalid]="editForm.get('name')?.invalid && editForm.get('name')?.touched">
+                <div class="invalid-feedback" 
+                     *ngIf="editForm.get('name')?.invalid && editForm.get('name')?.touched">
+                  El nombre es requerido y debe tener al menos 3 caracteres.
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="editStatus">Estado *</label>
+                <select class="form-control" 
+                        id="editStatus" 
+                        formControlName="status">
+                  <option *ngFor="let status of statusOptions" [value]="status.value">
+                    {{ status.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="editDescription">
+                  Descripción *
+                </label>
+                <textarea 
+                  class="form-control" 
+                  id="editDescription"
+                  formControlName="description"
+                  rows="3"
+                  [class.is-invalid]="editForm.get('description')?.invalid && editForm.get('description')?.touched">
+                </textarea>
+                <div class="invalid-feedback" 
+                     *ngIf="editForm.get('description')?.invalid && editForm.get('description')?.touched">
+                  La descripción es requerida.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" 
+                  class="btn btn-secondary" 
+                  (click)="onCancelEdit()"
+                  [disabled]="isLoading">
+            Cancelar
+          </button>
+          <button type="submit" 
+                  class="btn btn-warning"
+                  [disabled]="editForm.invalid || isLoading">
+            <i class="fas fa-save mr-1"></i>
+            Actualizar Acceso
+          </button>
+        </div>
+      </form>
+      
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,170 @@
+<div class="accesos-container">
+  <!-- Header -->
+  <div class="header-section">
+    <h1 class="page-title">
+      <i class="fas fa-users-cog"></i>
+      Gestión de Accesos
+    </h1>
+    <p class="page-subtitle">Administra los permisos de acceso a sistemas y menús por usuario</p>
+  </div>
+
+  <!-- Vista de Usuarios -->
+  <div *ngIf="vistaActual === 'usuarios'" class="usuarios-section">
+    <!-- Barra de búsqueda -->
+    <div class="search-bar">
+      <div class="search-input-group">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" 
+               class="search-input" 
+               placeholder="Buscar usuarios por nombre o email..."
+               [(ngModel)]="busquedaUsuario"
+               (ngModelChange)="filtrarUsuarios()">
+      </div>
+    </div>
+
+    <!-- Lista de usuarios -->
+    <div class="usuarios-grid">
+      <div *ngFor="let usuario of usuariosFiltrados" 
+           class="usuario-card"
+           (click)="seleccionarUsuario(usuario)">
+        <div class="usuario-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="usuario-info">
+          <h3 class="usuario-nombre">{{ usuario.nombre }}</h3>
+          <p class="usuario-email">{{ usuario.email }}</p>
+          <span class="usuario-rol">{{ usuario.rol }}</span>
+        </div>
+        <div class="usuario-actions">
+          <button class="btn-seleccionar">
+            <i class="fas fa-arrow-right"></i>
+            Gestionar Accesos
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje si no hay usuarios -->
+    <div *ngIf="usuariosFiltrados.length === 0 && !loading" class="no-data">
+      <i class="fas fa-users-slash"></i>
+      <p>No se encontraron usuarios</p>
+    </div>
+  </div>
+
+  <!-- Vista de Accesos del Usuario -->
+  <div *ngIf="vistaActual === 'accesos'" class="accesos-section">
+    <!-- Header de accesos -->
+    <div class="accesos-header">
+      <button class="btn-volver" (click)="volverUsuarios()">
+        <i class="fas fa-arrow-left"></i>
+        Volver a Usuarios
+      </button>
+      <div class="usuario-info-header">
+        <h2>{{ usuarioSeleccionado?.nombre }}</h2>
+        <p>{{ usuarioSeleccionado?.email }}</p>
+      </div>
+      <button class="btn-agregar" (click)="agregarAcceso()">
+        <i class="fas fa-plus"></i>
+        Agregar Acceso
+      </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-section">
+      <div class="filtro-group">
+        <label for="sistemaFilter">Filtrar por Sistema:</label>
+        <select id="sistemaFilter" 
+                class="filtro-select"
+                [(ngModel)]="filtroSistema"
+                (ngModelChange)="actualizarFiltro()">
+          <option [value]="null">Todos los Sistemas</option>
+          <option *ngFor="let sistema of sistemas" [value]="sistema.id">
+            {{ sistema.nombre }}
+          </option>
+        </select>
+      </div>
+      
+      <div class="filtro-group">
+        <label for="menuSearch">Buscar Menú:</label>
+        <div class="search-input-group">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" 
+                 id="menuSearch"
+                 class="search-input"
+                 placeholder="Buscar menú..."
+                 [(ngModel)]="busquedaMenu"
+                 (ngModelChange)="actualizarFiltro()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de accesos -->
+    <div class="accesos-list">
+      <div *ngFor="let acceso of accesosFiltrados" class="acceso-card">
+        <div class="acceso-header">
+          <div class="sistema-info">
+            <span class="sistema-badge">{{ getNombreSistema(acceso.sistema_id) }}</span>
+          </div>
+          <div class="acceso-actions">
+            <button class="btn-editar" (click)="editarAcceso(acceso)" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-eliminar" (click)="eliminarAcceso(acceso)" title="Eliminar">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="acceso-body">
+          <div class="menu-info">
+            <i class="fas fa-bars menu-icon"></i>
+            <div class="menu-details">
+              <h4 class="menu-nombre">{{ getNombreMenu(acceso.sistema_id, acceso.menu_id) }}</h4>
+              <p class="menu-id">ID: {{ acceso.menu_id }}</p>
+            </div>
+          </div>
+          
+          <div class="permisos-section">
+            <h5 class="permisos-title">Permisos:</h5>
+            <div class="permisos-list">
+              <span *ngFor="let permiso of acceso.permisos" 
+                    class="permiso-badge">
+                <i class="fas fa-check-circle"></i>
+                {{ permiso }}
+              </span>
+              <span *ngIf="acceso.permisos.length === 0" class="permiso-vacio">
+                Sin permisos asignados
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje si no hay accesos -->
+    <div *ngIf="accesosFiltrados.length === 0 && !loadingAccesos" class="no-data">
+      <i class="fas fa-lock"></i>
+      <p>Este usuario no tiene accesos asignados</p>
+      <button class="btn-agregar-primero" (click)="agregarAcceso()">
+        <i class="fas fa-plus"></i>
+        Agregar Primer Acceso
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loadingAccesos" class="loading-section">
+      <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+      <p>Cargando accesos...</p>
+    </div>
+  </div>
+
+  <!-- Loading general -->
+  <div *ngIf="loading && vistaActual === 'usuarios'" class="loading-section">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <p>Cargando usuarios...</p>
+  </div>
+</div>

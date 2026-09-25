@@ -1,0 +1,95 @@
+.widget-user-2 {
+  margin-bottom: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+
+  .widget-user-header {
+    padding: 1rem;
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+    position: relative;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .widget-user-image {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    
+    img {
+      width: 50px;
+      height: 50px;
+      border: 3px solid #fff;
+    }
+  }
+
+  .widget-user-username {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    margin-top: 0;
+    text-align: center;
+  }
+
+  .widget-user-desc {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.875rem;
+    margin: 0;
+    text-align: center;
+  }
+
+  .card-footer {
+    background-color: #fff;
+    border-bottom-left-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+  }
+}
+
+.input-group {
+  .input-group-prepend,
+  .input-group-append {
+    .btn,
+    .input-group-text {
+      border-color: #ced4da;
+    }
+  }
+}
+
+.alert {
+  border-radius: 0.25rem;
+  
+  i {
+    vertical-align: middle;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .widget-user-2 {
+    .widget-user-username {
+      font-size: 1rem;
+    }
+    
+    .widget-user-desc {
+      font-size: 0.8rem;
+    }
+  }
+}
+
+
+
+
+
+
+
+
+

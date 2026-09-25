@@ -1,0 +1,161 @@
+.modal.show {
+  display: block;
+}
+
+.modal-backdrop.show {
+  opacity: 0.5;
+}
+
+.badge-success {
+  background: linear-gradient(87deg, #2dce89 0, #2dcecc 100%);
+}
+
+.badge-danger {
+  background: linear-gradient(87deg, #f5365c 0, #f56036 100%);
+}
+
+.badge-info {
+  background: linear-gradient(87deg, #11cdef 0, #1171ef 100%);
+}
+
+.badge-warning {
+  background: linear-gradient(87deg, #fb6340 0, #fbb140 100%);
+}
+
+.badge-primary {
+  background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%);
+}
+
+.badge-secondary {
+  background: linear-gradient(87deg, #8898aa 0, #888aaa 100%);
+}
+
+.form-check-input:checked {
+  background-color: #5e72e4;
+  border-color: #5e72e4;
+}
+
+.card-header.bg-gradient-primary {
+  background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%);
+}
+
+.alert-info {
+  background-color: #e3f2fd;
+  border-color: #90caf9;
+  color: #1976d2;
+}
+
+.text-xxs {
+  font-size: 0.65rem;
+}
+
+// AdminLTE Tabs Styles
+.card-tabs {
+  .card-header {
+    background-color: #f4f6f9;
+    border-bottom: 0;
+    
+    .nav-tabs {
+      border-bottom: 0;
+      
+      .nav-item {
+        margin-bottom: -1px;
+        
+        .nav-link {
+          border: 0;
+          border-radius: 0.25rem 0.25rem 0 0;
+          color: #6c757d;
+          cursor: pointer;
+          padding: 0.75rem 1.25rem;
+          transition: all 0.3s;
+          
+          &:hover {
+            background-color: #e9ecef;
+            border-color: transparent;
+            color: #495057;
+          }
+          
+          &.active {
+            background-color: #fff;
+            border-bottom: 3px solid #007bff;
+            color: #007bff;
+            font-weight: 600;
+          }
+          
+          i {
+            font-size: 0.95rem;
+          }
+          
+          .badge {
+            font-size: 0.7rem;
+            padding: 0.25em 0.5em;
+          }
+        }
+      }
+    }
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+}
+
+// Tabs específicos por tipo
+.nav-tabs {
+  .nav-link {
+    &.active {
+      &:has(i.fa-plus-circle) {
+        border-bottom-color: #28a745 !important;
+        color: #28a745 !important;
+      }
+      
+      &:has(i.fa-minus-circle) {
+        border-bottom-color: #dc3545 !important;
+        color: #dc3545 !important;
+      }
+      
+      &:has(i.fa-hand-holding-usd) {
+        border-bottom-color: #17a2b8 !important;
+        color: #17a2b8 !important;
+      }
+    }
+  }
+}
+
+// Mejoras para las tablas en tabs
+.tab-content {
+  .table-responsive {
+    margin-top: 0;
+  }
+}
+
+// Dropdown de inserción de variables en fórmula
+.formula-variable-dropdown {
+  max-height: 70vh;
+  overflow-y: auto;
+  .dropdown-item {
+    white-space: normal;
+    padding: 0.5rem 0.75rem;
+    code {
+      font-size: 0.8em;
+    }
+  }
+}
+
+// Panel de selección de variables (alternativa al dropdown Bootstrap)
+.formula-variable-picker {
+  position: absolute;
+  right: 0;
+  z-index: 1050;
+  min-width: 320px;
+  max-height: 70vh;
+  overflow-y: auto;
+  button.dropdown-item {
+    cursor: pointer;
+    white-space: normal;
+    &:hover {
+      background-color: #f8f9fa;
+    }
+  }
+}
+

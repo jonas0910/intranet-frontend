@@ -1,0 +1,75 @@
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.bg-primary-light {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.bg-success-light {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.bg-warning-light {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.opacity-20 {
+    opacity: 0.2;
+}
+
+.text-xs {
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+.ds-crud-table {
+    thead th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+
+    tbody tr {
+        transition: all 0.2s;
+
+        &:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.002);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+        }
+    }
+}
+
+.avatar-sm {
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+// Animación para el modal
+.modal.fade .modal-dialog {
+    transform: scale(0.95);
+    transition: transform 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1);
+}
+
+.ds-crud-label {
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 0.4rem;
+}

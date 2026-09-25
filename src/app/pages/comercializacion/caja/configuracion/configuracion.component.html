@@ -1,0 +1,163 @@
+<app-system-layout [title]="viewConfig.title" [subtitle]="viewConfig.subtitle"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comercialización', url: '/comercializacion'}, {label: 'Configuración'}]"
+    [subsystem]="'comercializacion'">
+
+    <div class="card elevation-1" [ngClass]="cv.cardOutlineColor" [style.border-radius.px]="cv.cardBorderRadius">
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                    <i [class]="viewConfig.icon + ' mr-1 text-muted'"></i> Conceptos de Recaudación (TUPA) y Partidas de Ingreso MEF
+                </h3>
+                <span class="badge badge-info ml-2" *ngIf="cv.showRecordCount">{{data.length}} conceptos</span>
+
+                <ng-container *ngIf="cv.showExportButtons">
+                    <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"
+                        (click)="onExportExcel()">
+                        <i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"
+                        (click)="onExportPdf()">
+                        <i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}
+                    </button>
+                </ng-container>
+            </div>
+            <div>
+                <button type="button" class="btn btn-sm shadow-sm" [ngClass]="cv.newBtnClass"
+                    (click)="onAction('create')">
+                    <i [class]="viewConfig.actions?.create?.icon + ' mr-1'"></i> {{viewConfig.actions?.create?.label}}
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table">
+                    <thead>
+                        <tr>
+                            <th *ngFor="let h of viewConfig.table.headers" [class.text-center]="h.key === 'acciones'">
+                                {{h.label}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let p of data">
+                            <td><strong class="text-primary">{{p.codigo}}</strong></td>
+                            <td class="text-wrap" style="max-width: 280px;">{{p.descripcion}}</td>
+                            <td><span class="badge badge-light border">{{p.tipo}}</span></td>
+                            <td class="small">
+                                <span *ngIf="p.partida_ingreso" class="text-monospace">{{p.partida_ingreso}}</span>
+                                <span *ngIf="!p.partida_ingreso" class="text-muted">—</span>
+                                <span *ngIf="p.partida_descripcion" class="d-block text-muted" style="font-size: 0.8em;">{{p.partida_descripcion}}</span>
+                            </td>
+                            <td class="font-weight-bold">S/ {{p.monto | number:'1.2-2'}}</td>
+                            <td>
+                                <span class="badge badge-pill"
+                                    [ngClass]="p.estado === 'ACTIVO' ? 'badge-success' : 'badge-danger'">{{p.estado}}</span>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm mr-1" [ngClass]="cv.editBtnClass" title="Editar"
+                                    (click)="openEdit(p)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm" [ngClass]="cv.deleteBtnClass" title="Eliminar"
+                                    (click)="confirmDelete(p)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="data.length === 0">
+                            <td colspan="7" class="text-center p-5">
+                                <i class="fas fa-cog fa-spin fa-3x text-muted mb-3 d-block"></i>
+                                <p class="text-muted">Cargando configuraciones...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>
+
+<!-- Modal Nuevo Concepto -->
+<div class="modal fade" id="modalConcepto" [ngClass]="{'show': showModal}"
+    [style.display]="showModal ? 'block' : 'none'" tabindex="-1" role="dialog"
+    [ngStyle]="{'background-color': showModal ? 'rgba(0,0,0,0.5)' : 'transparent'}">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content elevation-3" [style.border-radius.px]="mc.borderRadius">
+            <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+                [style.padding]="mc.headerPadding">
+                <h5 class="modal-title" [style.font-size]="mc.headerFontSize">
+                    <i [class]="mc.headerIcon + ' mr-2'"></i> {{ editingId ? 'Editar Concepto' : 'Registrar Nuevo Concepto' }}
+                </h5>
+                <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" [style.background]="mc.bodyBg" [style.padding]="mc.formPadding">
+                <form [formGroup]="form">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">
+                                <i class="fas fa-barcode mr-1"></i> Código TUPA
+                            </label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="codigo"
+                                placeholder="Ej: 001.01">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">
+                                <i class="fas fa-tag mr-1"></i> Tipo
+                            </label>
+                            <select class="form-control" [ngClass]="mc.inputSize" formControlName="tipo">
+                                <option value="TASA">TASA</option>
+                                <option value="MULTA">MULTA</option>
+                                <option value="DERECHO">DERECHO</option>
+                                <option value="OTRO">OTRO</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">
+                                <i class="fas fa-align-left mr-1"></i> Descripción del Concepto
+                            </label>
+                            <textarea class="form-control" [ngClass]="mc.inputSize" formControlName="descripcion"
+                                rows="3" placeholder="Detalle el concepto de pago"></textarea>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">
+                                <i class="fas fa-list-ol mr-1"></i> Partida de ingreso (MEF)
+                            </label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="partida_ingreso"
+                                placeholder="Ej: 1.2.2.1.01.01">
+                            <small class="text-muted">Clasificador de Ingresos del Sector Público - Perú</small>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">
+                                <i class="fas fa-file-alt mr-1"></i> Descripción partida MEF
+                            </label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="partida_descripcion"
+                                placeholder="Ej: Tasas por licencias de funcionamiento (MEF)">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">
+                                <i class="fas fa-money-bill mr-1"></i> Monto (S/)
+                            </label>
+                            <input type="number" step="0.01" class="form-control" [ngClass]="mc.inputSize"
+                                formControlName="monto" placeholder="0.00">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0" [style.background]="mc.footerBg">
+                <button type="button" class="btn" [ngClass]="mc.cancelBtnClass" (click)="closeModal()"
+                    [disabled]="isSaving">
+                    <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> Cancelar
+                </button>
+                <button type="button" class="btn shadow-sm" [ngClass]="mc.saveBtnClass" (click)="save()"
+                    [disabled]="form.invalid || isSaving">
+                    <i class="fas fa-circle-notch fa-spin mr-1" *ngIf="isSaving"></i>
+                    <i [class]="mc.saveBtnIcon + ' mr-1'" *ngIf="!isSaving"></i>
+                    {{ isSaving ? 'Guardando...' : (editingId ? 'Actualizar' : mc.saveBtnLabel) }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

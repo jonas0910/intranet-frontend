@@ -1,0 +1,626 @@
+<div class="container-fluid p-0">
+
+  <!-- Subsystem Selector -->
+  <div class="card elevation-1 mb-3"
+    [ngClass]="config.crudView.cardOutlineColor ? 'card-outline ' + config.crudView.cardOutlineColor : 'card-outline card-info'"
+    [style.border-radius.px]="config.crudView.cardBorderRadius">
+    <div class="card-body py-2">
+      <div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
+        <div class="d-flex align-items-center" style="gap: 6px;">
+          <i class="fas fa-project-diagram text-info"></i>
+          <label class="mb-0 font-weight-bold small">Aplicar patrón a:</label>
+          <select class="form-control form-control-sm" [(ngModel)]="selectedSubsystem" (change)="onSubsystemChange()"
+            style="max-width: 260px;">
+            <option value="global">Global (todos los subsistemas)</option>
+            <option *ngFor="let sub of subsystems" [value]="sub.id">
+              {{ sub.label }}
+              <ng-container *ngIf="subsystemsWithConfig.includes(sub.id)"> (personalizado)</ng-container>
+            </option>
+          </select>
+        </div>
+
+        <span *ngIf="isSubsystemMode && currentSubsystemHasConfig" class="badge"
+          [ngClass]="config.crudView.cardOutlineColor ? 'bg-' + config.crudView.cardOutlineColor.replace('card-', '') : 'badge-info'">
+          <i class="fas fa-paint-brush mr-1"></i> Patrón personalizado
+        </span>
+        <span *ngIf="isSubsystemMode && !currentSubsystemHasConfig" class="badge badge-secondary">
+          <i class="fas fa-globe mr-1"></i> Usando patrón Global
+        </span>
+
+        <div class="ml-auto d-flex flex-wrap" style="gap: 6px;">
+          <button *ngIf="isSubsystemMode && !currentSubsystemHasConfig" class="btn btn-outline-info btn-sm"
+            (click)="copyGlobalToSubsystem()" title="Crear copia del Global para personalizar">
+            <i class="fas fa-copy mr-1"></i> Copiar Global
+          </button>
+          <button *ngIf="isSubsystemMode && currentSubsystemHasConfig" class="btn btn-outline-warning btn-sm"
+            (click)="removeSubsystemOverride()" title="Quitar personalización y usar Global">
+            <i class="fas fa-undo mr-1"></i> Usar Global
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subsystems with custom config summary -->
+  <div class="mb-3" *ngIf="subsystemsWithConfig.length > 0">
+    <small class="text-muted mr-2">Subsistemas con patrón propio:</small>
+    <span *ngFor="let sid of subsystemsWithConfig" class="badge mr-1"
+      [ngClass]="config.crudView.cardOutlineColor ? 'bg-' + config.crudView.cardOutlineColor.replace('card-', '') : 'badge-info'"
+      style="cursor: pointer;" (click)="selectedSubsystem = sid; onSubsystemChange()">
+      <i class="fas fa-paint-brush mr-1"></i>
+      {{ getSubsystemLabel(sid) }}
+    </span>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <span class="badge badge-success mr-2" *ngIf="savedMessage">
+        <i class="fas fa-check mr-1"></i> {{ savedMessage }}
+      </span>
+    </div>
+    <div class="d-flex gap-2" style="gap: 6px;">
+      <button class="btn btn-outline-secondary btn-sm" (click)="resetConfig()">
+        <i class="fas fa-undo mr-1"></i> Restablecer
+      </button>
+      <button class="btn btn-success btn-sm" (click)="saveConfig()">
+        <i class="fas fa-save mr-1"></i> Guardar {{ isSubsystemMode ? 'para ' + selectedSubsystem : 'Global' }}
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="openFullPreview()">
+        <i class="fas fa-desktop mr-1"></i> Previsualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Design Sub-Tabs (orden: Layout → Colores → Componentes → CRUD → Listados) -->
+  <div class="card elevation-1 mb-3"
+    [ngClass]="config.crudView.cardOutlineColor ? 'card-outline ' + config.crudView.cardOutlineColor : 'card-outline card-primary'"
+    [style.border-radius.px]="config.crudView.cardBorderRadius">
+    <div class="card-body p-0">
+      <ul class="nav nav-pills nav-fill ds-subtabs">
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeDesignTab === 'layout'" (click)="setActiveTab('layout')"
+            href="javascript:void(0)">
+            <i class="fas fa-columns mr-1"></i> 1. Layout
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeDesignTab === 'colors'" (click)="setActiveTab('colors')"
+            href="javascript:void(0)">
+            <i class="fas fa-palette mr-1"></i> 2. Colores y Botones
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeDesignTab === 'shared'" (click)="setActiveTab('shared')"
+            href="javascript:void(0)">
+            <i class="fas fa-puzzle-piece mr-1"></i> 3. Componentes
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeDesignTab === 'crud'" (click)="setActiveTab('crud')"
+            href="javascript:void(0)">
+            <i class="fas fa-edit mr-1"></i> 4. Modales y Form.
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeDesignTab === 'crudList'" (click)="setActiveTab('crudList')"
+            href="javascript:void(0)">
+            <i class="fas fa-table mr-1"></i> 5. Listados y Tablas
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SECCIONES DE TABS (Side-by-Side) -->
+
+  <!-- 1: Layout -->
+  <div *ngIf="activeDesignTab === 'layout'">
+    <div class="card elevation-1 mb-3" [ngClass]="config.crudView.cardOutlineColor ? 'card-outline ' + config.crudView.cardOutlineColor : 'card-outline card-primary'" [style.border-radius.px]="config.crudView.cardBorderRadius">
+      <div class="card-header py-2"><h3 class="card-title mb-0"><i class="fas fa-columns mr-2 text-primary"></i> 1. Layout y Estructura</h3></div>
+      <div class="card-body py-3">
+        <div class="row">
+          <div class="col-xl-5 col-lg-6 pr-lg-4" style="max-height: 800px; overflow-y: auto;">
+            <h6 class="text-primary font-weight-bold mb-3"><i class="fas fa-sliders-h mr-1"></i> Controles de Diseño</h6>
+
+            <h6 class="text-muted mb-2 font-weight-bold">Marca y barra superior</h6>
+            <div class="row">
+              <div class="col-6 mb-2">
+                <label class="small text-muted mb-1">Brand (fondo)</label>
+                <div class="d-flex align-items-center" style="gap:4px;"><input type="color" class="ds-color-picker" [(ngModel)]="config.layout.brandBg" (ngModelChange)="onLayoutControlChange()"><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.brandBg" (ngModelChange)="onLayoutControlChange()"></div>
+              </div>
+              <div class="col-6 mb-2">
+                <label class="small text-muted mb-1">Brand (texto)</label>
+                <div class="d-flex align-items-center" style="gap:4px;"><input type="color" class="ds-color-picker" [(ngModel)]="config.layout.brandText" (ngModelChange)="onLayoutControlChange()"><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.brandText" (ngModelChange)="onLayoutControlChange()"></div>
+              </div>
+              <div class="col-6 mb-2">
+                <label class="small text-muted mb-1">Navbar (fondo)</label>
+                <div class="d-flex align-items-center" style="gap:4px;"><input type="color" class="ds-color-picker" [(ngModel)]="config.layout.navbarBg" (ngModelChange)="onLayoutControlChange()"><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.navbarBg" (ngModelChange)="onLayoutControlChange()"></div>
+              </div>
+              <div class="col-6 mb-2">
+                <label class="small text-muted mb-1">Navbar (texto / iconos)</label>
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.navbarText" (ngModelChange)="onLayoutControlChange()" placeholder="rgba(...) o #hex">
+              </div>
+            </div>
+
+            <h6 class="text-muted mb-2 font-weight-bold mt-2">Menú lateral</h6>
+            <div class="row">
+              <div class="col-6 mb-2">
+                <label class="small text-muted mb-1">Fondo sidebar</label>
+                <div class="d-flex align-items-center" style="gap:4px;"><input type="color" class="ds-color-picker" [(ngModel)]="config.layout.sidebarBg" (ngModelChange)="onLayoutControlChange()"><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.sidebarBg" (ngModelChange)="onLayoutControlChange()"></div>
+              </div>
+              <div class="col-6 mb-2">
+                <label class="small text-muted mb-1">Texto ítems</label>
+                <div class="d-flex align-items-center" style="gap:4px;"><input type="color" class="ds-color-picker" [(ngModel)]="config.layout.sidebarText" (ngModelChange)="onLayoutControlChange()"><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.sidebarText" (ngModelChange)="onLayoutControlChange()"></div>
+              </div>
+              <div class="col-6 mb-2">
+                <label class="small text-muted mb-1">Ítem activo / hover</label>
+                <div class="d-flex align-items-center" style="gap:4px;"><input type="color" class="ds-color-picker" [(ngModel)]="config.layout.sidebarActiveText" (ngModelChange)="onLayoutControlChange()"><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.sidebarActiveText" (ngModelChange)="onLayoutControlChange()"></div>
+              </div>
+            </div>
+
+            <h6 class="text-muted mb-2 font-weight-bold mt-2">Contenido y tarjetas</h6>
+            <div class="row">
+              <div class="col-6 mb-2">
+                <label class="small text-muted mb-1">Fondo contenido</label>
+                <div class="d-flex align-items-center" style="gap:4px;"><input type="color" class="ds-color-picker" [(ngModel)]="config.layout.contentBg" (ngModelChange)="onLayoutControlChange()"><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.contentBg" (ngModelChange)="onLayoutControlChange()"></div>
+              </div>
+              <div class="col-6 mb-2">
+                <label class="small text-muted mb-1">Borde acento (card)</label>
+                <div class="d-flex align-items-center" style="gap:4px;"><input type="color" class="ds-color-picker" [(ngModel)]="config.layout.cardBorderColor" (ngModelChange)="onLayoutControlChange()"><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.cardBorderColor" (ngModelChange)="onLayoutControlChange()"></div>
+              </div>
+              <div class="col-12 mb-2">
+                <label class="small text-muted mb-1">Padding área principal (<code>container-fluid</code>)</label>
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.containerFluidPadding" (ngModelChange)="onLayoutControlChange()" placeholder="ej. 2rem, 1rem 0.5rem">
+              </div>
+            </div>
+
+            <hr class="my-3">
+            <h6 class="text-muted mb-2 font-weight-bold">Dimensiones</h6>
+            <div class="row">
+              <div class="col-6 mb-2"><label class="small">Ancho sidebar (px)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="config.layout.sidebarWidth" (ngModelChange)="onLayoutControlChange()"></div>
+              <div class="col-6 mb-2"><label class="small">Alto navbar (px)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="config.layout.navbarHeight" (ngModelChange)="onLayoutControlChange()"></div>
+            </div>
+
+            <hr class="my-3">
+            <h6 class="text-muted mb-2 font-weight-bold">Árbol de líneas (submenús)</h6>
+            <p class="small text-muted mb-2">Misma lógica que el menú lateral real; ajusta indentación y conectores.</p>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="dsShowTree" [(ngModel)]="config.layout.showTreeLines" (ngModelChange)="onLayoutControlChange()">
+              <label class="form-check-label small" for="dsShowTree">Mostrar líneas del árbol</label>
+            </div>
+            <div class="row">
+              <div class="col-6 mb-2">
+                <label class="small">Color líneas</label>
+                <div class="d-flex align-items-center" style="gap:4px;"><input type="color" class="ds-color-picker" [(ngModel)]="config.layout.treeLineColor" (ngModelChange)="onLayoutControlChange()"><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.treeLineColor" (ngModelChange)="onLayoutControlChange()"></div>
+              </div>
+              <div class="col-6 mb-2"><label class="small">Longitud rama (px)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="config.layout.treeBranchLength" (ngModelChange)="onLayoutControlChange()"></div>
+              <div class="col-12 mb-2"><label class="small">Offset nivel 1</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.treeLevel1Offset" (ngModelChange)="onLayoutControlChange()"></div>
+              <div class="col-12 mb-2"><label class="small">Offset nivel 2</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.treeLevel2Offset" (ngModelChange)="onLayoutControlChange()"></div>
+              <div class="col-12 mb-2"><label class="small">Offset nivel 3</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.treeLevel3Offset" (ngModelChange)="onLayoutControlChange()"></div>
+            </div>
+
+            <hr class="my-3">
+            <h6 class="text-muted mb-2 font-weight-bold">Modales (referencia)</h6>
+            <div class="row">
+              <div class="col-6 mb-2">
+                <label class="small text-muted mb-1">Cabecera modal</label>
+                <div class="d-flex align-items-center" style="gap:4px;"><input type="color" class="ds-color-picker" [(ngModel)]="config.layout.modalHeaderBg" (ngModelChange)="onLayoutControlChange()"><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.modalHeaderBg" (ngModelChange)="onLayoutControlChange()"></div>
+              </div>
+              <div class="col-6 mb-2">
+                <label class="small text-muted mb-1">Texto cabecera</label>
+                <div class="d-flex align-items-center" style="gap:4px;"><input type="color" class="ds-color-picker" [(ngModel)]="config.layout.modalHeaderText" (ngModelChange)="onLayoutControlChange()"><input type="text" class="form-control form-control-sm" [(ngModel)]="config.layout.modalHeaderText" (ngModelChange)="onLayoutControlChange()"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-7 col-lg-6">
+            <div class="sticky-top ds-preview-sticky bg-white p-4 border rounded shadow-sm" style="top: 15px; z-index: 10;">
+              <h6 class="text-primary font-weight-bold mb-3"><i class="fas fa-eye mr-1"></i> Vista previa (menú lateral, padding y árbol)</h6>
+              <p class="small text-muted mb-2">Misma vista que <strong>Previsualizar</strong>: marca, usuario, ítems anidados y líneas.</p>
+              <div class="ds-layout-preview-frame border rounded overflow-hidden shadow-sm">
+                <app-layout-shell-preview [layout]="config.layout"></app-layout-shell-preview>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2: Colors -->
+  <div *ngIf="activeDesignTab === 'colors'">
+    <div class="card elevation-1 mb-3" [ngClass]="config.crudView.cardOutlineColor ? 'card-outline ' + config.crudView.cardOutlineColor : 'card-outline card-primary'" [style.border-radius.px]="config.crudView.cardBorderRadius">
+      <div class="card-header py-2"><h3 class="card-title mb-0"><i class="fas fa-palette mr-2 text-primary"></i> 2. Colores y Botones</h3></div>
+      <div class="card-body py-3">
+        <div class="row">
+          <div class="col-xl-5 col-lg-6 pr-lg-4" style="max-height: 800px; overflow-y: auto;">
+             <h6 class="text-primary font-weight-bold mb-3"><i class="fas fa-sliders-h mr-1"></i> Colores del Sistema</h6>
+             <div class="ds-edit-row mb-2" *ngFor="let c of config.colors; let i = index" style="display:flex; align-items:center; gap:6px;">
+               <div style="width:24px; height:24px; border-radius:4px;" [style.background-color]="c.hex"></div>
+               <input type="text" class="form-control form-control-sm" [(ngModel)]="c.name" style="width:100px;">
+               <input type="color" class="ds-color-picker" [(ngModel)]="c.hex">
+               <input type="text" class="form-control form-control-sm" [(ngModel)]="c.hex" style="width:90px;">
+               <button class="btn btn-outline-danger btn-sm" (click)="removeColor(i)"><i class="fas fa-trash"></i></button>
+             </div>
+             <button class="btn btn-outline-primary btn-sm mt-2" (click)="addColor()">+ Color</button>
+             <hr>
+             <h6 class="text-muted mb-2 font-weight-bold">Grupos de Botones</h6>
+             <div class="mb-3 border rounded p-2 bg-light" *ngFor="let grp of config.buttonGroups; let gi = index">
+               <input type="text" class="form-control form-control-sm mb-2" [(ngModel)]="grp.label">
+               <div *ngFor="let btn of grp.buttons; let bi = index" class="d-flex mb-1" style="gap:4px;">
+                 <input type="text" class="form-control form-control-sm" [(ngModel)]="btn.label" style="width:80px;">
+                 <select class="form-control form-control-sm" [(ngModel)]="btn.cssClass">
+                   <option *ngFor="let cls of btnClassList" [value]="cls">{{ cls }}</option>
+                 </select>
+                 <button class="btn btn-outline-danger btn-sm" (click)="removeButton(gi, bi)"><i class="fas fa-times"></i></button>
+               </div>
+               <button class="btn btn-primary btn-xs mt-1" (click)="addButton(gi)">+ Botón</button>
+             </div>
+          </div>
+          <div class="col-xl-7 col-lg-6">
+            <div class="sticky-top ds-preview-sticky bg-white p-4 border rounded shadow-sm" style="top: 15px; z-index: 10;">
+              <h6 class="text-primary font-weight-bold mb-3"><i class="fas fa-eye mr-1"></i> Vista Previa</h6>
+              <div class="row mb-3">
+                <div class="col-3" *ngFor="let c of config.colors">
+                  <div class="p-2 rounded mb-1 text-center font-weight-bold shadow-xs" [style.background-color]="c.hex" [class]="c.textClass">{{ c.name }}</div>
+                </div>
+              </div>
+              <div *ngFor="let grp of config.buttonGroups" class="mb-3 p-2 border rounded">
+                <small class="text-muted d-block mb-2">{{ grp.label }}</small>
+                <button *ngFor="let btn of grp.buttons" class="btn btn-sm mr-2 mb-1 shadow-xs" [ngClass]="btn.cssClass"><i [class]="btn.icon"></i> {{ btn.label }}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3: Shared -->
+  <div *ngIf="activeDesignTab === 'shared'">
+    <div class="card elevation-1 mb-3" [ngClass]="config.crudView.cardOutlineColor ? 'card-outline ' + config.crudView.cardOutlineColor : 'card-outline card-primary'" [style.border-radius.px]="config.crudView.cardBorderRadius">
+      <div class="card-header py-2"><h3 class="card-title mb-0"><i class="fas fa-puzzle-piece mr-2 text-primary"></i> 3. Componentes Genéricos</h3></div>
+      <div class="card-body py-3">
+        <div class="row">
+          <div class="col-xl-5 col-lg-6 pr-lg-4" style="max-height: 800px; overflow-y: auto;">
+             <!-- Page Header Config -->
+             <h6 class="text-muted mb-2 font-weight-bold">Page Header</h6>
+             <div class="row bg-light p-2 rounded border mx-0 mb-3">
+                <div class="col-12 mb-2"><label class="small">Fondo</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.pageHeader.bg"></div>
+                <div class="col-6 mb-2"><label class="small">Color Título</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.pageHeader.titleColor"></div>
+                <div class="col-6 mb-2"><label class="small">Tamaño Título</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.pageHeader.titleSize"></div>
+                <div class="col-6 mb-2"><label class="small">Color Subtítulo</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.pageHeader.subtitleColor"></div>
+                <div class="col-6 mb-2"><label class="small">Padding</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.pageHeader.padding"></div>
+             </div>
+
+             <!-- Toasts Config -->
+             <h6 class="text-muted mb-2 font-weight-bold">Toasts</h6>
+             <div class="row bg-light p-2 rounded border mx-0 mb-3">
+                <div class="col-6 mb-2"><label class="small text-success">Bg Success</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.toast.successBg"></div>
+                <div class="col-6 mb-2"><label class="small text-danger">Bg Error</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.toast.errorBg"></div>
+                <div class="col-6 mb-2"><label class="small text-warning">Bg Warning</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.toast.warningBg"></div>
+                <div class="col-6 mb-2"><label class="small text-info">Bg Info</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.toast.infoBg"></div>
+                <div class="col-6 mb-2"><label class="small">Radio Borde (px)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="config.toast.borderRadius"></div>
+             </div>
+
+             <!-- System Layout Config -->
+             <h6 class="text-muted mb-2 font-weight-bold">System Layout (Inner)</h6>
+             <div class="row bg-light p-2 rounded border mx-0">
+               <div class="col-6 mb-2"><label class="small">Bg System</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.systemLayout.backgroundColor"></div>
+               <div class="col-6 mb-2"><label class="small">Ancho Max</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.systemLayout.maxWidth"></div>
+               <div class="col-12"><label class="small">Borde</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.systemLayout.border"></div>
+             </div>
+          </div>
+          <div class="col-xl-7 col-lg-6">
+            <div class="sticky-top ds-preview-sticky bg-white p-4 border rounded shadow-sm" style="top: 15px; z-index: 10;">
+              <h6 class="text-primary font-weight-bold mb-3"><i class="fas fa-eye mr-1"></i> Vista Previa</h6>
+              
+              <div class="p-3 mb-3 border rounded shadow-xs" [style.background]="config.pageHeader.bg" [style.color]="config.pageHeader.titleColor" [style.padding]="config.pageHeader.padding">
+                 <h4 class="m-0" [style.font-size]="config.pageHeader.titleSize">Page Header Preview</h4>
+                 <small [style.color]="config.pageHeader.subtitleColor">System Module</small>
+              </div>
+
+              <div class="mb-3">
+                <button class="btn btn-sm btn-outline-success mr-2" (click)="previewToast('success')">Toast Success</button>
+                <button class="btn btn-sm btn-outline-danger mr-2" (click)="previewToast('error')">Toast Error</button>
+                <button class="btn btn-sm btn-outline-info" (click)="previewToast('info')">Toast Info</button>
+              </div>
+
+              <div [style.background]="config.systemLayout.backgroundColor" [style.border]="config.systemLayout.border" [style.max-width]="config.systemLayout.maxWidth" [style.border-radius]="config.systemLayout.borderRadius" style="padding: 20px;">
+                <p><strong>System Layout Inner Content</strong></p>
+                Este bloque simula el contenedor interno de la página.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4: Modal -->
+  <div *ngIf="activeDesignTab === 'crud'">
+    <div class="card elevation-1 mb-3" [ngClass]="config.crudView.cardOutlineColor ? 'card-outline ' + config.crudView.cardOutlineColor : 'card-outline card-primary'" [style.border-radius.px]="config.crudView.cardBorderRadius">
+      <div class="card-header py-2"><h3 class="card-title mb-0"><i class="fas fa-edit mr-2 text-primary"></i> 4. Modales y Formularios</h3></div>
+      <div class="card-body py-3">
+        <div class="row">
+          <div class="col-xl-5 col-lg-6 pr-lg-4" style="max-height: 800px; overflow-y: auto;">
+            <!-- Modal styling -->
+            <h6 class="text-muted mb-2 font-weight-bold">Colores y Estilo</h6>
+            <div class="row bg-light p-2 rounded border mx-0 mb-3">
+               <div class="col-6 mb-2"><label class="small">Background Cabecera</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.modalCrud.headerBg" (change)="onModalPreviewConfigChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Color Cabecera</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.modalCrud.headerText" (change)="onModalPreviewConfigChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Background Cuerpo</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.modalCrud.bodyBg" (change)="onModalPreviewConfigChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Background Pie</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.modalCrud.footerBg" (change)="onModalPreviewConfigChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Radio de Borde (px)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="config.modalCrud.borderRadius" (change)="onModalPreviewConfigChange()"></div>
+            </div>
+            
+            <h6 class="text-muted mb-2 font-weight-bold">Estilos de Botones de Modal</h6>
+            <div class="row bg-light p-2 rounded border mx-0 mb-3">
+               <div class="col-6 mb-2"><label class="small">Clase Btn Guardar</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.modalCrud.saveBtnClass" (change)="onModalPreviewConfigChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Clase Btn Cancelar</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.modalCrud.cancelBtnClass" (change)="onModalPreviewConfigChange()"></div>
+            </div>
+            
+            <!-- Forms configuration -->
+            <h6 class="text-muted mb-2 font-weight-bold">Controles de Formulario</h6>
+            <div class="row bg-light p-2 rounded border mx-0 mb-3">
+               <div class="col-6 mb-2"><label class="small">Tamaño Input</label><select class="form-control form-control-sm" [(ngModel)]="config.modalCrud.inputSize" (change)="onModalPreviewConfigChange()"><option value="form-control-sm">Pequeño</option><option value="">Normal</option><option value="form-control-lg">Grande</option></select></div>
+               <div class="col-6 mb-2"><label class="small">Color de Labels</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.modalCrud.labelColor" (change)="onModalPreviewConfigChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Grosor Label</label><select class="form-control form-control-sm" [(ngModel)]="config.modalCrud.labelWeight" (change)="onModalPreviewConfigChange()"><option value="normal">Normal</option><option value="500">Medio</option><option value="bold">Negrita</option></select></div>
+            </div>
+
+            <!-- Formularios Preview fields configuration -->
+             <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="text-muted font-weight-bold m-0">Campos en Formulario Demo</h6>
+                <button class="btn btn-outline-primary btn-xs" (click)="addFormField()"><i class="fas fa-plus mr-1"></i> Añadir</button>
+             </div>
+             <div *ngFor="let field of config.formFields; let i = index" class="border rounded p-2 mb-2 bg-light">
+                <div class="row">
+                  <div class="col-6 mb-1"><label class="small mb-0">Label</label><input type="text" class="form-control form-control-sm" [(ngModel)]="field.label"></div>
+                  <div class="col-6 mb-1"><label class="small mb-0">Tipo</label><select class="form-control form-control-sm" [(ngModel)]="field.type"><option value="text">Texto</option><option value="number">Número</option><option value="select">Select</option><option value="select2-search">Select2</option><option value="textarea">Área de Texto</option></select></div>
+                  <div class="col-6 mb-1"><label class="small mb-0">Columnas (1-12)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="field.colSize" min="1" max="12"></div>
+                  <div class="col-6 mb-1 d-flex align-items-end"><button class="btn btn-danger btn-sm text-white w-100" (click)="removeFormField(i)"><i class="fas fa-trash"></i> Quitar</button></div>
+                </div>
+             </div>
+          </div>
+          <div class="col-xl-7 col-lg-6">
+            <div class="sticky-top ds-preview-sticky bg-white p-4 border rounded shadow-sm" style="top: 15px; z-index: 10;">
+              <h6 class="text-primary font-weight-bold mb-3"><i class="fas fa-eye mr-1"></i> Vista Previa</h6>
+              <div class="shadow-lg border ds-modal-preview" [style.border-radius.px]="config.modalCrud.borderRadius" style="overflow:hidden; max-width:550px; margin:0 auto;">
+                <div class="d-flex justify-content-between align-items-center" [style.background]="config.modalCrud.headerBg" [style.color]="config.modalCrud.headerText" [style.padding]="config.modalCrud.headerPadding">
+                  <h5 class="m-0" [style.font-size]="config.modalCrud.headerFontSize"><i [class]="config.modalCrud.headerIcon" class="mr-2"></i> {{ config.modalCrud.titleAdd }}</h5>
+                  <button type="button" class="close text-white" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div [style.background]="config.modalCrud.bodyBg" [style.padding]="config.modalCrud.formPadding">
+                  <div class="row">
+                    <div *ngFor="let f of config.formFields" class="col-{{ f.colSize }} mb-3">
+                       <label [style.color]="config.modalCrud.labelColor" [style.font-weight]="config.modalCrud.labelWeight" [style.margin-bottom]="config.modalCrud.labelMarginBottom">{{ f.label }}<span *ngIf="f.required" class="text-danger">*</span></label>
+                       
+                       <input *ngIf="f.type === 'text' || f.type === 'number' || f.type === 'date'" [type]="f.type" class="form-control" [ngClass]="config.modalCrud.inputSize" [placeholder]="f.placeholder || ''">
+                       
+                       <select *ngIf="f.type === 'select' || f.type.startsWith('select2')" class="form-control ds-select2-preview" [ngClass]="config.modalCrud.inputSize" [attr.multiple]="f.type === 'select2-multiple' ? true : null">
+                         <option *ngIf="!f.type.includes('multiple')" value="">Seleccione...</option>
+                         <option *ngFor="let o of (f.options || ['Opcion 1', 'Opcion 2'])">{{ o }}</option>
+                       </select>
+                       
+                       <textarea *ngIf="f.type === 'textarea'" class="form-control" [ngClass]="config.modalCrud.inputSize" [rows]="f.rows || 3" [placeholder]="f.placeholder || ''"></textarea>
+                    </div>
+                  </div>
+                </div>
+                <div class="border-top d-flex justify-content-end align-items-center" [style.background]="config.modalCrud.footerBg" style="padding: 1rem; gap:10px;">
+                  <button class="btn" [ngClass]="config.modalCrud.cancelBtnClass"><i [class]="config.modalCrud.cancelBtnIcon"></i> {{ config.modalCrud.cancelBtnLabel }}</button>
+                  <button class="btn" [ngClass]="config.modalCrud.saveBtnClass"><i [class]="config.modalCrud.saveBtnIcon"></i> {{ config.modalCrud.saveBtnLabel }}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5: Lists -->
+  <div *ngIf="activeDesignTab === 'crudList'">
+    <div class="card elevation-1 mb-3" [ngClass]="config.crudView.cardOutlineColor ? 'card-outline ' + config.crudView.cardOutlineColor : 'card-outline card-primary'" [style.border-radius.px]="config.crudView.cardBorderRadius">
+      <div class="card-header py-2"><h3 class="card-title mb-0"><i class="fas fa-table mr-2 text-primary"></i> 5. Listados y Tablas</h3></div>
+      <div class="card-body py-3">
+        <div class="row">
+          <div class="col-xl-5 col-lg-6 pr-lg-4" style="max-height: 800px; overflow-y: auto;">
+             <h6 class="text-muted mb-2 font-weight-bold">Tabla (listado)</h6>
+             <div class="row bg-light p-2 rounded border mx-0 mb-3">
+               <div class="col-6 mb-2"><label class="small">Fondo cabecera</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.crudView.tableHeaderBg" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Texto cabecera</label><input type="color" class="form-control form-control-sm" [(ngModel)]="config.crudView.tableHeaderColor" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-12 mb-2"><label class="small">Clases de tabla (Bootstrap)</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.tableClasses" (ngModelChange)="onCrudListControlChange()" placeholder="table-hover table-striped table-sm"></div>
+               <div class="col-6 mb-2"><label class="small">Padding celda vertical</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.cellPaddingY" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Padding celda horizontal</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.cellPaddingX" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Tamaño texto celdas</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.fontSize" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Tamaño texto cabecera tabla</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.headerFontSize" (ngModelChange)="onCrudListControlChange()"></div>
+             </div>
+
+             <h6 class="text-muted mb-2 font-weight-bold">Paginación</h6>
+             <div class="row bg-light p-2 rounded border mx-0 mb-3">
+               <div class="col-6 mb-2"><label class="small">Registros por página (defecto)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="config.crudView.defaultPageSize" (ngModelChange)="onCrudListControlChange()" min="1"></div>
+               <div class="col-12 mb-2"><label class="small">Opciones “Mostrar X” (números separados por coma)</label><input type="text" class="form-control form-control-sm" [(ngModel)]="pageSizeOptionsInput" (blur)="onPageSizeOptionsBlur()"></div>
+               <div class="col-6 mb-2"><label class="small">Tamaño control paginación</label><select class="form-control form-control-sm" [(ngModel)]="config.crudView.paginationSize" (ngModelChange)="onCrudListControlChange()"><option value="">Normal</option><option value="pagination-sm">Pequeño (pagination-sm)</option><option value="pagination-lg">Grande (pagination-lg)</option></select></div>
+               <div class="col-6 mb-2 d-flex align-items-end">
+                 <div class="form-check mb-0">
+                   <input class="form-check-input" type="checkbox" id="dsShowRc" [(ngModel)]="config.crudView.showRecordCount" (ngModelChange)="onCrudListControlChange()">
+                   <label class="form-check-label small" for="dsShowRc">Mostrar contador de registros</label>
+                 </div>
+               </div>
+             </div>
+
+             <h6 class="text-muted mb-2 font-weight-bold">Filtros (barra)</h6>
+             <div class="row bg-light p-2 rounded border mx-0 mb-3">
+               <div class="col-6 mb-2"><label class="small">Clase input filtros</label><select class="form-control form-control-sm" [(ngModel)]="config.crudView.filterInputSize" (ngModelChange)="onCrudListControlChange()"><option value="form-control-sm">form-control-sm</option><option value="">form-control</option><option value="form-control-lg">form-control-lg</option></select></div>
+               <div class="col-6 mb-2"><label class="small">Tamaño letra filtros</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.filterInputFontSize" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Tamaño etiquetas filtros</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.labelFontSize" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2 d-flex align-items-end">
+                 <div class="form-check mb-0">
+                   <input class="form-check-input" type="checkbox" id="dsCollF" [(ngModel)]="config.crudView.collapsibleFilters" (ngModelChange)="onCrudListControlChange()">
+                   <label class="form-check-label small" for="dsCollF">Filtros colapsables</label>
+                 </div>
+               </div>
+             </div>
+
+             <h6 class="text-muted mb-2 font-weight-bold">Contenedor (card)</h6>
+             <div class="row bg-light p-2 rounded border mx-0 mb-3">
+                <div class="col-6 mb-2"><label class="small">Color borde card</label><select class="form-control form-control-sm" [(ngModel)]="config.crudView.cardOutlineColor" (ngModelChange)="onCrudListControlChange()"><option *ngFor="let cl of btnClassList" [value]="cl.replace('btn-', 'card-')">{{ cl.replace('btn-', 'card-') }}</option></select></div>
+                <div class="col-6 mb-2"><label class="small">Radio borde card (px)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="config.crudView.cardBorderRadius" (ngModelChange)="onCrudListControlChange()"></div>
+                <div class="col-6 mb-2 d-flex align-items-end">
+                  <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" id="dsBc" [(ngModel)]="config.crudView.showBreadcrumbs" (ngModelChange)="onCrudListControlChange()">
+                    <label class="form-check-label small" for="dsBc">Migas de pan</label>
+                  </div>
+                </div>
+             </div>
+
+             <h6 class="text-muted mb-2 font-weight-bold">Botones y estados</h6>
+             <div class="row bg-light p-2 rounded border mx-0 mb-3">
+               <div class="col-6 mb-2"><label class="small">Nuevo (clase)</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.newBtnClass" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Nuevo (icono)</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.newBtnIcon" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Nuevo (texto)</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.newBtnLabel" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Ver</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.viewBtnClass" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Editar</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.editBtnClass" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Eliminar</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.deleteBtnClass" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Badge activo (clase)</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.statusActiveClass" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Texto activo</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.statusActiveText" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Badge inactivo (clase)</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.statusInactiveClass" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-6 mb-2"><label class="small">Texto inactivo</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.statusInactiveText" (ngModelChange)="onCrudListControlChange()"></div>
+             </div>
+
+             <h6 class="text-muted mb-2 font-weight-bold">Exportación (toolbar)</h6>
+             <div class="row bg-light p-2 rounded border mx-0">
+               <div class="col-12 mb-2"><div class="form-check"><input class="form-check-input" type="checkbox" id="dsExp" [(ngModel)]="config.crudView.showExportButtons" (ngModelChange)="onCrudListControlChange()"><label class="form-check-label small" for="dsExp">Mostrar botones Excel / PDF / Imprimir</label></div></div>
+               <div class="col-4 mb-2"><label class="small">Excel</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.excelBtnClass" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-4 mb-2"><label class="small">PDF</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.pdfBtnClass" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-4 mb-2"><label class="small">Imprimir</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.printBtnClass" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-4 mb-2"><label class="small">Etiqueta Excel</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.excelBtnLabel" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-4 mb-2"><label class="small">Etiqueta PDF</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.pdfBtnLabel" (ngModelChange)="onCrudListControlChange()"></div>
+               <div class="col-4 mb-2"><label class="small">Etiqueta Imprimir</label><input type="text" class="form-control form-control-sm" [(ngModel)]="config.crudView.printBtnLabel" (ngModelChange)="onCrudListControlChange()"></div>
+             </div>
+          </div>
+          <div class="col-xl-7 col-lg-6">
+            <div class="sticky-top ds-preview-sticky bg-white p-4 border rounded shadow-sm" style="top: 15px; z-index: 10;">
+              <h6 class="text-primary font-weight-bold mb-2"><i class="fas fa-eye mr-1"></i> Vista previa (tabla Angular)</h6>
+              <p class="small text-muted mb-3">
+                Listado de demostración con <strong>tabla, búsqueda, orden por columnas, paginación y selector de filas por página</strong>
+                implementados solo con plantillas y lógica de componente (sin jQuery ni DataTables).
+                Si activa «Mostrar botones exportación», la barra usa acciones de ejemplo: copiar al portapapeles, CSV (Excel), aviso para PDF e impresión del navegador.
+              </p>
+
+              <div class="mb-2 pb-2 border-bottom" *ngIf="config.crudView.showBreadcrumbs" [style.font-size]="config.crudView.filterInputFontSize">
+                <span class="text-muted">Inicio</span> <span class="text-muted">/</span> <span>Ejemplo</span> <span class="text-muted">/</span> <span>Listado</span>
+              </div>
+
+              <div class="card elevation-1" [ngClass]="config.crudView.cardOutlineColor ? 'card-outline ' + config.crudView.cardOutlineColor : ''" [style.border-radius.px]="config.crudView.cardBorderRadius">
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                   <h3 class="card-title mb-0" [style.font-size]="config.crudView.headerFontSize">Listado de Registros</h3>
+                   <div class="card-tools d-flex flex-wrap align-items-center gap-1">
+                     <button type="button" class="btn btn-sm" [ngClass]="config.crudView.newBtnClass"><i [class]="config.crudView.newBtnIcon"></i> {{ config.crudView.newBtnLabel }}</button>
+                     <ng-container *ngIf="config.crudView.showExportButtons">
+                       <button type="button" class="btn btn-sm btn-outline-secondary" (click)="crudListExportCopy()"><i class="fas fa-copy"></i> Copiar</button>
+                       <button type="button" class="btn btn-sm" [ngClass]="config.crudView.excelBtnClass || 'btn-success'" (click)="crudListExportCsv()"><i [class]="config.crudView.excelBtnIcon || 'fas fa-file-excel'"></i> {{ config.crudView.excelBtnLabel || 'Excel' }}</button>
+                       <button type="button" class="btn btn-sm" [ngClass]="config.crudView.pdfBtnClass || 'btn-danger'" (click)="crudListExportPdfHint()"><i [class]="config.crudView.pdfBtnIcon || 'fas fa-file-pdf'"></i> {{ config.crudView.pdfBtnLabel || 'PDF' }}</button>
+                       <button type="button" class="btn btn-sm" [ngClass]="config.crudView.printBtnClass || 'btn-info'" (click)="crudListExportPrint()"><i [class]="config.crudView.printBtnIcon || 'fas fa-print'"></i> {{ config.crudView.printBtnLabel || 'Imprimir' }}</button>
+                     </ng-container>
+                   </div>
+                </div>
+
+                <div class="card-body border-bottom py-2">
+                  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <span [style.font-size]="config.crudView.labelFontSize" class="font-weight-bold text-muted">Filtros</span>
+                    <button type="button" class="btn btn-link btn-sm p-0" (click)="toggleFiltersPreview()" *ngIf="config.crudView.collapsibleFilters">
+                      <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                    </button>
+                  </div>
+                  <div class="row" *ngIf="!config.crudView.collapsibleFilters || !isFiltersCollapsed">
+                    <div class="col-md-6">
+                      <label class="small mb-0" [style.font-size]="config.crudView.labelFontSize">Buscar</label>
+                      <input type="search" class="form-control" [ngClass]="config.crudView.filterInputSize" [style.font-size]="config.crudView.filterInputFontSize" placeholder="Texto de búsqueda…" [(ngModel)]="crudListSearch" (ngModelChange)="onCrudListSearchChange()">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card-body p-0 table-responsive ds-crud-list-preview"
+                  [style.--ds-cl-th-bg]="config.crudView.tableHeaderBg"
+                  [style.--ds-cl-th-color]="config.crudView.tableHeaderColor"
+                  [style.--ds-cl-cell-py]="config.crudView.cellPaddingY"
+                  [style.--ds-cl-cell-px]="config.crudView.cellPaddingX"
+                  [style.--ds-cl-header-fs]="config.crudView.headerFontSize"
+                  [style.font-size]="config.crudView.fontSize">
+                  <table class="table mb-0 w-100" [ngClass]="config.crudView.tableClasses">
+                    <thead>
+                      <tr>
+                        <th role="button" class="user-select-none" (click)="toggleCrudListSort('codigo')">Código <i class="fas ml-1" [ngClass]="crudListSortIcon('codigo')"></i></th>
+                        <th role="button" class="user-select-none" (click)="toggleCrudListSort('nombre')">Nombre <i class="fas ml-1" [ngClass]="crudListSortIcon('nombre')"></i></th>
+                        <th role="button" class="user-select-none" (click)="toggleCrudListSort('departamento')">Departamento <i class="fas ml-1" [ngClass]="crudListSortIcon('departamento')"></i></th>
+                        <th role="button" class="user-select-none" (click)="toggleCrudListSort('estado')">Estado <i class="fas ml-1" [ngClass]="crudListSortIcon('estado')"></i></th>
+                        <th class="text-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngIf="crudListTotalFiltered === 0">
+                        <td colspan="5" class="text-center text-muted py-4">No hay registros que coincidan con la búsqueda.</td>
+                      </tr>
+                      <tr *ngFor="let row of crudListPagedRows">
+                        <td>{{ row.codigo }}</td>
+                        <td>{{ row.nombre }}</td>
+                        <td>{{ row.departamento }}</td>
+                        <td>
+                          <span class="badge" [ngClass]="row.status ? config.crudView.statusActiveClass : config.crudView.statusInactiveClass">
+                            {{ row.status ? config.crudView.statusActiveText : config.crudView.statusInactiveText }}
+                          </span>
+                        </td>
+                        <td class="text-right text-nowrap">
+                          <button type="button" class="btn btn-xs mr-1" [ngClass]="config.crudView.viewBtnClass"><i class="fas fa-eye"></i></button>
+                          <button type="button" class="btn btn-xs mr-1" [ngClass]="config.crudView.editBtnClass"><i class="fas fa-edit"></i></button>
+                          <button type="button" class="btn btn-xs" [ngClass]="config.crudView.deleteBtnClass"><i class="fas fa-trash"></i></button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="card-footer py-2 d-flex flex-wrap align-items-center justify-content-between gap-2 bg-light border-top">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <label class="small mb-0 text-muted">Mostrar</label>
+                    <select class="form-control form-control-sm" style="width: auto; min-width: 4.5rem;" [(ngModel)]="crudListItemsPerPage" (ngModelChange)="onCrudListItemsPerPageChange()">
+                      <option *ngFor="let n of crudListPageSizeChoices" [ngValue]="n">{{ n }}</option>
+                    </select>
+                    <span class="small text-muted">registros</span>
+                  </div>
+                  <div *ngIf="config.crudView.showRecordCount !== false" class="small text-muted">
+                    Mostrando {{ crudListInfoFrom }} a {{ crudListInfoTo }} de {{ crudListTotalFiltered }} registros
+                  </div>
+                  <nav *ngIf="crudListTotalFiltered > 0" aria-label="Paginación listado">
+                    <ul class="pagination mb-0"
+                        [class.pagination-sm]="config.crudView.paginationSize === 'pagination-sm'"
+                        [class.pagination-lg]="config.crudView.paginationSize === 'pagination-lg'">
+                      <li class="page-item" [class.disabled]="crudListPage <= 1">
+                        <button type="button" class="page-link" (click)="goCrudListPage(1)" [disabled]="crudListPage <= 1">«</button>
+                      </li>
+                      <li class="page-item" [class.disabled]="crudListPage <= 1">
+                        <button type="button" class="page-link" (click)="goCrudListPage(crudListPage - 1)" [disabled]="crudListPage <= 1">‹</button>
+                      </li>
+                      <li class="page-item disabled">
+                        <span class="page-link">{{ crudListPage }} / {{ crudListTotalPages }}</span>
+                      </li>
+                      <li class="page-item" [class.disabled]="crudListPage >= crudListTotalPages">
+                        <button type="button" class="page-link" (click)="goCrudListPage(crudListPage + 1)" [disabled]="crudListPage >= crudListTotalPages">›</button>
+                      </li>
+                      <li class="page-item" [class.disabled]="crudListPage >= crudListTotalPages">
+                        <button type="button" class="page-link" (click)="goCrudListPage(crudListTotalPages)" [disabled]="crudListPage >= crudListTotalPages">»</button>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,247 @@
+.container-fluid {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  border-radius: 12px;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+  }
+}
+
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
+  border-bottom: none;
+  padding: 1.25rem 1.5rem;
+  
+  &.bg-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+  }
+  
+  &.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+  }
+  
+  &.bg-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%) !important;
+  }
+  
+  &.bg-dark {
+    background: linear-gradient(135deg, #343a40 0%, #212529 100%) !important;
+  }
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-title {
+  font-weight: 600;
+  margin-bottom: 0;
+}
+
+// Statistics cards styling
+.text-center .card-body {
+  padding: 2rem 1.5rem;
+  
+  i {
+    margin-bottom: 1rem;
+    opacity: 0.8;
+  }
+  
+  h4 {
+    font-weight: 700;
+    font-size: 1.75rem;
+  }
+  
+  h6 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+  }
+}
+
+// Form controls
+.form-select-sm {
+  min-width: 100px;
+  border-radius: 6px;
+}
+
+.btn {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+// Table styling
+.table {
+  margin-bottom: 0;
+  
+  th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1rem 0.75rem;
+  }
+  
+  td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    border-color: #e9ecef;
+  }
+  
+  tbody tr {
+    transition: background-color 0.2s ease-in-out;
+    
+    &:hover {
+      background-color: rgba(0, 123, 255, 0.05);
+    }
+  }
+}
+
+.table-light {
+  background-color: #f8f9fa;
+}
+
+// Badge styling
+.badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  
+  &.bg-light {
+    color: #495057 !important;
+    background-color: #e9ecef !important;
+  }
+}
+
+// Alert styling
+.alert {
+  border-radius: 8px;
+  border: none;
+  
+  &.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  
+  &.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+  }
+}
+
+// Loading spinner
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 1rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .text-center .card-body {
+    padding: 1.5rem 1rem;
+  }
+  
+  .row.text-center .col-md-3,
+  .row.text-center .col-md-4 {
+    margin-bottom: 1rem;
+    
+    .border-end {
+      border-right: none !important;
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 1rem;
+    }
+  }
+  
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 1rem;
+    
+    .d-flex.align-items-center {
+      justify-content: center;
+    }
+  }
+}
+
+// Color utilities
+.text-primary {
+  color: #007bff !important;
+}
+
+.text-success {
+  color: #28a745 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+.text-info {
+  color: #17a2b8 !important;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+// Animation for loading state
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+// Custom scrollbar for table
+.table-responsive {
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}

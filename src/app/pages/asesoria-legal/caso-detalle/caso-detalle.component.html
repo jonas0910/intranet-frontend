@@ -1,0 +1,366 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-balance-scale mr-2"></i>Detalle Caso Legal</h1></div>
+      <div class="col-sm-6"><ol class="breadcrumb float-sm-right"><li class="breadcrumb-item"><a routerLink="/asesoria-legal">Asesoría Jurídica</a></li><li class="breadcrumb-item"><a routerLink="/asesoria-legal/casos">Casos</a></li><li class="breadcrumb-item active">Detalle</li></ol></div>
+    </div>
+  </div>
+</div>
+
+<div class="content" *ngIf="data">
+  <div class="container-fluid">
+    <div class="card" *ngIf="loading"><div class="card-body text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div></div>
+    <div *ngIf="!loading && data.solicitud">
+      <!-- Cabecera -->
+      <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+          <div>
+            <h3 class="card-title mb-1">{{ data.solicitud.numero_expediente_legal }}</h3>
+            <span class="badge" [ngClass]="getEstadoClass(data.solicitud.estado)">{{ data.solicitud.estado }}</span>
+          </div>
+          <a routerLink="/asesoria-legal/casos" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left mr-1"></i>Volver</a>
+        </div>
+        <div class="card-body py-2">
+          <p class="mb-1"><strong>Asunto:</strong> {{ data.solicitud.asunto }}</p>
+          <p class="mb-1"><strong>Expediente STD:</strong>
+            <a *ngIf="data.solicitud.tramite_id" [routerLink]="['/tramite-documentario/detalle', data.solicitud.tramite_id]" target="_blank">{{ data.solicitud.numero_expediente_std || '-' }}</a>
+            <span *ngIf="!data.solicitud.tramite_id">{{ data.solicitud.numero_expediente_std || '-' }}</span>
+          </p>
+          <p class="mb-1"><strong>Solicitante:</strong> {{ data.solicitud.solicitante_nombre }} | <strong>Área:</strong> {{ data.solicitud.department_solicitante_nombre }}</p>
+          <p *ngIf="data.asignacion" class="mb-0"><strong>Abogado asignado:</strong> {{ data.asignacion.abogado_nombre }} — Límite: {{ data.asignacion.fecha_limite | date:'dd/MM/yyyy' }}</p>
+        </div>
+      </div>
+
+      <!-- Pestañas -->
+      <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item"><a class="nav-link" [class.active]="tabActiva==='resumen'" (click)="tabActiva='resumen'" href="javascript:void(0)"><i class="fas fa-info-circle mr-1"></i>Resumen</a></li>
+        <li class="nav-item"><a class="nav-link" [class.active]="tabActiva==='informe'" (click)="tabActiva='informe'" href="javascript:void(0)"><i class="fas fa-file-alt mr-1"></i>Informe Legal</a></li>
+        <li class="nav-item"><a class="nav-link" [class.active]="tabActiva==='versiones'" (click)="tabActiva='versiones'" href="javascript:void(0)"><i class="fas fa-copy mr-1"></i>Versiones</a></li>
+        <li class="nav-item"><a class="nav-link" [class.active]="tabActiva==='acto'" (click)="tabActiva='acto'" href="javascript:void(0)"><i class="fas fa-gavel mr-1"></i>Acto Resolutivo</a></li>
+        <li class="nav-item"><a class="nav-link" [class.active]="tabActiva==='glosa'" (click)="tabActiva='glosa'" href="javascript:void(0)"><i class="fas fa-book mr-1"></i>Glosa</a></li>
+      </ul>
+
+      <!-- Tab Resumen -->
+      <div class="tab-pane-content" *ngIf="tabActiva==='resumen'">
+        <div class="alert alert-info" *ngIf="!puedeCrearVersion && !puedeEnviarRevision && !puedeAprobarObservar && !puedeRegistrarActo && !puedeRegistrarGlosa && !puedeAsignar">
+          <strong>Acciones no disponibles:</strong>
+          <span *ngIf="sol.estado==='Finalizado'||sol.estado==='Acto Resolutivo Registrado'">Este caso ya está avanzado. Para probar <strong>Redactar/Versión</strong> use un caso en En Proceso u Observado. Para <strong>Acto Resolutivo</strong> use un caso en Informe Emitido.</span>
+          <span *ngIf="sol.estado==='En Proceso'||sol.estado==='Observado'||sol.estado==='Informe Emitido'">Debe estar registrado como abogado asignado o Jefe Legal para gestionar.</span>
+        </div>
+        <div class="card">
+          <div class="card-header"><h5 class="mb-0">Acciones rápidas</h5></div>
+          <div class="card-body">
+            <div class="btn-group flex-wrap">
+              <button *ngIf="puedeAsignar" class="btn btn-primary" (click)="abrirAsignar()"><i class="fas fa-user-plus mr-1"></i>Asignar abogado</button>
+              <button *ngIf="puedeCrearVersion" class="btn btn-info" (click)="abrirVersion()"><i class="fas fa-file-signature mr-1"></i>Redactar Informe Legal</button>
+              <button *ngIf="puedeEnviarRevision" class="btn btn-warning" (click)="enviarRevision()" [disabled]="processing"><i class="fas fa-paper-plane mr-1"></i>Enviar a revisión</button>
+              <button *ngIf="puedeAprobarObservar" class="btn btn-success" (click)="abrirAprobar()" [disabled]="processing"><i class="fas fa-check mr-1"></i>Aprobar informe</button>
+              <button *ngIf="puedeAprobarObservar" class="btn btn-warning" (click)="abrirObservar()"><i class="fas fa-comment mr-1"></i>Observar</button>
+              <button *ngIf="puedeRegistrarActo" class="btn btn-primary" (click)="abrirActo()"><i class="fas fa-gavel mr-1"></i>Registrar Acto Resolutivo</button>
+              <button *ngIf="puedeRegistrarGlosa" class="btn btn-dark" (click)="abrirGlosa()"><i class="fas fa-book mr-1"></i>Registrar Glosa</button>
+            </div>
+          </div>
+        </div>
+        <div class="card" *ngIf="data.historial?.length">
+          <div class="card-header"><h5 class="mb-0">Historial de estados</h5></div>
+          <div class="card-body p-0">
+            <ul class="list-group list-group-flush">
+              <li *ngFor="let h of data.historial" class="list-group-item d-flex justify-content-between">
+                <span>{{ h.estado_anterior || '-' }} → {{ h.estado_nuevo }}</span>
+                <small class="text-muted">{{ h.cambiado_por_nombre }} — {{ h.created_at | date:'dd/MM/yyyy HH:mm' }}</small>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Informe Legal -->
+      <div class="tab-pane-content" *ngIf="tabActiva==='informe'">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-file-signature mr-1"></i>Informe Legal</h5>
+            <div>
+              <button *ngIf="puedeCrearVersion" class="btn btn-sm btn-info mr-1" (click)="abrirVersion()"><i class="fas fa-plus mr-1"></i>Redactar / Nueva versión</button>
+              <button *ngIf="puedeGestionarInforme" class="btn btn-sm btn-primary" (click)="abrirInforme()"><i class="fas fa-edit mr-1"></i>Gestionar informe técnico</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="text-muted">El informe legal se redacta como versión del caso. Use el botón <strong>Redactar / Nueva versión</strong> para crear o editar el contenido. Una vez aprobado, gestione el informe técnico y suba el PDF.</p>
+            <div *ngIf="ultimaVersion" class="border rounded p-3 bg-light">
+              <strong>Última versión (v{{ ultimaVersion.version }})</strong> — {{ ultimaVersion.estado_version }}
+              <div *ngIf="ultimaVersion.contenido_html" class="mt-2 border-top pt-2" [innerHTML]="ultimaVersion.contenido_html"></div>
+            </div>
+            <div *ngIf="data.informe_emitido" class="border rounded p-3 mt-3 bg-light">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 class="mb-2"><i class="fas fa-file-pdf mr-1"></i>Informe técnico emitido</h6>
+                  <p class="mb-1"><strong>N°:</strong> {{ data.informe_emitido.numero_informe }} — <strong>Fecha:</strong> {{ data.informe_emitido.fecha_emision | date:'dd/MM/yyyy' }}</p>
+                  <p *ngIf="data.informe_emitido.titulo" class="mb-1"><strong>Título:</strong> {{ data.informe_emitido.titulo }}</p>
+                  <p *ngIf="data.informe_emitido.resumen" class="mb-1 small"><strong>Resumen:</strong> {{ data.informe_emitido.resumen }}</p>
+                  <a *ngIf="data.informe_emitido.ruta_pdf_final" [href]="mediaBaseUrl + '/media/' + data.informe_emitido.ruta_pdf_final" target="_blank" class="btn btn-sm btn-outline-danger mt-2"><i class="fas fa-file-pdf mr-1"></i>Descargar PDF</a>
+                </div>
+                <button *ngIf="puedeGestionarInforme" class="btn btn-sm btn-outline-primary" (click)="abrirInforme()"><i class="fas fa-edit"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Versiones -->
+      <div class="tab-pane-content" *ngIf="tabActiva==='versiones'">
+        <div class="card">
+          <div class="card-header"><h5 class="mb-0"><i class="fas fa-copy mr-1"></i>Versiones del Informe emitidas</h5></div>
+          <div class="card-body">
+            <div *ngIf="!data.versiones?.length" class="text-center py-5 text-muted">
+              <i class="fas fa-file-alt fa-3x mb-3"></i>
+              <p>No hay versiones aún. Redacte el informe en la pestaña <strong>Informe Legal</strong>.</p>
+            </div>
+            <div *ngFor="let v of data.versiones" class="border rounded p-3 mb-2">
+              <div class="d-flex justify-content-between">
+                <strong>Versión {{ v.version }}</strong>
+                <span class="badge" [ngClass]="getEstadoVersionClass(v.estado_version)">{{ v.estado_version }}</span>
+              </div>
+              <small class="text-muted">por {{ v.abogado_nombre }} — {{ v.created_at | date:'dd/MM/yyyy HH:mm' }}</small>
+              <div *ngIf="v.comentarios_revision" class="mt-2 p-2 bg-warning bg-opacity-25 rounded"><small><strong>Observación:</strong> {{ v.comentarios_revision }}</small></div>
+              <div *ngIf="v.contenido_html" class="mt-2 border-top pt-2" [innerHTML]="v.contenido_html"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Acto Resolutivo -->
+      <div class="tab-pane-content" *ngIf="tabActiva==='acto'">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-gavel mr-1"></i>Acto Resolutivo</h5>
+            <button *ngIf="puedeRegistrarActo" class="btn btn-sm btn-primary" (click)="abrirActo()"><i class="fas fa-plus mr-1"></i>Registrar Acto</button>
+          </div>
+          <div class="card-body">
+            <p class="text-muted">Registre el acto resolutivo (Resolución de Alcaldía, Ordenanza, etc.) una vez emitido el informe legal.</p>
+            <div *ngIf="data.acto_resolutivo" class="border rounded p-3">
+              <p><strong>Tipo:</strong> {{ data.acto_resolutivo.tipo_acto }}</p>
+              <p *ngIf="data.acto_resolutivo.numero_acto"><strong>N°:</strong> {{ data.acto_resolutivo.numero_acto }}</p>
+              <p *ngIf="data.acto_resolutivo.fecha_emision"><strong>Fecha:</strong> {{ data.acto_resolutivo.fecha_emision | date:'dd/MM/yyyy' }}</p>
+              <div *ngIf="data.acto_resolutivo.parte_resolutiva" [innerHTML]="data.acto_resolutivo.parte_resolutiva"></div>
+            </div>
+            <div *ngIf="!data.acto_resolutivo && !puedeRegistrarActo" class="text-center py-4 text-muted">
+              <p>El acto resolutivo se registra cuando el caso está en estado <strong>Informe Emitido</strong>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Glosa -->
+      <div class="tab-pane-content" *ngIf="tabActiva==='glosa'">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-book mr-1"></i>Glosa</h5>
+            <button *ngIf="puedeRegistrarGlosa" class="btn btn-sm btn-dark" (click)="abrirGlosa()"><i class="fas fa-plus mr-1"></i>Registrar Glosa</button>
+          </div>
+          <div class="card-body">
+            <p class="text-muted">La glosa resume el caso, la opinión legal y la decisión final para el archivo y consulta.</p>
+            <div *ngIf="data.glosa" class="border rounded p-3">
+              <p *ngIf="data.glosa.resumen_caso"><strong>Resumen:</strong> {{ data.glosa.resumen_caso }}</p>
+              <p *ngIf="data.glosa.opinion_legal"><strong>Opinión:</strong> {{ data.glosa.opinion_legal }}</p>
+              <p *ngIf="data.glosa.decision_final"><strong>Decisión:</strong> {{ data.glosa.decision_final }}</p>
+              <p *ngIf="data.glosa.palabras_clave"><strong>Palabras clave:</strong> {{ data.glosa.palabras_clave }}</p>
+            </div>
+            <div *ngIf="!data.glosa && !puedeRegistrarGlosa" class="text-center py-4 text-muted">
+              <p>La glosa se registra cuando el caso está en estado <strong>Acto Resolutivo Registrado</strong>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Asignar -->
+<div class="modal fade" [class.show]="showAsignar" [style.display]="showAsignar ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Asignar abogado</h5><button type="button" class="close" (click)="showAsignar=false">&times;</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Abogado</label>
+          <select class="form-control" [(ngModel)]="abogadoId">
+            <option [ngValue]="0">-- Seleccione --</option>
+            <option *ngFor="let a of catalogos?.abogados" [ngValue]="a.user_id">{{ a.name }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha límite</label>
+          <input type="date" class="form-control" [(ngModel)]="fechaLimite">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showAsignar=false">Cancelar</button>
+        <button class="btn btn-primary" (click)="asignar()" [disabled]="!abogadoId || !fechaLimite || processing">Asignar</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showAsignar" *ngIf="showAsignar" (click)="showAsignar=false"></div>
+</div>
+
+<!-- Modal Versión -->
+<div class="modal fade" [class.show]="showVersion" [style.display]="showVersion ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Redactar Informe Legal</h5><button type="button" class="close" (click)="showVersion=false">&times;</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Contenido del informe (puede usar HTML básico: &lt;p&gt;, &lt;strong&gt;, &lt;ul&gt;, etc.)</label>
+          <textarea class="form-control" rows="12" [(ngModel)]="contenidoHtml" placeholder="Escriba el contenido del informe..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showVersion=false">Cancelar</button>
+        <button class="btn btn-primary" (click)="guardarVersion()" [disabled]="processing">Guardar Informe</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showVersion" *ngIf="showVersion" (click)="showVersion=false"></div>
+</div>
+
+<!-- Modal Observar -->
+<div class="modal fade" [class.show]="showObservar" [style.display]="showObservar ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Observar versión</h5><button type="button" class="close" (click)="showObservar=false">&times;</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Comentarios de revisión (obligatorio)</label>
+          <textarea class="form-control" rows="4" [(ngModel)]="comentariosRevision" placeholder="Indique los motivos de la observación..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showObservar=false">Cancelar</button>
+        <button class="btn btn-warning" (click)="observar()" [disabled]="!comentariosRevision.trim() || processing">Observar</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showObservar" *ngIf="showObservar" (click)="showObservar=false"></div>
+</div>
+
+<!-- Modal Acto resolutivo -->
+<div class="modal fade" [class.show]="showActo" [style.display]="showActo ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Registrar acto resolutivo</h5><button type="button" class="close" (click)="showActo=false">&times;</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Tipo acto</label>
+          <input type="text" class="form-control" [(ngModel)]="tipoActo" placeholder="ej. RA, R">
+        </div>
+        <div class="form-group">
+          <label>N° Acto</label>
+          <input type="text" class="form-control" [(ngModel)]="numeroActo" placeholder="Opcional">
+        </div>
+        <div class="form-group">
+          <label>Fecha emisión</label>
+          <input type="date" class="form-control" [(ngModel)]="fechaActo">
+        </div>
+        <div class="form-group">
+          <label>Parte resolutiva</label>
+          <textarea class="form-control" rows="4" [(ngModel)]="parteResolutiva"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showActo=false">Cancelar</button>
+        <button class="btn btn-primary" (click)="guardarActo()" [disabled]="processing">Registrar</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showActo" *ngIf="showActo" (click)="showActo=false"></div>
+</div>
+
+<!-- Modal Informe técnico emitido -->
+<div class="modal fade" [class.show]="showInforme" [style.display]="showInforme ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Gestionar informe técnico</h5><button type="button" class="close" (click)="cerrarInforme()">&times;</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>N° Informe</label>
+          <input type="text" class="form-control" [(ngModel)]="informeForm.numero_informe" placeholder="Ej. 001-2025-AJ/MPJB">
+        </div>
+        <div class="form-group">
+          <label>Fecha emisión</label>
+          <input type="date" class="form-control" [(ngModel)]="informeForm.fecha_emision">
+        </div>
+        <div class="form-group">
+          <label>Título</label>
+          <input type="text" class="form-control" [(ngModel)]="informeForm.titulo" placeholder="Título del informe técnico">
+        </div>
+        <div class="form-group">
+          <label>Resumen</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="informeForm.resumen" placeholder="Resumen ejecutivo"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Antecedentes</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="informeForm.antecedentes" placeholder="Hechos y contexto del caso"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Fundamentos legales</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="informeForm.fundamentos_legales" placeholder="Normativa aplicable"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Análisis</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="informeForm.analisis" placeholder="Análisis jurídico"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Conclusiones</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="informeForm.conclusiones" placeholder="Conclusiones del informe"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Recomendaciones</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="informeForm.recomendaciones" placeholder="Recomendaciones"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Subir PDF del informe</label>
+          <input type="file" class="form-control-file" accept=".pdf" (change)="onPdfSelected($event)">
+          <small class="text-muted" *ngIf="pdfFile">{{ pdfFile.name }}</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarInforme()">Cancelar</button>
+        <button class="btn btn-primary" (click)="guardarInforme()" [disabled]="processing || pdfSubiendo">
+          <i class="fas fa-save mr-1"></i>{{ pdfFile ? 'Guardar y subir PDF' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showInforme" *ngIf="showInforme" (click)="cerrarInforme()"></div>
+</div>
+
+<!-- Modal Glosa -->
+<div class="modal fade" [class.show]="showGlosa" [style.display]="showGlosa ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Registrar glosa</h5><button type="button" class="close" (click)="showGlosa=false">&times;</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Resumen del caso</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="resumenCaso"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Opinión legal</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="opinionLegal"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Decisión final</label>
+          <input type="text" class="form-control" [(ngModel)]="decisionFinal" placeholder="ej. Procede, No procede">
+        </div>
+        <div class="form-group">
+          <label>Palabras clave</label>
+          <input type="text" class="form-control" [(ngModel)]="palabrasClave" placeholder="Separadas por coma">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showGlosa=false">Cancelar</button>
+        <button class="btn btn-dark" (click)="guardarGlosa()" [disabled]="processing">Guardar glosa</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showGlosa" *ngIf="showGlosa" (click)="showGlosa=false"></div>
+</div>

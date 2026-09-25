@@ -1,0 +1,356 @@
+<app-system-layout [title]="'Gestor de Reportes'" [subtitle]="'Consultas operativas y estadísticas de flota mecanizada'"
+  [subtitleItems]="subtitleItems"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Equipo Mecánico', url: '/equipo-mecanico'}, {label: 'Reportes'}]"
+  [subsystem]="'equipo-mecanico'">
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-primary'"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+        
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-clipboard-list mr-1"></i> Configuración del Reporte
+            </h3>
+            <button class="btn btn-sm btn-outline-info ml-1 px-2"
+              (click)="isFiltersCollapsed = !isFiltersCollapsed"
+              [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'" style="height: 24px; line-height: 1;">
+              <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros (Panel de Configuración de Reporte) -->
+        <div class="border-bottom bg-light overflow-hidden" [style.max-height]="isFiltersCollapsed ? '0px' : '800px'"
+          [style.padding]="isFiltersCollapsed ? '0px' : '1rem'"
+          style="transition: max-height 0.4s ease, padding 0.4s ease;">
+          
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="mb-1 ds-crud-label">Tipo de Reporte <span class="text-danger">*</span></label>
+              <select class="form-control form-control-sm ds-crud-filter" [ngModel]="reporteSeleccionado" (ngModelChange)="onReporteChange($event)">
+                <option value="estadisticas">📊 Estadísticas Generales</option>
+                <option value="estado-equipos">🚚 Estado de Equipos</option>
+                <option value="mantenimientos">🔧 Mantenimientos</option>
+                <option value="horas-trabajo">⏰ Horas de Trabajo</option>
+                <option value="utilizacion-equipos">📈 Utilización de Equipos</option>
+                <option value="asignaciones">👤 Asignaciones</option>
+              </select>
+            </div>
+
+            <ng-container *ngIf="reporteSeleccionado !== 'estadisticas'">
+              <div class="col-md-2" *ngIf="['mantenimientos', 'horas-trabajo', 'asignaciones'].includes(reporteSeleccionado)">
+                <label class="mb-1 ds-crud-label">Desde</label>
+                <input type="date" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.fecha_desde">
+              </div>
+              <div class="col-md-2" *ngIf="['mantenimientos', 'horas-trabajo', 'asignaciones'].includes(reporteSeleccionado)">
+                <label class="mb-1 ds-crud-label">Hasta</label>
+                <input type="date" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.fecha_hasta">
+              </div>
+
+              <!-- Filtros dinámicos -->
+              <div class="col-md-2" *ngIf="['estado-equipos', 'utilizacion-equipos'].includes(reporteSeleccionado)">
+                <label class="mb-1 ds-crud-label">Tipo de Equipo</label>
+                <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.tipo">
+                  <option value="">Todos</option>
+                  <option value="vehiculo">Vehículo</option>
+                  <option value="maquinaria">Maquinaria</option>
+                  <option value="equipo">Equipo</option>
+                </select>
+              </div>
+
+              <div class="col-md-2" *ngIf="reporteSeleccionado === 'horas-trabajo'">
+                <label class="mb-1 ds-crud-label">Actividad</label>
+                <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.tipo">
+                  <option value="">Todas</option>
+                  <option value="trabajo">💼 Trabajo</option>
+                  <option value="traslado">🚚 Traslado</option>
+                  <option value="espera">⏸️ Espera</option>
+                  <option value="otro">📝 Otro</option>
+                </select>
+              </div>
+
+              <div class="col-md-2" *ngIf="['estado-equipos', 'utilizacion-equipos'].includes(reporteSeleccionado)">
+                <label class="mb-1 ds-crud-label">Estado Operativo</label>
+                <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.estado">
+                  <option value="">Todos</option>
+                  <option value="operativo">Operativo</option>
+                  <option value="mantenimiento">Mantenimiento</option>
+                  <option value="fuera_servicio">Fuera de Servicio</option>
+                </select>
+              </div>
+
+              <div class="col-md-2" *ngIf="reporteSeleccionado === 'mantenimientos'">
+                <label class="mb-1 ds-crud-label">Tipo Mant.</label>
+                <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.tipo">
+                  <option value="">Todos</option>
+                  <option value="preventivo">Preventivo</option>
+                  <option value="correctivo">Correctivo</option>
+                </select>
+              </div>
+
+              <div class="col-md-2" *ngIf="reporteSeleccionado === 'asignaciones'">
+                <div class="custom-control custom-checkbox mt-4">
+                  <input type="checkbox" class="custom-control-input" id="checkActivas" [(ngModel)]="filtros.activas">
+                  <label class="custom-control-label small" for="checkActivas">Solo Activas</label>
+                </div>
+              </div>
+            </ng-container>
+
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-primary btn-sm btn-block" (click)="generarReporte()" [disabled]="cargando">
+                <i class="fas" [ngClass]="cargando ? 'fa-spinner fa-spin' : 'fa-play-circle'"></i> Generar
+              </button>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+              <button class="btn btn-outline-secondary btn-sm btn-block" (click)="limpiarFiltros()" title="Limpiar">
+                <i class="fas fa-redo"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resultados -->
+        <div class="card-body p-4 min-vh-50">
+          
+          <div *ngIf="cargando" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+            <p class="mt-3">Procesando información...</p>
+          </div>
+
+          <!-- Estadísticas Dashboard -->
+          <div *ngIf="!cargando && reporteSeleccionado === 'estadisticas' && datosReporte" class="stats-dashboard">
+            <div class="row">
+              <div class="col-lg-3 col-6 mb-4">
+                <div class="stat-card bg-primary text-white position-relative card shadow-sm">
+                  <div class="card-body py-4">
+                    <div class="stat-value">{{datosReporte?.equipos?.total}}</div>
+                    <div class="stat-label">Total Unidades</div>
+                  </div>
+                  <i class="fas fa-truck-moving stat-icon opacity-50"></i>
+                </div>
+              </div>
+              <div class="col-lg-3 col-6 mb-4">
+                <div class="stat-card bg-success text-white position-relative card shadow-sm">
+                  <div class="card-body py-4">
+                    <div class="stat-value">{{datosReporte?.equipos?.operativos}}</div>
+                    <div class="stat-label">En Operación</div>
+                  </div>
+                  <i class="fas fa-check-circle stat-icon opacity-50"></i>
+                </div>
+              </div>
+              <div class="col-lg-3 col-6 mb-4">
+                <div class="stat-card bg-warning text-white position-relative card shadow-sm">
+                  <div class="card-body py-4">
+                    <div class="stat-value">{{datosReporte?.equipos?.mantenimiento}}</div>
+                    <div class="stat-label">En Taller</div>
+                  </div>
+                  <i class="fas fa-tools stat-icon opacity-50"></i>
+                </div>
+              </div>
+              <div class="col-lg-3 col-6 mb-4">
+                <div class="stat-card bg-danger text-white position-relative card shadow-sm">
+                  <div class="card-body py-4">
+                    <div class="stat-value">{{datosReporte?.equipos?.fuera_servicio}}</div>
+                    <div class="stat-label">Inoperativos</div>
+                  </div>
+                  <i class="fas fa-exclamation-triangle stat-icon opacity-50"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="row mt-2">
+              <div class="col-lg-7">
+                <div class="card shadow-none border">
+                  <div class="card-body">
+                    <h5 class="font-weight-bold mb-4">
+                      <i class="fas fa-calendar-alt mr-2 text-primary"></i>Resumen Operativo del Mes
+                    </h5>
+                    <div class="row">
+                      <div class="col-md-6 border-right">
+                        <div class="metric-row border-left border-primary pl-3 mb-3">
+                          <p class="text-muted small mb-0">Partes Diarios</p>
+                          <h4 class="font-weight-bold">{{datosReporte?.mes_actual?.partes}} documentos</h4>
+                        </div>
+                        <div class="metric-row border-left border-warning pl-3 mb-3">
+                          <p class="text-muted small mb-0">Mantenimientos</p>
+                          <h4 class="font-weight-bold">{{datosReporte?.mes_actual?.mantenimientos}} servicios</h4>
+                        </div>
+                      </div>
+                      <div class="col-md-6 pl-md-4">
+                        <div class="metric-row border-left border-success pl-3 mb-3">
+                          <p class="text-muted small mb-0">Combustible</p>
+                          <h4 class="font-weight-bold">{{datosReporte?.mes_actual?.consumo_litros | number}} Gal.</h4>
+                        </div>
+                        <div class="metric-row border-left border-danger pl-3 mb-3">
+                          <p class="text-muted small mb-0">Costo Estimado</p>
+                          <h4 class="font-weight-bold text-danger">S/ {{datosReporte?.mes_actual?.costo_combustible | number:'1.2-2'}}</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-5">
+                <div class="card shadow-none border">
+                  <div class="card-body">
+                    <h5 class="font-weight-bold mb-4">
+                      <i class="fas fa-users-cog mr-2 text-success"></i>Personal y Cobertura
+                    </h5>
+                    <div class="mb-4">
+                      <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Disponibilidad de Operadores</span>
+                        <span class="font-weight-bold small">{{datosReporte?.operadores?.asignaciones_activas}} / {{datosReporte?.operadores?.total}}</span>
+                      </div>
+                      <div class="progress progress-sm" style="height: 10px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             [style.width]="(datosReporte?.operadores?.asignaciones_activas / datosReporte?.operadores?.total * 100) + '%'"></div>
+                      </div>
+                      <p class="text-right mt-1 mb-0 small text-success">
+                        {{ (datosReporte?.operadores?.asignaciones_activas / datosReporte?.operadores?.total * 100) | number:'1.0-1' }}% Cobertura
+                      </p>
+                    </div>
+                    <div class="bg-light p-3 rounded border text-muted small">
+                      <i class="fas fa-info-circle mr-1"></i> Información actualizada según las últimas asignaciones de flota.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Report Data Tables -->
+          <div *ngIf="!cargando && reporteSeleccionado !== 'estadisticas' && datosReporte" class="report-table-container">
+            <div class="table-responsive p-0">
+              <table id="tablaReporte" class="table table-sm mb-0 w-100 ds-crud-table border" [ngClass]="cv.tableClasses">
+                <thead>
+                  <tr>
+                    <ng-container *ngIf="reporteSeleccionado === 'estado-equipos'">
+                      <th style="width: 150px;">Código / Placa</th>
+                      <th>Descripción / Marca / Modelo</th>
+                      <th>Tipo</th>
+                      <th class="text-center">Estado</th>
+                      <th class="text-right">Km / Horas</th>
+                    </ng-container>
+                    <ng-container *ngIf="reporteSeleccionado === 'mantenimientos'">
+                      <th>Servicio</th>
+                      <th>Unidad / Equipo</th>
+                      <th>Fecha Inicio</th>
+                      <th>Fecha Fin</th>
+                      <th class="text-center">Estado</th>
+                      <th class="text-right px-3">Costo (S/)</th>
+                    </ng-container>
+                    <ng-container *ngIf="reporteSeleccionado === 'horas-trabajo'">
+                      <th>Unidad / Equipo</th>
+                      <th>Actividad</th>
+                      <th class="text-center">Total Horas</th>
+                      <th class="text-center">Registros</th>
+                    </ng-container>
+                    <ng-container *ngIf="reporteSeleccionado === 'utilizacion-equipos'">
+                      <th>Unidad / Equipo</th>
+                      <th class="text-center">Partes</th>
+                      <th class="text-center">Mant.</th>
+                      <th class="text-center">Estado</th>
+                    </ng-container>
+                    <ng-container *ngIf="reporteSeleccionado === 'asignaciones'">
+                      <th style="width: 180px;">Periodo</th>
+                      <th>Unidad / Equipo (Placa)</th>
+                      <th>Operador / Responsable</th>
+                    </ng-container>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of (datosReporte?.equipos || datosReporte?.mantenimientos || datosReporte?.detalles || datosReporte?.asignaciones)">
+                    <!-- Case: estado-equipos -->
+                    <ng-container *ngIf="reporteSeleccionado === 'estado-equipos'">
+                      <td>
+                        <strong class="text-primary">{{item.codigo_interno}}</strong>
+                        <div class="text-xs text-muted font-weight-bold">{{item.placa}}</div>
+                      </td>
+                      <td>
+                        <div class="font-weight-bold">{{item.marca}} {{item.modelo}}</div>
+                        <small class="text-muted">{{item.descripcion || '-'}}</small>
+                      </td>
+                      <td><span class="badge badge-light border text-muted px-2">{{item.tipo | uppercase}}</span></td>
+                      <td class="text-center"><span class="badge" [ngClass]="getBadgeClase(item.estado)">{{item.estado | uppercase}}</span></td>
+                      <td class="text-right">
+                        <div><strong>{{item.odometro_actual | number}} KM</strong></div>
+                        <small class="text-muted">{{item.horas_motor_actual}} H</small>
+                      </td>
+                    </ng-container>
+
+                    <!-- Case: mantenimientos -->
+                    <ng-container *ngIf="reporteSeleccionado === 'mantenimientos'">
+                      <td>
+                        <div class="font-weight-bold text-info">{{item.tipo | uppercase}}</div>
+                        <small class="text-muted">#{{item.id}}</small>
+                      </td>
+                      <td>
+                        <strong>{{item.codigo_interno}}</strong><br>
+                        <small class="text-muted">{{item.marca}} {{item.modelo}}</small>
+                      </td>
+                      <td>{{formatearFecha(item.fecha_inicio)}}</td>
+                      <td>{{item.fecha_fin ? formatearFecha(item.fecha_fin) : 'PENDIENTE'}}</td>
+                      <td class="text-center"><span class="badge" [ngClass]="getBadgeClase(item.estado)">{{item.estado | uppercase}}</span></td>
+                      <td class="text-right px-3 font-weight-bold text-success">S/ {{item.costo_total | number:'1.2-2'}}</td>
+                    </ng-container>
+
+                    <!-- Case: horas-trabajo -->
+                    <ng-container *ngIf="reporteSeleccionado === 'horas-trabajo'">
+                      <td>
+                        <strong>{{item.codigo_interno}}</strong><br>
+                        <small class="text-muted">{{item.marca}} {{item.modelo}}</small>
+                      </td>
+                      <td><span class="badge badge-outline-primary">{{item.tipo | uppercase}}</span></td>
+                      <td class="text-center font-weight-bold">{{item.total_horas | number:'1.2-2'}}</td>
+                      <td class="text-center text-muted">{{item.total_registros || '-'}}</td>
+                    </ng-container>
+
+                    <!-- Case: utilizacion-equipos -->
+                    <ng-container *ngIf="reporteSeleccionado === 'utilizacion-equipos'">
+                      <td>
+                        <strong>{{item.codigo_interno}}</strong><br>
+                        <small class="text-muted">{{item.marca}} {{item.modelo}}</small>
+                      </td>
+                      <td class="text-center font-weight-bold text-primary">{{item.partes_count}}</td>
+                      <td class="text-center font-weight-bold text-warning">{{item.mantenimientos_count}}</td>
+                      <td class="text-center"><span class="badge" [ngClass]="getBadgeClase(item.estado)">{{item.estado}}</span></td>
+                    </ng-container>
+
+                    <!-- Case: asignaciones -->
+                    <ng-container *ngIf="reporteSeleccionado === 'asignaciones'">
+                      <td>
+                        <small class="d-block"><strong>INI:</strong> {{formatearFecha(item.fecha_inicio)}}</small>
+                        <small class="d-block" *ngIf="item.fecha_fin"><strong>FIN:</strong> {{formatearFecha(item.fecha_fin)}}</small>
+                        <span *ngIf="!item.fecha_fin" class="badge badge-success text-xxs mt-1">VIGENTE</span>
+                      </td>
+                      <td>
+                        <strong>{{item.codigo_interno}}</strong><br>
+                        <small class="text-muted">{{item.placa}} - {{item.marca}} {{item.modelo}}</small>
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <i class="fas fa-user-circle text-muted mr-1"></i>
+                          <div class="font-weight-bold text-dark text-xs uppercase">{{item.first_name}} {{item.last_name}}</div>
+                        </div>
+                      </td>
+                    </ng-container>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div *ngIf="!cargando && !datosReporte" class="text-center py-5 text-muted">
+            <i class="fas fa-clipboard-check fa-4x mb-3 opacity-25"></i>
+            <h5>Configure y genere un reporte para visualizar resultados</h5>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</app-system-layout>

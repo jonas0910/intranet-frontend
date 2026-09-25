@@ -1,0 +1,357 @@
+<!-- Channels Management -->
+<div class="channels-container">
+  
+  <!-- Header -->
+  <div class="card card-primary card-outline">
+    <div class="card-header bg-gradient-info">
+      <h3 class="card-title text-white">
+        <i class="fas fa-broadcast-tower mr-2"></i>
+        Canales y Difusión
+        <span class="badge badge-light ml-2">{{ stats.total }}</span>
+      </h3>
+      <div class="card-tools">
+        <button type="button" class="btn btn-sm btn-light" (click)="openCreateModal()">
+          <i class="fas fa-plus mr-1"></i>
+          Crear Canal
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="card-body">
+      <div class="row mb-4">
+        <div class="col-md-3 col-6">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>{{ stats.total }}</h3>
+              <p>Total Canales</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-broadcast-tower"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>{{ stats.subscribed }}</h3>
+              <p>Suscritos</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-rss"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="small-box bg-danger">
+            <div class="inner">
+              <h3>{{ stats.owned }}</h3>
+              <p>Creados por Mí</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-crown"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3>{{ stats.public }}</h3>
+              <p>Públicos</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-globe"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">
+                <i class="fas fa-search"></i>
+              </span>
+            </div>
+            <input type="text" 
+                   class="form-control" 
+                   [(ngModel)]="searchQuery"
+                   (input)="onSearchChange()"
+                   placeholder="Buscar canales...">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <select class="form-control" [(ngModel)]="filterType" (change)="onFilterChange()">
+            <option value="all">Todos los tipos</option>
+            <option *ngFor="let type of channelTypes" [value]="type.value">
+              {{ type.label }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <select class="form-control" [(ngModel)]="filterSubscription" (change)="onFilterChange()">
+            <option value="all">Todos</option>
+            <option value="subscribed">Suscritos</option>
+            <option value="not_subscribed">No suscritos</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Channels List -->
+      <div class="row">
+        <!-- Loading -->
+        <div class="col-12" *ngIf="loading">
+          <div class="text-center p-5">
+            <div class="spinner-border text-info" role="status">
+              <span class="sr-only">Cargando canales...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="col-12" *ngIf="!loading && filteredChannels.length === 0">
+          <div class="callout callout-info">
+            <h5><i class="fas fa-info-circle"></i> No hay canales</h5>
+            <p>No se encontraron canales disponibles.</p>
+            <button type="button" class="btn btn-info" (click)="openCreateModal()">
+              <i class="fas fa-plus mr-1"></i>
+              Crear Primer Canal
+            </button>
+          </div>
+        </div>
+
+        <!-- Channel Cards -->
+        <div class="col-md-6" *ngFor="let channel of filteredChannels">
+          <div class="card card-outline shadow-sm mb-3 channel-card">
+            <div class="card-header" [style.border-left]="'4px solid ' + getChannelColor(channel)">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <h5 class="card-title mb-1">
+                    <i [class]="getChannelIcon(channel)" [style.color]="getChannelColor(channel)" class="mr-2"></i>
+                    {{ channel.name }}
+                    <i class="fas fa-lock ml-2 text-muted" *ngIf="!channel.is_public" title="Canal privado"></i>
+                    <i class="fas fa-globe ml-2 text-success" *ngIf="channel.is_public" title="Canal público"></i>
+                  </h5>
+                  <p class="text-muted small mb-0">
+                    {{ channel.subscriber_count }} suscriptores · {{ channel.post_count }} publicaciones
+                  </p>
+                </div>
+                <span class="badge badge-info">
+                  {{ getChannelTypeLabel(channel.type) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="card-body p-3">
+              <p class="text-muted small mb-2" *ngIf="channel.description">
+                {{ channel.description }}
+              </p>
+
+              <div class="latest-post" *ngIf="channel.latest_post">
+                <small class="text-muted">
+                  <i class="fas fa-comment-alt mr-1"></i>
+                  <strong>{{ channel.latest_post.author_name }}:</strong>
+                  {{ channel.latest_post.content | slice:0:80 }}...
+                </small>
+                <br>
+                <small class="text-muted">
+                  <i class="far fa-clock mr-1"></i>
+                  {{ formatDate(channel.latest_post.created_at) }}
+                </small>
+              </div>
+
+              <div class="alert alert-warning mb-0 mt-2" *ngIf="channel.unread_count > 0">
+                <i class="fas fa-bell mr-1"></i>
+                {{ channel.unread_count }} publicación(es) nueva(s)
+              </div>
+            </div>
+
+            <div class="card-footer p-2">
+              <div class="btn-group btn-group-sm w-100" *ngIf="channel.is_subscribed">
+                <button type="button" class="btn btn-primary" (click)="openChannel(channel)">
+                  <i class="fas fa-eye"></i> Ver
+                </button>
+                <button type="button" class="btn btn-secondary" (click)="unsubscribeFromChannel(channel)">
+                  <i class="fas fa-bell-slash"></i> Desuscribir
+                </button>
+                <button type="button" class="btn btn-danger" *ngIf="channel.is_owner" (click)="deleteChannel(channel)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+              <button type="button" class="btn btn-success btn-sm btn-block" 
+                      *ngIf="!channel.is_subscribed"
+                      (click)="subscribeToChannel(channel)">
+                <i class="fas fa-rss mr-1"></i>
+                Suscribirse
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Channel Modal -->
+<div class="modal fade" [class.show]="showCreateModal" [style.display]="showCreateModal ? 'block' : 'none'" 
+     *ngIf="showCreateModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-broadcast-tower mr-2"></i>
+          Crear Nuevo Canal
+        </h5>
+        <button type="button" class="close text-white" (click)="closeCreateModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <form [formGroup]="createChannelForm" (ngSubmit)="createChannel()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Nombre del Canal *</label>
+            <input type="text" class="form-control" formControlName="name" 
+                   placeholder="Ej: Anuncios de RRHH">
+            <small class="form-text text-muted">Mínimo 3 caracteres</small>
+          </div>
+
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea class="form-control" formControlName="description" rows="3"
+                      placeholder="Descripción del canal"></textarea>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Tipo de Canal *</label>
+                <select class="form-control" formControlName="type">
+                  <option *ngFor="let type of channelTypes" [value]="type.value">
+                    {{ type.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Visibilidad</label>
+                <div class="custom-control custom-switch mt-2">
+                  <input type="checkbox" class="custom-control-input" id="channelPublic" formControlName="is_public">
+                  <label class="custom-control-label" for="channelPublic">
+                    Canal Público
+                  </label>
+                </div>
+                <small class="form-text text-muted">Los canales públicos son visibles para todos</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-info" [disabled]="!createChannelForm.valid">
+            <i class="fas fa-save mr-1"></i>
+            Crear Canal
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showCreateModal" *ngIf="showCreateModal"></div>
+
+<!-- Channel Posts Modal -->
+<div class="modal fade" [class.show]="showPostsModal" [style.display]="showPostsModal ? 'block' : 'none'" 
+     *ngIf="showPostsModal && selectedChannel">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header" [style.background]="getChannelColor(selectedChannel)">
+        <h5 class="modal-title text-white">
+          <i [class]="getChannelIcon(selectedChannel)" class="mr-2"></i>
+          {{ selectedChannel.name }}
+        </h5>
+        <button type="button" class="close text-white" (click)="closePostsModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+        <!-- Post Form -->
+        <div class="post-composer mb-4" *ngIf="selectedChannel.can_post">
+          <form [formGroup]="postForm" (ngSubmit)="postToChannel()">
+            <div class="form-group">
+              <textarea class="form-control" formControlName="content" rows="3"
+                        placeholder="Escribe una publicación..."></textarea>
+            </div>
+            <div class="text-right">
+              <button type="submit" class="btn btn-primary" [disabled]="!postForm.valid">
+                <i class="fas fa-paper-plane mr-1"></i>
+                Publicar
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Posts List -->
+        <div *ngIf="loadingPosts" class="text-center p-4">
+          <div class="spinner-border text-info" role="status">
+            <span class="sr-only">Cargando publicaciones...</span>
+          </div>
+        </div>
+
+        <div class="posts-list" *ngIf="!loadingPosts">
+          <div class="post-item" *ngFor="let post of channelPosts">
+            <div class="d-flex">
+              <img [src]="post.author_avatar || 'assets/img/user-default.png'" 
+                   class="img-circle mr-3" 
+                   style="width: 40px; height: 40px;">
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between">
+                  <h6 class="mb-0">{{ post.author_name }}</h6>
+                  <small class="text-muted">
+                    <i class="far fa-clock mr-1"></i>
+                    {{ formatDate(post.created_at) }}
+                  </small>
+                </div>
+                <p class="mb-2">{{ post.content }}</p>
+                <div class="post-actions">
+                  <button type="button" class="btn btn-sm btn-link text-muted">
+                    <i class="far fa-thumbs-up mr-1"></i>
+                    {{ post.like_count || 0 }}
+                  </button>
+                  <button type="button" class="btn btn-sm btn-link text-muted">
+                    <i class="far fa-comment mr-1"></i>
+                    {{ post.comment_count || 0 }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <hr>
+          </div>
+
+          <div class="text-center text-muted p-4" *ngIf="channelPosts.length === 0">
+            <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
+            <p>No hay publicaciones en este canal aún</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closePostsModal()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showPostsModal" *ngIf="showPostsModal"></div>
+
+
+
+
+
+
+
+
+

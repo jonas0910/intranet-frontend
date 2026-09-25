@@ -1,0 +1,188 @@
+<!-- Content Header -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0"><i class="fas fa-layer-group mr-2"></i>Gestión de Plantillas</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Contenido</a></li>
+          <li class="breadcrumb-item active">Plantillas</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <!-- Estadísticas -->
+    <div class="row mb-3">
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+          <div class="inner"><h3>{{ estadisticas.total }}</h3><p>Total Plantillas</p></div>
+          <div class="icon"><i class="fas fa-layer-group"></i></div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-success">
+          <div class="inner"><h3>{{ estadisticas.basicas }}</h3><p>Básicas</p></div>
+          <div class="icon"><i class="fas fa-file-alt"></i></div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+          <div class="inner"><h3>{{ estadisticas.intermedias }}</h3><p>Intermedias</p></div>
+          <div class="icon"><i class="fas fa-layer-group"></i></div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+          <div class="inner"><h3>{{ estadisticas.avanzadas }}</h3><p>Avanzadas</p></div>
+          <div class="icon"><i class="fas fa-star"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs por categoría -->
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <ul class="nav nav-tabs card-header-tabs flex-grow-1" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab==='todas'" (click)="setTab('todas')" href="javascript:void(0)">
+              <i class="fas fa-th-large mr-1"></i>Todas ({{ estadisticas.total }})
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab==='basica'" (click)="setTab('basica')" href="javascript:void(0)">
+              <i class="fas fa-file-alt mr-1"></i>Básicas ({{ estadisticas.basicas }})
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab==='intermedia'" (click)="setTab('intermedia')" href="javascript:void(0)">
+              <i class="fas fa-layer-group mr-1"></i>Intermedias ({{ estadisticas.intermedias }})
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab==='avanzada'" (click)="setTab('avanzada')" href="javascript:void(0)">
+              <i class="fas fa-star mr-1"></i>Avanzadas ({{ estadisticas.avanzadas }})
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab==='preview'" (click)="setTab('preview')" href="javascript:void(0)">
+              <i class="fas fa-eye mr-1"></i>Vista preview
+            </a>
+          </li>
+        </ul>
+        <a routerLink="/gestor-contenidos/plantillas/crear" class="btn btn-primary btn-sm ml-2">
+          <i class="fas fa-plus mr-1"></i>Nueva Plantilla
+        </a>
+      </div>
+
+      <div class="card-body">
+        <!-- Loading -->
+        <div *ngIf="loading" class="text-center py-4">
+          <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+          <p class="mt-2">Cargando plantillas...</p>
+        </div>
+
+        <!-- Vista preview (renderizado HTML de cada plantilla) -->
+        <div *ngIf="!loading && activeTab === 'preview'" class="row">
+          <div class="col-12 mb-4" *ngFor="let p of plantillasAll">
+            <div class="card plantilla-card plantilla-preview-card" [class.border-secondary]="!p.activa">
+              <div class="card-header d-flex justify-content-between align-items-center py-2">
+                <h5 class="card-title mb-0">
+                  <i [ngClass]="p.icono || 'fas fa-file-alt'" class="mr-1"></i>{{ p.nombre }}
+                </h5>
+                <div class="btn-group btn-group-sm">
+                  <a [routerLink]="['/gestor-contenidos/plantillas', p.id]" class="btn btn-info" title="Ver Detalles"><i class="fas fa-eye"></i></a>
+                  <a [routerLink]="['/gestor-contenidos/plantillas', p.id, 'editar']" class="btn btn-primary" title="Editar"><i class="fas fa-edit"></i></a>
+                </div>
+              </div>
+              <div class="card-body p-0">
+                <iframe [src]="getPreviewIframeUrl(p)" class="plantilla-preview-iframe" title="Preview de {{ p.nombre }}"></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de plantillas (vista normal) -->
+        <div class="table-responsive" *ngIf="!loading && filteredPlantillas.length > 0 && activeTab !== 'preview'">
+          <table class="table table-hover table-striped">
+            <thead class="thead-light">
+              <tr>
+                <th><i class="fas fa-file-alt mr-1"></i>Nombre</th>
+                <th>Categoría</th>
+                <th>Nivel</th>
+                <th>Vista</th>
+                <th>Estado</th>
+                <th>Componentes</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of filteredPlantillas" [class.table-secondary]="!p.activa">
+                <td>
+                  <i [ngClass]="p.icono || 'fas fa-file-alt'" class="mr-2 text-muted"></i>
+                  <strong>{{ p.nombre }}</strong>
+                  <p class="small text-muted mb-0">Slug: {{ p.slug || '-' }}</p>
+                </td>
+                <td><span class="badge" [ngClass]="getCategoriaBadge(p.categoria)">{{ (p.categoria || 'basica') | titlecase }}</span></td>
+                <td><span class="badge" [ngClass]="getNivelBadge(p.nivel)">{{ (p.nivel || 'basico') | titlecase }}</span></td>
+                <td><code class="small">{{ p.vista || '-' }}</code></td>
+                <td>
+                  <span *ngIf="p.activa" class="badge badge-success"><i class="fas fa-check mr-1"></i>Activa</span>
+                  <span *ngIf="!p.activa" class="badge badge-secondary">Inactiva</span>
+                </td>
+                <td>
+                  <span *ngIf="getComponentes(p).length > 0" class="small">{{ getComponentes(p).slice(0, 3).join(', ') }}
+                    <span *ngIf="getComponentes(p).length > 3" class="text-primary">+{{ getComponentes(p).length - 3 }}</span>
+                  </span>
+                  <span *ngIf="getComponentes(p).length === 0" class="text-muted small">-</span>
+                </td>
+                <td class="text-right">
+                  <div class="btn-group btn-group-sm">
+                    <a [routerLink]="['/gestor-contenidos/plantillas', p.id]" class="btn btn-info" title="Ver">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a [routerLink]="['/gestor-contenidos/plantillas', p.id, 'editar']" class="btn btn-primary" title="Editar">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <button class="btn btn-warning" (click)="duplicar(p.id)" title="Duplicar">
+                      <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="btn btn-danger" (click)="eliminar(p.id)" title="Eliminar">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty state vista preview -->
+        <div *ngIf="!loading && activeTab === 'preview' && plantillasAll.length === 0" class="text-center py-5">
+          <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+          <h5>No hay plantillas</h5>
+          <p class="text-muted">Crea una nueva plantilla para comenzar</p>
+          <a routerLink="/gestor-contenidos/plantillas/crear" class="btn btn-primary">
+            <i class="fas fa-plus mr-1"></i>Crear Plantilla
+          </a>
+        </div>
+
+        <!-- Empty state (vista normal) -->
+        <div *ngIf="!loading && filteredPlantillas.length === 0 && activeTab !== 'preview'" class="text-center py-5">
+          <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+          <h5>No hay plantillas en esta categoría</h5>
+          <p class="text-muted">Crea una nueva plantilla para comenzar</p>
+          <a routerLink="/gestor-contenidos/plantillas/crear" class="btn btn-primary">
+            <i class="fas fa-plus mr-1"></i>Crear Plantilla
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

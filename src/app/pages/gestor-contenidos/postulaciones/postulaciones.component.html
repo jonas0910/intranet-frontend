@@ -1,0 +1,143 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0">Postulaciones</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor</a></li>
+          <li class="breadcrumb-item active">Postulaciones</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-users mr-2"></i>Listado de Postulaciones</h3>
+      </div>
+      <div class="card-body p-0">
+        <div class="text-center py-5" *ngIf="loading">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+        </div>
+        <div class="table-responsive" *ngIf="!loading">
+          <table class="table table-hover table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Nombres</th>
+                <th>Apellidos</th>
+                <th>Email</th>
+                <th>Doc. Identidad</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="postulaciones.length === 0">
+                <td colspan="7" class="text-center text-muted py-4">No hay postulaciones registradas</td>
+              </tr>
+              <tr *ngFor="let item of postulaciones">
+                <td>{{ item.nombres }}</td>
+                <td>{{ item.apellidos }}</td>
+                <td>{{ item.email }}</td>
+                <td>{{ item.documento_identidad }}</td>
+                <td>
+                  <span class="badge badge-{{ getEstadoBadge(item.estado) }}">{{ item.estado }}</span>
+                </td>
+                <td>{{ formatDate(item.created_at) }}</td>
+                <td class="text-right">
+                  <button class="btn btn-info btn-xs" (click)="openDetail(item)" title="Ver detalle">
+                    <i class="fas fa-eye mr-1"></i>Detalle
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Detail Modal -->
+<div class="modal fade show d-block" *ngIf="showDetailModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Detalle de Postulación</h5>
+        <button type="button" class="close" (click)="showDetailModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedPostulacion">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <dl class="row mb-0">
+              <dt class="col-sm-5">Nombres:</dt>
+              <dd class="col-sm-7">{{ selectedPostulacion.nombres }}</dd>
+              <dt class="col-sm-5">Apellidos:</dt>
+              <dd class="col-sm-7">{{ selectedPostulacion.apellidos }}</dd>
+              <dt class="col-sm-5">Email:</dt>
+              <dd class="col-sm-7">{{ selectedPostulacion.email }}</dd>
+              <dt class="col-sm-5">Teléfono:</dt>
+              <dd class="col-sm-7">{{ selectedPostulacion.telefono || '-' }}</dd>
+            </dl>
+          </div>
+          <div class="col-md-6">
+            <dl class="row mb-0">
+              <dt class="col-sm-5">Documento:</dt>
+              <dd class="col-sm-7">{{ selectedPostulacion.documento_identidad }}</dd>
+              <dt class="col-sm-5">Fecha:</dt>
+              <dd class="col-sm-7">{{ formatDate(selectedPostulacion.created_at) }}</dd>
+              <dt class="col-sm-5">Oferta:</dt>
+              <dd class="col-sm-7">{{ selectedPostulacion.oferta?.titulo || selectedPostulacion.oferta_id || '-' }}</dd>
+              <dt class="col-sm-5">Estado:</dt>
+              <dd class="col-sm-7">
+                <span class="badge badge-{{ getEstadoBadge(selectedPostulacion.estado) }}">
+                  {{ selectedPostulacion.estado }}
+                </span>
+              </dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="mb-3" *ngIf="selectedPostulacion.carta_presentacion">
+          <strong>Carta de Presentación:</strong>
+          <div class="border rounded p-3 bg-light mt-1">{{ selectedPostulacion.carta_presentacion }}</div>
+        </div>
+
+        <div class="mb-3" *ngIf="selectedPostulacion.cv_url">
+          <strong>CV:</strong>
+          <a [href]="selectedPostulacion.cv_url" target="_blank" class="btn btn-sm btn-outline-primary ml-2">
+            <i class="fas fa-file-pdf mr-1"></i>Descargar CV
+          </a>
+        </div>
+
+        <div class="mb-3" *ngIf="selectedPostulacion.experiencia">
+          <strong>Experiencia:</strong>
+          <div class="border rounded p-3 bg-light mt-1">{{ selectedPostulacion.experiencia }}</div>
+        </div>
+
+        <hr>
+        <div class="form-group">
+          <label><strong>Cambiar Estado:</strong></label>
+          <div class="input-group">
+            <select class="form-control" [(ngModel)]="nuevoEstado">
+              <option *ngFor="let e of estados" [value]="e">{{ e | titlecase }}</option>
+            </select>
+            <div class="input-group-append">
+              <button class="btn btn-primary" (click)="changeStatus()"
+                      [disabled]="nuevoEstado === selectedPostulacion.estado">
+                <i class="fas fa-check mr-1"></i>Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="showDetailModal = false">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

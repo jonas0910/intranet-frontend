@@ -1,0 +1,830 @@
+<!-- Header mínimo -->
+<div class="content-header compact-header">
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center">
+      <h1 class="page-title m-0">
+        <i class="fas fa-cogs mr-2 text-primary"></i>Integración de Subsistemas
+      </h1>
+      <ol class="breadcrumb m-0">
+        <li class="breadcrumb-item"><a [routerLink]="['/dashboard']"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item active">Integración</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<section class="content pt-0">
+  <div class="container-fluid">
+
+    <!-- Loading global -->
+    <div *ngIf="loading" class="text-center py-3">
+      <div class="spinner-border spinner-border-sm text-primary"></div>
+      <span class="text-muted ml-2 small">Cargando...</span>
+    </div>
+
+    <div *ngIf="!loading">
+      <!-- Barra de pestañas + acciones -->
+      <div class="tool-bar d-flex align-items-center mb-2">
+        <ul class="nav nav-pills nav-sm flex-nowrap" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link py-1 px-3" [class.active]="currentTab === 'discovery'" href="#"
+               (click)="switchTab('discovery', $event)">
+              <i class="fas fa-search mr-1"></i>Descubrir
+              <span class="badge badge-pill ml-1" [class.badge-light]="currentTab === 'discovery'"
+                    [class.badge-secondary]="currentTab !== 'discovery'">{{ sistemasDescubiertos.length }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link py-1 px-3" [class.active]="currentTab === 'integrated'" href="#"
+               (click)="switchTab('integrated', $event)">
+              <i class="fas fa-check-circle mr-1"></i>Integrados
+              <span class="badge badge-pill ml-1" [class.badge-light]="currentTab === 'integrated'"
+                    [class.badge-secondary]="currentTab !== 'integrated'">{{ sistemasParaTabIntegrados.length }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link py-1 px-3" [class.active]="currentTab === 'menu-intranet'" href="#"
+               (click)="switchTab('menu-intranet', $event)">
+              <i class="fas fa-sitemap mr-1"></i>Menú Intranet
+              <span class="badge badge-pill ml-1" [class.badge-light]="currentTab === 'menu-intranet'"
+                    [class.badge-secondary]="currentTab !== 'menu-intranet'">{{ (menusIntranet || []).length }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link py-1 px-3" [class.active]="currentTab === 'access'" href="#"
+               (click)="switchTab('access', $event)">
+              <i class="fas fa-user-shield mr-1"></i>Accesos
+            </a>
+          </li>
+        </ul>
+
+        <div class="ml-auto d-flex align-items-center gap-1">
+          <button *ngIf="currentTab === 'discovery'" class="btn btn-sm btn-info" (click)="discoverSystems()" [disabled]="discovering">
+            <i class="fas fa-satellite-dish mr-1" [class.fa-spin]="discovering"></i>
+            {{ discovering ? 'Buscando...' : 'Escanear' }}
+          </button>
+          <button *ngIf="currentTab === 'integrated'" class="btn btn-sm btn-success" (click)="openSystemForm()">
+            <i class="fas fa-plus mr-1"></i>Agregar
+          </button>
+          <button *ngIf="currentTab === 'menu-intranet'" class="btn btn-sm btn-success" (click)="openMenuIntranetForm()">
+            <i class="fas fa-plus mr-1"></i>Agregar subsistema
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" (click)="refreshIntegratedSystems()" [disabled]="loading" title="Actualizar">
+            <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══════ TAB: Sistemas Integrados ═══════ -->
+      <div *ngIf="currentTab === 'integrated'" class="panel">
+        <div class="table-responsive" *ngIf="sistemasParaTabIntegrados.length > 0">
+          <table class="table table-hover table-sm mb-0 compact-table">
+            <thead>
+              <tr>
+                <th class="col-expand"></th>
+                <th>Sistema</th>
+                <th class="text-center col-num">Menús</th>
+                <th class="text-center col-num">Sub</th>
+                <th class="col-code">Código</th>
+                <th class="text-center col-status">Estado</th>
+                <th class="text-right col-actions">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let sistema of sistemasParaTabIntegrados; trackBy: trackBySistemaId">
+                <tr class="row-main" [class.row-inactive]="!sistema.activo">
+                  <td class="text-center">
+                    <button class="btn btn-link btn-sm p-0 toggle-btn" (click)="toggleMenuExpanded(sistema)">
+                      <i class="fas fa-caret-right" [class.fa-rotate-90]="sistema.menusExpanded"></i>
+                    </button>
+                  </td>
+                  <td>
+                    <strong class="text-dark">{{ sistema.nombre }}</strong>
+                    <span class="text-muted d-block small text-truncate" style="max-width:220px">{{ sistema.descripcion }}</span>
+                  </td>
+                  <td class="text-center"><span class="num-badge bg-primary">{{ sistema.totalMenus || 0 }}</span></td>
+                  <td class="text-center"><span class="num-badge bg-info">{{ getTotalSubmenus(sistema) }}</span></td>
+                  <td><code class="code-tag">{{ sistema.codigo || '—' }}</code></td>
+                  <td class="text-center">
+                    <span class="dot" [class.dot-on]="sistema.activo" [class.dot-off]="!sistema.activo"></span>
+                  </td>
+                  <td class="text-right">
+                    <button class="btn btn-xs btn-outline-info" (click)="viewSystemDetails(sistema)" title="Detalles">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-xs btn-outline-danger ml-1" (click)="deleteSystem(sistema, $event)" title="Eliminar">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+                <!-- Fila expandible: menús -->
+                <tr *ngIf="sistema.menusExpanded" class="row-expand">
+                  <td colspan="7" class="p-0">
+                    <div class="expand-content" *ngIf="sistema.menus?.length > 0; else noMenusTpl">
+                      <div *ngFor="let menu of sistema.menus; trackBy: trackByMenuId" class="tree-item">
+                        <div class="tree-node">
+                          <i [class]="menu.icono || menu.icon || 'fas fa-circle'" class="tree-icon text-primary"></i>
+                          <span class="tree-label">{{ menu.nombre || menu.name || '(Sin nombre)' }}</span>
+                          <code class="tree-route">{{ menu.ruta || menu.route || '' }}</code>
+                          <span class="ml-auto badge badge-sm" [class.badge-success]="menu.activo !== false" [class.badge-secondary]="menu.activo === false">
+                            {{ menu.activo !== false ? 'On' : 'Off' }}
+                          </span>
+                        </div>
+                        <div *ngIf="menu.submenus?.length" class="tree-children">
+                          <div *ngFor="let sub of menu.submenus" class="tree-node tree-child">
+                            <i class="fas fa-angle-right tree-arrow"></i>
+                            <i [class]="sub.icono || sub.icon || 'far fa-circle'" class="tree-icon text-muted"></i>
+                            <span class="tree-label">{{ sub.nombre || sub.name }}</span>
+                            <code class="tree-route">{{ sub.ruta || sub.route || '' }}</code>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <ng-template #noMenusTpl>
+                      <div class="text-center text-muted py-2 small"><i class="fas fa-info-circle mr-1"></i>Sin menús</div>
+                    </ng-template>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Vacío -->
+        <div class="empty-state" *ngIf="sistemasParaTabIntegrados.length === 0">
+          <i class="fas fa-server"></i>
+          <p>No hay sistemas integrados al apartado SISTEMAS</p>
+          <button class="btn btn-sm btn-info" (click)="switchTab('discovery', $event)">
+            <i class="fas fa-search mr-1"></i>Descubrir Sistemas
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══════ TAB: Descubrir Sistemas ═══════ -->
+      <div *ngIf="currentTab === 'discovery'" class="panel">
+        <div class="alert alert-light border mb-2 py-2 px-3 small">
+          <i class="fas fa-info-circle text-info mr-1"></i>
+          <strong>Integración de subsistemas:</strong> Añade el módulo a la plataforma. Para mostrarlo en el menú INTRANET, use la pestaña <strong>Menú Intranet</strong> y seleccione con checkboxes qué incluir.
+        </div>
+
+        <!-- Discovering spinner -->
+        <div *ngIf="discovering" class="text-center py-3">
+          <div class="spinner-border spinner-border-sm text-info"></div>
+          <span class="text-muted ml-2 small">Escaneando módulos del backend...</span>
+        </div>
+
+        <!-- Lista de módulos descubiertos -->
+        <div *ngIf="!discovering && sistemasDescubiertos.length > 0">
+          <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0 compact-table">
+              <thead>
+                <tr>
+                  <th class="col-expand"></th>
+                  <th>Módulo</th>
+                  <th class="text-center col-num">Menús</th>
+                  <th class="text-center col-num">Sub</th>
+                  <th class="text-center col-num">Total</th>
+                  <th class="text-right col-actions-lg">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <ng-container *ngFor="let sistema of sistemasDescubiertos; trackBy: trackBySistemaId">
+                  <tr class="row-main row-discovery" [class.row-unauthorized]="!sistema.autorizado">
+                    <td class="text-center">
+                      <button class="btn btn-link btn-sm p-0 toggle-btn" (click)="toggleMenuExpanded(sistema)"
+                              *ngIf="sistema.menusDetallados?.length > 0">
+                        <i class="fas fa-caret-right" [class.fa-rotate-90]="sistema.menusExpanded"></i>
+                      </button>
+                      <button class="btn btn-link btn-sm p-0 toggle-btn text-info" (click)="loadSystemMenus(sistema)"
+                              *ngIf="!sistema.menusDetallados?.length && sistema.autorizado" title="Cargar menús">
+                        <i class="fas fa-download"></i>
+                      </button>
+                      <i *ngIf="!sistema.autorizado && !sistema.menusDetallados?.length"
+                         class="fas fa-ban text-danger small" title="No autorizado"></i>
+                    </td>
+                    <td>
+                      <i class="fas fa-cube mr-1" [class.text-info]="sistema.autorizado" [class.text-danger]="!sistema.autorizado"></i>
+                      <strong [class.text-dark]="sistema.autorizado" [class.text-muted]="!sistema.autorizado">{{ sistema.nombre }}</strong>
+                      <span *ngIf="!sistema.autorizado" class="badge badge-danger badge-sm ml-1">No autorizado</span>
+                      <span class="text-muted d-block small text-truncate" style="max-width:250px">{{ sistema.descripcion }}</span>
+                    </td>
+                    <td class="text-center"><span class="num-badge" [class.bg-secondary]="sistema.autorizado" [class.bg-danger]="!sistema.autorizado">{{ sistema.menusPrincipales || 0 }}</span></td>
+                    <td class="text-center"><span class="num-badge bg-secondary">{{ sistema.submenus || 0 }}</span></td>
+                    <td class="text-center"><span class="num-badge" [class.bg-info]="sistema.autorizado" [class.bg-secondary]="!sistema.autorizado">{{ sistema.menus || 0 }}</span></td>
+                    <td class="text-right">
+                      <button class="btn btn-xs btn-outline-info mr-1" (click)="viewSystemDetails(sistema)" title="Detalles"
+                              *ngIf="sistema.autorizado">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="btn btn-xs btn-info mr-1" (click)="openIntranetFromDiscovery(sistema)" title="Agregar al menú INTRANET"
+                              *ngIf="sistema.autorizado">
+                        <i class="fas fa-sitemap mr-1"></i>Intranet
+                      </button>
+                      <button class="btn btn-xs btn-success" (click)="viewSystemDetails(sistema)" title="Integrar subsistema"
+                              *ngIf="sistema.autorizado">
+                        <i class="fas fa-plus-circle mr-1"></i>Integrar
+                      </button>
+                      <span *ngIf="!sistema.autorizado" class="text-muted small">
+                        <i class="fas fa-lock mr-1"></i>Sin menús
+                      </span>
+                    </td>
+                  </tr>
+                  <!-- Fila expandible: previa de menús -->
+                  <tr *ngIf="sistema.menusExpanded && sistema.menusDetallados?.length > 0" class="row-expand">
+                    <td colspan="6" class="p-0">
+                      <div class="expand-content expand-discovery">
+                        <div class="expand-label"><i class="fas fa-sitemap mr-1"></i>Vista previa de menús a integrar:</div>
+                        <div class="menu-chips">
+                          <ng-container *ngFor="let menu of sistema.menusDetallados; trackBy: trackByMenuId">
+                            <span class="menu-chip"
+                                  [class.chip-parent]="(menu.level === 1 || menu.nivel === 1)"
+                                  [class.chip-child]="(menu.level === 2 || menu.nivel === 2)">
+                              <i *ngIf="menu.level === 2 || menu.nivel === 2" class="fas fa-long-arrow-alt-right mr-1 text-muted"></i>
+                              <i [class]="menu.icon || menu.icono || 'fas fa-circle'" class="mr-1"></i>
+                              {{ menu.name || menu.nombre || '(Sin nombre)' }}
+                              <code class="chip-route">{{ menu.route || menu.ruta || '' }}</code>
+                            </span>
+                          </ng-container>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Vacío -->
+        <div class="empty-state" *ngIf="!discovering && sistemasDescubiertos.length === 0">
+          <i class="fas fa-satellite-dish"></i>
+          <p>No hay módulos descubiertos</p>
+          <button class="btn btn-sm btn-info" (click)="discoverSystems()" [disabled]="discovering">
+            <i class="fas fa-search mr-1"></i>Escanear Módulos
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══════ TAB: Accesos ═══════ -->
+      <div *ngIf="currentTab === 'access'" class="panel">
+        <div class="access-bar d-flex align-items-center flex-wrap">
+          <div class="access-stat-inline">
+            <strong>{{ totalUsers }}</strong> <span>usuarios</span>
+          </div>
+          <div class="access-stat-inline">
+            <strong>{{ sistemasIntegrados.length }}</strong> <span>sistemas</span>
+          </div>
+          <div class="access-stat-inline">
+            <strong>{{ getTotalMenus() }}</strong> <span>menús</span>
+          </div>
+          <div class="access-stat-inline">
+            <strong>{{ totalRoles }}</strong> <span>roles</span>
+          </div>
+          <div class="ml-auto">
+            <button class="btn btn-sm btn-warning" (click)="openUserAccessManagement()">
+              <i class="fas fa-external-link-alt mr-1"></i>Gestionar Accesos
+            </button>
+          </div>
+        </div>
+        <div class="small text-muted mt-2 px-1">
+          <i class="fas fa-info-circle text-info mr-1"></i>
+          Desde Gestión de Accesos puedes asignar permisos de menús a usuarios y controlar accesos por sistema.
+        </div>
+      </div>
+
+      <!-- ═══════ TAB: Menú Intranet ═══════ -->
+      <div *ngIf="currentTab === 'menu-intranet'" class="panel">
+        <div class="d-flex align-items-center justify-content-between flex-wrap mb-2">
+          <div class="small text-muted px-1">
+            <i class="fas fa-info-circle text-info mr-1"></i>
+            Escanee sistemas para agregarlos al menú INTRANET.
+          </div>
+          <div class="d-flex align-items-center">
+            <button class="btn btn-sm btn-info mr-1" (click)="discoverSystems()" [disabled]="discovering">
+              <i class="fas fa-satellite-dish mr-1" [class.fa-spin]="discovering"></i>
+              {{ discovering ? 'Escaneando...' : 'Escanear sistemas' }}
+            </button>
+            <button class="btn btn-sm btn-success" (click)="openMenuIntranetForm()">
+              <i class="fas fa-plus mr-1"></i>Agregar subsistema
+            </button>
+          </div>
+        </div>
+
+        <h6 class="text-muted small mb-2">Subsistemas configurados en INTRANET</h6>
+        <div class="table-responsive" *ngIf="menusIntranet.length > 0">
+          <table class="table table-hover table-sm mb-0 compact-table">
+            <thead>
+              <tr>
+                <th class="col-expand"></th>
+                <th>Subsistema</th>
+                <th class="col-code">Código</th>
+                <th class="text-center col-num">Ítems</th>
+                <th class="text-center col-status">Estado</th>
+                <th class="text-right col-actions">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let item of menusIntranet; trackBy: trackByMenuIntranetId">
+                <tr class="row-main" [class.row-inactive]="!item.activo">
+                  <td class="text-center">
+                    <button class="btn btn-link btn-sm p-0 toggle-btn" (click)="toggleMenuIntranetExpanded(item)">
+                      <i class="fas fa-caret-right" [class.fa-rotate-90]="item.expanded"></i>
+                    </button>
+                  </td>
+                  <td>
+                    <i [class]="item.icono || 'fas fa-circle'" class="mr-1 text-primary"></i>
+                    <strong class="text-dark">{{ item.nombre }}</strong>
+                  </td>
+                  <td><code class="code-tag">{{ item.codigo }}</code></td>
+                  <td class="text-center"><span class="num-badge bg-primary">{{ getMenuIntranetDetailCount(item) }}</span></td>
+                  <td class="text-center">
+                    <span class="dot" [class.dot-on]="item.activo" [class.dot-off]="!item.activo"></span>
+                  </td>
+                  <td class="text-right">
+                    <button class="btn btn-xs btn-outline-info" (click)="editMenuIntranet(item)" title="Editar">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-xs btn-outline-success ml-1" (click)="addMenuIntranetDetail(item)" title="Agregar ítem">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="btn btn-xs btn-outline-danger ml-1" (click)="deleteMenuIntranet(item, $event)" title="Eliminar">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="item.expanded" class="row-expand">
+                  <td colspan="6" class="p-0">
+                    <div class="expand-content">
+                      <div class="expand-label"><i class="fas fa-list mr-1"></i>Ítems del menú:</div>
+                      <div *ngIf="getMenuIntranetDetails(item).length > 0; else noDetailsTpl" class="tree-children">
+                        <div *ngFor="let d of getMenuIntranetDetails(item); trackBy: trackByDetailId" class="tree-node tree-child d-flex align-items-center py-1">
+                          <i [class]="d.icono || 'far fa-circle'" class="mr-2 text-muted"></i>
+                          <span class="tree-label flex-grow-1">{{ d.nombre }}</span>
+                          <code class="tree-route small mr-2">{{ d.ruta }}</code>
+                          <button class="btn btn-xs btn-outline-secondary mr-1" (click)="editMenuIntranetDetail(item, d)" title="Editar">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button class="btn btn-xs btn-outline-danger" (click)="deleteMenuIntranetDetail(item, d)" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <ng-template #noDetailsTpl>
+                        <div class="text-muted small py-2">Sin ítems. Haz clic en <i class="fas fa-plus ml-1 mr-1"></i> para agregar.</div>
+                      </ng-template>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+        <div class="empty-state" *ngIf="menusIntranet.length === 0">
+          <i class="fas fa-sitemap"></i>
+          <p>No hay subsistemas configurados para INTRANET</p>
+          <button class="btn btn-sm btn-success" (click)="openMenuIntranetForm()">
+            <i class="fas fa-plus mr-1"></i>Agregar subsistema
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ Modal: Detalles del Sistema ═══════ -->
+<div class="modal fade" *ngIf="showDetailsModal" [class.show]="showDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title mb-0">
+          <i class="fas fa-info-circle mr-2 text-primary"></i>{{ selectedSystemDetails?.nombre }}
+        </h6>
+        <button type="button" class="close" (click)="closeDetailsModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedSystemDetails">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <p class="mb-1 text-muted small">{{ selectedSystemDetails.descripcion }}</p>
+            <small class="mr-3"><strong>Código:</strong> <code>{{ selectedSystemDetails.codigo || 'N/A' }}</code></small>
+            <small><strong>URL:</strong> <code>{{ selectedSystemDetails.url_base || 'N/A' }}</code></small>
+          </div>
+          <div class="text-nowrap">
+            <span class="badge badge-primary mr-1">{{ getMenusToShow(selectedSystemDetails).length }} menús</span>
+            <span class="badge badge-success mr-1">{{ getActiveMenusCount(selectedSystemDetails) }} activos</span>
+          </div>
+        </div>
+
+        <div *ngIf="getMenusToShow(selectedSystemDetails).length > 0">
+          <h6 class="text-muted mb-2 small font-weight-bold"><i class="fas fa-sitemap mr-1"></i>Menús</h6>
+          <table class="table table-sm table-striped table-bordered mb-0 compact-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Ruta</th>
+                <th class="text-center">Orden</th>
+                <th class="text-center">Submenús</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center" title="Mostrar en la sección 'Para todo el personal' del menú lateral">Para la intranet</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let menu of getMenusToShowFlat(selectedSystemDetails); trackBy: trackByMenuId">
+                <td>
+                  <i [class]="menu.icono || menu.icon || 'fas fa-circle'" class="mr-1"></i>
+                  <span *ngIf="menu._level > 0" class="ml-2 text-muted small">↳</span>
+                  {{ menu.nombre || menu.name || '(Sin nombre)' }}
+                </td>
+                <td><code class="small">{{ menu.route || menu.ruta || menu.codigo }}</code></td>
+                <td class="text-center">{{ menu.orden || menu.order }}</td>
+                <td class="text-center">
+                  <span class="badge badge-info" *ngIf="menu.submenus?.length">{{ menu.submenus.length }}</span>
+                  <span class="text-muted" *ngIf="!menu.submenus?.length">—</span>
+                </td>
+                <td class="text-center">
+                  <span class="badge badge-sm" [class.badge-success]="menu.activo || menu.active" [class.badge-secondary]="!(menu.activo || menu.active)">
+                    {{ (menu.activo || menu.active) ? 'Activo' : 'Off' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <label class="mb-0 d-flex align-items-center justify-content-center" title="Mostrar en 'Para todo el personal'">
+                    <input type="checkbox" [checked]="getMenuVisibleEnIntranet(selectedSystemDetails, menu)"
+                           (change)="setMenuVisibleEnIntranet(selectedSystemDetails, menu, $any($event.target).checked)">
+                    <span class="ml-1 small">Sí</span>
+                  </label>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="alert alert-info small mt-3 mb-0" *ngIf="selectedSystemDetails?.moduleInfo">
+          <i class="fas fa-rocket mr-1"></i>
+          Listo para integrar: <strong>{{ getMenusToShow(selectedSystemDetails).length }} menús</strong>
+        </div>
+
+        <div class="mt-3 mb-2" *ngIf="selectedSystemDetails?.moduleInfo">
+          <p class="small text-muted mb-0"><i class="fas fa-info-circle mr-1"></i>Si marca alguna opción, las tareas se encolan y se ejecutan en orden (dependencias → migraciones → seeder) para evitar errores. Asegure tener un worker de cola activo (<code>php artisan queue:work</code>).</p>
+        </div>
+        <div class="form-check mt-1 mb-0" *ngIf="selectedSystemDetails?.moduleInfo">
+          <input class="form-check-input" type="checkbox" id="runMigrationTables" [(ngModel)]="runMigrationTables" name="runMigrationTables">
+          <label class="form-check-label small" for="runMigrationTables">
+            <i class="fas fa-database mr-1 text-primary"></i>
+            <strong>Ejecutar migración de tablas del subsistema</strong>
+            <span class="d-block text-muted mt-1">Recomendado si el módulo fue desarrollado por otro colaborador y tiene tablas nuevas o actualizadas en <code>Modules/.../database/migrations</code>. Se ejecutan en segundo plano; la integración responde de inmediato.</span>
+          </label>
+        </div>
+        <div class="form-check mt-2 mb-0" *ngIf="selectedSystemDetails?.moduleInfo">
+          <input class="form-check-input" type="checkbox" id="runSeederTables" [(ngModel)]="runSeederTables" name="runSeederTables">
+          <label class="form-check-label small" for="runSeederTables">
+            <i class="fas fa-seedling mr-1 text-success"></i>
+            <strong>Ejecutar seeder del subsistema</strong>
+            <span class="d-block text-muted mt-1">Carga datos iniciales o de ejemplo del módulo (<code>Modules/.../database/seeders</code>). Se ejecuta en segundo plano.</span>
+          </label>
+        </div>
+        <div class="form-check mt-2 mb-0" *ngIf="selectedSystemDetails?.moduleInfo">
+          <input class="form-check-input" type="checkbox" id="runInstallDependencies" [(ngModel)]="runInstallDependencies" name="runInstallDependencies">
+          <label class="form-check-label small" for="runInstallDependencies">
+            <i class="fas fa-box-open mr-1 text-info"></i>
+            <strong>Incorporar librerías/dependencias del subsistema</strong>
+            <span class="d-block text-muted mt-1">Instala las extensiones o paquetes Composer declarados en <code>Modules/.../composer.json</code> que falten en el proyecto. Se ejecuta en segundo plano.</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="closeDetailsModal()">Cerrar</button>
+        <button type="button" class="btn btn-sm btn-primary" *ngIf="selectedSystemDetails?.moduleInfo"
+                (click)="confirmAndIntegrate(selectedSystemDetails); $event.preventDefault(); $event.stopPropagation()">
+          <i class="fas fa-plus-circle mr-1"></i>Integrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ Modal: Log de integración (resumen de pasos) ═══════ -->
+<div class="modal fade" *ngIf="showIntegrationLogModal" [class.show]="showIntegrationLogModal" tabindex="-1" style="display: block;">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header py-2 bg-info text-white">
+        <h6 class="modal-title mb-0"><i class="fas fa-clipboard-list mr-2"></i>Resumen del proceso de integración</h6>
+        <button type="button" class="close text-white" (click)="closeIntegrationLogModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body p-3">
+        <p class="small text-muted mb-2">Estados de cada paso solicitado (dependencias, migraciones, seeder):</p>
+
+        <!-- Bloque destacado: detalle de error y tabla afectada -->
+        <div *ngIf="integrationErrorDetail.hasErrors" class="alert alert-danger mb-3 py-2 px-3 small">
+          <strong class="d-block mb-2"><i class="fas fa-exclamation-triangle mr-1"></i>Detalle del error</strong>
+          <div *ngIf="integrationErrorDetail.tableNames.length" class="mb-2">
+            <span class="text-muted">Tabla(s) afectada(s):</span>
+            <code class="ml-1 px-1 bg-white border rounded" *ngFor="let t of integrationErrorDetail.tableNames">{{ t }}</code>
+          </div>
+          <ul class="mb-0 pl-3 list-unstyled integration-error-detail">
+            <li *ngFor="let line of integrationErrorDetail.lines" class="mb-1">{{ line }}</li>
+          </ul>
+        </div>
+
+        <pre class="bg-dark text-light p-3 rounded small mb-0" style="max-height: 400px; overflow: auto;">{{ lastIntegrationSummaryText }}</pre>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="closeIntegrationLogModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" *ngIf="showIntegrationLogModal" [class.show]="showIntegrationLogModal"></div>
+
+<!-- ═══════ Modal: Seleccionar sistemas para Intranet (tras escanear) ═══════ -->
+<div class="modal fade" *ngIf="showIntranetSelectModal" [class.show]="showIntranetSelectModal" tabindex="-1" style="display: block;">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header py-2 bg-info text-white">
+        <h6 class="modal-title mb-0"><i class="fas fa-check-double mr-2"></i>Sistemas para integrar a Intranet</h6>
+        <button type="button" class="close text-white" (click)="closeIntranetSelectModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body py-2">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0 compact-table">
+            <thead>
+              <tr>
+                <th class="col-expand"></th>
+                <th>Sistema</th>
+                <th class="text-center col-num">Menús</th>
+                <th class="text-center" style="min-width: 140px;">Seleccionar para Intranet</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="sistemasIntegrados.length === 0">
+                <td colspan="4" class="text-center text-muted py-4">No hay sistemas integrados. Integre subsistemas primero en la pestaña Integración.</td>
+              </tr>
+              <ng-container *ngFor="let s of sistemasIntegrados; trackBy: trackBySistemaId">
+                <tr>
+                  <td class="text-center">
+                    <button class="btn btn-link btn-sm p-0" (click)="toggleExpandSistema(s)" *ngIf="getMenusFlatForIntranet(s).length">
+                      <i class="fas" [class.fa-caret-right]="!s._expanded" [class.fa-caret-down]="s._expanded" class="small"></i>
+                    </button>
+                  </td>
+                  <td>
+                    <i class="mr-1 text-primary fa-server fas"></i>
+                    <strong>{{ s.nombre || s.name || s.codigo || '(Sin nombre)' }}</strong>
+                  </td>
+                  <td class="text-center"><span class="num-badge bg-primary">{{ getMenusFlatForIntranet(s).length }}</span></td>
+                  <td class="text-center">
+                    <button class="btn btn-xs btn-outline-info" *ngIf="!isSistemaEnIntranet(s)" (click)="toggleIntranetWhole(s)">
+                      <i class="fas fa-check-double mr-1"></i>Seleccionar menús
+                    </button>
+                    <button class="btn btn-xs btn-success" *ngIf="isSistemaEnIntranet(s)" (click)="toggleIntranetWhole(s)">
+                      <i class="fas fa-check mr-1"></i>Todo seleccionado
+                    </button>
+                  </td>
+                </tr>
+                <ng-container *ngIf="s._expanded && getMenusFlatForIntranet(s).length">
+                  <tr *ngFor="let m of getMenusFlatForIntranet(s)" class="table-light">
+                    <td></td>
+                    <td class="pl-4">
+                      <i [class]="m.icono || m.icon || 'fas fa-circle'" class="mr-1"></i>
+                      <span *ngIf="m._level > 0" class="ml-2 text-muted small">↳</span>
+                      {{ m.nombre || m.name || '(Sin nombre)' }}
+                    </td>
+                    <td></td>
+                    <td class="text-center">
+                      <label class="mb-0 d-flex align-items-center justify-content-center">
+                        <input type="checkbox" [checked]="isIntranetMenuChecked(s, m)" (change)="toggleIntranetMenu(s, m)">
+                        <span class="ml-1 small">Incluir</span>
+                      </label>
+                    </td>
+                  </tr>
+                </ng-container>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn btn-sm btn-info mt-2" (click)="aplicarIntranetSeleccion()" [disabled]="loading">
+          <i class="fas fa-save mr-1"></i>Grabar solo menús seleccionados
+        </button>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="closeIntranetSelectModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" *ngIf="showIntranetSelectModal" [class.show]="showIntranetSelectModal"></div>
+
+<!-- ═══════ Modal: Intranet desde Descubrir (menús a integrar en INTRANET) ═══════ -->
+<div class="modal fade" *ngIf="showIntranetFromDiscoveryModal" [class.show]="showIntranetFromDiscoveryModal" tabindex="-1" style="display: block;">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header py-2 bg-info text-white">
+        <h6 class="modal-title mb-0"><i class="fas fa-sitemap mr-2"></i>Agregar al menú INTRANET: {{ selectedModuleForIntranet?.nombre }}</h6>
+        <button type="button" class="close text-white" (click)="closeIntranetFromDiscoveryModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body py-2">
+        <p class="small text-muted mb-2">Seleccione los menús que desea integrar en el apartado <strong>INTRANET</strong> del menú lateral. Se integrará el subsistema y se agregarán los menús seleccionados.</p>
+        <div class="mb-2">
+          <button class="btn btn-xs btn-outline-primary mr-1" (click)="selectAllDiscoveryMenus()">
+            <i class="fas fa-check-double mr-1"></i>Seleccionar todos
+          </button>
+          <button class="btn btn-xs btn-outline-secondary" (click)="deselectAllDiscoveryMenus()">
+            <i class="fas fa-times mr-1"></i>Deseleccionar todos
+          </button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0 compact-table">
+            <thead>
+              <tr>
+                <th>Menú</th>
+                <th class="text-center" style="width: 100px;">Incluir en INTRANET</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="!getMenusFlatFromDiscovery(selectedModuleForIntranet).length">
+                <td colspan="2" class="text-center text-muted py-3">No hay menús. Cargue los menús con el botón de descarga o integre primero.</td>
+              </tr>
+              <tr *ngFor="let m of getMenusFlatFromDiscovery(selectedModuleForIntranet); trackBy: trackByMenuId" [class.table-light]="m._level > 0">
+                <td>
+                  <span *ngIf="m._level > 0" class="ml-3 text-muted small">↳</span>
+                  <i [class]="m.icono || m.icon || 'fas fa-circle'" class="mr-1"></i>
+                  {{ m.nombre || m.name || '(Sin nombre)' }}
+                  <code class="small ml-1" *ngIf="m.route || m.ruta">{{ m.route || m.ruta }}</code>
+                </td>
+                <td class="text-center">
+                  <label class="mb-0 d-flex align-items-center justify-content-center">
+                    <input type="checkbox" [checked]="isDiscoveryMenuSelected(m)" (change)="toggleDiscoveryMenuSelection(m)">
+                    <span class="ml-1 small">Sí</span>
+                  </label>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn btn-sm btn-info mt-2" (click)="aplicarIntranetFromDiscovery()" [disabled]="loading">
+          <i class="fas fa-check-double mr-1"></i>Integrar y agregar a INTRANET
+        </button>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="closeIntranetFromDiscoveryModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" *ngIf="showIntranetFromDiscoveryModal" [class.show]="showIntranetFromDiscoveryModal"></div>
+
+<!-- ═══════ Modal: Agregar Sistema Manual ═══════ -->
+<div class="modal fade" *ngIf="showAddSystemModal" [class.show]="showAddSystemModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header py-2 bg-success text-white">
+        <h6 class="modal-title mb-0"><i class="fas fa-plus-circle mr-2"></i>Agregar Sistema</h6>
+        <button type="button" class="close text-white" (click)="closeAddSystemModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group form-group-sm">
+                <label class="small font-weight-bold">Nombre *</label>
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="newSystem.nombre" name="nombre" placeholder="Ej: Inventario">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group form-group-sm">
+                <label class="small font-weight-bold">Código *</label>
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="newSystem.codigo" name="codigo" placeholder="Ej: inventario">
+              </div>
+            </div>
+          </div>
+          <div class="form-group form-group-sm">
+            <label class="small font-weight-bold">Descripción</label>
+            <textarea class="form-control form-control-sm" [(ngModel)]="newSystem.descripcion" name="descripcion" rows="2" placeholder="Descripción..."></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <div class="form-group form-group-sm">
+                <label class="small font-weight-bold">URL Base *</label>
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="newSystem.url_base" name="url_base" placeholder="https://ejemplo.com">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group form-group-sm">
+                <label class="small font-weight-bold">Icono</label>
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="newSystem.icono" name="icono" placeholder="fas fa-server">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group form-group-sm">
+                <label class="small font-weight-bold">Modo ejecución</label>
+                <select class="form-control form-control-sm" [(ngModel)]="newSystem.modo_ejecucion" name="modo_ejecucion">
+                  <option value="iframe">Iframe</option>
+                  <option value="enlace_externo">Enlace Externo</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6 d-flex align-items-end pb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="usa_sso" [(ngModel)]="newSystem.usa_sso" name="usa_sso">
+                <label class="form-check-label small" for="usa_sso">Usar SSO</label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="closeAddSystemModal()">Cancelar</button>
+        <button type="button" class="btn btn-sm btn-success" (click)="addSystem()" [disabled]="loading">
+          <i class="fas fa-plus mr-1"></i>Agregar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ Modal: Menú Intranet (subsistema) ═══════ -->
+<div class="modal fade" *ngIf="showMenuIntranetModal" [class.show]="showMenuIntranetModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header py-2 bg-success text-white">
+        <h6 class="modal-title mb-0">
+          <i class="fas fa-sitemap mr-2"></i>{{ editingMenuIntranet ? 'Editar' : 'Agregar' }} subsistema
+        </h6>
+        <button type="button" class="close text-white" (click)="closeMenuIntranetModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="form-group form-group-sm">
+            <label class="small font-weight-bold">Nombre *</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="menuIntranetForm.nombre" name="menuIntranetNombre" placeholder="Ej: Helpdesk">
+          </div>
+          <div class="form-group form-group-sm">
+            <label class="small font-weight-bold">Código *</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="menuIntranetForm.codigo" name="menuIntranetCodigo" placeholder="Ej: helpdesk" [readonly]="!!editingMenuIntranet">
+          </div>
+          <div class="form-group form-group-sm">
+            <label class="small font-weight-bold">Icono</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="menuIntranetForm.icono" name="menuIntranetIcono" placeholder="fas fa-headset">
+          </div>
+          <div class="form-group form-group-sm">
+            <label class="small font-weight-bold">Ruta (opcional, si es enlace directo)</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="menuIntranetForm.ruta" name="menuIntranetRuta" placeholder="/ruta o vacío si tiene submenús">
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="menuIntranetActivo" [(ngModel)]="menuIntranetForm.activo" name="menuIntranetActivo">
+            <label class="form-check-label small" for="menuIntranetActivo">Activo</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="closeMenuIntranetModal()">Cancelar</button>
+        <button type="button" class="btn btn-sm btn-success" (click)="saveMenuIntranet()" [disabled]="loading || !(menuIntranetForm.nombre || '').trim() || !(menuIntranetForm.codigo || '').trim()">
+          <i class="fas fa-save mr-1"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ Modal: Menú Intranet Detail (ítem) ═══════ -->
+<div class="modal fade" *ngIf="showMenuIntranetDetailModal" [class.show]="showMenuIntranetDetailModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header py-2 bg-info text-white">
+        <h6 class="modal-title mb-0">
+          <i class="fas fa-list mr-2"></i>{{ editingMenuIntranetDetail ? 'Editar' : 'Agregar' }} ítem
+        </h6>
+        <button type="button" class="close text-white" (click)="closeMenuIntranetDetailModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="form-group form-group-sm">
+            <label class="small font-weight-bold">Nombre *</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="menuIntranetDetailForm.nombre" name="detailNombre" placeholder="Ej: Portal">
+          </div>
+          <div class="form-group form-group-sm">
+            <label class="small font-weight-bold">Ruta *</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="menuIntranetDetailForm.ruta" name="detailRuta" placeholder="/helpdesk">
+          </div>
+          <div class="form-group form-group-sm">
+            <label class="small font-weight-bold">Icono</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="menuIntranetDetailForm.icono" name="detailIcono" placeholder="fas fa-home">
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="detailActivo" [(ngModel)]="menuIntranetDetailForm.activo" name="detailActivo">
+            <label class="form-check-label small" for="detailActivo">Activo</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="closeMenuIntranetDetailModal()">Cancelar</button>
+        <button type="button" class="btn btn-sm btn-info" (click)="saveMenuIntranetDetail()" [disabled]="loading || !(menuIntranetDetailForm.nombre || '').trim() || !(menuIntranetDetailForm.ruta || '').trim()">
+          <i class="fas fa-save mr-1"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop -->
+<div class="modal-backdrop fade show" *ngIf="isAnyModalOpen()"></div>

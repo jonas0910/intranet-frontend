@@ -1,0 +1,231 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2 align-items-center">
+      <div class="col-sm-6">
+        <h1 class="m-0 text-dark font-weight-bold">
+          <i class="fas" [class.fa-plus-circle]="!editMode" [class.fa-edit]="editMode"></i>
+          {{ editMode ? 'Editar' : 'Crear' }} Noticia
+        </h1>
+        <p class="text-muted small">Complete todos los campos necesarios para la publicación en el portal.</p>
+      </div>
+      <div class="col-sm-6 text-right">
+        <a routerLink="/gestor-contenidos/noticias" class="btn btn-outline-secondary px-4">
+          <i class="fas fa-arrow-left mr-2"></i>Regresar al Listado
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid pb-5">
+    <div class="text-center py-5" *ngIf="loading">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-2 text-muted">Cargando datos de la noticia...</p>
+    </div>
+
+    <div class="row cms-form" *ngIf="!loading">
+      <!-- Columna Principal (Contenido) -->
+      <div class="col-md-8">
+        <div class="card cms-card card-outline">
+          <div class="card-header">
+            <h3 class="card-title">Cuerpo de la Noticia</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Título de la Publicación <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-lg font-weight-bold" [(ngModel)]="noticia.titulo" (input)="generarSlug()" placeholder="Escriba un título impactante...">
+            </div>
+            
+            <div class="form-group">
+              <label>Enlace Permanente (Slug)</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text bg-light text-muted border-right-0">/noticias/</span>
+                </div>
+                <input type="text" class="form-control border-left-0 pl-0" [(ngModel)]="noticia.slug" (input)="marcarSlugManual()">
+              </div>
+              <small class="text-muted"><i class="fas fa-info-circle mr-1"></i>Se genera automáticamente, evite caracteres especiales.</small>
+            </div>
+
+            <div class="form-group">
+              <label>Breve Resumen / Bajada</label>
+              <textarea class="form-control" rows="3" [(ngModel)]="noticia.resumen" placeholder="Un pequeño extracto que aparecerá en los listados..."></textarea>
+            </div>
+
+            <div class="form-group mb-0">
+              <label>Contenido Extenso</label>
+              <textarea id="editor_contenido" class="form-control" rows="18" [(ngModel)]="noticia.contenido" placeholder="Escriba aquí el cuerpo completo de la noticia..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card cms-card mt-4">
+          <div class="card-header bg-light">
+            <h3 class="card-title">Metadata e Información Adicional</h3>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Categoría</label>
+                  <select class="form-control custom-select" [(ngModel)]="noticia.categoria">
+                    <option [value]="null">Seleccione...</option>
+                    <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Etiquetas (Tags)</label>
+                  <input type="text" class="form-control" [(ngModel)]="noticia.tags" placeholder="ejm: institucional, eventos">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Autor de la Nota</label>
+                  <input type="text" class="form-control" [(ngModel)]="noticia.autor" placeholder="Nombre completo">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna Lateral (Ajustes y Multimedia) -->
+      <div class="col-md-4">
+        <!-- Publicación -->
+        <div class="card cms-card card-accent">
+          <div class="card-header">
+            <h3 class="card-title">Configuración de Salida</h3>
+          </div>
+          <div class="card-body">
+            <div class="status-panel p-3 border rounded mb-3" [class.bg-light-success]="noticia.publicada" [class.bg-light-secondary]="!noticia.publicada">
+              <div class="custom-control custom-switch custom-switch-xl">
+                <input type="checkbox" class="custom-control-input" id="publicada" [(ngModel)]="noticia.publicada">
+                <label class="custom-control-label font-weight-bold" for="publicada">
+                  {{ noticia.publicada ? 'PÚBLICO' : 'MODO BORRADOR' }}
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Fecha Programada</label>
+              <input type="datetime-local" class="form-control font-sm" [(ngModel)]="noticia.fecha_publicacion">
+            </div>
+
+            <div class="custom-control custom-checkbox mb-3">
+              <input type="checkbox" class="custom-control-input" id="destacada" [(ngModel)]="noticia.destacada">
+              <label class="custom-control-label" for="destacada">Fijar como noticia destacada</label>
+            </div>
+
+            <div class="form-group mb-0">
+              <label>Prioridad en el Orden</label>
+              <input type="number" class="form-control" [(ngModel)]="noticia.orden" placeholder="0">
+            </div>
+          </div>
+          <div class="card-footer bg-white">
+            <button class="btn btn-cms-primary btn-block py-3" (click)="guardar()" [disabled]="saving">
+              <i class="fas fa-save mr-2"></i>{{ saving ? 'Procesando...' : 'Guardar y Publicar' }}
+            </button>
+            <a routerLink="/gestor-contenidos/noticias" class="btn btn-link btn-block text-muted small mt-2">Desechar cambios</a>
+          </div>
+        </div>
+
+        <!-- Recursos Multimedia -->
+        <div class="card cms-card mt-4">
+          <div class="card-header bg-light">
+            <h3 class="card-title">Archivo Multimedia</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group mb-4">
+              <label class="d-block">Imagen de Portada</label>
+              <div class="image-upload-area rounded p-2 border bg-light text-center mb-3">
+                <img *ngIf="noticia.imagen_principal" [src]="getStorageUrl(noticia.imagen_principal)" class="img-fluid rounded shadow-sm" style="max-height: 180px; width: 100%; object-fit: cover;">
+                <div *ngIf="!noticia.imagen_principal" class="py-4 opacity-50">
+                  <i class="fas fa-cloud-upload-alt fa-3x mb-2"></i>
+                  <p class="small m-0">No hay imagen cargada</p>
+                </div>
+              </div>
+              <div class="custom-file mb-2">
+                <input type="file" class="custom-file-input" id="imgPrincipal" (change)="onFileSelected($event, 'imagen_principal')" accept="image/*">
+                <label class="custom-file-label font-sm" for="imgPrincipal">Elegir archivo local</label>
+              </div>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="noticia.imagen_principal" placeholder="O pegue URL del recurso">
+            </div>
+
+            <hr>
+
+            <div class="form-group mb-0">
+              <label class="d-block">Miniatura (Opcional)</label>
+              <div class="d-flex align-items-center gap-3 bg-light p-2 rounded border">
+                <img *ngIf="noticia.imagen_miniatura" [src]="getStorageUrl(noticia.imagen_miniatura)" class="rounded border" style="width: 60px; height: 60px; object-fit: cover;">
+                <div *ngIf="!noticia.imagen_miniatura" class="rounded border bg-white d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                  <i class="fas fa-image text-muted"></i>
+                </div>
+                <div class="flex-grow-1 ml-3">
+                  <div class="custom-file custom-file-sm">
+                    <input type="file" class="custom-file-input" id="imgMiniatura" (change)="onFileSelected($event, 'imagen_miniatura')" accept="image/*">
+                    <label class="custom-file-label font-xs" for="imgMiniatura">Cambiar...</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr>
+
+            <div class="form-group mb-0">
+              <label class="d-block">Documento Adjunto (Opcional)</label>
+              <div class="d-flex align-items-center gap-3 bg-light p-2 rounded border">
+                <div class="rounded border bg-white d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                  <i class="fas fa-file-pdf text-danger" *ngIf="noticia.archivo_adjunto"></i>
+                  <i class="fas fa-file text-muted" *ngIf="!noticia.archivo_adjunto"></i>
+                </div>
+                <div class="flex-grow-1 ml-3">
+                  <div class="custom-file custom-file-sm mb-1">
+                    <input type="file" class="custom-file-input" id="archivoAdjunto" (change)="onFileSelected($event, 'archivo_adjunto')" accept=".pdf,.doc,.docx">
+                    <label class="custom-file-label font-xs" for="archivoAdjunto">Subir archivo...</label>
+                  </div>
+                  <input type="text" class="form-control form-control-sm font-xs" [(ngModel)]="noticia.archivo_adjunto" placeholder="O pegue URL del documento" *ngIf="noticia.archivo_adjunto">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Optimización SEO -->
+        <div class="card cms-card mt-4">
+          <div class="card-header bg-light">
+            <h3 class="card-title">Optimización para buscadores (SEO)</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Título SEO (Meta Title)</label>
+              <input type="text" class="form-control" [(ngModel)]="noticia.meta_titulo" maxlength="70" placeholder="Título para Google">
+              <div class="d-flex justify-content-end mt-1">
+                <small [class.text-danger]="(noticia.meta_titulo || '').length > 60" class="small">{{ (noticia.meta_titulo || '').length }}/70</small>
+              </div>
+            </div>
+            <div class="form-group mb-0">
+              <label>Descripción SEO (Meta Description)</label>
+              <textarea class="form-control" rows="3" [(ngModel)]="noticia.meta_descripcion" maxlength="160" placeholder="Breve descripción para resultados de búsqueda..."></textarea>
+              <div class="d-flex justify-content-end mt-1">
+                <small [class.text-danger]="(noticia.meta_descripcion || '').length > 150" class="small">{{ (noticia.meta_descripcion || '').length }}/160</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .bg-light-success { background-color: #f0fdf4; border-color: #bbf7d0 !important; color: #15803d !important; }
+  .bg-light-secondary { background-color: #f8fafc; border-color: #e2e8f0 !important; color: #64748b !important; }
+  .font-sm { font-size: 0.85rem !important; }
+  .font-xs { font-size: 0.75rem !important; }
+  .custom-switch-xl .custom-control-label { padding-top: 2px; cursor: pointer; }
+  .gap-3 { gap: 1rem; }
+  .image-upload-area { min-height: 100px; display: flex; align-items: center; justify-content: center; }
+</style>

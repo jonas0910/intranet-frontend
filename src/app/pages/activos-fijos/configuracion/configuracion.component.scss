@@ -1,0 +1,26 @@
+.nav-tabs {
+  margin-bottom: 0 !important;
+  border-bottom: none !important;
+  
+  .nav-link {
+    cursor: pointer;
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    
+    &.active {
+      background: transparent !important;
+      color: #007bff !important;
+      border-bottom-color: #007bff !important;
+    }
+  }
+}
+
+.tab-content {
+  background: white;
+  padding: 1rem;
+  
+  .card {
+    box-shadow: none;
+  }
+}
+

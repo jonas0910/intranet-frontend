@@ -1,0 +1,74 @@
+// Patrón de diseño alineado con Design System (dinámico)
+#bienesPatrimonialesTable {
+  thead {
+    th {
+      font-weight: 600;
+      border-bottom: 2px solid #dee2e6;
+      vertical-align: middle;
+    }
+  }
+
+  tbody {
+    tr {
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: #f1f3f5;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    }
+
+    td {
+      vertical-align: middle;
+    }
+  }
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.35em 0.65em;
+  font-weight: 600;
+}
+
+.badge-pill {
+  border-radius: 10rem;
+}
+
+.card {
+  .card-title {
+    font-weight: 600;
+  }
+}
+
+.dataTables_info {
+  padding-top: 0.75rem;
+  color: #6c757d;
+}
+
+.pagination {
+  .page-item {
+    &.active .page-link {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+
+    &.disabled .page-link {
+      cursor: not-allowed;
+    }
+  }
+
+  .page-link {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+
+    &:hover {
+      background-color: #e9ecef;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.75rem;
+  }
+}

@@ -1,0 +1,241 @@
+<app-system-layout 
+  [title]="'HISTORIAL DE ALERTAS GPS'" 
+  [subtitle]="'Registro detallado de emergencias y avisos de personal operativo'" 
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Equipo Mecánico', url: '/equipo-mecanico'}, {label: 'Alertas de Personal'}]"
+  [subsystem]="'equipo-mecanico'">
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm border-0 rounded-lg overflow-hidden">
+        
+        <!-- Header con Toolbar -->
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-bottom">
+          <div class="d-flex align-items-center">
+            <h3 class="card-title font-weight-bold mb-0 text-dark">
+              <i class="fas fa-history mr-2 text-primary"></i> Reporte de Alertas
+            </h3>
+            <span class="badge badge-pill badge-primary ml-2 px-3">{{ alertas.length }} registros</span>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-sm btn-outline-secondary px-3" (click)="isFiltersCollapsed = !isFiltersCollapsed">
+              <i class="fas fa-filter mr-1"></i> {{ isFiltersCollapsed ? 'Mostrar Filtros' : 'Ocultar Filtros' }}
+            </button>
+            <button class="btn btn-sm btn-primary ml-2 px-3 rounded-pill shadow-sm" (click)="loadAlertas()" [disabled]="loading">
+              <i class="fas fa-sync-alt mr-1" [class.fa-spin]="loading"></i> Refrescar
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros Avanzados -->
+        <div class="bg-light border-bottom overflow-hidden transition-all" [style.max-height]="isFiltersCollapsed ? '0px' : '500px'">
+          <div class="p-4">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="small font-weight-bold text-muted mb-1 text-uppercase">Búsqueda rápida</label>
+                <input type="text" class="form-control form-control-sm border-0 shadow-sm" [(ngModel)]="filtros.search" 
+                       (ngModelChange)="onFilterChange()" placeholder="Nombre, código o mensaje...">
+              </div>
+              <div class="col-md-2">
+                <label class="small font-weight-bold text-muted mb-1 text-uppercase">Tipo de Alerta</label>
+                <select class="form-control form-control-sm border-0 shadow-sm" [(ngModel)]="filtros.tipo_alerta_id" (ngModelChange)="onFilterChange()">
+                  <option value="">Todas</option>
+                  <option *ngFor="let t of tiposAlerta" [value]="t.id">{{ t.nombre }}</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="small font-weight-bold text-muted mb-1 text-uppercase">Estado</label>
+                <select class="form-control form-control-sm border-0 shadow-sm" [(ngModel)]="filtros.estado" (ngModelChange)="onFilterChange()">
+                  <option value="">Todos</option>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="resuelta">Resuelta</option>
+                  <option value="rechazada">Rechazada</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="small font-weight-bold text-muted mb-1 text-uppercase">Desde</label>
+                <input type="date" class="form-control form-control-sm border-0 shadow-sm" [(ngModel)]="filtros.fecha_desde" (ngModelChange)="onFilterChange()">
+              </div>
+              <div class="col-md-2">
+                <label class="small font-weight-bold text-muted mb-1 text-uppercase">Hasta</label>
+                <input type="date" class="form-control form-control-sm border-0 shadow-sm" [(ngModel)]="filtros.fecha_hasta" (ngModelChange)="onFilterChange()">
+              </div>
+              <div class="col-md-1 d-flex align-items-end">
+                <button class="btn btn-sm btn-outline-danger w-100 shadow-sm" (click)="limpiarFiltros()" title="Limpiar Filtros">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla Body -->
+        <div class="card-body p-0">
+          <div *ngIf="loading" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+            <p class="text-muted font-weight-bold">Buscando en historial...</p>
+          </div>
+
+          <div class="table-responsive p-0" *ngIf="!loading">
+            <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-striped align-middle mb-0 w-100 ds-crud-table">
+              <thead class="bg-light text-dark text-uppercase small" style="letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">
+                <tr>
+                  <th class="border-0 px-4">ID</th>
+                  <th class="border-0">Personal / Agente</th>
+                  <th class="border-0">Vehículo</th>
+                  <th class="border-0">Alerta / Evento</th>
+                  <th class="border-0">Coordenadas</th>
+                  <th class="border-0 text-center">Fecha y Hora</th>
+                  <th class="border-0 text-center">Estado</th>
+                  <th class="border-0 text-center" style="width: 120px;">Detalle</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let a of alertas" class="fade-in">
+                  <td class="px-4 text-muted font-weight-bold">#{{ a.id }}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="avatar-sm mr-2 bg-light text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border: 1px solid #dee2e6;">
+                        <i class="fas fa-user-shield"></i>
+                      </div>
+                      <div class="font-weight-bold text-dark text-xs uppercase letter-spacing-1">
+                        {{ a.personal_nombre }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div *ngIf="a.equipo_id">
+                      <strong class="text-primary d-block text-xs">{{ a.equipo_codigo }}</strong>
+                      <small class="text-muted text-xxs uppercase">{{ a.equipo_placa }}</small>
+                    </div>
+                    <small *ngIf="!a.equipo_id" class="text-muted text-xs italic">Sin vehículo</small>
+                  </td>
+                  <td>
+                    <span class="badge px-3 py-1 rounded-pill shadow-sm" [style.background]="a.tipo_color_hex" style="color: white; font-weight: 600;">
+                      {{ a.tipo_nombre }}
+                    </span>
+                    <small class="d-block text-muted mt-1 italic" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      {{ a.mensaje || 'Informado por dispositivo GPS' }}
+                    </small>
+                  </td>
+                  <td>
+                    <small class="text-muted d-block"><i class="fas fa-map-marker-alt text-danger mr-1"></i> {{ a.lat }}, {{ a.lng }}</small>
+                  </td>
+                  <td class="text-center">
+                    <div class="text-sm font-weight-bold">{{ a.created_at | date:'dd/MM/yyyy' }}</div>
+                    <div class="text-xxs text-muted">{{ a.created_at | date:'HH:mm:ss' }}</div>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge px-3 py-2 rounded-pill shadow-sm" [ngClass]="getEstadoClass(a.estado)">
+                      {{ getEstadoLabel(a.estado) }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <button class="btn btn-sm btn-info rounded-circle shadow-sm" (click)="verDetalle(a, modalGestion)" title="Gestionar Alerta">
+                      <i class="fas fa-info-circle"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div *ngIf="!loading && alertas.length === 0" class="text-center p-5">
+            <i class="fas fa-cloud-sun fa-3x text-warning mb-3 opacity-50"></i>
+            <h5 class="text-muted">No se encontraron alertas en este rango</h5>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</app-system-layout>
+
+<!-- MODAL: GESTION DE ALERTA -->
+<ng-template #modalGestion let-modal>
+  <div *ngIf="alertaParaResolver">
+    <div class="modal-header bg-dark text-white border-0 py-3">
+      <h5 class="modal-title font-weight-bold"><i class="fas fa-shield-alt mr-2"></i>Gestión de Alerta #{{ alertaParaResolver.id }}</h5>
+      <button type="button" class="close text-white" (click)="modal.dismiss()">&times;</button>
+    </div>
+    <div class="modal-body p-4 bg-light">
+      <div class="row g-4 overflow-hidden">
+        <div class="col-md-6 pr-lg-4">
+          <div class="bg-white p-4 rounded-lg shadow-sm mb-4 h-100">
+            <h6 class="text-primary small font-weight-bold text-uppercase border-bottom pb-2 mb-3">Datos del Agente</h6>
+            <div class="d-flex align-items-center mb-4">
+              <div class="icon-box bg-primary-light text-primary rounded-circle mr-3 p-3" style="background: #eef2f7;">
+                <i class="fas fa-user-shield fa-2x"></i>
+              </div>
+              <div>
+                <h4 class="mb-0 font-weight-bold text-dark">{{ alertaParaResolver.personal_nombre }}</h4>
+                <p class="text-muted mb-0 uppercase small font-weight-bold text-primary" *ngIf="alertaParaResolver.equipo_codigo">
+                   <i class="fas fa-truck mr-1"></i> {{ alertaParaResolver.equipo_codigo }} ({{ alertaParaResolver.equipo_placa }})
+                </p>
+              </div>
+            </div>
+            <div class="info-grid">
+              <div class="mb-2">
+                <label class="text-muted text-xxs font-weight-bold text-uppercase d-block mb-1">Tipo de Evento</label>
+                <div class="font-weight-bold">{{ alertaParaResolver.tipo_nombre }}</div>
+              </div>
+              <div class="mb-2">
+                <label class="text-muted text-xxs font-weight-bold text-uppercase d-block mb-1">Fecha Reporte</label>
+                <div class="font-weight-bold">{{ alertaParaResolver.created_at | date:'dd MMM yyyy - HH:mm:ss' }}</div>
+              </div>
+              <div class="mb-0">
+                <label class="text-muted text-xxs font-weight-bold text-uppercase d-block mb-1">Mensaje del GPS/Operador</label>
+                <div class="bg-light p-2 rounded text-sm italic">{{ alertaParaResolver.mensaje || 'Información automática del dispositivo' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 pl-lg-4">
+          <div class="bg-white p-4 rounded-lg shadow-sm h-100">
+            <h6 class="text-primary small font-weight-bold text-uppercase border-bottom pb-2 mb-3">Control de Resolución</h6>
+            
+            <div class="mb-4">
+               <label class="small font-weight-bold text-muted mb-1 text-uppercase">Estado de la Atención</label>
+               <div class="p-2 border rounded d-flex align-items-center bg-light">
+                  <span class="badge badge-pill px-3 py-1 mr-2" [ngClass]="getEstadoClass(alertaParaResolver.estado)">
+                    {{ getEstadoLabel(alertaParaResolver.estado) }}
+                  </span>
+                  <small class="text-muted" *ngIf="alertaParaResolver.estado !== 'pendiente'">Gestionado el {{ alertaParaResolver.created_at | date:'fullDate' }}</small>
+               </div>
+            </div>
+
+            <div class="form-group mb-4">
+              <label class="small font-weight-bold text-muted mb-1 text-uppercase">Respuesta / Resolución Automática</label>
+              <textarea class="form-control" [(ngModel)]="observacionResolucion" rows="4" 
+                        placeholder="Describa las acciones tomadas..." 
+                        [disabled]="alertaParaResolver.estado !== 'pendiente'"></textarea>
+            </div>
+
+            <div class="alert alert-info py-2" *ngIf="alertaParaResolver.estado === 'pendiente'">
+               <small><i class="fas fa-info-circle mr-1"></i> Al marcar como resuelta, desaparece de la vigilancia activa del mapa.</small>
+            </div>
+
+            <button class="btn btn-success btn-block py-2 font-weight-bold rounded-pill shadow" 
+                    (click)="resolverAlerta()" 
+                    [disabled]="guardandoResolucion || alertaParaResolver.estado !== 'pendiente'">
+              <i class="fas mr-2" [class.fa-spinner]="guardandoResolucion" [class.fa-spin]="guardandoResolucion" [class.fa-check-circle]="!guardandoResolucion"></i>
+              {{ guardandoResolucion ? 'Procesando...' : (alertaParaResolver.estado === 'pendiente' ? 'Finalizar y Marcar como Resuelta' : 'Alerta ya Gestionada') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer bg-light border-0 px-4 py-3">
+      <button type="button" class="btn btn-secondary px-4 rounded-pill font-weight-bold shadow-sm" (click)="modal.close()">Cerrar Consulta</button>
+    </div>
+  </div>
+</ng-template>
+
+<style>
+  .transition-all { transition: all 0.3s ease-in-out; }
+  .fade-in { animation: fadeIn 0.4s ease-in-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  .text-xxs { font-size: 0.65rem; }
+  .badge-orange { background-color: #fd7e14; color: white; }
+  .bg-primary-light { background-color: #e3f2fd; }
+  .shadow-sm { box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important; }
+</style>

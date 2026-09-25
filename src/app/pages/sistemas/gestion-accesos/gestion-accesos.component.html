@@ -1,0 +1,317 @@
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="mb-1 fw-light">
+            <i class="fas fa-shield-alt text-primary me-2"></i>
+            Gestión de Accesos
+          </h2>
+          <p class="text-muted mb-0 small">Administrar accesos de usuarios a sistemas y menús</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-primary btn-sm" (click)="loadAccesos()" [disabled]="loading">
+            <i class="fas fa-sync-alt me-1" [class.fa-spin]="loading"></i>
+            {{ loading ? 'Cargando...' : 'Actualizar' }}
+          </button>
+          <button class="btn btn-info btn-sm text-white" *ngIf="selectedUsuario" (click)="syncUserAccessWithRoles(selectedUsuario)">
+            <i class="fas fa-sync-alt me-1"></i>
+            Sincronizar Roles
+          </button>
+          <button class="btn btn-success btn-sm" (click)="openNewAccessForm()">
+            <i class="fas fa-plus me-1"></i>
+            Asignar Acceso
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card stats-card">
+        <div class="card-body text-center">
+          <div class="stats-number">{{ sistemas.length }}</div>
+          <div class="stats-label">Sistemas Disponibles</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stats-card">
+        <div class="card-body text-center">
+          <div class="stats-number">{{ usuarios.length }}</div>
+          <div class="stats-label">Usuarios Registrados</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stats-card">
+        <div class="card-body text-center">
+          <div class="stats-number">{{ accesos.length }}</div>
+          <div class="stats-label">Accesos Asignados</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stats-card">
+        <div class="card-body text-center">
+          <div class="stats-number">{{ getAccesosAgrupados().length }}</div>
+          <div class="stats-label">Usuarios con Acceso</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filter-section">
+    <div class="row">
+      <div class="col-md-4">
+        <label class="form-label">Filtrar por Sistema</label>
+        <select class="form-select" (change)="filterBySistema($any($event.target).value ? +$any($event.target).value : null)">
+          <option value="">Todos los sistemas</option>
+          <option *ngFor="let sistema of sistemas" [value]="sistema.id">
+            {{ sistema.nombre }}
+          </option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Filtrar por Usuario</label>
+        <select class="form-select" (change)="filterByUsuario($any($event.target).value ? +$any($event.target).value : null)">
+          <option value="">Todos los usuarios</option>
+          <option *ngFor="let usuario of usuarios" [value]="usuario.id">
+            {{ usuario.nombre }}
+          </option>
+        </select>
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button class="btn btn-outline-secondary btn-sm" (click)="clearFilters()">
+          <i class="fas fa-times me-1"></i>
+          Limpiar Filtros
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only">Cargando...</span>
+    </div>
+    <p class="mt-3 text-muted">Cargando accesos...</p>
+  </div>
+
+  <!-- Tabla de Accesos -->
+  <div class="card" *ngIf="!loading">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="fas fa-list me-2"></i>
+        Accesos Asignados
+      </h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th style="width: 25%">Usuario</th>
+              <th style="width: 25%">Sistema</th>
+              <th style="width: 35%">Menús Permitidos</th>
+              <th style="width: 15%">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let grupo of getAccesosAgrupados()" class="access-card">
+              <!-- Usuario -->
+              <td class="align-top">
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
+                       style="width: 36px; height: 36px; min-width: 36px;">
+                    {{ getUsuarioById(grupo.usuario_id)?.nombre?.charAt(0) || 'U' }}
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark">{{ getUsuarioById(grupo.usuario_id)?.nombre || 'Usuario' }}</div>
+                    <div class="small text-muted">{{ getUsuarioById(grupo.usuario_id)?.email || '' }}</div>
+                    
+                    <!-- Roles solo si existen -->
+                    <div class="mt-1" *ngIf="getUsuarioById(grupo.usuario_id)?.roles?.length">
+                       <span class="badge bg-light text-dark border mr-1" *ngFor="let rol of getUsuarioById(grupo.usuario_id)?.roles">
+                         {{ rol }}
+                       </span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Sistema -->
+              <td class="align-top">
+                <div class="d-flex align-items-center mb-1">
+                  <i class="fas fa-desktop text-primary me-2"></i>
+                  <span class="fw-medium">{{ getSistemaById(grupo.sistema_id)?.nombre || 'Sistema' }}</span>
+                </div>
+                <div class="small text-muted ps-4">
+                  <span class="badge" [class]="grupo.activo ? 'bg-success' : 'bg-secondary'">
+                    {{ grupo.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                  <span class="ms-2">Desde: {{ grupo.ultimo_acceso | date:'shortDate' }}</span>
+                </div>
+              </td>
+
+              <!-- Menús Agrupados -->
+              <td class="align-top">
+                <div class="menu-list">
+                  <div *ngFor="let detalle of grupo.detalles" class="d-flex align-items-center mb-2 p-2 border rounded bg-light">
+                    <i class="fas fa-list text-muted me-2"></i>
+                    <div class="flex-grow-1">
+                      <div class="fw-bold small">{{ getMenuName(grupo.sistema_id, detalle.menu_id) }}</div>
+                      <div class="d-flex flex-wrap gap-1 mt-1">
+                        <span class="badge bg-white text-secondary border" *ngFor="let permiso of detalle.permisos">
+                          {{ permiso }}
+                        </span>
+                      </div>
+                    </div>
+                    <button class="btn btn-xs btn-link text-danger ms-2" (click)="revokeAccess(detalle.id)" title="Quitar este menú">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Acciones Globales -->
+              <td class="align-top text-end">
+                <button class="btn btn-sm btn-outline-primary me-1" (click)="openNewAccessForm()" title="Agregar menú">
+                  <i class="fas fa-plus"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info" title="Sincronizar">
+                  <i class="fas fa-sync"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje sin accesos -->
+  <div *ngIf="!loading && getAccesosAgrupados().length === 0" class="text-center py-5">
+    <i class="fas fa-shield-alt fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">No se encontraron accesos</h5>
+    <p class="text-muted">No hay accesos asignados con los filtros actuales.</p>
+    <button class="btn btn-primary" (click)="openNewAccessForm()">
+      <i class="fas fa-plus me-1"></i>
+      Asignar Primer Acceso
+    </button>
+  </div>
+</div>
+
+<!-- Modal para Asignar/Editar Acceso -->
+<div class="modal fade show" [class.d-block]="showForm" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-shield-alt text-primary me-2"></i>
+          {{ isEditing ? 'Editar Acceso' : 'Asignar Nuevo Acceso' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeForm()"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <form [formGroup]="accesoForm" (ngSubmit)="saveAccess()">
+          
+          <!-- Selección de Usuario -->
+          <div class="form-section">
+            <h6><i class="fas fa-user me-2"></i>Usuario</h6>
+            <select class="form-select" formControlName="usuario_id" [class.is-invalid]="isFieldInvalid('usuario_id')">
+              <option value="">Selecciona un usuario...</option>
+              <option *ngFor="let usuario of usuarios" [value]="usuario.id">
+                {{ usuario.nombre }} ({{ usuario.email }})
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('usuario_id')">
+              {{ getFieldError('usuario_id') }}
+            </div>
+          </div>
+
+          <!-- Selección de Sistema -->
+          <div class="form-section">
+            <h6><i class="fas fa-desktop me-2"></i>Sistema</h6>
+            <select class="form-select" formControlName="sistema_id" [class.is-invalid]="isFieldInvalid('sistema_id')">
+              <option value="">Selecciona un sistema...</option>
+              <option *ngFor="let sistema of sistemas" [value]="sistema.id">
+                {{ sistema.nombre }} ({{ sistema.codigo }})
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('sistema_id')">
+              {{ getFieldError('sistema_id') }}
+            </div>
+          </div>
+
+          <!-- Selección de Menú -->
+          <div class="form-section" *ngIf="accesoForm.get('sistema_id')?.value">
+            <h6><i class="fas fa-list me-2"></i>Menú</h6>
+            <select class="form-select" formControlName="menu_id" [class.is-invalid]="isFieldInvalid('menu_id')">
+              <option value="">Selecciona un menú...</option>
+              <option *ngFor="let menu of getMenusFromSistema(accesoForm.get('sistema_id')?.value)" [value]="menu.id">
+                {{ menu.nombre || menu.name || menu.id }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('menu_id')">
+              {{ getFieldError('menu_id') }}
+            </div>
+          </div>
+
+          <!-- Estado del Acceso -->
+          <div class="form-section">
+            <h6><i class="fas fa-toggle-on me-2"></i>Estado</h6>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" formControlName="activo">
+              <label class="form-check-label">
+                Acceso activo
+              </label>
+            </div>
+          </div>
+
+        </form>
+        
+        <!-- Información sobre cambios de acceso -->
+        <div class="mt-4 p-3 bg-light rounded">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle text-info me-2"></i>
+            <small class="text-muted">
+              Los cambios en los accesos se aplican inmediatamente. 
+              El usuario deberá cerrar sesión e iniciar sesión nuevamente para que los cambios surtan efecto.
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeForm()">
+          <i class="fas fa-times me-1"></i>
+          Cancelar
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="saveAccess()"
+          [disabled]="saving || accesoForm.invalid"
+        >
+          <span *ngIf="saving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+          <i *ngIf="!saving" class="fas fa-save me-1"></i>
+          {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Asignar Acceso') }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div class="modal-backdrop fade show" *ngIf="showForm"></div>

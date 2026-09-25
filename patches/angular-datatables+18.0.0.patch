@@ -1,0 +1,60 @@
+diff --git a/node_modules/angular-datatables/esm2022/src/angular-datatables.directive.mjs b/node_modules/angular-datatables/esm2022/src/angular-datatables.directive.mjs
+index cdd9e25..72af51d 100644
+--- a/node_modules/angular-datatables/esm2022/src/angular-datatables.directive.mjs
++++ b/node_modules/angular-datatables/esm2022/src/angular-datatables.directive.mjs
+@@ -16,10 +16,12 @@ export class DataTableDirective {
+          * The DataTable option you pass to configure your table.
+          */
+         this.dtOptions = {};
++        /** Suscripción al dtTrigger del padre: jamás llamar dtTrigger.unsubscribe() aquí (cierra el Subject compartido). */
++        this.triggerSubscription = null;
+     }
+     ngOnInit() {
+         if (this.dtTrigger) {
+-            this.dtTrigger.subscribe((options) => {
++            this.triggerSubscription = this.dtTrigger.subscribe((options) => {
+                 this.displayTable(options);
+             });
+         }
+@@ -28,8 +30,9 @@ export class DataTableDirective {
+         }
+     }
+     ngOnDestroy() {
+-        if (this.dtTrigger) {
+-            this.dtTrigger.unsubscribe();
++        if (this.triggerSubscription) {
++            this.triggerSubscription.unsubscribe();
++            this.triggerSubscription = null;
+         }
+         if (this.dt) {
+             this.dt.destroy(true);
+diff --git a/node_modules/angular-datatables/fesm2022/angular-datatables.mjs b/node_modules/angular-datatables/fesm2022/angular-datatables.mjs
+index 89d150b..9c6dc47 100644
+--- a/node_modules/angular-datatables/fesm2022/angular-datatables.mjs
++++ b/node_modules/angular-datatables/fesm2022/angular-datatables.mjs
+@@ -18,10 +18,12 @@ class DataTableDirective {
+          * The DataTable option you pass to configure your table.
+          */
+         this.dtOptions = {};
++        /** Suscripción al dtTrigger del padre: jamás llamar dtTrigger.unsubscribe() aquí (cierra el Subject compartido). */
++        this.triggerSubscription = null;
+     }
+     ngOnInit() {
+         if (this.dtTrigger) {
+-            this.dtTrigger.subscribe((options) => {
++            this.triggerSubscription = this.dtTrigger.subscribe((options) => {
+                 this.displayTable(options);
+             });
+         }
+@@ -30,8 +32,9 @@ class DataTableDirective {
+         }
+     }
+     ngOnDestroy() {
+-        if (this.dtTrigger) {
+-            this.dtTrigger.unsubscribe();
++        if (this.triggerSubscription) {
++            this.triggerSubscription.unsubscribe();
++            this.triggerSubscription = null;
+         }
+         if (this.dt) {
+             this.dt.destroy(true);

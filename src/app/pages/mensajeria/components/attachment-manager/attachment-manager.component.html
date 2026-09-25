@@ -1,0 +1,257 @@
+<!-- Attachment Manager -->
+<div class="attachment-manager">
+  <!-- File Drop Zone -->
+  <div class="file-drop-zone" 
+       *ngIf="!readonly && canAddMoreFiles()"
+       [class.drag-over]="dragOver"
+       [class.disabled]="isAtMaxFiles"
+       (drop)="onFileDrop($event)"
+       (dragover)="onDragOver($event)"
+       (dragleave)="onDragLeave($event)"
+       (click)="openFileDialog()">
+    
+    <div class="drop-zone-content">
+      <div class="drop-zone-icon">
+        <i class="fas fa-cloud-upload-alt fa-2x text-muted" *ngIf="!compressing"></i>
+        <i class="fas fa-spinner fa-spin fa-2x text-primary" *ngIf="compressing"></i>
+      </div>
+      
+      <div class="drop-zone-text">
+        <p class="mb-1" *ngIf="!compressing">
+          <strong>Arrastra archivos aquí</strong> o haz clic para seleccionar
+        </p>
+        <p class="mb-1" *ngIf="compressing">
+          <strong>Comprimiendo imágenes...</strong>
+        </p>
+        <small class="text-muted">
+          Máximo {{ maxFiles }} archivos, {{ formatFileSize(maxFileSize) }} cada uno
+        </small>
+      </div>
+    </div>
+    
+    <!-- Hidden File Input -->
+    <input type="file" 
+           #fileInput
+           [multiple]="allowMultiple"
+           [accept]="getAcceptedTypes()"
+           (change)="onFileSelect($event)"
+           style="display: none;">
+  </div>
+
+  <!-- File Limit Warning -->
+  <div class="alert alert-warning" *ngIf="isAtMaxFiles && !readonly">
+    <i class="fas fa-exclamation-triangle mr-2"></i>
+    Has alcanzado el límite máximo de {{ maxFiles }} archivos.
+  </div>
+
+  <!-- Errors -->
+  <div class="alert alert-danger" *ngIf="hasErrors">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        <ul class="mb-0">
+          <li *ngFor="let error of errors">{{ error }}</li>
+        </ul>
+      </div>
+      <button type="button" 
+              class="btn btn-link btn-sm p-0"
+              (click)="clearErrors()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Attachment List -->
+  <div class="attachment-list" *ngIf="hasAttachments">
+    <div class="attachment-header">
+      <h6 class="mb-0">
+        <i class="fas fa-paperclip mr-2"></i>
+        {{ attachments.length }} archivo(s) adjunto(s)
+        <small class="text-muted ml-2">({{ formatFileSize(totalSize) }})</small>
+      </h6>
+      <div class="attachment-actions" *ngIf="!readonly">
+        <button type="button" 
+                class="btn btn-outline-danger btn-sm"
+                (click)="clearAll()"
+                title="Eliminar todos">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Attachment Items -->
+    <div class="attachment-items">
+      <div class="attachment-item" 
+           *ngFor="let attachment of attachments; let i = index"
+           [class.image-attachment]="isImage(attachment)"
+           [class.document-attachment]="isDocument(attachment)">
+        
+        <!-- File Preview/Icon -->
+        <div class="attachment-preview">
+          <!-- Image Preview -->
+          <div class="image-preview" 
+               *ngIf="isImage(attachment) && attachment.previewUrl">
+            <img [src]="attachment.previewUrl" 
+                 [alt]="getFileName(attachment)"
+                 (click)="onPreviewFile(attachment)"
+                 class="preview-thumbnail">
+            <div class="preview-overlay" (click)="onPreviewFile(attachment)">
+              <i class="fas fa-search-plus"></i>
+            </div>
+          </div>
+          
+          <!-- File Icon -->
+          <div class="file-icon" *ngIf="!isImage(attachment) || !attachment.previewUrl">
+            <i [class]="getFileIcon(attachment) + ' ' + getFileColor(attachment)"
+               style="font-size: 2rem;"></i>
+          </div>
+        </div>
+
+        <!-- File Info -->
+        <div class="attachment-info">
+          <div class="file-name" [title]="getFileName(attachment)">
+            {{ getFileName(attachment) }}
+          </div>
+          <div class="file-details">
+            <span class="file-size">{{ formatFileSize(getFileSize(attachment)) }}</span>
+            <span class="file-type text-muted">{{ getFileType(attachment) }}</span>
+          </div>
+          
+          <!-- Progress Bar (for uploads) -->
+          <div class="upload-progress" *ngIf="attachment.uploading">
+            <div class="progress progress-sm">
+              <div class="progress-bar bg-primary" 
+                   [style.width.%]="attachment.progress || 0">
+              </div>
+            </div>
+            <small class="text-muted">Subiendo... {{ attachment.progress || 0 }}%</small>
+          </div>
+        </div>
+
+        <!-- File Actions -->
+        <div class="attachment-actions">
+          <!-- Preview Button -->
+          <button type="button" 
+                  class="btn btn-outline-primary btn-sm"
+                  (click)="onPreviewFile(attachment)"
+                  *ngIf="isPreviewable(attachment) && showPreview"
+                  title="Vista previa">
+            <i class="fas fa-eye"></i>
+          </button>
+          
+          <!-- Download Button -->
+          <button type="button" 
+                  class="btn btn-outline-secondary btn-sm"
+                  (click)="onDownloadFile(attachment)"
+                  title="Descargar">
+            <i class="fas fa-download"></i>
+          </button>
+          
+          <!-- Remove Button -->
+          <button type="button" 
+                  class="btn btn-outline-danger btn-sm"
+                  (click)="removeFile(i)"
+                  *ngIf="!readonly"
+                  title="Eliminar">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-attachments text-center py-3" 
+       *ngIf="!hasAttachments && readonly">
+    <i class="fas fa-paperclip fa-2x text-muted mb-2"></i>
+    <p class="text-muted mb-0">No hay archivos adjuntos</p>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" 
+     [class.show]="showPreviewModal"
+     [style.display]="showPreviewModal ? 'block' : 'none'"
+     *ngIf="showPreviewModal && previewFile">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i [class]="getFileIcon(previewFile)" 
+             [class]="getFileColor(previewFile)"
+             class="mr-2"></i>
+          {{ getFileName(previewFile) }}
+        </h5>
+        <button type="button" 
+                class="close" 
+                (click)="closePreview()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-0">
+        <!-- Image Preview -->
+        <div class="image-preview-container" 
+             *ngIf="isImage(previewFile) && previewFile.previewUrl">
+          <img [src]="previewFile.previewUrl" 
+               [alt]="getFileName(previewFile)"
+               class="img-fluid">
+        </div>
+        
+        <!-- PDF Preview -->
+        <div class="pdf-preview-container" 
+             *ngIf="isPdf(previewFile)">
+          <iframe [src]="previewFile.previewUrl" 
+                  width="100%" 
+                  height="600px"
+                  frameborder="0">
+          </iframe>
+        </div>
+        
+        <!-- Other File Types -->
+        <div class="file-info-container text-center py-5" 
+             *ngIf="!isImage(previewFile) && !isPdf(previewFile)">
+          <i [class]="getFileIcon(previewFile)" 
+             [class]="getFileColor(previewFile)"
+             style="font-size: 4rem;"
+             class="mb-3"></i>
+          <h4>{{ getFileName(previewFile) }}</h4>
+          <p class="text-muted">
+            {{ formatFileSize(getFileSize(previewFile)) }} • {{ getFileType(previewFile) }}
+          </p>
+          <button type="button" 
+                  class="btn btn-primary"
+                  (click)="onDownloadFile(previewFile)">
+            <i class="fas fa-download mr-2"></i>
+            Descargar archivo
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="file-info">
+          <small class="text-muted">
+            {{ formatFileSize(getFileSize(previewFile)) }} • {{ getFileType(previewFile) }}
+          </small>
+        </div>
+        <div class="modal-actions">
+          <button type="button" 
+                  class="btn btn-outline-primary"
+                  (click)="onDownloadFile(previewFile)">
+            <i class="fas fa-download mr-1"></i>
+            Descargar
+          </button>
+          <button type="button" 
+                  class="btn btn-secondary"
+                  (click)="closePreview()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show" 
+     *ngIf="showPreviewModal"
+     (click)="closePreview()">
+</div>

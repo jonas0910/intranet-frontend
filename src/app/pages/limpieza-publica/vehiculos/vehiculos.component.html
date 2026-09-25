@@ -1,0 +1,506 @@
+<app-system-layout [title]="'Flota de Limpieza Pública'" [subtitle]="'Gestión y monitoreo de la flota vehicular Notaria'"
+    [subtitleItems]="[
+        { label: 'Control de compactadores, barredoras y unidades de supervisión', icon: 'fas fa-truck' },
+        { label: 'Seguimiento de mantenimiento y estado operativo', icon: 'fas fa-tools' },
+        { label: 'Gestión de activos vehiculares', icon: 'fas fa-car-side' }
+    ]"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Limpieza Pública', url: '/limpieza-publica'}, {label: 'Vehículos'}]"
+    [subsystem]="'limpieza-publica'">
+
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-pills mb-3 bg-white p-2 rounded shadow-sm border" style="gap: 10px;">
+        <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'lista-vehiculos'" (click)="setActiveTab('lista-vehiculos')" role="button">
+                <i class="fas fa-truck mr-2"></i> LISTA DE VEHÍCULOS
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'tipos-mantenimiento'" (click)="setActiveTab('tipos-mantenimiento')" role="button">
+                <i class="fas fa-tools mr-2"></i> CONFIGURACIÓN DE MANTENIMIENTOS
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Tab: Lista de Vehículos -->
+        <div class="tab-pane fade" [class.show]="activeTab === 'lista-vehiculos'" [class.active]="activeTab === 'lista-vehiculos'">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card elevation-1 mb-3 card-outline card-primary" style="border-radius: 8px;">
+                        <!-- Toolbar -->
+                        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white rounded-top">
+                            <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                                <h3 class="card-title mb-0" style="font-size: 1.1rem; font-weight: 600;">
+                                    <i class="fas fa-truck mr-2 text-primary"></i> Unidades Registradas
+                                </h3>
+                                <span class="badge badge-primary ml-2">{{ vehiculos.length }}</span>
+                                
+                                <button class="btn btn-xs btn-outline-secondary ml-2" (click)="isFiltersCollapsed = !isFiltersCollapsed"
+                                    [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'">
+                                    <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-times'"></i>
+                                </button>
+
+                                <div class="btn-group ml-2" *ngIf="cv.showExportButtons">
+                                    <button type="button" class="btn btn-xs btn-success" (click)="onExportExcel()">
+                                        <i class="fas fa-file-excel mr-1"></i> Excel
+                                    </button>
+                                    <button type="button" class="btn btn-xs btn-danger" (click)="onExportPdf()">
+                                        <i class="fas fa-file-pdf mr-1"></i> PDF
+                                    </button>
+                                </div>
+
+                                <button type="button" class="btn btn-xs btn-outline-info ml-2" (click)="cargarVehiculos()">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                            <div class="ms-auto flex-shrink-0">
+                                <button type="button" class="btn btn-sm btn-primary shadow-sm" (click)="abrirNuevo()">
+                                    <i class="fas fa-plus mr-1"></i> Nueva Unidad
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Filtros -->
+                        <div class="bg-light border-bottom overflow-hidden" 
+                             [style.max-height]="isFiltersCollapsed ? '0px' : '200px'"
+                             style="transition: max-height 0.3s ease-out;">
+                            <div class="p-3">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="small font-weight-bold text-muted mb-1 text-uppercase">Búsqueda rápida</label>
+                                        <div class="input-group input-group-sm shadow-sm">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text bg-white border-right-0"><i class="fas fa-search text-muted"></i></span>
+                                            </div>
+                                            <input type="text" class="form-control border-left-0" [(ngModel)]="filtros.placa" 
+                                                   (keyup.enter)="cargarVehiculos()" placeholder="Buscar por placa o código...">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="small font-weight-bold text-muted mb-1 text-uppercase">Tipo de Vehículo</label>
+                                        <select class="form-control form-control-sm shadow-sm" [(ngModel)]="filtros.tipo" (change)="cargarVehiculos()">
+                                            <option [ngValue]="undefined">Todos los tipos</option>
+                                            <option value="compactador">Compactador</option>
+                                            <option value="barredora">Barredora Mecánica</option>
+                                            <option value="camioneta">Camioneta de Supervisión</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="small font-weight-bold text-muted mb-1 text-uppercase">Estado</label>
+                                        <select class="form-control form-control-sm shadow-sm" [(ngModel)]="filtros.estado" (change)="cargarVehiculos()">
+                                            <option [ngValue]="undefined">Cualquier estado</option>
+                                            <option value="operativo">Operativo</option>
+                                            <option value="mantenimiento">En Mantenimiento</option>
+                                            <option value="fuera_servicio">Fuera de Servicio</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button class="btn btn-sm btn-link text-muted" (click)="limpiarFiltros()">Limpiar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="card-body p-0">
+                            <div *ngIf="loading" class="text-center p-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-muted">Cargando flota vehicular...</p>
+                            </div>
+
+                            <div class="table-responsive" *ngIf="!loading">
+                                <table class="table table-hover table-striped mb-0 align-middle">
+                                    <thead class="bg-white text-muted small text-uppercase font-weight-bold">
+                                        <tr>
+                                            <th class="border-top-0 px-3" style="width: 50px;">#</th>
+                                            <th class="border-top-0">Unidad / Placa</th>
+                                            <th class="border-top-0">Marca / Modelo</th>
+                                            <th class="border-top-0">Año</th>
+                                            <th class="border-top-0">Kilometraje</th>
+                                            <th class="border-top-0">Capacidad</th>
+                                            <th class="border-top-0">Estado</th>
+                                            <th class="border-top-0 text-center" style="width: 120px;">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let v of vehiculos; let i = index">
+                                            <td class="px-3 text-muted small">{{ i + 1 }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="p-2 mr-2 rounded bg-light border border-info" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="fas" [ngClass]="{
+                                                            'fa-truck-loading': v.tipo === 'compactador',
+                                                            'fa-broom': v.tipo === 'barredora',
+                                                            'fa-truck-pickup': v.tipo === 'camioneta'
+                                                        }" class="text-primary fa-lg"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="font-weight-bold" style="letter-spacing: 0.5px;">{{ v.placa }}</div>
+                                                        <div class="small text-muted text-uppercase">{{ v.codigo_interno || 'V-0' + v.id }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="font-weight-bold">{{ v.marca || 'S/M' }}</div>
+                                                <div class="small text-muted text-uppercase">{{ v.modelo || 'GENERICO' }}</div>
+                                            </td>
+                                            <td class="small">{{ v.anio || 'N/A' }}</td>
+                                            <td class="text-right pr-4 font-weight-bold">
+                                                {{ v.odometro_actual || 0 | number }} <small class="text-muted">km</small>
+                                            </td>
+                                            <td class="text-right pr-4 font-weight-bold">
+                                                {{ v.capacidad_kg || 0 | number }} <small class="text-muted">kg</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-pill px-3 py-1 font-weight-bold" [ngClass]="getVehicleStatusClass(v.estado)" style="font-size: 0.7rem;">
+                                                    <i class="fas fa-circle mr-1" style="font-size: 0.5rem;"></i> {{ v.estado | uppercase }}
+                                                </span>
+                                            </td>
+                                            <td class="text-center px-1">
+                                                <div class="btn-group shadow-sm border rounded overflow-hidden">
+                                                    <button type="button" class="btn btn-xs btn-white bg-white text-info" (click)="openView(v)" title="Ver Ficha">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-xs btn-white bg-white text-warning border-left" (click)="abrirEditar(v)" title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-xs btn-white bg-white text-danger border-left" (click)="eliminar(v)" title="Eliminar">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Configuración de Mantenimientos -->
+        <div class="tab-pane fade" [class.show]="activeTab === 'tipos-mantenimiento'" [class.active]="activeTab === 'tipos-mantenimiento'">
+            <div class="card elevation-1 card-outline card-success" style="border-radius: 8px;">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title font-weight-bold">
+                            <i class="fas fa-cogs mr-2 text-success"></i> Tipos de Mantenimiento (Limpieza)
+                        </h3>
+                        <button class="btn btn-sm btn-success shadow-sm px-4" (click)="abrirModalNuevoTipo()">
+                            <i class="fas fa-plus mr-1"></i> Nuevo Tipo
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light text-muted small text-uppercase">
+                                <tr>
+                                    <th class="px-4">Nombre / Descripción</th>
+                                    <th>Medición</th>
+                                    <th>Frecuencia</th>
+                                    <th class="text-center">Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let t of tiposMantenimiento">
+                                    <td class="px-4">
+                                        <div class="font-weight-bold text-dark">{{ t.nombre }}</div>
+                                        <div class="small text-muted">{{ t.descripcion || 'Sin descripción' }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-light border text-info px-2 py-1">{{ t.tipo_medicion | uppercase }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="small" *ngIf="t.frecuencia_kilometros">
+                                            <i class="fas fa-road mr-1 text-muted"></i> {{ t.frecuencia_kilometros | number }} KM
+                                        </div>
+                                        <div class="small" *ngIf="t.frecuencia_dias">
+                                            <i class="fas fa-calendar-alt mr-1 text-muted"></i> {{ t.frecuencia_dias }} DÍAS
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge" [ngClass]="t.activo ? 'badge-success' : 'badge-danger'">
+                                            {{ t.activo ? 'ACTIVO' : 'INACTIVO' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group shadow-sm">
+                                            <button class="btn btn-xs btn-white" (click)="editarTipoMantenimiento(t)" title="Editar">
+                                                <i class="fas fa-edit text-warning"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="tiposMantenimiento.length === 0">
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <i class="fas fa-tools fa-3x mb-3 opacity-25"></i>
+                                        <p>No hay tipos de mantenimiento configurados.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</app-system-layout>
+
+<!-- MODAL FORMULARIO -->
+<div class="modal fade" id="modalVehiculo" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header bg-primary text-white border-0 py-3">
+                <h5 class="modal-title font-weight-bold">
+                    <i class="fas" [ngClass]="editando ? 'fa-edit' : 'fa-plus-circle'" class="mr-2"></i>
+                    {{ editando ? 'Editar Unidad de Limpieza' : 'Registrar Nueva Unidad de Limpieza' }}
+                </h5>
+                <button type="button" class="close text-white outline-none" (click)="cerrarModal()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form #vForm="ngForm" (ngSubmit)="guardar()">
+                <div class="modal-body p-4 bg-light">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="card card-outline card-primary shadow-sm mb-3">
+                                <div class="card-header bg-white"><h3 class="card-title font-weight-bold small uppercase">INFORMACIÓN DEL VEHÍCULO</h3></div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="small font-weight-bold text-muted mb-1">PLACA / UNIDAD <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control font-weight-bold text-uppercase" 
+                                                   name="placa" [(ngModel)]="formVehiculo.placa" required placeholder="ABC-123">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="small font-weight-bold text-muted mb-1">TIPO <span class="text-danger">*</span></label>
+                                            <select class="form-control" name="tipo" [(ngModel)]="formVehiculo.tipo" required>
+                                                <option value="compactador">Compactador (Recolector)</option>
+                                                <option value="barredora">Barredora Mecánica</option>
+                                                <option value="camioneta">Camioneta (Supervisión)</option>
+                                                <option value="triciclo">Triciclo Motorizado</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="small font-weight-bold text-muted mb-1">MARCA</label>
+                                            <input type="text" class="form-control" name="marca" [(ngModel)]="formVehiculo.marca">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="small font-weight-bold text-muted mb-1">MODELO</label>
+                                            <input type="text" class="form-control" name="modelo" [(ngModel)]="formVehiculo.modelo">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="small font-weight-bold text-muted mb-1">AÑO</label>
+                                            <input type="number" class="form-control" name="anio" [(ngModel)]="formVehiculo.anio">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="small font-weight-bold text-muted mb-1">ORIGEN / PERTENENCIA</label>
+                                            <div class="bg-white p-2 rounded border d-flex justify-content-around">
+                                                <div class="custom-control custom-radio">
+                                                    <input class="custom-control-input" type="radio" id="lp_o1" name="origen" [(ngModel)]="formVehiculo.origen" value="interna">
+                                                    <label for="lp_o1" class="custom-control-label small font-weight-bold">PROPIO</label>
+                                                </div>
+                                                <div class="custom-control custom-radio">
+                                                    <input class="custom-control-input" type="radio" id="lp_o2" name="origen" [(ngModel)]="formVehiculo.origen" value="externa">
+                                                    <label for="lp_o2" class="custom-control-label small font-weight-bold">ALQUILADO</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="small font-weight-bold text-muted mb-1">ESTADO</label>
+                                            <select class="form-control" name="estado" [(ngModel)]="formVehiculo.estado">
+                                                <option value="operativo">OPERATIVO</option>
+                                                <option value="mantenimiento">EN MANTENIMIENTO</option>
+                                                <option value="fuera_servicio">FUERA DE SERVICIO</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="card card-outline card-warning shadow-sm mb-3">
+                                <div class="card-header bg-white"><h3 class="card-title font-weight-bold small uppercase">TÉCNICO Y CAPACIDAD</h3></div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="small font-weight-bold text-muted mb-1">CAPACIDAD (KG)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="capacidad_kg" [(ngModel)]="formVehiculo.capacidad_kg">
+                                                <div class="input-group-append"><span class="input-group-text small">KG</span></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="small font-weight-bold text-muted mb-1">ODÓMETRO (KM)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control font-weight-bold" name="odometro_actual" [(ngModel)]="formVehiculo.odometro_actual">
+                                                <div class="input-group-append"><span class="input-group-text small">KM</span></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="small font-weight-bold text-muted mb-1">Nº MOTOR</label>
+                                            <input type="text" class="form-control text-uppercase small" name="numero_motor" [(ngModel)]="formVehiculo.numero_motor">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="small font-weight-bold text-muted mb-1">Nº CHASIS</label>
+                                            <input type="text" class="form-control text-uppercase small" name="numero_chasis" [(ngModel)]="formVehiculo.numero_chasis">
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <label class="small font-weight-bold text-muted mb-0">FECHA SOAT</label>
+                                            <input type="date" class="form-control form-control-sm" name="fecha_soat" [(ngModel)]="formVehiculo.fecha_soat">
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <label class="small font-weight-bold text-muted mb-0">FECHA REV. TÉCNICA</label>
+                                            <input type="date" class="form-control form-control-sm" name="fecha_revision_tecnica" [(ngModel)]="formVehiculo.fecha_revision_tecnica">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0 py-3 shadow-sm">
+                    <button type="button" class="btn btn-light font-weight-bold px-4 shadow-sm" (click)="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold px-5 shadow-sm" [disabled]="!vForm.valid || guardando">
+                        <i [class]="(guardando ? 'fas fa-spinner fa-spin' : 'fas fa-save') + ' mr-1'"></i>
+                        {{ guardando ? 'Guardar...' : (editando ? 'Guardar Cambios' : 'Registrar Unidad') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL VER DETALLE -->
+<div class="modal fade" id="modalViewVehiculo" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg text-dark mx-auto" role="document">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;" *ngIf="vehiculoSeleccionado">
+            <div class="modal-body p-0">
+                <div class="bg-primary p-4 text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0 font-weight-bold">{{ vehiculoSeleccionado.placa }}</h4>
+                        <p class="mb-0 small opacity-75">{{ vehiculoSeleccionado.tipo | uppercase }} - {{ vehiculoSeleccionado.marca }} {{ vehiculoSeleccionado.modelo }}</p>
+                    </div>
+                    <button type="button" class="close text-white" (click)="closeView()"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="p-4 bg-light">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="card border-0 shadow-sm mb-4" style="border-radius: 8px;">
+                                <div class="card-body p-3">
+                                    <h6 class="font-weight-bold border-bottom pb-2 mb-3"><i class="fas fa-info-circle mr-2 text-primary"></i>Datos Técnicos</h6>
+                                    <div class="row">
+                                        <div class="col-6 mb-2">
+                                            <label class="small text-muted mb-0 d-block">Kilometraje Actual</label>
+                                            <span class="font-weight-bold">{{ vehiculoSeleccionado?.odometro_actual | number }} km</span>
+                                        </div>
+                                        <div class="col-6 mb-2">
+                                            <label class="small text-muted mb-0 d-block">Capacidad</label>
+                                            <span class="font-weight-bold">{{ vehiculoSeleccionado?.capacidad_kg | number }} kg</span>
+                                        </div>
+                                        <div class="col-6 mb-2">
+                                            <label class="small text-muted mb-0 d-block">Estado Operativo</label>
+                                            <span class="badge" [ngClass]="getVehicleStatusClass(vehiculoSeleccionado?.estado)">{{ vehiculoSeleccionado?.estado | uppercase }}</span>
+                                        </div>
+                                        <div class="col-6 mb-2">
+                                            <label class="small text-muted mb-0 d-block">Año de Fab.</label>
+                                            <span class="font-weight-bold">{{ vehiculoSeleccionado?.anio }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="card border-0 shadow-sm mb-4" style="border-radius: 8px;">
+                                <div class="card-body p-3">
+                                    <h6 class="font-weight-bold border-bottom pb-2 mb-2">Identificación</h6>
+                                    <div class="small mb-2">
+                                        <label class="text-muted mb-0 d-block">Nº Motor</label>
+                                        <span class="font-weight-bold">{{ vehiculoSeleccionado?.numero_motor || 'N/A' }}</span>
+                                    </div>
+                                    <div class="small">
+                                        <label class="text-muted mb-0 d-block">Nº Chasis</label>
+                                        <span class="font-weight-bold">{{ vehiculoSeleccionado?.numero_chasis || 'N/A' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary btn-sm" (click)="closeView()">Cerrar</button>
+                <button type="button" class="btn btn-primary btn-sm px-4" (click)="abrirEditar(vehiculoSeleccionado)">Editar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CONFIGURACIÓN TIPO MANTENIMIENTO -->
+<div class="modal fade" id="modalTipoMantenimiento" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header bg-success text-white border-0 py-3">
+                <h5 class="modal-title font-weight-bold">
+                    <i class="fas" [ngClass]="editandoTipo ? 'fa-edit' : 'fa-plus-circle'" class="mr-2"></i>
+                    {{ editandoTipo ? 'Editar Configuración' : 'Nueva Configuración de Mantenimiento' }}
+                </h5>
+                <button type="button" class="close text-white outline-none" (click)="cerrarModalTipo()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form #tmForm="ngForm" (ngSubmit)="guardarTipo()">
+                <div class="modal-body p-4 bg-light">
+                    <div class="row g-3">
+                        <div class="col-md-8 mb-3">
+                            <label class="small font-weight-bold text-muted mb-1">NOMBRE DEL PROCEDIMIENTO <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="nombre" [(ngModel)]="formTipoMantenimiento.nombre" required placeholder="Ej: Cambio de Aceite 10000km">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="small font-weight-bold text-muted mb-1">TIPO DE MEDICIÓN <span class="text-danger">*</span></label>
+                            <select class="form-control" name="tipo_medicion" [(ngModel)]="formTipoMantenimiento.tipo_medicion" required>
+                                <option value="kilometraje">KILOMETRAJE</option>
+                                <option value="temporal">TIEMPO (DÍAS)</option>
+                                <option value="ambos">AMBOS</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="small font-weight-bold text-muted mb-1">FRECUENCIA (KM)</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="frecuencia_kilometros" [(ngModel)]="formTipoMantenimiento.frecuencia_kilometros">
+                                <div class="input-group-append"><span class="input-group-text small">KM</span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="small font-weight-bold text-muted mb-1">FRECUENCIA (DÍAS)</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="frecuencia_dias" [(ngModel)]="formTipoMantenimiento.frecuencia_dias">
+                                <div class="input-group-append"><span class="input-group-text small">DÍAS</span></div>
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="small font-weight-bold text-muted mb-1">DESCRIPCIÓN</label>
+                            <textarea class="form-control" name="descripcion" [(ngModel)]="formTipoMantenimiento.descripcion" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="custom-control custom-switch pt-4">
+                                <input type="checkbox" class="custom-control-input" id="lp_tm_a1" name="activo" [(ngModel)]="formTipoMantenimiento.activo">
+                                <label class="custom-control-label font-weight-bold text-muted" for="lp_tm_a1">ESTADO ACTIVO</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0 py-3 shadow-sm">
+                    <button type="button" class="btn btn-light font-weight-bold px-4 shadow-sm" (click)="cerrarModalTipo()">Cancelar</button>
+                    <button type="submit" class="btn btn-success font-weight-bold px-5 shadow-sm" [disabled]="!tmForm.valid || guardandoTipo">
+                        <i [class]="(guardandoTipo ? 'fas fa-spinner fa-spin' : 'fas fa-save') + ' mr-1'"></i>
+                        {{ guardandoTipo ? 'Guardar...' : 'Guardar Configuración' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

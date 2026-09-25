@@ -1,0 +1,273 @@
+<app-system-layout [title]="viewConfig.title" [subtitle]="'Fiscalización y Control'"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comercialización', url: '/comercializacion'}, {label: 'Sanciones'}]"
+    [subsystem]="'comercializacion'">
+
+    <div class="row">
+        <!-- Panel de Filtros -->
+        <div class="col-md-3">
+            <div class="card elevation-1" [ngClass]="cv.cardOutlineColor || 'card-outline card-success'"
+                [style.border-radius.px]="cv.cardBorderRadius">
+                <div class="card-header bg-white">
+                    <h3 class="card-title text-sm font-weight-bold">
+                        <i class="fas fa-filter mr-1"></i> Filtros de Búsqueda
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label [style.font-size]="cv.labelFontSize">Tipo de Sanción</label>
+                        <select class="form-control" [ngClass]="cv.filterInputSize"
+                            [style.font-size]="cv.filterInputFontSize">
+                            <option>Todos</option>
+                            <option>Multa (Administrativa)</option>
+                            <option>Clausura Temporal</option>
+                            <option>Clausura Definitiva</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label [style.font-size]="cv.labelFontSize">Estado</label>
+                        <select class="form-control" [ngClass]="cv.filterInputSize"
+                            [style.font-size]="cv.filterInputFontSize">
+                            <option>Todos</option>
+                            <option>Notificada</option>
+                            <option>En Apelación</option>
+                            <option>Consentida / Firme</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-block" [ngClass]="cv.newBtnClass" [style.font-size]="cv.fontSize">
+                        <i class="fas fa-search mr-1"></i> Filtrar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Resultados -->
+        <div class="col-md-9">
+            <div class="card elevation-1" [ngClass]="cv.cardOutlineColor || 'card-outline card-success'"
+                [style.border-radius.px]="cv.cardBorderRadius">
+
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+                    <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                        <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                            <i [class]="viewConfig.icon + ' mr-1 text-muted'"></i> Resoluciones de Sanción
+                        </h3>
+                        <span class="badge badge-info ml-2" *ngIf="cv.showRecordCount">{{data.length}} registros</span>
+
+                        <ng-container *ngIf="cv.showExportButtons">
+                            <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"
+                                (click)="onExportExcel()">
+                                <i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}
+                            </button>
+                            <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"
+                                (click)="onExportPdf()">
+                                <i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}
+                            </button>
+                        </ng-container>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-sm shadow-sm" [ngClass]="cv.newBtnClass"
+                            (click)="onAction('create')">
+                            <i [class]="cv.newBtnIcon + ' mr-1'"></i> Registrar Sanción
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table">
+                            <thead>
+                                <tr>
+                                    <th>Nº Resolución</th>
+                                    <th>Infracción / CUIS</th>
+                                    <th>Infractor</th>
+                                    <th class="text-right">Monto / Medida</th>
+                                    <th class="text-center">Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let item of data">
+                                    <td><strong class="text-primary">{{item.nro_resolucion}}</strong></td>
+                                    <td>{{item.infraccion}}</td>
+                                    <td>
+                                        <div class="font-weight-bold">{{item.infractor}}</div>
+                                        <small class="text-muted">ID: #{{item.id}}</small>
+                                    </td>
+                                    <td class="text-right font-weight-bold">
+                                        {{item.monto_medida}}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-pill" [ngClass]="{
+                                            'badge-warning': item.estado === 'APELADA',
+                                            'badge-info': item.estado === 'NOTIFICADA',
+                                            'badge-success': item.estado === 'CONSENTIDA'
+                                        }">{{item.estado}}</span>
+                                    </td>
+                                    <td class="text-center" style="white-space: nowrap;">
+                                        <button class="btn btn-sm btn-outline-success" title="Liquidar Pago (Generar Pre-Recibo)"
+                                            (click)="openLiquidar(item)">
+                                            <i class="fas fa-file-invoice-dollar"></i>
+                                        </button>
+                                        <button class="btn btn-sm ml-1" [ngClass]="cv.viewBtnClass"
+                                            title="Ver Resolución (PDF)" (click)="onAction('view', item)">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </button>
+                                        <button class="btn btn-sm ml-1" [ngClass]="cv.editBtnClass" title="Editar"
+                                            (click)="onAction('edit', item)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="data.length === 0">
+                                    <td colspan="6" class="text-center p-5">
+                                        <i class="fas fa-search-minus fa-3x text-muted mb-3 d-block"></i>
+                                        <p class="text-muted">No se encontraron resoluciones de sanción.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>
+
+<!-- Modal Registrar Sanción -->
+<div class="modal fade" id="modalSancion" [ngClass]="{'show': showModal}" [style.display]="showModal ? 'block' : 'none'"
+    tabindex="-1" role="dialog" [ngStyle]="{'background-color': showModal ? 'rgba(0,0,0,0.5)' : 'transparent'}">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content elevation-3" [style.border-radius.px]="mc.borderRadius">
+            <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+                [style.padding]="mc.headerPadding">
+                <h5 class="modal-title" [style.font-size]="mc.headerFontSize">
+                    <i [class]="mc.headerIcon + ' mr-2'"></i>
+                    {{ viewMode === 'view' ? 'Detalle de Resolución de Sanción' : (viewMode === 'edit' ? 'Editar
+                    Resolución' : 'Registrar Resolución de Sanción') }}
+                </h5>
+                <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" [style.background]="mc.bodyBg" [style.padding]="mc.formPadding">
+                <form [formGroup]="form">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Nº
+                                Resolución</label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize"
+                                formControlName="nro_resolucion" placeholder="Ej: RES-2026-001">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Infracción /
+                                CUIS</label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize"
+                                formControlName="infraccion" placeholder="Código de Infracción">
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Vincular Infractor
+                                (Padrón)</label>
+                            <select class="form-control" [ngClass]="mc.inputSize" formControlName="comerciante_id"
+                                (change)="onComercianteChange($event)">
+                                <option [value]="null">-- Seleccionar del Padrón (Opcional) --</option>
+                                <option *ngFor="let c of comerciantesPadron" [value]="c.id">
+                                    {{c.contribuyente}} (Puesto: {{c.nro_puesto}} - {{c.giro}})
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Infractor
+                                (Manual)</label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="infractor"
+                                placeholder="Identificación del infractor">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Monto / Medida
+                                Correctiva</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" [ngClass]="mc.inputSize"
+                                    formControlName="monto_medida" placeholder="S/ 0.00 o Detalle">
+                            </div>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Estado
+                                Inicial</label>
+                            <select class="form-control" [ngClass]="mc.inputSize" formControlName="estado">
+                                <option value="NOTIFICADA">NOTIFICADA</option>
+                                <option value="APELADA">APELADA</option>
+                                <option value="CONSENTIDA">CONSENTIDA (FIRME)</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0" [style.background]="mc.footerBg">
+                <button type="button" class="btn" [ngClass]="mc.cancelBtnClass" (click)="closeModal()"
+                    [disabled]="isSaving">
+                    <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ viewMode === 'view' ? 'Cerrar' : mc.cancelBtnLabel
+                    }}
+                </button>
+                <button type="button" class="btn shadow-sm" [ngClass]="mc.saveBtnClass" (click)="save()"
+                    [disabled]="form.invalid || isSaving" *ngIf="viewMode !== 'view'">
+                    <i class="fas fa-circle-notch fa-spin mr-1" *ngIf="isSaving"></i>
+                    <i [class]="mc.saveBtnIcon + ' mr-1'" *ngIf="!isSaving"></i>
+                    {{ isSaving ? 'Guardando...' : (viewMode === 'edit' ? 'Actualizar' : mc.saveBtnLabel) }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Liquidar Pago -->
+<div class="modal fade" id="modalLiquidar" [ngClass]="{'show': showLiquidarModal}"
+    [style.display]="showLiquidarModal ? 'block' : 'none'" tabindex="-1" role="dialog"
+    [ngStyle]="{'background-color': showLiquidarModal ? 'rgba(0,0,0,0.5)' : 'transparent'}">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content elevation-3" [style.border-radius.px]="mc.borderRadius">
+            <div class="modal-header bg-success text-white" [style.padding]="mc.headerPadding">
+                <h5 class="modal-title" [style.font-size]="mc.headerFontSize">
+                    <i class="fas fa-file-invoice-dollar mr-2"></i> Liquidar Pago (Acción de Fiscalización)
+                </h5>
+                <button type="button" class="close text-white" (click)="closeLiquidar()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" [style.background]="mc.bodyBg" [style.padding]="mc.formPadding">
+                <div class="alert alert-info py-2 small mb-3" *ngIf="selectedSancion">
+                    <i class="fas fa-info-circle mr-1"></i> Se generará un pre-recibo de <strong>Fiscalización</strong>
+                    a nombre de <strong>{{ selectedSancion.infractor }}</strong> por la resolución
+                    <strong>{{ selectedSancion.nro_resolucion }}</strong>.
+                </div>
+                <form [formGroup]="liquidarForm">
+                    <div class="form-group">
+                        <label>Tipo de Concepto / Tasa (opcional)</label>
+                        <select class="form-control" formControlName="concepto_id" (change)="onConceptoChange($event)">
+                            <option [value]="null">-- Seleccione el concepto --</option>
+                            <option *ngFor="let c of conceptos" [value]="c.id">{{ c.descripcion }} (S/ {{ c.monto | number:'1.2-2' }})</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto a Liquidar (S/)</label>
+                        <input type="number" step="0.01" class="form-control form-control-lg font-weight-bold text-success"
+                            formControlName="monto">
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones</label>
+                        <textarea class="form-control" formControlName="observaciones" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0" [style.background]="mc.footerBg">
+                <button type="button" class="btn" [ngClass]="mc.cancelBtnClass" (click)="closeLiquidar()" [disabled]="isSaving">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-success shadow-sm" (click)="confirmLiquidar()"
+                    [disabled]="liquidarForm.invalid || isSaving">
+                    <i class="fas fa-circle-notch fa-spin mr-1" *ngIf="isSaving"></i>
+                    <i class="fas fa-check-circle mr-1" *ngIf="!isSaving"></i>
+                    {{ isSaving ? 'Procesando...' : 'Generar Pre-Recibo' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,399 @@
+.table-danger {
+  background-color: #f8d7da !important;
+}
+
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Modal styles
+.modal {
+  &.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal-dialog {
+    max-width: 90%;
+    margin: 1.75rem auto;
+  }
+
+  .modal-content {
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .modal-header {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+
+    .modal-title {
+      color: white;
+      font-weight: 600;
+    }
+
+    .close {
+      color: white;
+      opacity: 1;
+      text-shadow: none;
+      
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
+
+  .modal-body {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+  }
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1040;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  
+  &.show {
+    opacity: 1;
+  }
+}
+
+// Timeline Profesional (AdminLTE style)
+.timeline {
+  position: relative;
+  margin: 0 0 30px 0;
+  padding: 0;
+  list-style: none;
+
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #ddd;
+    left: 31px;
+    margin: 0;
+    border-radius: 2px;
+  }
+
+  > div {
+    margin-right: 10px;
+    margin-bottom: 15px;
+    position: relative;
+    
+    &:before,
+    &:after {
+      content: '';
+      display: table;
+    }
+    
+    &:after {
+      clear: both;
+    }
+
+    > .fa,
+    > .fas,
+    > .far,
+    > .fab,
+    > .fal,
+    > .fad,
+    > .svg-inline--fa,
+    > .ion {
+      width: 30px;
+      height: 30px;
+      font-size: 15px;
+      line-height: 30px;
+      position: absolute;
+      color: #666;
+      background: #d2d6de;
+      border-radius: 50%;
+      text-align: center;
+      left: 18px;
+      top: 0;
+    }
+
+    > .timeline-item {
+      background: #fff;
+      color: #444;
+      margin-left: 60px;
+      margin-right: 15px;
+      padding: 0;
+      position: relative;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+
+      > .time {
+        color: #999;
+        float: right;
+        padding: 10px;
+        font-size: 12px;
+      }
+
+      > .timeline-header {
+        margin: 0;
+        color: #555;
+        border-bottom: 1px solid #f4f4f4;
+        padding: 10px;
+        font-size: 16px;
+        line-height: 1.1;
+        font-weight: 600;
+      }
+
+      > .timeline-body {
+        padding: 15px;
+        
+        p {
+          margin-bottom: 0.5rem;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+
+      > .timeline-footer {
+        padding: 10px;
+        background-color: #f4f4f4;
+        border-top: 1px solid #ddd;
+      }
+    }
+  }
+
+  &.timeline-inverse {
+    > div > .timeline-item {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      box-shadow: none;
+
+      > .timeline-header {
+        border-bottom-color: #dee2e6;
+      }
+    }
+  }
+}
+
+// Badges más grandes
+.badge-lg {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.badge-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+// Estilos mejorados para el modal de firma
+.firma-modal-content {
+  border-radius: 8px;
+  overflow: hidden;
+  
+  .modal-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  }
+}
+
+.firma-canvas {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    cursor: crosshair;
+  }
+
+  .firma-indicador {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    z-index: 10;
+    pointer-events: auto;
+    cursor: move !important;
+    user-select: none;
+    transition: all 0.1s ease;
+    
+    &:not(.arrastrando) {
+      animation: pulse 2s infinite;
+    }
+    
+    &.arrastrando {
+      animation: none;
+      transform: translate(-50%, -100%) scale(1.15);
+      z-index: 1000;
+      box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+    }
+
+    .firma-badge {
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.5), 0 0 20px rgba(40, 167, 69, 0.3);
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+      border: 2px solid white;
+      position: relative;
+
+      i {
+        font-size: 1rem;
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 8px solid #28a745;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+      }
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      transform: translate(-50%, -100%) scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: translate(-50%, -100%) scale(1.08);
+      opacity: 0.95;
+    }
+  }
+}
+
+// Gradientes mejorados
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+}
+
+.bg-gradient-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+.bg-gradient-warning {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%) !important;
+}
+
+.bg-gradient-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+}
+
+.bg-gradient-secondary {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+}
+
+// Mejoras para los controles de zoom
+.btn-group-sm .btn {
+  border-color: rgba(255, 255, 255, 0.3);
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+  
+  &:disabled {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+// Mejoras para los sliders
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #dee2e6;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+
+    &:hover {
+      background: #0056b3;
+      transform: scale(1.2);
+    }
+  }
+
+  &::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+
+    &:hover {
+      background: #0056b3;
+      transform: scale(1.2);
+    }
+  }
+}
+
+// Mejoras para las plantillas
+.btn-group-vertical .btn-outline-success {
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+  }
+  
+  i {
+    transition: transform 0.2s;
+  }
+  
+  &:hover i {
+    transform: scale(1.2);
+  }
+}
+
+// Mejoras para el alert de instrucciones
+.alert {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-left-width: 4px;
+  
+  &.border-left-info {
+    border-left-color: #17a2b8;
+  }
+}
+
+.documento-preview {
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+

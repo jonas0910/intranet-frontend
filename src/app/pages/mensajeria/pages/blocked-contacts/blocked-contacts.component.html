@@ -1,0 +1,176 @@
+<!-- Content Header -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">
+          <i class="fas fa-ban mr-2 text-danger"></i>
+          Contactos Bloqueados
+        </h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item">
+            <a routerLink="/dashboard">
+              <i class="fas fa-home mr-1"></i>Inicio
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a routerLink="/mensajeria">
+              <i class="fas fa-envelope mr-1"></i>Mensajería
+            </a>
+          </li>
+          <li class="breadcrumb-item active">Bloqueados</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+  <div class="container-fluid">
+    
+    <!-- Search and Info Card -->
+    <div class="card card-danger card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-users-slash mr-2"></i>
+          Contactos Bloqueados ({{ filteredContacts.length }})
+        </h3>
+      </div>
+      <div class="card-body">
+        <!-- Search Box -->
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text">
+                  <i class="fas fa-search"></i>
+                </span>
+              </div>
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="Buscar contacto bloqueado..."
+                [(ngModel)]="searchQuery">
+              <div class="input-group-append" *ngIf="searchQuery">
+                <button class="btn btn-default" type="button" (click)="searchQuery = ''">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Alert -->
+        <div class="alert alert-info" *ngIf="blockedContacts.length === 0 && !loading">
+          <i class="fas fa-info-circle mr-2"></i>
+          No tienes contactos bloqueados. Los contactos bloqueados no podrán enviarte mensajes ni ver tu estado.
+        </div>
+
+        <!-- Loading State -->
+        <div class="text-center p-5" *ngIf="loading">
+          <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+          <p class="mt-3">Cargando contactos bloqueados...</p>
+        </div>
+
+        <!-- Blocked Contacts List -->
+        <div class="row" *ngIf="!loading && filteredContacts.length > 0">
+          <div class="col-md-6 col-lg-4" *ngFor="let contact of filteredContacts">
+            <div class="card card-widget widget-user-2 shadow-sm">
+              <div class="widget-user-header bg-danger">
+                <div class="widget-user-image">
+                  <img 
+                    class="img-circle elevation-2" 
+                    [src]="contact.avatar || 'assets/img/user-default.png'" 
+                    (error)="onImageError($event)"
+                    alt="User Avatar">
+                </div>
+                <h3 class="widget-user-username">{{ contact.name }}</h3>
+                <h5 class="widget-user-desc">{{ contact.email }}</h5>
+              </div>
+              <div class="card-footer p-3">
+                <div class="row mb-2">
+                  <div class="col-12">
+                    <div class="text-muted">
+                      <i class="fas fa-clock mr-1"></i>
+                      Bloqueado {{ getTimeAgo(contact.blocked_at) }}
+                    </div>
+                  </div>
+                </div>
+                <div class="row" *ngIf="contact.reason">
+                  <div class="col-12">
+                    <div class="text-muted small">
+                      <i class="fas fa-comment mr-1"></i>
+                      {{ contact.reason }}
+                    </div>
+                  </div>
+                </div>
+                <div class="row mt-3">
+                  <div class="col-12">
+                    <button 
+                      type="button" 
+                      class="btn btn-success btn-sm btn-block"
+                      (click)="unblockContact(contact)">
+                      <i class="fas fa-unlock mr-1"></i>
+                      Desbloquear
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Results -->
+        <div class="alert alert-warning" *ngIf="!loading && searchQuery && filteredContacts.length === 0">
+          <i class="fas fa-search mr-2"></i>
+          No se encontraron contactos bloqueados que coincidan con "{{ searchQuery }}"
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="card card-info card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-info-circle mr-2"></i>
+          Información sobre Bloqueo
+        </h3>
+      </div>
+      <div class="card-body">
+        <h5><i class="fas fa-question-circle mr-2"></i>¿Qué sucede cuando bloqueas a un contacto?</h5>
+        <ul class="mb-3">
+          <li>El contacto no podrá enviarte mensajes directos</li>
+          <li>No verá tu estado en línea ni tu última conexión</li>
+          <li>No recibirá notificaciones de lectura de sus mensajes</li>
+          <li>No podrá agregarte a grupos nuevos</li>
+          <li>Los mensajes anteriores se mantendrán en tu historial</li>
+        </ul>
+
+        <h5><i class="fas fa-unlock-alt mr-2"></i>¿Cómo desbloquear un contacto?</h5>
+        <p>
+          Simplemente haz clic en el botón "Desbloquear" en la tarjeta del contacto. 
+          Una vez desbloqueado, el contacto podrá volver a comunicarse contigo normalmente.
+        </p>
+
+        <div class="alert alert-warning mb-0">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          <strong>Nota:</strong> El contacto bloqueado no será notificado de que ha sido bloqueado o desbloqueado.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+
+
+
+
+
+
+

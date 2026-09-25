@@ -1,0 +1,138 @@
+<app-system-layout [title]="'Depreciación de Activos'" [subtitle]="'Cálculo automático de depreciación mensual'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Activos Fijos', url: '/activos-fijos'}, {label: 'Depreciación'}]"
+  [subsystem]="'activos-fijos'">
+
+  <!-- Card de Cálculo -->
+  <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-success'"
+    [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+    <div class="card-header py-2">
+      <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+        <i class="fas fa-calculator mr-2"></i>Calcular Depreciación
+      </h3>
+    </div>
+
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Año</label>
+            <input type="number" class="form-control" [(ngModel)]="periodoAno" [min]="2020" [max]="2030">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Mes</label>
+            <select class="form-control ds-select2" [(ngModel)]="periodoMes" name="periodoMes">
+              <option [value]="i+1" *ngFor="let mes of meses; let i = index">{{mes}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary btn-block" (click)="calcularDepreciacion()" [disabled]="calculando">
+              <i class="fas fa-calculator mr-1"></i>
+              {{calculando ? 'Calculando...' : 'Calcular Depreciación'}}
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3" *ngIf="resultado">
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button class="btn btn-success btn-block">
+              <i class="fas fa-file-excel mr-1"></i>Exportar Resultado
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="resultado" class="alert alert-success mt-3">
+        <div class="row">
+          <div class="col-md-4">
+            <h5><i class="fas fa-check-circle mr-2"></i>Cálculo Completado</h5>
+            <p class="mb-0"><strong>Período:</strong> {{meses[periodoMes-1]}} {{periodoAno}}</p>
+          </div>
+          <div class="col-md-4">
+            <p class="mb-0"><strong>Activos procesados:</strong></p>
+            <h4 class="mb-0">{{resultado.total_procesados}}</h4>
+          </div>
+          <div class="col-md-4">
+            <p class="mb-0"><strong>Depreciación total:</strong></p>
+            <h4 class="mb-0">{{formatCurrency(resultado.depreciacion_total)}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historial con Design System -->
+  <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-success'"
+    [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+    <!-- Toolbar -->
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+      <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+        <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+          <i class="fas fa-history mr-1"></i> Historial de Depreciaciones
+        </h3>
+        <span class="badge"
+          [ngClass]="cv.cardOutlineColor ? 'bg-' + cv.cardOutlineColor.replace('card-', '') : 'badge-info'"
+          *ngIf="cv.showRecordCount">{{historial.length}}</span>
+        <ng-container *ngIf="cv.showExportButtons">
+          <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'"
+            (click)="onExportExcel()">
+            <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{ cv.excelBtnLabel || 'Excel' }}
+          </button>
+          <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'"
+            (click)="onExportPdf()">
+            <i [class]="(cv.pdfBtnIcon || 'fas fa-file-pdf') + ' mr-1'"></i> {{ cv.pdfBtnLabel || 'PDF' }}
+          </button>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="card-body px-0 pt-0 pb-2">
+      <div class="table-responsive p-2">
+        <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Período</th>
+              <th>Activos Procesados</th>
+              <th class="text-right">Depreciación Mensual</th>
+              <th class="text-right">Depreciación Acumulada</th>
+              <th>Fecha de Cálculo</th>
+              <th>Usuario</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of historial; let i = index">
+              <td>{{i + 1}}</td>
+              <td>
+                <strong>{{meses[item.periodo_mes-1]}} {{item.periodo_ano}}</strong>
+              </td>
+              <td>{{item.total_procesados || 0}}</td>
+              <td class="text-right">{{formatCurrency(item.depreciacion_mensual)}}</td>
+              <td class="text-right">{{formatCurrency(item.depreciacion_acumulada)}}</td>
+              <td>{{formatDate(item.created_at)}}</td>
+              <td>
+                <small>
+                  <i class="fas fa-user mr-1"></i>
+                  {{item.usuario?.name || '-'}}
+                </small>
+              </td>
+            </tr>
+            <tr *ngIf="historial.length === 0">
+              <td colspan="7" class="text-center p-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3 d-block"></i>
+                <p class="text-muted">No hay registros de depreciación</p>
+                <p class="text-muted">Use el formulario superior para calcular la depreciación del período actual</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</app-system-layout>

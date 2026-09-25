@@ -1,0 +1,98 @@
+<aside class="control-sidebar control-sidebar-dark chat-sidebar" [class.open]="isOpen">
+  <!-- Content -->
+  <div class="sidebar-header">
+    <h3 class="sidebar-title">
+      <i class="fas fa-comment-dots mr-2"></i>
+      Mensajería
+    </h3>
+    <div class="header-actions d-flex align-items-center">
+      <button class="btn-privacy-toggle mr-2" 
+               [class.active]="isOnlineHidden" 
+               (click)="togglePrivacyMode()" 
+               [title]="isOnlineHidden ? 'Modo Invisible Activado (Nadie te ve activo)' : 'Ponerse Invisible (Modo Incógnito)'">
+        <i class="fas" [ngClass]="isOnlineHidden ? 'fa-user-secret' : 'fa-user'"></i>
+      </button>
+      <button class="btn-new-chat mr-2" (click)="mostrarModalNueva = true" title="Nueva conversación">
+        <i class="fas fa-edit"></i>
+      </button>
+      <button class="close-sidebar-btn" (click)="closeSidebar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="sidebar-content">
+    <!-- Search Bar -->
+    <div class="sidebar-search-box p-3">
+        <div class="input-group">
+          <input class="form-control form-control-sidebar" 
+                 type="search" 
+                 placeholder="Buscar conversación..." 
+                 [(ngModel)]="busquedaConv"
+                 aria-label="Search">
+          <div class="input-group-append">
+            <button class="btn btn-sidebar">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </div>
+    </div>
+
+    <!-- Active Conversations List -->
+    <div class="sidebar-list-container">
+      <div *ngIf="cargando" class="text-center p-4">
+        <i class="fas fa-circle-notch fa-spin fa-2x text-muted"></i>
+      </div>
+
+      <div *ngIf="!cargando && conversaciones.length === 0" class="text-center p-5 text-muted">
+        <i class="fas fa-comments fa-3x mb-3 opacity-25"></i>
+        <p>No tienes conversaciones activas</p>
+        <button (click)="mostrarModalNueva = true" class="btn btn-primary btn-sm mt-2">
+          Empezar chat
+        </button>
+      </div>
+
+      <div class="sidebar-conv-list" *ngIf="!cargando && conversaciones.length > 0">
+        <div class="sidebar-conv-item" *ngFor="let c of convsFiltradas" (click)="openChat(c)">
+          <div class="conv-avatar">
+            {{ getAvatar(c) }}
+            <span class="status-indicator online" *ngIf="isOnline(getOtroUserId(c))"></span>
+          </div>
+          <div class="conv-info">
+            <div class="conv-name-row">
+              <span class="conv-name">{{ getDisplayName(c) }}</span>
+              <span class="conv-time">{{ formatFecha(c.updated_at) }}</span>
+            </div>
+            <div class="conv-msg-row">
+              <span class="conv-preview">{{ c.last_message?.content || 'Sin mensajes' }}</span>
+              <span class="conv-unread-badge" *ngIf="c.unread_count > 0">
+                {{ c.unread_count > 9 ? '9+' : c.unread_count }}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- No results search -->
+        <div *ngIf="convsFiltradas.length === 0 && busquedaConv" class="text-center p-4 text-muted">
+            <p><small>No se encontraron resultados para "{{busquedaConv}}"</small></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <a [routerLink]="['/mensajeria']" class="btn-view-all" (click)="closeSidebar()">
+        Ir al panel completo
+        <i class="fas fa-arrow-right ml-1"></i>
+    </a>
+  </div>
+</aside>
+
+<!-- Componente modular para nueva conversación -->
+<app-new-chat-modal 
+  [visible]="mostrarModalNueva" 
+  (onClose)="mostrarModalNueva = false"
+  (onChatCreated)="onChatCreated($event)">
+</app-new-chat-modal>
+
+<!-- Multi-Chat Boxes Container (managed by service in AppComponent) -->

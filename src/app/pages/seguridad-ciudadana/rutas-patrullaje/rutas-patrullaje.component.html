@@ -1,0 +1,531 @@
+<app-system-layout 
+  [title]="'Rutas de Patrullaje'" 
+  [subtitle]="'Programación y gestión de rutas para seguridad ciudadana'"
+  [subtitleItems]="[
+    { label: 'Programacion por turnos de la distribucion de servicios de patrullaje', icon: 'fas fa-shield-alt' }
+  ]"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Seguridad Ciudadana', url: '/seguridad-ciudadana'}, {label: 'Rutas'}]"
+  [subsystem]="'seguridad-ciudadana'">
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card elevation-1 mb-3" [class.card-outline]="true" [ngClass]="cv.cardOutlineColor || 'card-primary'"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-route mr-1 text-primary"></i> Rutas Planificadas
+            </h3>
+            <span class="badge badge-primary">{{ paginacion.total }}</span>
+            <button class="btn btn-sm btn-outline-info ml-1 px-2" (click)="filtrosColapsados = !filtrosColapsados"
+              [title]="filtrosColapsados ? 'Ver filtros' : 'Ocultar filtros'" style="height: 24px; line-height: 1;">
+              <i class="fas" [ngClass]="filtrosColapsados ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+            </button>
+            
+            <ng-container *ngIf="cv.showExportButtons">
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'"
+                (click)="onExportExcel()">
+                <i class="fas fa-file-excel mr-1"></i> Excel
+              </button>
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'"
+                (click)="onPrintGeneral()">
+                <i class="fas fa-file-pdf mr-1"></i> Reporte PDF
+              </button>
+            </ng-container>
+          </div>
+          <div class="ms-auto flex-shrink-0">
+            <button type="button" class="btn btn-sm btn-primary" (click)="abrirNuevo()">
+              <i class="fas fa-plus mr-1"></i> Nueva Ruta
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="border-bottom bg-light overflow-hidden" [style.max-height]="filtrosColapsados ? '0px' : '500px'"
+          [style.padding]="filtrosColapsados ? '0px' : '0.5rem'"
+          style="transition: max-height 0.3s ease, padding 0.3s ease;">
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="mb-1 ds-crud-label">Buscar</label>
+              <input type="text" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.buscar"
+                (ngModelChange)="onFilterChange()" placeholder="Nombre o descripción...">
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Tipo Patrullaje</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.tipo_patrullaje"
+                (change)="onFilterChange()">
+                <option [ngValue]="undefined">Todos</option>
+                <option *ngFor="let t of catalogos.tipos_patrullaje" [value]="t.id">{{ t.nombre }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Sector / Cuadrante</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.id_sector"
+                (change)="onFilterChange()">
+                <option [ngValue]="undefined">Todos</option>
+                <option *ngFor="let s of catalogos.sectores" [value]="s.id_sector">{{ s.nombre_sector }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Turno</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.turno"
+                (change)="onFilterChange()">
+                <option [ngValue]="undefined">Todos</option>
+                <option value="manana">Mañana</option>
+                <option value="tarde">Tarde</option>
+                <option value="noche">Noche</option>
+              </select>
+            </div>
+            <div class="col-md-1">
+              <label class="mb-1 ds-crud-label">Estado</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.activo"
+                (change)="onFilterChange()">
+                <option [ngValue]="undefined">Todos</option>
+                <option [value]="1">Activas</option>
+                <option [value]="0">Inactivas</option>
+              </select>
+            </div>
+            <div class="col-md-1">
+              <label class="mb-1 ds-crud-label">Por página</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.per_page"
+                (change)="onFilterChange()">
+                <option *ngFor="let size of [10, 20, 50]" [ngValue]="size">{{size}}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card-body p-0">
+          <div *ngIf="loading" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+            <p class="text-muted">Cargando rutas...</p>
+          </div>
+
+          <div class="table-responsive p-3" *ngIf="!loading">
+            <table class="table table-hover table-striped align-middle mb-0 w-100 ds-crud-table">
+              <thead [style.background-color]="cv.tableHeaderBg" [style.color]="cv.tableHeaderColor">
+                <tr>
+                  <th class="border-0">#</th>
+                  <th class="border-0">Ruta y Descripción</th>
+                  <th class="border-0">Tipo</th>
+                  <th class="border-0">Sector</th>
+                  <th class="text-center border-0">Horario / Frecuencia</th>
+                  <th class="text-center border-0">Estado</th>
+                  <th class="text-center border-0" style="width: 150px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let r of rutas; let i = index" class="fade-in">
+                  <td>{{ (paginacion.currentPage - 1) * paginacion.perPage + i + 1 }}</td>
+                  <td>
+                    <strong class="text-primary d-block">{{ r.nombre }}</strong>
+                    <small class="text-muted d-block text-truncate" style="max-width: 200px;">
+                      {{ r.descripcion || 'Sin descripción' }}
+                    </small>
+                  </td>
+                  <td>
+                    <span class="badge badge-light border">{{ getNombreTipo(r.tipo_patrullaje) }}</span>
+                  </td>
+                  <td>
+                    <small class="text-dark">
+                      <i class="fas fa-map-marker-alt text-danger mr-1"></i> 
+                      {{ r.sector?.nombre_sector || 'N/A' }}
+                    </small>
+                  </td>
+                  <td class="text-center">
+                    <div class="small">
+                      <strong class="text-uppercase">{{ r.turno || 'N/A' }}</strong>
+                      <br>
+                      <span class="text-muted"><i class="far fa-clock mr-1"></i>{{ r.hora_inicio || '--:--' }} - {{ r.hora_fin || '--:--' }}</span>
+                      <br>
+                      <span class="badge badge-outline-secondary mt-1">{{ r.frecuencia || 'Diario' }}</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge" [ngClass]="r.activo ? 'badge-success' : 'badge-danger'">
+                      {{ r.activo ? 'ACTIVA' : 'INACTIVA' }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm shadow-sm" style="gap: 2px;">
+                      <button class="btn btn-sm btn-outline-danger" (click)="onPrintHojaServicio(r)" title="Hoja de Servicio de Hoy">
+                        <i class="fas fa-file-invoice"></i>
+                      </button>
+                      <button class="btn" [ngClass]="cv.viewBtnClass || 'btn-info'" (click)="abrirVer(r)" title="Ver recorrido">
+                        <i class="fas fa-map"></i>
+                      </button>
+                      <button class="btn" [ngClass]="cv.editBtnClass || 'btn-warning'" (click)="abrirEditar(r)" title="Editar">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn" [ngClass]="cv.deleteBtnClass || 'btn-danger'" (click)="confirmarEliminar(r)" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="!rutas.length">
+                  <td colspan="7" class="text-center py-5 text-muted">
+                    <i class="fas fa-route fa-3x mb-3 opacity-25"></i>
+                    <p>No se encontraron rutas con los filtros seleccionados.</p>
+                    <button type="button" class="btn btn-sm btn-primary" (click)="limpiarFiltros()">
+                      <i class="fas fa-redo mr-1"></i> Limpiar Filtros
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Footer con Paginación -->
+        <div *ngIf="!loading && paginacion.total > 0" class="card-footer bg-white border-top py-2 clearfix">
+          <div class="row align-items-center">
+            <div class="col-sm-12 col-md-5">
+              <div class="text-muted small">
+                Mostrando {{ (paginacion.currentPage - 1) * paginacion.perPage + 1 }} a {{ 
+                Math.min(paginacion.currentPage * paginacion.perPage, paginacion.total) }} de {{ paginacion.total }} registros
+              </div>
+            </div>
+            <div class="col-sm-12 col-md-7 text-right">
+              <ul class="pagination pagination-sm m-0 float-right" *ngIf="paginacion.lastPage > 1">
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                  <a class="page-link" (click)="cambiarPagina(1)">«</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                  <a class="page-link" (click)="cambiarPagina(paginacion.currentPage - 1)">‹</a>
+                </li>
+                <li class="page-item" *ngFor="let p of getPaginas()" [class.active]="p === paginacion.currentPage" [class.disabled]="p === -1">
+                  <a class="page-link" (click)="p !== -1 && cambiarPagina(p)">{{ p === -1 ? '...' : p }}</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                  <a class="page-link" (click)="cambiarPagina(paginacion.currentPage + 1)">›</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                  <a class="page-link" (click)="cambiarPagina(paginacion.lastPage)">»</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-system-layout>
+
+<!-- ==================== MODAL FORMULARIO ==================== -->
+<div class="modal fade shadow-lg" id="modalRuta" tabindex="-1" role="dialog" data-backdrop="static">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content border-0 overflow-hidden" style="border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+      
+      <div class="modal-header border-0 pb-0" [style.background-color]="mc.headerBg">
+        <h5 class="modal-title font-weight-bold text-white d-flex align-items-center">
+          <i class="fas mr-3 opacity-75" [ngClass]="editando ? 'fa-edit' : 'fa-plus'"></i>
+          <span style="letter-spacing: -0.5px;">
+            {{ editando ? 'Actualizar Ruta de Patrullaje' : 'Registrar Nueva Ruta' }}
+          </span>
+        </h5>
+        <button type="button" class="close text-white opacity-75" (click)="cerrarModal()" style="font-weight: 300;">
+          <span>&times;</span>
+        </button>
+      </div>
+      
+      <div class="modal-body bg-white p-0">
+        <!-- Tabs Elegantes -->
+        <ul class="nav nav-tabs border-bottom bg-light px-4 pt-3" style="gap: 10px;">
+          <li class="nav-item">
+            <a class="nav-link border-0 font-weight-bold px-3 pb-2" [class.active]="tabActiva === 'general'" 
+               (click)="setTab('general')" href="javascript:void(0)"
+               [style.border-bottom]="tabActiva === 'general' ? '3px solid #007bff' : '3px solid transparent'"
+               [style.color]="tabActiva === 'general' ? '#007bff' : '#6c757d'">
+              <i class="fas fa-list-alt mr-2 small"></i> Información
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-0 font-weight-bold px-3 pb-2" [class.active]="tabActiva === 'mapa'" 
+               (click)="setTab('mapa')" href="javascript:void(0)"
+               [style.border-bottom]="tabActiva === 'mapa' ? '3px solid #007bff' : '3px solid transparent'"
+               [style.color]="tabActiva === 'mapa' ? '#007bff' : '#6c757d'">
+              <i class="fas fa-map mr-2 small"></i> Recorrido
+            </a>
+          </li>
+          <li class="nav-item" *ngIf="editando">
+            <a class="nav-link border-0 font-weight-bold px-3 pb-2" [class.active]="tabActiva === 'asignaciones'" 
+               (click)="setTab('asignaciones')" href="javascript:void(0)"
+               [style.border-bottom]="tabActiva === 'asignaciones' ? '3px solid #007bff' : '3px solid transparent'"
+               [style.color]="tabActiva === 'asignaciones' ? '#007bff' : '#6c757d'">
+              <i class="fas fa-users-cog mr-2 small"></i> Programación
+            </a>
+          </li>
+        </ul>
+
+        <div class="tab-content" style="min-height: 480px;">
+          <!-- TAB: GENERAL -->
+          <div class="tab-pane fade show active p-4" *ngIf="tabActiva === 'general'">
+            <div class="row">
+              <div class="col-lg-8 pr-lg-4">
+                <div class="section-title mb-3">
+                  <h6 class="text-primary small font-weight-bold text-uppercase m-0" style="letter-spacing: 1px;">Detalles descriptivos</h6>
+                  <hr class="mt-1 mb-0 border-primary opacity-25" style="width: 40px;">
+                </div>
+                
+                <div class="form-group mb-3">
+                  <label class="small text-muted font-weight-bold mb-1">Nombre de la Ruta <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" [(ngModel)]="formRuta.nombre" 
+                         style="height: 42px; border-radius: 8px;" placeholder="Ej: Zona Norte - Sector A" required>
+                </div>
+
+                <div class="form-group mb-3">
+                  <label class="small text-muted font-weight-bold mb-1">Descripción / Detalles Operativos</label>
+                  <textarea class="form-control" [(ngModel)]="formRuta.descripcion" rows="3" 
+                            style="border-radius: 8px; resize: none;" placeholder="Describa el área de cobertura..."></textarea>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 form-group mb-3">
+                    <label class="small text-muted font-weight-bold mb-1">Tipo de Patrullaje <span class="text-danger">*</span></label>
+                    <select class="form-control" [(ngModel)]="formRuta.tipo_patrullaje" style="height: 42px; border-radius: 8px;" required>
+                      <option [value]="undefined" disabled>-- Seleccionar --</option>
+                      <option *ngFor="let t of catalogos.tipos_patrullaje" [value]="t.id">{{ t.nombre }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 form-group mb-3">
+                    <label class="small text-muted font-weight-bold mb-1">Sector / Cuadrante <span class="text-danger">*</span></label>
+                    <select class="form-control" [(ngModel)]="formRuta.id_sector" style="height: 42px; border-radius: 8px;" required>
+                      <option [value]="undefined" disabled>-- Seleccionar --</option>
+                      <option *ngFor="let s of catalogos.sectores" [value]="s.id_sector">{{ s.nombre_sector }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-lg-4 pl-lg-4 border-left">
+                <div class="section-title mb-3">
+                  <h6 class="text-primary small font-weight-bold text-uppercase m-0" style="letter-spacing: 1px;">Configuración Horaria</h6>
+                  <hr class="mt-1 mb-0 border-primary opacity-25" style="width: 40px;">
+                </div>
+
+                <div class="p-3 rounded bg-light border border-white shadow-sm mb-3">
+                  <div class="form-group mb-2">
+                    <label class="small text-muted font-weight-bold mb-1">Turno Predeterminado</label>
+                    <select class="form-control form-control-sm" [(ngModel)]="formRuta.turno">
+                      <option value="manana">Mañana</option>
+                      <option value="tarde">Tarde</option>
+                      <option value="noche">Noche</option>
+                    </select>
+                  </div>
+                  <div class="row">
+                    <div class="col-6 form-group mb-2">
+                      <label class="small text-muted font-weight-bold mb-1">Desde</label>
+                      <input type="time" class="form-control form-control-sm" [(ngModel)]="formRuta.hora_inicio">
+                    </div>
+                    <div class="col-6 form-group mb-2">
+                      <label class="small text-muted font-weight-bold mb-1">Hasta</label>
+                      <input type="time" class="form-control form-control-sm" [(ngModel)]="formRuta.hora_fin">
+                    </div>
+                  </div>
+                  <div class="form-group mb-0">
+                    <label class="small text-muted font-weight-bold mb-1">Frecuencia</label>
+                    <select class="form-control form-control-sm" [(ngModel)]="formRuta.frecuencia">
+                      <option value="una-vez">Una sola vez</option>
+                      <option value="diario">Diario (Lu-Do)</option>
+                      <option value="interdiario">Interdiario (Lu-Mi-Vi)</option>
+                      <option value="interdiario-2">Interdiario (Ma-Ju-Sa)</option>
+                      <option value="semanal">Semanal</option>
+                      <option value="fines-de-semana">Fines de Semana</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="section-title mt-4 mb-2">
+                  <h6 class="text-primary small font-weight-bold text-uppercase m-0" style="letter-spacing: 1px;">Estado</h6>
+                </div>
+                <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-success pt-1">
+                  <input type="checkbox" class="custom-control-input" id="swActivo" [(ngModel)]="formRuta.activo">
+                  <label class="custom-control-label font-weight-bold small" for="swActivo">
+                    {{ formRuta.activo ? 'RUTA OPERATIVA' : 'RUTA SUSPENDIDA' }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB: MAPA -->
+          <div class="tab-pane fade show active h-100" *ngIf="tabActiva === 'mapa'">
+            <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+              <span class="text-muted small"><i class="fas fa-info-circle mr-1"></i> Pulsa en el mapa para delimitar el recorrido. Clic derecho en un punto para eliminarlo.</span>
+              <div class="d-flex align-items-center">
+                <button class="btn btn-sm btn-outline-dark shadow-sm mr-2 border-0" (click)="onPrintRecorrido()" title="Exportar Reporte">
+                  <i class="fas fa-file-pdf mr-1 text-danger"></i> Reporte
+                </button>
+                <button class="btn btn-sm btn-outline-danger shadow-sm mr-3" (click)="limpiarPuntos()">
+                  <i class="fas fa-eraser mr-1"></i> Reiniciar Ruta
+                </button>
+                <span class="badge badge-primary py-2 px-3 shadow-sm border">{{ formRuta.puntos?.length || 0 }} Vértices</span>
+              </div>
+            </div>
+            <div id="map-definicion" style="height: 420px; width: 100%;" class="bg-light"></div>
+          </div>
+
+          <!-- TAB: ASIGNACIONES -->
+          <div class="tab-pane fade show active p-4" *ngIf="tabActiva === 'asignaciones'">
+            <div class="row">
+              <div class="col-12 mb-3">
+                <div class="d-flex justify-content-between align-items-end border-bottom pb-2">
+                  <div class="pr-3">
+                    <h6 class="mb-1 font-weight-bold text-dark">{{ formRuta.nombre }}</h6>
+                    <label class="text-muted small font-weight-bold text-uppercase mb-0">Seleccione la Fecha de Operaciones</label>
+                  </div>
+                  <div class="d-flex align-items-end" style="gap: 10px;">
+                    <div style="width: 180px;">
+                      <input type="date" class="form-control form-control-sm text-center font-weight-bold" [(ngModel)]="fechaAsignacion" (change)="cargarAsignaciones()">
+                    </div>
+                    <button class="btn btn-sm btn-danger shadow-sm px-3" (click)="onPrintProgramacion()" title="Imprimir Orden" [disabled]="!programacionesDelDia || programacionesDelDia.length === 0">
+                      <i class="fas fa-print mr-1"></i> PDF
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Formulario de rápida asignación -->
+              <div class="col-12 mb-3">
+                <div class="p-2 border rounded bg-light">
+                  <div class="row g-2 align-items-end mx-0">
+                    <div class="col-md-4 px-1">
+                      <label class="text-muted small font-weight-bold text-uppercase mb-1">Agente Asignado</label>
+                      <select class="form-control form-control-sm" [(ngModel)]="nuevaProg.id_personal">
+                        <option [ngValue]="null">-- Seleccionar Agente --</option>
+                        <option *ngFor="let p of catalogos.personal" [ngValue]="p.id">{{ p.nombres }} {{ p.apellidos }}</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4 px-1">
+                      <label class="text-muted small font-weight-bold text-uppercase mb-1">Vehículo / Unidad</label>
+                      <select class="form-control form-control-sm" [(ngModel)]="nuevaProg.id_vehiculo">
+                        <option [ngValue]="null">-- Seleccionar Unidad --</option>
+                        <option *ngFor="let v of catalogos.vehiculos" [ngValue]="v.id">{{ v.placa }} - {{ v.tipo }}</option>
+                      </select>
+                    </div>
+                    <div class="col-md-2 px-1">
+                      <label class="text-muted small font-weight-bold text-uppercase mb-1">Turno</label>
+                      <select class="form-control form-control-sm" [(ngModel)]="nuevaProg.turno">
+                        <option value="manana">Mañana</option>
+                        <option value="tarde">Tarde</option>
+                        <option value="noche">Noche</option>
+                      </select>
+                    </div>
+                    <div class="col-md-2 px-1">
+                      <button class="btn btn-dark btn-sm btn-block" (click)="asignar()" 
+                              [disabled]="!nuevaProg.id_personal && !nuevaProg.id_vehiculo">
+                        <i class="fas fa-plus mr-1"></i> Añadir
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Lista -->
+              <div class="col-12">
+                <table class="table table-sm border w-100 mb-0">
+                  <thead class="bg-light">
+                    <tr>
+                      <th class="px-2 border-bottom-0 py-2 text-muted small font-weight-bold text-uppercase">Turno</th>
+                      <th class="border-bottom-0 py-2 text-muted small font-weight-bold text-uppercase">Agente Asignado</th>
+                      <th class="border-bottom-0 py-2 text-muted small font-weight-bold text-uppercase">Unidad/Vehículo</th>
+                      <th class="text-right px-2 border-bottom-0 py-2 text-muted small font-weight-bold text-uppercase">Remover</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let p of programacionesDelDia">
+                      <td class="align-middle px-2">
+                        <span class="text-secondary font-weight-bold small">{{ p.turno | uppercase }}</span>
+                      </td>
+                      <td class="align-middle font-weight-bold text-dark">
+                        <span *ngIf="p.personal">{{ p.personal.nombres }} {{ p.personal.apellidos }}</span>
+                        <span class="text-muted small font-weight-normal" *ngIf="!p.personal">Sin personal</span>
+                      </td>
+                      <td class="align-middle">
+                        <span *ngIf="p.vehiculo" class="text-secondary"><i class="fas fa-car-side mr-1 small"></i> {{ p.vehiculo.placa }}</span>
+                        <span class="text-muted small" *ngIf="!p.vehiculo">Operativo a pie</span>
+                      </td>
+                      <td class="align-middle text-right px-2">
+                        <button class="btn btn-sm btn-link text-danger p-0 m-0" (click)="quitarAsignacion(p)" title="Eliminar asignación">
+                          <i class="fas fa-times"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr *ngIf="!programacionesDelDia.length">
+                      <td colspan="4" class="text-center py-4 text-muted small">No hay unidades ni agentes asignados para esta fecha.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="modal-footer bg-light border-0 px-4 py-3 justify-content-between">
+        <button type="button" class="btn btn-outline-secondary font-weight-bold px-4 shadow-sm" (click)="cerrarModal()" style="border-radius: 30px;">
+          <i class="fas fa-times-circle mr-1 small"></i> Descartar
+        </button>
+        <div class="btn-group-elegant">
+          <button type="button" class="btn btn-primary px-5 shadow-sm font-weight-bold" 
+                  [disabled]="!formRuta.nombre || guardando" (click)="guardar()" 
+                  *ngIf="tabActiva !== 'asignaciones'" style="border-radius: 30px;">
+            <i class="fas mr-2" [ngClass]="guardando ? 'fa-spinner fa-spin' : (editando ? 'fa-sync-alt' : 'fa-check')"></i> 
+            {{ guardando ? 'Procesando...' : (editando ? 'Actualizar Cambios' : 'Confirmar Registro') }}
+          </button>
+          <button type="button" class="btn btn-primary px-5 shadow-sm font-weight-bold" (click)="cerrarModal()" 
+                  *ngIf="tabActiva === 'asignaciones'" style="border-radius: 30px;">
+            <i class="fas fa-check mr-2"></i> Finalizar Programación
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL VER RECORRIDO ==================== -->
+<div class="modal fade" id="modalVerRuta" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content overflow-hidden" style="border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+      <div class="modal-header text-white" [style.background-color]="cv.tableHeaderBg || '#17a2b8'">
+        <h5 class="modal-title font-weight-bold d-flex align-items-center">
+          <i class="fas fa-map-marked mr-2 opacity-75"></i>
+          <span>Recorrido Patrullaje: {{ rutaVista?.nombre }}</span>
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="p-3 bg-light d-flex align-items-center border-bottom border-white shadow-sm">
+          <div class="mr-4">
+            <span class="badge badge-info mr-2">{{ getNombreTipo(rutaVista?.tipo_patrullaje) }}</span>
+            <span class="badge badge-light border text-dark font-weight-normal">
+              <i class="fas fa-map-marker-alt mr-1 text-danger"></i> {{ rutaVista?.sector?.nombre_sector || 'N/A' }}
+            </span>
+          </div>
+          <div class="ml-auto">
+            <span class="badge badge-outline-primary py-2 px-3">{{ rutaVista?.puntos?.length || 0 }} Puntos Trazados</span>
+          </div>
+        </div>
+        <div id="map-vista" style="height: 500px; width: 100%;" class="bg-dark"></div>
+      </div>
+      <div class="modal-footer bg-light border-0">
+        <button type="button" class="btn btn-outline-danger shadow-sm font-weight-bold px-4 mr-auto" (click)="onPrintRecorrido(rutaVista)">
+          <i class="fas fa-file-pdf mr-2"></i> Reporte
+        </button>
+        <button type="button" class="btn btn-warning shadow-sm font-weight-bold px-4" (click)="editarDesdeVista()">
+          <i class="fas fa-edit mr-2"></i> Editar Recorrido
+        </button>
+        <button type="button" class="btn btn-secondary px-4 font-weight-bold" data-dismiss="modal">
+          Cerrar Vista
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,117 @@
+// Estilos específicos para el componente ejemplo de ngx-bootstrap
+.info-box {
+  margin-bottom: 20px;
+  
+  .info-box-icon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    
+    i {
+      font-size: 2rem;
+      color: white;
+    }
+  }
+  
+  .info-box-content {
+    padding-left: 10px;
+    
+    .info-box-text {
+      font-weight: 500;
+      margin-bottom: 10px;
+      color: #495057;
+    }
+  }
+}
+
+.code-block {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 20px;
+  margin: 0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-x: auto;
+  
+  code {
+    background: none;
+    padding: 0;
+    color: #333;
+  }
+}
+
+.btn-group-vertical {
+  button {
+    width: 100%;
+    text-align: left;
+  }
+}
+
+// Estilos específicos para tooltips
+.btn-toolbar {
+  .btn {
+    margin: 2px;
+    min-width: 60px;
+  }
+}
+
+// Asegurar que los dropdowns funcionen con AdminLTE
+.dropdown {
+  &.show .dropdown-menu {
+    display: block;
+  }
+  
+  .dropdown-toggle::after {
+    margin-left: 0.255em;
+    vertical-align: 0.255em;
+    content: "";
+    border-top: 0.3em solid;
+    border-right: 0.3em solid transparent;
+    border-bottom: 0;
+    border-left: 0.3em solid transparent;
+  }
+}
+
+// Estilos para badges con AdminLTE
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25em 0.5em;
+  border-radius: 0.25rem;
+}
+
+// Animaciones suaves
+.fade {
+  &.show {
+    opacity: 1;
+  }
+  
+  &:not(.show) {
+    opacity: 0;
+  }
+}
+
+// Mejoras visuales para AdminLTE
+.card {
+  box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+  border: 0;
+  border-radius: 0.25rem;
+  
+  .card-header {
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0,0,0,.125);
+    
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #495057;
+      margin: 0;
+    }
+  }
+}
+

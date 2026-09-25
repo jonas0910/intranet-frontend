@@ -1,0 +1,192 @@
+<div class="mini-chat-box" 
+     [class.minimized]="minimized"
+     [style.z-index]="zIndex"
+     [id]="'chat-box-' + conversation.id">
+    
+    <!-- Header -->
+    <div class="chat-box-header" (click)="minimized && minimizeChat()">
+        <div class="chat-box-info" (click)="!minimized && minimizeChat()">
+            <div class="mini-avatar">{{ getAvatar() }}</div>
+            <span class="mini-conv-name">{{ getDisplayName() }}</span>
+        </div>
+        <div class="chat-box-actions">
+            <button class="btn-box-action" (click)="toggleDetalles(); $event.stopPropagation()" 
+                    [class.active]="mostrarDetalles" title="Información" *ngIf="!minimized">
+                <i class="fas fa-info-circle"></i>
+            </button>
+            <button class="btn-box-action" (click)="minimizeChat(); $event.stopPropagation()" [title]="minimized ? 'Restaurar' : 'Minimizar'">
+                <i class="fas" [class.fa-minus]="!minimized" [class.fa-plus]="minimized"></i>
+            </button>
+            <button class="btn-box-action" (click)="closeChat(); $event.stopPropagation()" title="Cerrar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Body -->
+    <div class="chat-box-body" *ngIf="!minimized">
+        
+        <!-- Panel de Detalles Overlay -->
+        <div class="mini-details-panel" [class.open]="mostrarDetalles">
+            <div class="mini-details-header">
+                <span>Detalles</span>
+                <button (click)="mostrarDetalles = false" class="btn-mini-close-details">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mini-details-body scroll-beautify">
+                <!-- Individual -->
+                <div *ngIf="conversation.conversation_type === 'individual'" class="mini-details-content">
+                    <div class="mini-det-avatar">{{ getAvatar() }}</div>
+                    <div class="mini-det-name">{{ getDisplayName() }}</div>
+                    <div class="mini-det-status">
+                        <span *ngIf="isOnline(getOtroUserId())" class="mini-badge-online">
+                            <span class="mini-dot-online"></span> En línea
+                        </span>
+                        <span *ngIf="!isOnline(getOtroUserId())" class="mini-badge-offline">
+                            <span class="mini-dot-offline"></span> Desconectado
+                        </span>
+                    </div>
+                    <div class="mini-det-info" *ngIf="conversation.active_participants">
+                        <ng-container *ngFor="let p of conversation.active_participants || conversation.participants">
+                            <div *ngIf="(p.id ?? p.user_id) !== usuarioActual?.id" class="mini-det-row">
+                                <i class="fas fa-envelope"></i>
+                                <span>{{ p.email || 'Sin email' }}</span>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+
+                <!-- Grupo -->
+                <div *ngIf="conversation.conversation_type !== 'individual'" class="mini-details-content">
+                    <div class="mini-det-avatar group">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="mini-det-name">{{ conversation.title || 'Grupo' }}</div>
+                    
+                    <div class="mini-members-title">
+                        <i class="fas fa-user-friends"></i>
+                        {{ (conversation.active_participants || conversation.participants)?.length || 0 }} participantes
+                    </div>
+                    
+                    <div class="mini-members-list">
+                        <div class="mini-member-item" *ngFor="let p of conversation.active_participants || conversation.participants">
+                            <div class="mini-m-avatar">{{ (p.name || '?').charAt(0).toUpperCase() }}</div>
+                            <div class="mini-m-info">
+                                <span class="mini-m-name">{{ p.name }} <span *ngIf="(p.id ?? p.user_id) === usuarioActual?.id">(tú)</span></span>
+                                <span class="mini-m-role" [class.admin]="p.role === 'admin'">
+                                    {{ p.role === 'admin' ? 'Admin' : 'Miembro' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mini-messages" #miniMessages>
+            <div class="mini-msgs-loading" *ngIf="cargandoMsgs && mensajesMini.length === 0">
+                <i class="fas fa-circle-notch fa-spin"></i>
+            </div>
+
+            <div class="mini-msg-container"
+                 *ngFor="let m of mensajesMini; trackBy: trackMsg"
+                 [class.mine]="esMio(m)"
+                 [class.theirs]="!esMio(m)">
+                <div class="mini-sender-name" *ngIf="!esMio(m) && conversation.conversation_type !== 'individual'">
+                    {{ m.sender?.name }}
+                </div>
+                <div class="mini-msg">
+                    <div class="mini-bubble">
+                        <!-- Mini Attachments -->
+                        <div *ngIf="m.attachments?.length > 0" class="mini-attachments">
+                            <div *ngFor="let att of m.attachments" class="mini-att-item">
+                                <div *ngIf="att.mime_type?.startsWith('image/')" class="mini-att-image">
+                                    <img [src]="att.download_url" [alt]="att.original_name">
+                                </div>
+                                <div *ngIf="att.mime_type?.startsWith('audio/')" class="mini-att-audio">
+                                    <audio controls><source [src]="att.download_url"></audio>
+                                </div>
+                                <div *ngIf="!att.mime_type?.startsWith('image/') && !att.mime_type?.startsWith('audio/')" class="mini-att-file">
+                                    <i [class]="att.icon_class || 'fas fa-file'"></i>
+                                    <a [href]="att.download_url" target="_blank">{{ att.original_name }}</a>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="mini-content" *ngIf="m.content && m.content !== 'Archivo adjunto'">{{ m.content }}</span>
+                        <span class="mini-time">{{ formatHora(m.created_at) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing -->
+            <div class="mini-typing" *ngIf="typingUsuarios.length > 0">
+                <span class="typing-dots-mini"><span></span><span></span><span></span></span>
+                <span class="typing-name">{{ typingUsuarios[0] }} escribe...</span>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="mini-input-area">
+            <div class="mini-input-actions">
+                <div class="mini-dropup" [class.open]="mostrarMediaMenu">
+                    <button class="btn-mini-media" title="Adjuntar" (click)="toggleMediaMenu()"><i class="fas fa-plus"></i></button>
+                    <div class="mini-media-menu">
+                        <button (click)="abrirCarga('image')"><i class="fas fa-image"></i></button>
+                        <button (click)="abrirCarga('file')"><i class="fas fa-file-alt"></i></button>
+                        <button (click)="abrirCarga('audio')"><i class="fas fa-microphone"></i></button>
+                    </div>
+                </div>
+            </div>
+            <input type="text"
+                   class="mini-input"
+                   [(ngModel)]="textoMini"
+                   (input)="onMiniTyping()"
+                   (keydown.enter)="onMiniEnter($any($event))"
+                   placeholder="Escribe..."
+                   [disabled]="enviandoMini">
+            <button class="mini-send"
+                    (click)="enviarMiniMensaje()"
+                    [disabled]="!textoMini.trim() || enviandoMini">
+                <i class="fas" [class.fa-paper-plane]="!enviandoMini" [class.fa-spinner]="enviandoMini" [class.fa-spin]="enviandoMini"></i>
+            </button>
+        </div>
+
+        <!-- Overlay Carga -->
+        <div class="mini-upload-overlay" *ngIf="showUploadOverlay">
+            <div class="mini-upload-header">
+                <span>Adjuntar {{ uploadType }}</span>
+                <button (click)="cerrarCarga()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mini-upload-body">
+                <div *ngIf="uploadType === 'audio'" class="mini-audio-zone">
+                    <div class="mini-rec-status" *ngIf="isRecording">Grabando: {{ formatTime(recordingTime) }}</div>
+                    <button class="btn-mini-rec" *ngIf="!isRecording && !audioUrlPre" (click)="iniciarGrabacion()">Grabar</button>
+                    <button class="btn-mini-stop" *ngIf="isRecording" (click)="detenerGrabacion()">Stop</button>
+                    <audio *ngIf="audioUrlPre" [src]="audioUrlPre" controls class="mini-preview-audio"></audio>
+                </div>
+                <div *ngIf="uploadType !== 'audio'" class="mini-drop-zone" 
+                     (dragover)="onDragOver($event)" (drop)="onDrop($event)">
+                    <input type="file" #fileInputMini hidden multiple (change)="onFileSelected($event)">
+                    <div *ngIf="selectedFiles.length === 0" (click)="fileInputMini.click()" class="mini-drop-prompt">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click para subir</p>
+                    </div>
+                    <div class="mini-previews" *ngIf="selectedFiles.length > 0">
+                        <div class="mini-p-item" *ngFor="let p of previews; let i = index">
+                            <span class="mini-p-name">{{ p.name }}</span>
+                            <i class="fas fa-times" (click)="removerArchivo(i)"></i>
+                        </div>
+                        <button (click)="fileInputMini.click()" class="btn-mini-add"> + </button>
+                    </div>
+                </div>
+                <textarea [(ngModel)]="mensajeAdjunto" placeholder="Mensaje..." class="mini-up-textarea"></textarea>
+            </div>
+            <div class="mini-upload-footer">
+                <button class="btn-mini-cancel" (click)="cerrarCarga()">Atrás</button>
+                <button class="btn-mini-send-up" (click)="enviarMultimedia()" [disabled]="enviandoMini">Enviar</button>
+            </div>
+        </div>
+    </div>
+</div>

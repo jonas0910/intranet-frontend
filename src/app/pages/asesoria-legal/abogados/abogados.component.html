@@ -1,0 +1,97 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-user-tie mr-2"></i>Abogados</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/asesoria-legal">Asesoría Jurídica</a></li>
+          <li class="breadcrumb-item active">Abogados</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title mb-0">Lista de abogados</h3>
+        <button class="btn btn-primary btn-sm" (click)="abrirModal()">
+          <i class="fas fa-plus mr-1"></i>Agregar abogado
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <div *ngIf="loading" class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div>
+        <div *ngIf="!loading && abogados.length === 0" class="text-center py-5 text-muted">
+          <i class="fas fa-user-tie fa-3x mb-3"></i>
+          <p>No hay abogados registrados. Agregue uno para asignar casos.</p>
+        </div>
+        <table *ngIf="!loading && abogados.length > 0" class="table table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Jefe Legal</th>
+              <th>Estado</th>
+              <th width="120">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of abogados">
+              <td>{{ a.name }}</td>
+              <td><small>{{ a.email }}</small></td>
+              <td>
+                <button class="btn btn-sm" [ngClass]="a.es_jefe_legal ? 'btn-warning' : 'btn-outline-secondary'" (click)="toggleJefe(a.id, a.es_jefe_legal)" [disabled]="processing">
+                  {{ a.es_jefe_legal ? 'Sí' : 'No' }}
+                </button>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="a.activo ? 'badge-success' : 'badge-secondary'">{{ a.activo ? 'Activo' : 'Inactivo' }}</span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-secondary" (click)="toggleActivo(a.id, a.activo)" [disabled]="processing">
+                  <i class="fas" [ngClass]="a.activo ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal agregar abogado -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Agregar abogado</h5>
+        <button type="button" class="close" (click)="cerrarModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Usuario</label>
+          <select class="form-control" [(ngModel)]="selectedUserId">
+            <option [ngValue]="0">-- Seleccione --</option>
+            <option *ngFor="let u of usuariosDisponibles" [ngValue]="u.id">{{ u.name }} ({{ u.email }})</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="chkJefe" [(ngModel)]="esJefeLegal">
+            <label class="custom-control-label" for="chkJefe">Es Jefe Legal (puede asignar y aprobar informes)</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="agregarAbogado()" [disabled]="!selectedUserId || processing">
+          <i class="fas fa-plus mr-1"></i>Agregar
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showModal" *ngIf="showModal"></div>
+</div>

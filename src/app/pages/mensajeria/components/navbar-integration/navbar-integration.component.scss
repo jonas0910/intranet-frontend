@@ -1,0 +1,314 @@
+.mensajeria-navbar-integration {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quick-compose-btn {
+  .btn {
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: #fff !important;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3) !important;
+      transform: none;
+      box-shadow: none;
+    }
+
+    i { font-size: 0.7rem; }
+  }
+}
+
+.notifications-dropdown {
+  position: relative;
+
+  .notification-bell {
+    position: relative;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    padding: 4px 8px;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+
+    &:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    &.has-notifications {
+      color: #fff;
+    }
+
+    &:focus { box-shadow: none; }
+
+    .notification-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      min-width: 14px;
+      height: 14px;
+      padding: 0 3px;
+      font-size: 0.55rem;
+      font-weight: 600;
+      line-height: 14px;
+      text-align: center;
+      border-radius: 7px;
+      background-color: #e41e3f;
+      color: white;
+      border: 2px solid #1877f2;
+      animation: none;
+    }
+  }
+}
+
+.notification-menu {
+  width: 300px;
+  max-height: 420px;
+  border: none !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+
+  .dropdown-header {
+    background-color: #f0f2f5;
+    border-bottom: 1px solid #e4e6eb;
+    padding: 8px 10px;
+
+    h6 {
+      color: #1c1e21;
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+
+    .btn-link {
+      color: #65676b;
+      text-decoration: none;
+      font-size: 0.78rem;
+
+      &:hover { color: #1877f2; }
+    }
+
+    .stats-summary {
+      .stat-item {
+        .stat-number {
+          font-size: 0.9rem;
+          font-weight: bold;
+          color: #1877f2;
+        }
+        .stat-label {
+          font-size: 0.6rem;
+          color: #65676b;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+      }
+    }
+  }
+
+  .notifications-list {
+    max-height: 250px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-thumb {
+      background: #bec3c9;
+      border-radius: 2px;
+    }
+
+    .notification-item {
+      padding: 6px 10px;
+      border-bottom: 1px solid #f0f2f5;
+      cursor: pointer;
+      transition: background 0.12s ease;
+
+      &:hover { background: #f0f2f5; }
+
+      &.unread {
+        background: #e7f3ff;
+        border-left: 3px solid #1877f2;
+
+        &:hover { background: #d9ecff; }
+      }
+
+      &:last-child { border-bottom: none; }
+
+      .notification-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+
+        .notification-icon {
+          flex-shrink: 0;
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          background-color: #e4e6eb;
+
+          i { font-size: 0.75rem; }
+        }
+
+        .notification-body {
+          flex: 1;
+          min-width: 0;
+
+          .notification-title {
+            font-weight: 600;
+            color: #1c1e21;
+            font-size: 0.75rem;
+            margin-bottom: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .notification-message {
+            color: #65676b;
+            font-size: 0.7rem;
+            line-height: 1.3;
+            margin-bottom: 1px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+
+          .notification-time {
+            color: #8a8d91;
+            font-size: 0.65rem;
+          }
+        }
+
+        .notification-actions {
+          flex-shrink: 0;
+          opacity: 0;
+          transition: opacity 0.15s ease;
+
+          .btn-link {
+            color: #65676b;
+            padding: 2px;
+            font-size: 0.7rem;
+
+            &:hover { color: #e41e3f; }
+          }
+        }
+      }
+
+      &:hover .notification-actions { opacity: 1; }
+    }
+  }
+
+  .empty-notifications {
+    padding: 1.5rem 1rem;
+
+    .fa-2x { font-size: 1.5rem; }
+    p { font-size: 0.78rem; }
+  }
+
+  .dropdown-footer {
+    background-color: #f0f2f5;
+    border-top: 1px solid #e4e6eb;
+    padding: 6px 10px;
+
+    .btn {
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-color: #1877f2;
+      color: #1877f2;
+
+      &:hover {
+        background: #1877f2;
+        color: #fff;
+      }
+    }
+  }
+}
+
+.modal {
+  z-index: 1050;
+
+  .modal-dialog {
+    margin: 1.75rem auto;
+    max-width: 800px;
+  }
+
+  .modal-content {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .modal-header {
+    background: #f0f2f5;
+    border-bottom: 1px solid #e4e6eb;
+    border-radius: 8px 8px 0 0;
+    padding: 10px 16px;
+
+    .modal-title {
+      color: #1c1e21;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .close { color: #65676b; }
+  }
+
+  .modal-body { padding: 0; }
+}
+
+.modal-backdrop {
+  z-index: 1040;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+  .notification-menu {
+    width: 280px;
+
+    .dropdown-header { padding: 6px 8px; }
+
+    .notification-item {
+      padding: 5px 8px;
+
+      .notification-content {
+        gap: 6px;
+
+        .notification-icon {
+          width: 24px;
+          height: 24px;
+        }
+      }
+    }
+  }
+
+  .modal-dialog {
+    margin: 0.5rem;
+    max-width: none;
+  }
+
+  .quick-compose-btn {
+    .btn span { display: none !important; }
+  }
+}
+
+.notification-menu {
+  animation: slideDown 0.15s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notification-bell:focus,
+.btn:focus { outline: none; }

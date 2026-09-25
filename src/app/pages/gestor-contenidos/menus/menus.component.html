@@ -1,0 +1,127 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">Gestión de Menús</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/dashboard">CMS</a></li>
+          <li class="breadcrumb-item active">Menús</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="card card-outline card-primary">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-bars mr-2"></i>Listado de Menús
+        </h3>
+        <div class="card-tools">
+          <a routerLink="/gestor-contenidos/menus/builder" class="btn btn-info btn-sm mr-2">
+            <i class="fas fa-puzzle-piece mr-1"></i> Constructor
+          </a>
+          <a routerLink="/gestor-contenidos/menus/crear" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus mr-1"></i> Nuevo Menú
+          </a>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <!-- Filtro -->
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <div class="input-group input-group-sm">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="fas fa-filter"></i></span>
+              </div>
+              <select class="form-control" [(ngModel)]="filtroUbicacion" (ngModelChange)="aplicarFiltro()">
+                <option value="">Todas las ubicaciones</option>
+                <option *ngFor="let u of ubicaciones" [value]="u">{{ u | titlecase }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div *ngIf="cargando" class="text-center py-4">
+          <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+          <p class="mt-2 text-muted">Cargando menús...</p>
+        </div>
+
+        <!-- Tabla -->
+        <div *ngIf="!cargando" class="table-responsive">
+          <table class="table table-bordered table-striped table-hover table-sm">
+            <thead class="thead-dark">
+              <tr>
+                <th style="width: 50px">ID</th>
+                <th>Nombre</th>
+                <th style="width: 120px">Ubicación</th>
+                <th style="width: 100px">Tipo</th>
+                <th>URL / Página</th>
+                <th style="width: 130px">Padre</th>
+                <th style="width: 70px">Orden</th>
+                <th style="width: 80px">Estado</th>
+                <th style="width: 120px">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="menusFiltrados.length === 0">
+                <td colspan="9" class="text-center text-muted py-3">
+                  <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                  No se encontraron elementos de menú
+                </td>
+              </tr>
+              <tr *ngFor="let menu of menusFiltrados">
+                <td>{{ menu.id }}</td>
+                <td>
+                  <i *ngIf="menu.icono" [class]="menu.icono + ' mr-1 text-muted'"></i>
+                  {{ menu.nombre }}
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getUbicacionBadgeClass(menu.ubicacion)">
+                    {{ menu.ubicacion | titlecase }}
+                  </span>
+                </td>
+                <td>{{ menu.tipo | titlecase }}</td>
+                <td>
+                  <span *ngIf="menu.tipo === 'pagina'" class="text-info">
+                    <i class="fas fa-file-alt mr-1"></i>Página #{{ menu.pagina_id }}
+                  </span>
+                  <span *ngIf="menu.tipo === 'url'" class="text-muted">
+                    <i class="fas fa-link mr-1"></i>{{ menu.url }}
+                  </span>
+                  <span *ngIf="menu.tipo === 'seccion'" class="text-secondary">
+                    <i class="fas fa-layer-group mr-1"></i>Sección
+                  </span>
+                </td>
+                <td>{{ menu.parent_id ? getNombrePadre(menu.parent_id) : '—' }}</td>
+                <td class="text-center">{{ menu.orden }}</td>
+                <td class="text-center">
+                  <span class="badge" [ngClass]="menu.activo ? 'badge-success' : 'badge-danger'">
+                    {{ menu.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <div class="btn-group btn-group-sm">
+                    <a [routerLink]="['/gestor-contenidos/menus', menu.id, 'editar']"
+                       class="btn btn-warning" title="Editar">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <button class="btn btn-danger" (click)="eliminar(menu.id)" title="Eliminar">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

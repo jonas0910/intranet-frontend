@@ -1,0 +1,598 @@
+<app-system-layout [title]="'Gestión de Control de Mantenimiento'"
+  [subtitle]="'Coordine planificaciones y atienda alertas de las maquinarias de su departamento.'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Equipo Mecánico', url: '/equipo-mecanico'}, {label: 'Control Mantenimiento'}]"
+  [subsystem]="'equipo-mecanico'">
+
+  <div class="row align-items-center mb-3">
+    <div class="col">
+      <h4 class="mb-0 font-weight-bold text-dark">
+        <i class="fas fa-tools text-primary mr-2"></i> Control de Mantenimiento
+      </h4>
+      <p class="text-muted small mb-0 mt-1 d-none d-md-block">
+        Use el filtro <strong>Departamento</strong> debajo para alinear maquinarias, alertas y realizados; el enlace puede incluir parámetros de búsqueda para compartir la vista.
+      </p>
+    </div>
+  </div>
+
+  <div class="card elevation-1 border-0 shadow-sm mb-4" style="border-radius: 10px;">
+    <!-- Filtro departamento + sincronizar (afecta todas las pestañas) -->
+    <div class="card-header bg-light border-bottom py-2 px-3">
+      <div class="d-flex flex-wrap align-items-start justify-content-between" style="gap: 12px;">
+        <div class="flex-grow-1" style="min-width: 200px; max-width: 100%;">
+          <div class="d-flex flex-wrap align-items-center mb-1" style="gap: 8px;">
+            <span class="font-weight-bold text-dark small text-nowrap">
+              <i class="fas fa-building text-primary mr-1"></i> Departamento
+            </span>
+            <select id="filtro-dept-control-mto"
+                    class="form-control filtros-dept-select"
+                    [(ngModel)]="filtroDepartamentoValor"
+                    (ngModelChange)="onCambioFiltroDepartamento()"
+                    [disabled]="cargando"
+                    [attr.title]="etiquetaFiltroDepartamento"
+                    aria-label="Elegir departamento para filtrar">
+              <option [ngValue]="'empleado'">Mi departamento (según mi usuario)</option>
+              <option [ngValue]="'todos'">Todos los departamentos</option>
+              <option *ngFor="let d of departamentos" [ngValue]="d.id">{{ d.nombre }}</option>
+            </select>
+          </div>
+          <p class="mb-0 small filtros-dept-etiqueta">
+            <span class="text-muted">Mostrando:</span>
+            <span class="font-weight-bold text-dark ml-1 text-break">{{ etiquetaFiltroDepartamento }}</span>
+          </p>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm px-3 shadow-sm align-self-start" (click)="cargarDatos()" [disabled]="cargando">
+          <i class="fas fa-sync-alt mr-1" [class.fa-spin]="cargando"></i> Sincronizar
+        </button>
+      </div>
+    </div>
+    <!-- TABS NAV -->
+    <div class="card-header bg-white border-bottom py-0">
+      <ul class="nav nav-tabs border-0 flex-nowrap mt-2" style="overflow-x: auto; overflow-y: hidden;">
+        <li class="nav-item">
+          <a class="nav-link py-3 cursor-pointer" style="border-radius: 8px 8px 0 0;" [class.active]="activeTab === 'maquinarias'" (click)="cambiarTab('maquinarias')">
+            <i class="fas fa-truck-pickup mr-1"></i> Maquinarias
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link py-3 cursor-pointer" style="border-radius: 8px 8px 0 0;" [class.active]="activeTab === 'vencidos'" (click)="cambiarTab('vencidos')">
+            <i class="fas fa-exclamation-circle text-danger mr-1"></i> Vencidos
+            <span class="badge badge-danger ml-1" *ngIf="vencidos.length">{{vencidos.length}}</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link py-3 cursor-pointer" style="border-radius: 8px 8px 0 0;" [class.active]="activeTab === 'proximos'" (click)="cambiarTab('proximos')">
+            <i class="fas fa-exclamation-triangle text-warning mr-1"></i> Próximos
+            <span class="badge badge-warning ml-1" *ngIf="proximos.length">{{proximos.length}}</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link py-3 cursor-pointer" style="border-radius: 8px 8px 0 0;" [class.active]="activeTab === 'pendientes'" (click)="cambiarTab('pendientes')">
+            <i class="fas fa-clock text-info mr-1"></i> Pendientes
+            <span class="badge badge-info ml-1" *ngIf="pendientes.length">{{pendientes.length}}</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link py-3 cursor-pointer" style="border-radius: 8px 8px 0 0;" [class.active]="activeTab === 'realizados'" (click)="cambiarTab('realizados')">
+            <i class="fas fa-check-circle text-success mr-1"></i> Realizados
+            <span class="badge badge-success ml-1" *ngIf="realizados.length">{{ realizados.length }}</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link py-3 cursor-pointer" style="border-radius: 8px 8px 0 0;" [class.active]="activeTab === 'planes'" (click)="cambiarTab('planes')">
+            <i class="fas fa-folder-open text-secondary mr-1"></i> Planes generados
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- TABS CONTENT -->
+    <div class="card-body pt-3">
+      <!-- Loading Indicator (la pestaña Planes generados usa su propio indicador) -->
+      <div *ngIf="cargando && activeTab !== 'planes'" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 text-muted">Cargando la información solicitada...</p>
+      </div>
+
+      <!-- MAQUINARIAS TAB -->
+      <div *ngIf="!cargando && activeTab === 'maquinarias'">
+        <div class="mb-3 p-3 rounded border bg-light d-flex flex-wrap align-items-center justify-content-between" style="gap: 10px;">
+          <div>
+            <span class="font-weight-bold text-dark"><i class="fas fa-clipboard-list text-primary mr-1"></i> Listado de Maquinarias Disponibles</span>
+            <br>
+            <small class="text-muted mb-0">Las maquinarias que ya tienen <strong>plan de mantenimiento registrado</strong> se separan del listado seleccionable, quedan con <span class="resaltado-plan-etiqueta">fondo resaltado</span> y conservan su <strong>N° de plan</strong>.</small>
+            <div class="mt-2 d-flex flex-wrap" style="gap: 6px;">
+              <span class="badge badge-light border text-dark">Disponibles para agregar: {{ equiposDisponiblesParaNuevoPlan.length }}</span>
+              <span class="badge badge-plan-oficial" *ngIf="equiposYaIncluidosEnPlan.length > 0">Ya planificadas: {{ equiposYaIncluidosEnPlan.length }}</span>
+            </div>
+          </div>
+          <div>
+            <button type="button" class="btn btn-outline-secondary btn-sm mr-2" (click)="seleccionarTodosEquipos()"
+                    [disabled]="equiposDisponiblesParaNuevoPlan.length === 0">
+              <i class="fas fa-check-double mr-1"></i> {{ hayTodosSeleccionadosListadoMaquinarias ? 'Deseleccionar Todos' : 'Seleccionar Todos' }}
+            </button>
+            <button type="button" class="btn btn-primary btn-sm shadow-sm" (click)="abrirModalNuevoPlan(modalNuevoPlan)" [disabled]="selectedEquipos.size === 0">
+              <i class="fas fa-plus mr-1"></i> Generar Plan de Mantenimiento
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover table-sm table-bordered w-100 mb-0">
+            <thead class="bg-light text-nowrap">
+              <tr>
+                <th class="text-center align-middle" style="width: 40px;">Sel.</th>
+                <th>Código / Placa</th>
+                <th>Marca y Modelo</th>
+                <th>Tipo</th>
+                <th class="text-nowrap">N° plan</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let eq of equiposDisponiblesParaNuevoPlan">
+                <td class="text-center align-middle">
+                  <input type="checkbox"
+                         [id]="'eq-sel-' + eq.id"
+                         [checked]="isEquipoSelected(eq.id)"
+                         (change)="toggleEquipo(eq.id, $any($event.target).checked)">
+                </td>
+                <td class="font-weight-bold">
+                  {{ eq.codigo_interno || '—' }} <br>
+                  <span class="text-muted small" *ngIf="eq.placa">[{{ eq.placa }}]</span>
+                </td>
+                <td>{{ eq.marca }} {{ eq.modelo }}</td>
+                <td><span class="badge badge-secondary">{{ eq.tipo || '—' }}</span></td>
+                <td class="align-middle text-nowrap"><span class="text-muted">—</span></td>
+              </tr>
+              <tr *ngIf="equiposDisponiblesParaNuevoPlan.length === 0">
+                <td colspan="5" class="text-center py-3 text-muted">No hay maquinarias registradas en este ámbito.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4" *ngIf="equiposYaIncluidosEnPlan.length > 0">
+          <div class="mb-2 d-flex align-items-center justify-content-between flex-wrap" style="gap: 8px;">
+            <span class="font-weight-bold text-dark"><i class="fas fa-highlighter text-warning mr-1"></i> Maquinarias con plan registrado</span>
+            <span class="small text-muted">Estas maquinarias ya no aparecen en la selección para un nuevo plan.</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover table-sm table-bordered w-100 mb-0">
+              <thead class="bg-light text-nowrap">
+                <tr>
+                  <th>Código / Placa</th>
+                  <th>Marca y Modelo</th>
+                  <th>Tipo</th>
+                  <th class="text-nowrap">N° plan</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let eq of equiposYaIncluidosEnPlan" class="fila-en-plan-mantenimiento">
+                  <td class="font-weight-bold">
+                    {{ eq.codigo_interno || '—' }} <br>
+                    <span class="text-muted small" *ngIf="eq.placa">[{{ eq.placa }}]</span>
+                  </td>
+                  <td>{{ eq.marca }} {{ eq.modelo }}</td>
+                  <td><span class="badge badge-secondary">{{ eq.tipo || '—' }}</span></td>
+                  <td class="align-middle text-nowrap">
+                    <span class="badge badge-plan-oficial font-weight-bold">{{ textoPlanMaquinaria(eq.id) }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLANES GENERADOS (registrados en BD con N° de plan) -->
+      <div *ngIf="activeTab === 'planes'">
+        <div class="mb-3 p-3 rounded border bg-white">
+          <p class="small text-muted mb-2">
+            Planes de mantenimiento preventivo generados desde controles seleccionados. Cada fila tiene <strong>N° de plan</strong> (código único). Use <strong>Editar maquinarias</strong> para agregar o quitar equipos; el sistema actualizará las líneas del plan según los controles pendientes/próximos/vencidos de cada maquinaria. Luego puede volver a descargar el PDF.
+          </p>
+          <div *ngIf="cargandoPlanesDocumento" class="text-center py-4 text-muted small">
+            <i class="fas fa-spinner fa-spin mr-1"></i> Cargando planes…
+          </div>
+          <div class="table-responsive" *ngIf="!cargandoPlanesDocumento">
+            <table class="table table-sm table-bordered table-hover mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th>N° plan</th>
+                  <th>Nombre</th>
+                  <th>Estado</th>
+                  <th class="text-center">Controles</th>
+                  <th>Registro</th>
+                  <th class="text-center" style="min-width: 200px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of planesPreventivosDocumento">
+                  <td class="font-weight-bold text-nowrap">{{ p.codigo }}</td>
+                  <td class="text-break">{{ p.nombre }}</td>
+                  <td><span class="badge badge-light border">{{ p.estado | titlecase }}</span></td>
+                  <td class="text-center">{{ p.plan_controles_count ?? '—' }}</td>
+                  <td class="small text-muted text-nowrap">{{ p.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td class="text-center text-nowrap">
+                    <button type="button" class="btn btn-sm btn-outline-primary mr-1 mb-1"
+                            (click)="abrirModalEditarMaquinariasPlan(p, modalEditarMaquinariasPlan)"
+                            title="Agregar o quitar maquinarias">
+                      <i class="fas fa-truck-pickup mr-1"></i><span class="d-none d-lg-inline">Editar</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger mb-1"
+                            (click)="descargarPdfPlanAlmacenado(p.id, p.codigo)"
+                            [disabled]="descargandoPdfPlanId === p.id"
+                            title="Descargar PDF">
+                      <i class="fas fa-spinner fa-spin" *ngIf="descargandoPdfPlanId === p.id"></i>
+                      <i class="fas fa-file-pdf" *ngIf="descargandoPdfPlanId !== p.id"></i>
+                      <span class="ml-1 d-none d-lg-inline">PDF</span>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="planesPreventivosDocumento.length === 0">
+                  <td colspan="6" class="text-center text-muted py-4">No hay planes generados en este ámbito. Use <strong>Generar plan de mantenimiento</strong> desde Vencidos, Próximos o Pendientes.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTROLES TABS -->
+      <div *ngIf="!cargando && activeTab !== 'maquinarias' && activeTab !== 'planes'">
+        <div class="alert alert-light border py-2 small mb-3 text-muted">
+          <i class="fas fa-highlighter mr-1 text-warning"></i>
+          Las filas que ya tienen <strong>plan de mantenimiento</strong> se muestran resaltadas, su <strong>N° de plan</strong> aparece en la columna y ya no se pueden volver a seleccionar.
+        </div>
+        <!-- Registrar plan en BD + PDF (controles seleccionados) -->
+        <div class="mb-3 p-3 rounded border bg-light d-flex flex-wrap align-items-center" style="gap: 10px;" *ngIf="listadoActual.length > 0 && activeTab !== 'realizados'">
+          <span class="font-weight-bold text-dark small mr-1"><i class="fas fa-clipboard-list text-primary mr-1"></i> Plan de mantenimiento (registro + PDF)</span>
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="seleccionarTodosControles()" [disabled]="controlesDisponiblesParaPlan.length === 0">
+            <i class="fas fa-check-double mr-1"></i> {{ hayControlesSeleccionadosCompleto() ? 'Deseleccionar todos' : 'Seleccionar todos' }}
+          </button>
+          <button type="button" class="btn btn-primary btn-sm shadow-sm" (click)="abrirModalPlanPreventivo(modalPlanPreventivo)"
+                  [disabled]="selectedControles.size === 0">
+            <i class="fas fa-file-signature mr-1"></i> Generar plan de mantenimiento
+          </button>
+        </div>
+
+        <div *ngIf="listadoActual.length === 0" class="text-center py-5 border rounded bg-white">
+          <i class="fas fa-clipboard-check fa-3x text-success opacity-50 mb-3"></i>
+          <p class="text-muted mb-0 font-weight-bold">No hay registros en estado {{ activeTab }}.</p>
+        </div>
+
+        <div class="table-responsive" *ngIf="listadoActual.length > 0">
+          <table class="table table-hover table-sm table-bordered w-100 mb-0">
+            <thead class="bg-light text-nowrap">
+              <tr>
+                <th class="text-center align-middle" style="width: 40px;" *ngIf="activeTab !== 'realizados'">Sel.</th>
+                <th>Equipo / Codigo</th>
+                <th class="text-nowrap">N° plan</th>
+                <th>Tipo de Mantenimiento</th>
+                <th *ngIf="activeTab !== 'realizados'">Fecha Próxima</th>
+                <th *ngIf="activeTab === 'realizados'">Última Realización</th>
+                <th *ngIf="activeTab === 'realizados'">Doc. Mto.</th>
+                <th *ngIf="activeTab !== 'realizados'">Aprobación</th>
+                <th class="text-center">Estado / Alerta</th>
+                <th class="text-center" style="min-width: 120px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let control of listadoActual; trackBy: trackByControlId"
+                  [class.fila-en-plan-mantenimiento]="controlEstaPlanificado(control)"
+                  [class.fila-programacion-aprobada]="controlTieneProgramacionAprobada(control)">
+                <td class="text-center align-middle" *ngIf="activeTab !== 'realizados'">
+                  <input type="checkbox"
+                         [checked]="isControlSelected(control.id)"
+                         [disabled]="!controlPuedeSeleccionarseParaPlan(control)"
+                         (change)="toggleControl(control.id, $any($event.target).checked)">
+                  <div class="small text-muted mt-1" *ngIf="!controlPuedeSeleccionarseParaPlan(control)">
+                    <i class="fas fa-lock text-warning"></i>
+                  </div>
+                </td>
+                <td>
+                  <span class="font-weight-bold d-block">
+                    {{ control.equipo?.codigo_interno }} <span *ngIf="control.equipo?.placa">[{{ control.equipo?.placa }}]</span>
+                  </span>
+                  <small class="text-muted">{{ control.equipo?.marca }} {{ control.equipo?.modelo }}</small>
+                </td>
+                <td class="align-middle text-nowrap">
+                  <span *ngIf="controlEstaPlanificado(control)" class="badge badge-plan-oficial font-weight-bold">{{ textoCodigoPlanControl(control) }}</span>
+                  <span *ngIf="!controlEstaPlanificado(control)" class="text-muted">—</span>
+                </td>
+                <td>
+                  {{ control.tipo_mantenimiento?.nombre }} <br>
+                  <span class="badge badge-light border text-muted" *ngIf="control.plan_correlativo">N° Corr. {{control.plan_correlativo}}</span>
+                  <span class="badge badge-aprobacion-fecha mt-1" *ngIf="controlTieneProgramacionAprobada(control)">Aprobado {{ fechaAprobacionControl(control) | date:'dd/MM/yyyy HH:mm' }}</span>
+                </td>
+                <td *ngIf="activeTab !== 'realizados'">
+                  <strong [ngClass]="control.dias_restantes != null && control.dias_restantes < 0 ? 'text-danger' : 'text-dark'">
+                    {{ formatearFecha(control.fecha_proxima) }}
+                  </strong>
+                  <br>
+                  <small class="text-muted" *ngIf="control.dias_restantes != null">
+                    {{ control.dias_restantes < 0 ? 'Vencido por ' + Math.abs(control.dias_restantes) + ' d' : 'Faltan ' + control.dias_restantes + ' d' }}
+                  </small>
+                </td>
+                <td *ngIf="activeTab === 'realizados'">
+                  <strong class="text-success">{{ control.fecha_ultima_realizacion ? formatearFecha(control.fecha_ultima_realizacion) : '—' }}</strong>
+                </td>
+                <td *ngIf="activeTab === 'realizados'">
+                  <a *ngIf="control.mantenimiento_realizado_id" [routerLink]="['/equipo-mecanico/mantenimientos']" [queryParams]="{ id: control.mantenimiento_realizado_id }" class="font-weight-bold text-primary mx-1" style="text-decoration: underline;">
+                    <i class="fas fa-file-invoice mr-1"></i> Mto. #{{ control.mantenimiento_realizado_id }}
+                  </a>
+                  <span *ngIf="!control.mantenimiento_realizado_id" class="text-muted small">N/A</span>
+                </td>
+                <td *ngIf="activeTab !== 'realizados'" class="align-middle">
+                  <div class="aprobacion-celda">
+                    <div *ngIf="controlTieneProgramacionAprobada(control)" class="aprobacion-guardada mb-1">
+                      <i class="fas fa-check-circle mr-1"></i>
+                      <span class="font-weight-bold">Aprobado:</span>
+                      {{ fechaAprobacionControl(control) | date:'dd/MM/yyyy HH:mm' }}
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+                      <input type="datetime-local" class="form-control form-control-sm" style="max-width: 190px;"
+                             [value]="fechaHoraAprobacionInputValue(control)"
+                             (input)="onCambioFechaHoraAprobacion(control.id, $any($event.target).value)"
+                             [attr.title]="controlTieneProgramacionAprobada(control) ? 'Ajustar y volver a aprobar si corresponde' : 'Fecha y hora de aprobación de la programación'">
+                      <button type="button" class="btn btn-sm btn-outline-primary"
+                              (click)="aprobarProgramacionFila(control)"
+                              [disabled]="aprobandoPlanId === control.id"
+                              title="Grabar fecha de aprobación en el sistema">
+                        <i class="fas fa-spinner fa-spin" *ngIf="aprobandoPlanId === control.id"></i>
+                        <i class="fas fa-stamp" *ngIf="aprobandoPlanId !== control.id"></i>
+                      </button>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center text-nowrap">
+                  <span class="badge" [ngClass]="getBadgeClaseEstado(control.estado)">{{ control.estado | titlecase }}</span>
+                  <br>
+                  <span class="badge mt-1" *ngIf="control.nivel_alerta !== 'ninguno'" [ngClass]="getBadgeClaseAlerta(control.nivel_alerta)">{{ control.nivel_alerta }}</span>
+                </td>
+                <td class="text-center text-nowrap">
+                  <div class="btn-group btn-group-sm" *ngIf="activeTab !== 'realizados'">
+                    <button type="button" class="btn btn-success" (click)="marcarRealizado(control, modalMarcarRealizado)" title="Atender">
+                      <i class="fas fa-check"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" (click)="reprogramar(control, modalReprogramar)" title="Reprogramar">
+                      <i class="fas fa-calendar-alt"></i>
+                    </button>
+                  </div>
+                  <div class="btn-group btn-group-sm" *ngIf="activeTab === 'realizados'">
+                    <button type="button" class="btn btn-danger" (click)="descargarFicha(control)" title="Descargar PDF de ejecución" [disabled]="!control.mantenimiento_realizado_id || descargandoFichaIds.has(control.id)">
+                      <i class="fas fa-file-pdf" *ngIf="!descargandoFichaIds.has(control.id)"></i>
+                      <i class="fas fa-spinner fa-spin" *ngIf="descargandoFichaIds.has(control.id)"></i>
+                      <span class="ml-1 d-none d-lg-inline">PDF Mto.</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: generar plan documento (BD + PDF) desde controles -->
+  <ng-template #modalPlanPreventivo let-modal>
+    <div class="modal-header bg-primary text-white">
+      <h5 class="modal-title mb-0">
+        <i class="fas fa-file-signature mr-2"></i> Generar plan de mantenimiento
+      </h5>
+      <button type="button" class="close text-white" (click)="modal.dismiss()">
+        <span>&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="small text-muted mb-3">
+        Se guardará en base de datos un plan con <strong>número único</strong> y los <strong>{{ selectedControles.size }}</strong> controles seleccionados. Luego podrá descargar el PDF y consultar el historial en la pestaña <strong>Planes generados</strong>.
+      </p>
+      <div class="form-group mb-0">
+        <label class="font-weight-bold">Nombre del plan</label>
+        <input type="text" class="form-control" [(ngModel)]="nombrePlanPreventivoSeleccion" placeholder="Ej: Plan preventivo marzo 2026">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancelar</button>
+      <button type="button" class="btn btn-primary" (click)="confirmarGenerarPlanPreventivoDocumento()" [disabled]="generandoPlanPreventivoDocumento">
+        <i class="fas fa-spinner fa-spin mr-1" *ngIf="generandoPlanPreventivoDocumento"></i>
+        <i class="fas fa-save mr-1" *ngIf="!generandoPlanPreventivoDocumento"></i>
+        Registrar y descargar PDF
+      </button>
+    </div>
+  </ng-template>
+
+  <!-- Modal: editar maquinarias del plan documento -->
+  <ng-template #modalEditarMaquinariasPlan let-modal>
+    <div class="modal-header bg-light border-bottom">
+      <h5 class="modal-title mb-0 text-dark">
+        <i class="fas fa-truck-pickup text-primary mr-2"></i> Editar maquinarias del plan
+        <span class="badge badge-secondary ml-2 font-weight-normal">{{ etiquetaPlanEdicionCodigo }}</span>
+      </h5>
+      <button type="button" class="close" (click)="modal.dismiss()">
+        <span>&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="cargandoDetallePlanEdicion" class="text-center py-4 text-muted">
+        <i class="fas fa-spinner fa-spin mr-1"></i> Cargando plan…
+      </div>
+      <ng-container *ngIf="!cargandoDetallePlanEdicion">
+        <p class="small text-muted mb-3">
+          Maquinarias visibles según el <strong>filtro Departamento</strong> de la página. Al guardar, el plan incluirá los controles <strong>pendiente / próximo / vencido</strong> de cada equipo seleccionado (misma lógica que las alertas).
+        </p>
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2" style="gap: 8px;">
+          <span class="small font-weight-bold text-dark">Seleccionadas: {{ selectedEquiposPlanEdicion.size }}</span>
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="seleccionarTodosEquiposPlanEdicion()" [disabled]="equiposCatalogo.length === 0">
+            <i class="fas fa-check-double mr-1"></i>
+            {{ todasMaquinariasListaSeleccionadasPlan ? 'Quitar todas' : 'Seleccionar todas' }}
+          </button>
+        </div>
+        <div class="table-responsive border rounded" style="max-height: 55vh; overflow-y: auto;">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="bg-light sticky-top">
+              <tr>
+                <th class="text-center" style="width: 44px;">Sel.</th>
+                <th>Código / Placa</th>
+                <th>Marca / Modelo</th>
+                <th>Tipo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let eq of equiposCatalogo">
+                <td class="text-center align-middle">
+                  <input type="checkbox"
+                         [id]="'plan-edit-eq-' + eq.id"
+                         [checked]="isEquipoSeleccionadoPlanEdicion(eq.id)"
+                         (change)="toggleEquipoPlanEdicion(eq.id, $any($event.target).checked)">
+                </td>
+                <td class="font-weight-bold">
+                  {{ eq.codigo_interno || '—' }}
+                  <span class="text-muted small d-block" *ngIf="eq.placa">[{{ eq.placa }}]</span>
+                </td>
+                <td>{{ eq.marca }} {{ eq.modelo }}</td>
+                <td><span class="badge badge-secondary">{{ eq.tipo || '—' }}</span></td>
+              </tr>
+              <tr *ngIf="equiposCatalogo.length === 0">
+                <td colspan="4" class="text-center text-muted py-3">No hay maquinarias en este ámbito. Ajuste el departamento o sincronice datos.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancelar</button>
+      <button type="button" class="btn btn-primary" (click)="guardarMaquinariasPlanDocumento()"
+              [disabled]="guardandoMaquinariasPlan || cargandoDetallePlanEdicion">
+        <i class="fas fa-spinner fa-spin mr-1" *ngIf="guardandoMaquinariasPlan"></i>
+        <i class="fas fa-save mr-1" *ngIf="!guardandoMaquinariasPlan"></i>
+        Guardar cambios
+      </button>
+    </div>
+  </ng-template>
+
+  <!-- Modal: Crear Nuevo Plan para Seleccionados -->
+  <ng-template #modalNuevoPlan let-modal>
+    <div class="modal-header bg-primary text-white">
+      <h5 class="modal-title mb-0">
+        <i class="fas fa-clipboard-list mr-2"></i> Nuevo Plan Oficial de Mantenimiento
+      </h5>
+      <button type="button" class="close text-white" (click)="modal.dismiss()">
+        <span>&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group mb-3">
+        <label class="font-weight-bold">Nombre del plan <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" [(ngModel)]="nombreNuevoPlanOficial" placeholder="Ej: Plan Anual 2026">
+      </div>
+      <p class="small text-muted mb-0">
+        Se generará un plan consolidado para las <strong>{{selectedEquipos.size}}</strong> maquinarias seleccionadas. Guardará este agrupamiento en el sistema para luego aprobar sus mantenimientos.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancelar</button>
+      <button type="button" class="btn btn-primary" (click)="confirmarNuevoPlan()" [disabled]="creandoNuevoPlanOficial">
+        <i class="fas fa-spinner fa-spin mr-1" *ngIf="creandoNuevoPlanOficial"></i>
+        <i class="fas fa-save mr-1" *ngIf="!creandoNuevoPlanOficial"></i>
+        Guardar Plan
+      </button>
+    </div>
+  </ng-template>
+
+  <!-- Modal: Marcar como Realizado -->
+  <ng-template #modalMarcarRealizado let-modal>
+    <div class="modal-header bg-success text-white">
+      <h5 class="modal-title">
+        <i class="fas fa-check-circle"></i> Confirmar Mantenimiento Realizado
+      </h5>
+      <button type="button" class="close text-white" (click)="modal.dismiss()">
+        <span>&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="controlSeleccionado" class="alert alert-info py-2 mb-3">
+        <div><i class="fas fa-wrench mr-1"></i> <strong>{{ controlSeleccionado.tipo_mantenimiento?.nombre }}</strong></div>
+        <div class="small mt-1">
+          <strong>Equipo:</strong> {{ controlSeleccionado.equipo?.codigo_interno }} | {{ controlSeleccionado.equipo?.marca }}
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="mantenimientoId" class="font-weight-bold text-success">
+          Referencia de Ejecución de Mantenimiento <span class="text-danger">*</span>
+        </label>
+        <select class="form-control border-success" id="mantenimientoId"
+                [(ngModel)]="mantenimientoIdSeleccionado" (change)="onMantenimientoChange()" required>
+          <option [value]="null">-- Seleccione el acta o registro previo --</option>
+          <option *ngFor="let mto of mantenimientosDisponibles" [value]="mto.id">
+            Ref #{{mto.id}} - ({{mto.fecha_cierre || mto.fecha_inicio | date:'dd/MM/yyyy'}})
+          </option>
+        </select>
+        <small class="text-muted" *ngIf="mantenimientosDisponibles.length === 0">
+          <i class="fas fa-info-circle"></i> No se encontraron registros de mantenimiento cerrados para relacionar a este control. Puede faltar crear o cerrar el Mantenimiento en el historial.
+        </small>
+      </div>
+      <div class="row mt-3">
+        <div class="col-6">
+          <label class="small">Fecha Ref:</label>
+          <input type="text" class="form-control form-control-sm bg-light" [value]="fechaRealizacion | date:'dd/MM/yyyy'" readonly placeholder="Autocompletar">
+        </div>
+        <div class="col-6">
+          <label class="small">KMs Marcados:</label>
+          <input type="text" class="form-control form-control-sm bg-light" [value]="kilometrajeRealizacion" readonly placeholder="Autocompletar">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancelar</button>
+      <button type="button" class="btn btn-success" (click)="confirmarMarcarRealizado()" [disabled]="!mantenimientoIdSeleccionado">
+        <i class="fas fa-check"></i> Finalizar y Marcar Realizado
+      </button>
+    </div>
+  </ng-template>
+
+  <!-- Modal: Reprogramar -->
+  <ng-template #modalReprogramar let-modal>
+    <div class="modal-header bg-warning">
+      <h5 class="modal-title">
+        <i class="fas fa-calendar-plus"></i> Reprogramar Mantenimiento
+      </h5>
+      <button type="button" class="close" (click)="modal.dismiss()">
+        <span>&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="controlSeleccionado" class="alert alert-warning py-2 mb-3">
+        <div><i class="fas fa-wrench mr-1"></i> <strong>{{ controlSeleccionado.tipo_mantenimiento?.nombre }}</strong></div>
+        <div class="small mt-1"><strong>Fecha Anterior Proyectada:</strong> {{ formatearFecha(controlSeleccionado.fecha_proxima) }}</div>
+      </div>
+  
+      <div class="form-group mb-3">
+        <label>Nueva Fecha Pospuesta <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" [(ngModel)]="nuevaFecha" required>
+      </div>
+      <div class="row mb-3">
+        <div class="col-6">
+          <label>Nuevo Kilometraje</label>
+          <input type="number" class="form-control" [(ngModel)]="nuevoKilometraje" placeholder="KMs">
+        </div>
+        <div class="col-6">
+          <label>Nuevo Horómetro</label>
+          <input type="number" class="form-control" [(ngModel)]="nuevoHorometro" placeholder="Hrs">
+        </div>
+      </div>
+      <div class="form-group mb-0">
+        <label>Motivo de Reprogramación <span class="text-danger">*</span></label>
+        <textarea class="form-control" rows="2" [(ngModel)]="motivoReprogramacion" required placeholder="Falta de repuestos, unidad ocupada..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancelar</button>
+      <button type="button" class="btn btn-warning" (click)="confirmarReprogramar()">
+        <i class="fas fa-save"></i> Guardar Reprogramación
+      </button>
+    </div>
+  </ng-template>
+
+</app-system-layout>

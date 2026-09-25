@@ -1,0 +1,197 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0">Contactos</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor</a></li>
+          <li class="breadcrumb-item active">Contactos</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <!-- Stats -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <div class="small-box bg-info">
+          <div class="inner">
+            <h3>{{ stats.total }}</h3>
+            <p>Total Mensajes</p>
+          </div>
+          <div class="icon"><i class="fas fa-envelope"></i></div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="small-box bg-warning">
+          <div class="inner">
+            <h3>{{ stats.pendientes }}</h3>
+            <p>Pendientes</p>
+          </div>
+          <div class="icon"><i class="fas fa-clock"></i></div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="small-box bg-success">
+          <div class="inner">
+            <h3>{{ stats.respondidos }}</h3>
+            <p>Atendidos</p>
+          </div>
+          <div class="icon"><i class="fas fa-check-double"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-address-book mr-2"></i>Mensajes de Contacto</h3>
+      </div>
+      <div class="card-body p-0">
+        <div class="text-center py-5" *ngIf="loading">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+        </div>
+        <div class="table-responsive" *ngIf="!loading">
+          <table class="table table-hover table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Asunto</th>
+                <th>Atendido</th>
+                <th>Fecha</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="contactos.length === 0">
+                <td colspan="6" class="text-center text-muted py-4">No hay mensajes de contacto</td>
+              </tr>
+              <tr *ngFor="let item of contactos">
+                <td>{{ item.nombre }}</td>
+                <td>{{ item.email }}</td>
+                <td>{{ item.asunto }}</td>
+                <td>
+                  <span class="badge" [ngClass]="item.respondido ? 'badge-success' : 'badge-secondary'">
+                    {{ item.respondido ? 'Sí' : 'No' }}
+                  </span>
+                </td>
+                <td>{{ formatDate(item.created_at) }}</td>
+                <td class="text-right">
+                  <button class="btn btn-default btn-xs mr-1" (click)="openDetail(item)" title="Ver detalle">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn btn-success btn-xs mr-1" (click)="openRespond(item)" title="Atender / Añadir Nota"
+                          *ngIf="!item.respondido">
+                    <i class="fas fa-check"></i>
+                  </button>
+                  <button class="btn btn-warning btn-xs mr-1" (click)="marcarPendiente(item)" title="Marcar como Pendiente"
+                          *ngIf="item.respondido">
+                    <i class="fas fa-undo"></i>
+                  </button>
+                  <button class="btn btn-danger btn-xs" (click)="delete(item.id)" title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Detail Modal -->
+<div class="modal fade show d-block" *ngIf="showDetailModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Detalle del Mensaje</h5>
+        <button type="button" class="close" (click)="showDetailModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedContact">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Nombre:</strong> {{ selectedContact.nombre }}
+          </div>
+          <div class="col-md-6">
+            <strong>Email:</strong> {{ selectedContact.email }}
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Teléfono:</strong> {{ selectedContact.telefono || '-' }}
+          </div>
+          <div class="col-md-6">
+            <strong>Fecha:</strong> {{ formatDate(selectedContact.created_at) }}
+          </div>
+        </div>
+        <div class="mb-3">
+          <strong>Asunto:</strong> {{ selectedContact.asunto }}
+        </div>
+        <div class="mb-3">
+          <strong>Mensaje:</strong>
+          <div class="border rounded p-3 bg-light mt-1">{{ selectedContact.mensaje }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 text-right">
+            <button class="btn btn-warning btn-sm" (click)="marcarPendiente(selectedContact)" *ngIf="selectedContact.respondido">
+              <i class="fas fa-undo mr-1"></i>Marcar como Pendiente
+            </button>
+          </div>
+        </div>
+        <div class="row mt-2">
+          <div class="col-md-12">
+            <span class="badge" [ngClass]="selectedContact.respondido ? 'badge-success' : 'badge-secondary'">
+              {{ selectedContact.respondido ? 'Atendido' : 'Pendiente' }}
+            </span>
+          </div>
+        </div>
+        <div class="mt-3" *ngIf="selectedContact.respuesta">
+          <strong>Notas de Atención:</strong>
+          <div class="border rounded p-3 bg-light mt-1">{{ selectedContact.respuesta }}</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" (click)="showDetailModal = false; openRespond(selectedContact)"
+                *ngIf="selectedContact && !selectedContact.respondido">
+          <i class="fas fa-check mr-1"></i>Atender / Añadir Nota
+        </button>
+        <button type="button" class="btn btn-default" (click)="showDetailModal = false">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Respond Modal -->
+<div class="modal fade show d-block" *ngIf="showRespondModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Atender Mensaje / Añadir Nota</h5>
+        <button type="button" class="close" (click)="showRespondModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedContact">
+        <div class="callout callout-info">
+          <p class="mb-1"><strong>De:</strong> {{ selectedContact.nombre }} ({{ selectedContact.email }})</p>
+          <p class="mb-1"><strong>Asunto:</strong> {{ selectedContact.asunto }}</p>
+          <p class="mb-0 text-muted"><small>{{ selectedContact.mensaje }}</small></p>
+        </div>
+        <div class="form-group">
+          <label>Notas de Atención</label>
+          <textarea class="form-control" rows="5" [(ngModel)]="respuesta"
+                    placeholder="Escriba las notas sobre la acción tomada..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="showRespondModal = false">Cancelar</button>
+        <button type="button" class="btn btn-success" (click)="sendResponse()" [disabled]="!respuesta.trim()">
+          <i class="fas fa-save mr-1"></i>Guardar Atención
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

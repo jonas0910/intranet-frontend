@@ -1,0 +1,185 @@
+<app-system-layout [title]="viewConfig.title" [subtitle]="'Gestión de Mercados y Abastos'"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comercialización', url: '/comercializacion'}, {label: 'Padrón'}]"
+    [subsystem]="'comercializacion'">
+
+    <div class="card elevation-1" [ngClass]="cv.cardOutlineColor" [style.border-radius.px]="cv.cardBorderRadius">
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                    <i [class]="viewConfig.icon + ' mr-1 text-muted'"></i> Listado de Comerciantes y Puestos
+                </h3>
+                <span class="badge badge-info ml-2" *ngIf="cv.showRecordCount">{{data.length}} puestos</span>
+
+                <ng-container *ngIf="cv.showExportButtons">
+                    <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"
+                        (click)="onExportExcel()">
+                        <i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"
+                        (click)="onExportPdf()">
+                        <i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}
+                    </button>
+                </ng-container>
+            </div>
+            <div>
+                <button type="button" class="btn btn-sm shadow-sm" [ngClass]="cv.newBtnClass"
+                    (click)="onAction('create')">
+                    <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{viewConfig.actions.create.label}}
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table">
+                    <thead>
+                        <tr>
+                            <th>Nº Puesto</th>
+                            <th>Contribuyente / Razón Social</th>
+                            <th>Mercado</th>
+                            <th>Giro</th>
+                            <th class="text-center">Estado Pago</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let m of data">
+                            <td><strong class="text-success">{{m.nro_puesto}}</strong></td>
+                            <td>{{m.contribuyente}}</td>
+                            <td><i class="fas fa-store text-muted mr-1"></i> {{m.mercado}}</td>
+                            <td>{{m.giro}}</td>
+                            <td class="text-center">
+                                <span class="badge badge-pill"
+                                    [ngClass]="m.estado_pago === 'AL DÍA' ? 'badge-success' : 'badge-danger'">
+                                    {{m.estado_pago}}
+                                </span>
+                            </td>
+                            <td class="text-center" style="white-space: nowrap;">
+                                <button class="btn btn-sm" [ngClass]="cv.viewBtnClass" title="Ver Historial"
+                                    (click)="onAction('history', m)">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                                <button class="btn btn-sm ml-1" [ngClass]="cv.editBtnClass" title="Editar"
+                                    (click)="onAction('edit', m)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm ml-1 btn-outline-danger" title="Eliminar"
+                                    (click)="onAction('delete', m)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="data.length === 0">
+                            <td colspan="6" class="text-center p-5">
+                                <i class="fas fa-store-slash fa-3x text-muted mb-3 d-block"></i>
+                                <p class="text-muted">No hay puestos registrados en el padrón.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>
+
+<!-- Modal Nuevo Comerciante -->
+<div class="modal fade" id="modalComerciante" [ngClass]="{'show': showModal}"
+    [style.display]="showModal ? 'block' : 'none'" tabindex="-1" role="dialog"
+    [ngStyle]="{'background-color': showModal ? 'rgba(0,0,0,0.5)' : 'transparent'}">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content elevation-3" [style.border-radius.px]="mc.borderRadius">
+            <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+                [style.padding]="mc.headerPadding">
+                <h5 class="modal-title" [style.font-size]="mc.headerFontSize">
+                    <i [class]="mc.headerIcon + ' mr-2'"></i>
+                    {{ viewMode === 'edit' ? 'Editar Comerciante' : 'Registrar Nuevo Comerciante' }}
+                </h5>
+                <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" [style.background]="mc.bodyBg" [style.padding]="mc.formPadding">
+                <form [formGroup]="form">
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Nº Puesto /
+                                Ubicación</label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize"
+                                formControlName="nro_puesto" placeholder="Ej: A-12">
+                        </div>
+                        <div class="col-md-8 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Contribuyente
+                                (Titular)</label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize"
+                                formControlName="contribuyente" placeholder="Nombre completo o Razón Social">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Mercado / Centro
+                                Comercial</label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="mercado"
+                                placeholder="Indique el local/mercado">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Giro
+                                Autorizado</label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="giro"
+                                placeholder="Ej: Abarrotes, Carnes, etc.">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0" [style.background]="mc.footerBg">
+                <button type="button" class="btn" [ngClass]="mc.cancelBtnClass" (click)="closeModal()"
+                    [disabled]="isSaving">
+                    <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> Cancelar
+                </button>
+                <button type="button" class="btn shadow-sm" [ngClass]="mc.saveBtnClass" (click)="save()"
+                    [disabled]="form.invalid || isSaving">
+                    <i class="fas fa-circle-notch fa-spin mr-1" *ngIf="isSaving"></i>
+                    <i [class]="mc.saveBtnIcon + ' mr-1'" *ngIf="!isSaving"></i>
+                    {{ isSaving ? 'Guardando...' : mc.saveBtnLabel }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Historial -->
+<div class="modal fade" id="modalHistorial" [ngClass]="{'show': showHistoryModal}"
+    [style.display]="showHistoryModal ? 'block' : 'none'" tabindex="-1" role="dialog"
+    [ngStyle]="{'background-color': showHistoryModal ? 'rgba(0,0,0,0.5)' : 'transparent'}">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" [style.border-radius.px]="mc.borderRadius">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-history mr-2"></i> Historial de Trámites
+                </h5>
+                <button type="button" class="close text-white" (click)="closeModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0" *ngIf="historyData">
+                <div class="bg-light p-3 border-bottom">
+                    <div class="text-xs text-muted text-uppercase font-weight-bold">Comerciante</div>
+                    <div class="font-weight-bold text-lg text-primary">{{historyData.comerciante}}</div>
+                    <div class="text-sm mt-1">Puesto: <span class="badge badge-success">{{historyData.puesto}}</span>
+                    </div>
+                </div>
+                <div class="timeline p-3" style="max-height: 400px; overflow-y: auto;">
+                    <div class="timeline-item" *ngFor="let item of historyData.items">
+                        <i class="fas fa-circle text-info timeline-icon"></i>
+                        <div class="timeline-content ml-4 pb-3 border-left pl-3">
+                            <div class="text-xs text-muted">{{item.fecha}}</div>
+                            <div class="font-weight-bold text-sm">{{item.accion}}</div>
+                            <p class="text-xs mb-0 text-muted">{{item.detalle}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary shadow-sm" (click)="closeModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>

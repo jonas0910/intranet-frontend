@@ -1,0 +1,116 @@
+/* Premium Styles for Monitoring Map - Equipo Mecánico */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeInDown { from { opacity: 0; transform: translate3d(0, -100%, 0); visibility: visible; } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes heartBeat { 0% { transform: scale(1); } 14% { transform: scale(1.1); } 28% { transform: scale(1); } 42% { transform: scale(1.1); } 70% { transform: scale(1); } }
+@keyframes marker-glow { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
+
+.animate__animated { animation-duration: 0.6s; animation-fill-mode: both; }
+.animate__fadeIn { animation-name: fadeIn; }
+.animate__fadeInDown { animation-name: fadeInDown; }
+.animate__fadeInLeft { animation: fadeInLeft 0.5s both; }
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translate3d(-30px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+:host ::ng-deep {
+  .map-full-height {
+    height: 600px;
+    width: 100%;
+    background-color: #f8f9fa;
+    transition: all 0.5s ease-in-out;
+  }
+
+  .blink-animation { animation: blinker 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+  @keyframes blinker { 50% { opacity: 0.2; } }
+
+  .custom-marker {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    &:hover { transform: scale(1.25); z-index: 9999 !important; }
+  }
+
+  .leaflet-popup-content-wrapper { 
+    border-radius: 12px; 
+    padding: 0; 
+    overflow: hidden; 
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); 
+    border: none;
+  }
+  
+  .leaflet-popup-content { margin: 12px; }
+  
+  .leaflet-container { font-family: 'Inter', sans-serif !important; }
+}
+
+/* Sidebar Styles */
+.sidebar-container {
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  height: 600px;
+  background: white;
+  overflow: hidden;
+}
+
+.scrollable-list {
+  flex: 1;
+  overflow-y: auto;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 10px; }
+}
+
+.list-item-custom {
+  transition: all 0.2s ease;
+  border-left: 4px solid transparent;
+  &:hover { background-color: #f8f9fa; }
+  &.active-alert { background-color: rgba(220, 53, 69, 0.04); border-left-color: #dc3545; }
+  &.selected-p { background-color: rgba(0, 123, 255, 0.06); border-left-color: #007bff; }
+}
+
+.avatar-neutral-sm {
+  width: 34px;
+  height: 34px;
+  background: #f1f3f5;
+  color: #495057;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  &.has-alert { background: #fff5f5; color: #fa5252; border: 1.5px solid #fa5252; }
+}
+
+/* Notificación Flotante */
+.floating-alert-toast {
+  position: fixed;
+  top: 90px;
+  right: 25px;
+  z-index: 9999;
+  min-width: 320px;
+  max-width: 400px;
+}
+
+.icon-pulse { animation: heartBeat 1.5s infinite; }
+.pulse-dot { animation: marker-glow 1.5s ease-out infinite; }
+
+.map-overlay-tools {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.btn-white {
+  background: white; border: 1px solid rgba(0,0,0,0.1); color: #444;
+  &:hover { background: #f8f9fa; color: #000; }
+}
+
+.text-xxs { font-size: 0.65rem; }
+.text-xs { font-size: 0.75rem; }
+
+.color-preview {
+  display: inline-block; width: 20px; height: 20px; border-radius: 4px;
+  border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}

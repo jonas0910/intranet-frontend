@@ -1,0 +1,104 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1>Proyectos</h1></div>
+      <div class="col-sm-6 text-right">
+        <a routerLink="../proyectos/crear" class="btn btn-primary"><i class="fas fa-plus mr-1"></i>Nuevo Proyecto</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+          <div class="inner"><h3>{{ proyectosAll.length }}</h3><p>Total</p></div>
+          <div class="icon"><i class="fas fa-project-diagram"></i></div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-primary">
+          <div class="inner"><h3>{{ totalEnCurso }}</h3><p>En Curso</p></div>
+          <div class="icon"><i class="fas fa-spinner"></i></div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-success">
+          <div class="inner"><h3>{{ totalCompletados }}</h3><p>Completados</p></div>
+          <div class="icon"><i class="fas fa-check-circle"></i></div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+          <div class="inner"><h3>{{ totalDestacados }}</h3><p>Destacados</p></div>
+          <div class="icon"><i class="fas fa-star"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title">Lista de Proyectos</h3>
+        <div class="card-tools">
+          <ul class="nav nav-pills nav-sm">
+            <li class="nav-item"><a class="nav-link" [class.active]="!filtroEstado" (click)="cambiarFiltro('')" href="javascript:void(0)">Todos</a></li>
+            <li class="nav-item"><a class="nav-link" [class.active]="filtroEstado==='en_curso'" (click)="cambiarFiltro('en_curso')" href="javascript:void(0)">En Curso</a></li>
+            <li class="nav-item"><a class="nav-link" [class.active]="filtroEstado==='completado'" (click)="cambiarFiltro('completado')" href="javascript:void(0)">Completados</a></li>
+            <li class="nav-item"><a class="nav-link" [class.active]="filtroEstado==='planificacion'" (click)="cambiarFiltro('planificacion')" href="javascript:void(0)">Planificación</a></li>
+            <li class="nav-item"><a class="nav-link" [class.active]="filtroEstado==='pausado'" (click)="cambiarFiltro('pausado')" href="javascript:void(0)">Pausados</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="text-center py-4" *ngIf="loading"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+        <div class="table-responsive" *ngIf="!loading">
+          <table class="table table-striped table-hover" *ngIf="proyectos.length > 0">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>Estado</th>
+                <th>Progreso</th>
+                <th>Prioridad</th>
+                <th>Fechas</th>
+                <th>Responsable</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of proyectos">
+                <td>{{ p.id }}</td>
+                <td>
+                  <strong>{{ p.titulo }}</strong>
+                  <br><small class="text-muted">{{ p.descripcion_corta | slice:0:80 }}</small>
+                </td>
+                <td><span class="badge" [ngClass]="getEstadoBadge(p.estado)">{{ getEstadoLabel(p.estado) }}</span></td>
+                <td style="min-width:120px">
+                  <div class="progress" style="height:20px">
+                    <div class="progress-bar" [ngClass]="getProgressColor(p.progreso)" [style.width.%]="p.progreso || 0">{{ p.progreso || 0 }}%</div>
+                  </div>
+                </td>
+                <td><span class="badge" [ngClass]="getPrioridadBadge(p.prioridad)">{{ p.prioridad || 'normal' }}</span></td>
+                <td>
+                  <small>{{ p.fecha_inicio | date:'dd/MM/yyyy' }}</small>
+                  <span *ngIf="p.fecha_fin"> - <small>{{ p.fecha_fin | date:'dd/MM/yyyy' }}</small></span>
+                </td>
+                <td>{{ p.responsable || '-' }}</td>
+                <td>
+                  <a [routerLink]="['..', 'proyectos', p.id, 'editar']" class="btn btn-sm btn-info mr-1"><i class="fas fa-edit"></i></a>
+                  <button class="btn btn-sm btn-danger" (click)="eliminar(p.id)"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="text-center py-4 text-muted" *ngIf="proyectos.length === 0">
+            <i class="fas fa-project-diagram fa-3x mb-2"></i>
+            <p>No hay proyectos registrados</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

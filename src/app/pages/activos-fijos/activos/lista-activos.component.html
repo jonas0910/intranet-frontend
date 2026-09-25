@@ -1,0 +1,938 @@
+<app-system-layout [title]="'Catálogo de Activos Fijos'" [subtitle]="'Gestión integral del patrimonio institucional'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Activos Fijos', url: '/activos-fijos'}, {label: 'Catálogo'}]"
+  [subsystem]="'activos-fijos'">
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card elevation-1 mb-3"
+        [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-success'"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-table mr-1"></i> Activos Registrados
+            </h3>
+            <span class="badge"
+              [ngClass]="cv.cardOutlineColor ? 'bg-' + cv.cardOutlineColor.replace('card-', '') : 'badge-info'">{{
+              paginacion.total }}</span>
+            <button class="btn btn-sm btn-outline-info ml-1 px-2" *ngIf="cv.collapsibleFilters"
+              (click)="isFiltersCollapsed = !isFiltersCollapsed"
+              [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'" style="height: 24px; line-height: 1;">
+              <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+            </button>
+            <ng-container *ngIf="cv.showExportButtons">
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'"
+                title="Exportar Excel" (click)="onExportExcel()">
+                <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{ cv.excelBtnLabel || 'Excel' }}
+              </button>
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'"
+                title="Exportar PDF" (click)="onExportPdf()">
+                <i [class]="(cv.pdfBtnIcon || 'fas fa-file-pdf') + ' mr-1'"></i> {{ cv.pdfBtnLabel || 'PDF' }}
+              </button>
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass || 'btn-info'"
+                title="Imprimir" (click)="onExportPrint()">
+                <i [class]="(cv.printBtnIcon || 'fas fa-print') + ' mr-1'"></i> {{ cv.printBtnLabel || 'Imprimir' }}
+              </button>
+            </ng-container>
+          </div>
+          <div class="ms-auto flex-shrink-0">
+            <button type="button" class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-success'"
+              (click)="abrirModalCrear()">
+              <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> Nuevo Activo
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="border-bottom bg-light overflow-hidden" [style.max-height]="isFiltersCollapsed ? '0px' : '500px'"
+          [style.padding]="isFiltersCollapsed ? '0px' : '0.5rem'"
+          style="transition: max-height 0.3s ease, padding 0.3s ease;">
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="mb-1 ds-crud-label">Buscar</label>
+              <input type="text" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.search"
+                (ngModelChange)="onFilterChange()" placeholder="Código, descripción o serie...">
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Categoría</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.categoria_id"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todas</option>
+                <option *ngFor="let cat of categorias" [value]="cat.id">{{ cat.nombre }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Ubicación</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.ubicacion_id"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todas</option>
+                <option *ngFor="let ubi of ubicaciones" [value]="ubi.id">{{ ubi.nombre }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Unidad orgánica</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.unidad_organica_id"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todas</option>
+                <option *ngFor="let uo of unidadesOrganicas" [value]="uo.id ?? ''">{{ uo.code }} - {{ uo.name }}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Estado</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.estado"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todos</option>
+                <option value="activo">Activo</option>
+                <option value="baja">Baja</option>
+                <option value="transferido">Transferido</option>
+                <option value="extraviado">Extraviado</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Condición</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.condicion"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todas</option>
+                <option value="bueno">Bueno</option>
+                <option value="regular">Regular</option>
+                <option value="malo">Malo</option>
+                <option value="obsoleto">Obsoleto</option>
+              </select>
+            </div>
+            <div class="col-md-1">
+              <label class="mb-1 ds-crud-label">Por página</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.per_page"
+                (ngModelChange)="onFilterChange()">
+                <option *ngFor="let size of cv.pageSizeOptions" [ngValue]="size">{{size}}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div *ngIf="loading" class="text-center p-5">
+          <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+          <p class="mt-3">Cargando activos...</p>
+        </div>
+
+        <!-- DataTable -->
+        <div *ngIf="!loading" class="card-body px-0 pt-0 pb-2">
+          <div class="table-responsive p-2">
+            <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger"
+              [ngClass]="cv.tableClasses || 'table table-hover table-striped table-sm'"
+              class="table mb-0 w-100 ds-crud-table" id="activosTable">
+              <thead>
+                <tr>
+                  <th style="width: 50px;" class="border-0">#</th>
+                  <th style="width: 80px;" class="border-0">Imagen</th>
+                  <th class="border-0">Código Patrimonial</th>
+                  <th class="border-0">Descripción</th>
+                  <th class="border-0">Categoría</th>
+                  <th class="border-0">Ubicación</th>
+                  <th class="border-0">Unidad orgánica</th>
+                  <th class="border-0">Responsable</th>
+                  <th class="text-right border-0">Valor Neto</th>
+                  <th class="border-0">Estado</th>
+                  <th class="border-0">Condición</th>
+                  <th class="text-center border-0" style="width: 180px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let activo of activos; let i = index">
+                  <td>{{ (paginacion.currentPage - 1) * paginacion.perPage + i + 1 }}</td>
+                  <td>
+                    <div *ngIf="activo.imagen_principal" class="img-thumbnail p-0 position-relative"
+                      style="width: 60px; height: 60px; overflow: hidden; cursor: pointer;">
+                      <img [src]="getImageUrl(activo.imagen_principal)" alt="Imagen"
+                        style="width: 100%; height: 100%; object-fit: cover;"
+                        (click)="verImagenCompleta(activo.imagen_principal, activo.imagenes || [])"
+                        (error)="onImageError($event)" title="Click para ver en grande">
+                      <div class="image-overlay" *ngIf="activo.imagenes && activo.imagenes.length > 1">
+                        <span class="badge badge-dark">{{ activo.imagenes.length }}</span>
+                      </div>
+                    </div>
+                    <div *ngIf="!activo.imagen_principal" class="bg-light text-center"
+                      style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid #dee2e6; border-radius: 0.25rem;">
+                      <i class="fas fa-image text-muted"></i>
+                    </div>
+                  </td>
+                  <td>
+                    <strong class="text-primary">{{ activo.codigo_patrimonial }}</strong>
+                    <br><small class="text-muted">{{ activo.codigo_sbn }}</small>
+                  </td>
+                  <td>
+                    <div>{{ activo.descripcion }}</div>
+                    <small class="text-muted" *ngIf="activo.marca"><i class="fas fa-tag"></i> {{ activo.marca }} {{
+                      activo.modelo }}</small>
+                  </td>
+                  <td><span class="badge badge-secondary">{{ activo.categoria?.nombre }}</span></td>
+                  <td><small><i class="fas fa-map-marker-alt text-danger mr-1"></i>{{ activo.ubicacion?.nombre
+                      }}</small></td>
+                  <td><small>{{ activo.unidad_organica?.name || '-' }}</small></td>
+                  <td>
+                    <small *ngIf="activo.responsable"><i class="fas fa-user mr-1"></i>{{ activo.responsable.name
+                      }}</small>
+                    <small *ngIf="!activo.responsable" class="text-muted">Sin asignar</small>
+                  </td>
+                  <td class="text-right"><strong class="text-success">S/ {{ formatNumber(activo.valor_neto)
+                      }}</strong></td>
+                  <td><span class="badge" [ngClass]="getEstadoBadgeClass(activo.estado)">{{ activo.estado |
+                      titlecase }}</span></td>
+                  <td><span class="badge badge-pill" [ngClass]="getCondicionBadgeClass(activo.condicion)">{{
+                      activo.condicion | titlecase }}</span></td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <app-crud-actions
+                        [showView]="true"
+                        [showEdit]="true"
+                        [showDelete]="true"
+                        [subsystem]="'activos-fijos'"
+                        (onView)="verDetalle(activo)"
+                        (onEdit)="abrirModalEditar(activo)"
+                        (onDelete)="confirmarEliminar(activo)">
+                      </app-crud-actions>
+                      <button type="button" class="btn btn-primary" (click)="generarQR(activo)" title="Generar QR"><i
+                          class="fas fa-qrcode"></i></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="activos.length === 0">
+                  <td colspan="12" class="text-center p-5">
+                    <i class="fas fa-inbox fa-4x text-muted mb-3 d-block"></i>
+                    <p class="text-muted">No se encontraron activos con los filtros aplicados</p>
+                    <button type="button" class="btn btn-sm btn-primary" (click)="limpiarFiltros()"><i
+                        class="fas fa-redo mr-1"></i> Limpiar Filtros</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Paginación (footer) -->
+        <div *ngIf="!loading" class="card-footer clearfix">
+          <div class="row">
+            <div class="col-sm-12 col-md-5">
+              <div class="dataTables_info" style="font-size: var(--ds-font-size);">
+                Mostrando {{ (paginacion.currentPage - 1) * paginacion.perPage + 1 }} a {{
+                Math.min(paginacion.currentPage * paginacion.perPage, paginacion.total) }} de {{ paginacion.total }}
+                registros
+              </div>
+            </div>
+            <div class="col-sm-12 col-md-7">
+              <ul class="pagination m-0 float-right" [ngClass]="cv.paginationSize || 'pagination-sm'"
+                *ngIf="paginacion.lastPage > 1">
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage > 1 && onPageChange(1)">«</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage > 1 && onPageChange(paginacion.currentPage - 1)">‹</a>
+                </li>
+                <li class="page-item" *ngFor="let page of getPaginationPages()"
+                  [class.active]="page === paginacion.currentPage" [class.disabled]="page === -1">
+                  <a class="page-link" href="javascript:void(0)" (click)="page !== -1 && onPageChange(page)">{{ page
+                    === -1 ? '...' : page }}</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage < paginacion.lastPage && onPageChange(paginacion.currentPage + 1)">›</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage < paginacion.lastPage && onPageChange(paginacion.lastPage)">»</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-system-layout>
+
+<!-- ==================== MODAL CREAR/EDITAR ACTIVO ==================== -->
+<div class="modal fade" id="modalActivoForm" tabindex="-1" role="dialog" data-backdrop="static">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas" [ngClass]="modoEdicion ? 'fa-edit' : 'fa-plus'"></i>
+          {{modoEdicion ? 'Editar Activo' : 'Nuevo Activo'}}
+        </h5>
+        <button type="button" class="close" (click)="cerrarModal()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form (ngSubmit)="guardarActivo()">
+        <div class="modal-body p-0">
+          <!-- Nav Tabs -->
+          <ul class="nav nav-tabs ds-modal-tabs px-3 pt-2 bg-light" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="tabActivo === 'general'" (click)="tabActivo = 'general'"
+                href="javascript:void(0)">
+                <i class="fas fa-info-circle mr-1"></i>General
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="tabActivo === 'adquisicion'" (click)="tabActivo = 'adquisicion'"
+                href="javascript:void(0)">
+                <i class="fas fa-dollar-sign mr-1"></i>Adquisición
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="tabActivo === 'ubicacion'"
+                (click)="tabActivo = 'ubicacion'; initSelect2Locations()" href="javascript:void(0)">
+                <i class="fas fa-map-marker-alt mr-1"></i>Ubicación
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="tabActivo === 'media'" (click)="tabActivo = 'media'"
+                href="javascript:void(0)">
+                <i class="fas fa-images mr-1"></i>Estado y Multimedia
+              </a>
+            </li>
+          </ul>
+
+          <div class="tab-content p-4">
+            <!-- TAB: GENERAL -->
+            <div class="tab-pane fade" [class.show]="tabActivo === 'general'" [class.active]="tabActivo === 'general'">
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <h6 class="text-primary font-weight-bold">Información Básica</h6>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Código Patrimonial <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.codigo_patrimonial"
+                      name="codigo_patrimonial" [readonly]="modoEdicion" placeholder="Ej: COMP-2024-0001" required>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Código SBN</label>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.codigo_sbn"
+                      name="codigo_sbn" placeholder="Ej: SBN-COMP-001">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Categoría <span class="text-danger">*</span></label>
+                    <select class="form-control form-control-sm ds-select2" [(ngModel)]="formulario.categoria_id"
+                      name="categoria_id" required>
+                      <option value="">Buscar categoría...</option>
+                      <option *ngFor="let cat of categorias" [value]="cat.id">{{cat.nombre}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Descripción <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.descripcion"
+                      name="descripcion" placeholder="Descripción detallada del activo" required>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Detalle</label>
+                    <textarea class="form-control form-control-sm" [(ngModel)]="formulario.detalle" name="detalle"
+                      rows="2" placeholder="Información adicional del activo"></textarea>
+                  </div>
+                </div>
+
+                <div class="col-md-12 mt-3 mb-2">
+                  <h6 class="text-primary font-weight-bold">Características</h6>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Marca</label>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.marca" name="marca"
+                      placeholder="Ej: HP, DELL, LENOVO">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Modelo</label>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.modelo"
+                      name="modelo" placeholder="Ej: ThinkPad X1">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Serie</label>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.serie" name="serie"
+                      placeholder="Número de serie">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Color</label>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.color" name="color"
+                      placeholder="Ej: Negro, Gris">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: ADQUISICION -->
+            <div class="tab-pane fade" [class.show]="tabActivo === 'adquisicion'"
+              [class.active]="tabActivo === 'adquisicion'">
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <h6 class="text-primary font-weight-bold">Valores y Adquisición</h6>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Valor de Adquisición <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control form-control-sm" [(ngModel)]="formulario.valor_adquisicion"
+                      name="valor_adquisicion" step="0.01" min="0" placeholder="0.00" required>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Tipo de Adquisición</label>
+                    <select class="form-control form-control-sm ds-select2" [(ngModel)]="formulario.tipo_adquisicion"
+                      name="tipo_adquisicion">
+                      <option value="compra">Compra</option>
+                      <option value="donacion">Donación</option>
+                      <option value="transferencia">Transferencia</option>
+                      <option value="fabricacion">Fabricación</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Fecha de Adquisición</label>
+                    <input type="date" class="form-control form-control-sm" [(ngModel)]="formulario.fecha_adquisicion"
+                      name="fecha_adquisicion">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Documento de Adquisición</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [(ngModel)]="formulario.documento_adquisicion" name="documento_adquisicion"
+                      placeholder="Ej: Factura 001-123">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Proveedor</label>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.proveedor"
+                      name="proveedor" placeholder="Nombre del proveedor">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Orden de Compra</label>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.orden_compra"
+                      name="orden_compra" placeholder="Ej: OC-2024-00123">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: UBICACION -->
+            <div class="tab-pane fade" [class.show]="tabActivo === 'ubicacion'"
+              [class.active]="tabActivo === 'ubicacion'">
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <h6 class="text-primary font-weight-bold">Ubicación y Asignación</h6>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Ubicación <span class="text-danger">*</span></label>
+                    <select class="form-control form-control-sm ds-select2 select2-ubicacion"
+                      [(ngModel)]="formulario.ubicacion_id" id="ubicacion_id_select" name="ubicacion_id" required>
+                      <option value="">Buscar ubicación...</option>
+                      <option *ngFor="let ubi of ubicaciones" [value]="ubi.id">{{ubi.nombre}} - {{ubi.codigo}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Unidad orgánica</label>
+                    <select class="form-control form-control-sm ds-select2 select2-ubicacion"
+                      [(ngModel)]="formulario.unidad_organica_id" id="unidad_organica_id_select"
+                      name="unidad_organica_id">
+                      <option value="">Buscar unidad orgánica...</option>
+                      <option *ngFor="let uo of unidadesOrganicas" [value]="uo.id ?? ''">{{ uo.code }} - {{ uo.name }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Responsable</label>
+                    <select class="form-control form-control-sm ds-select2 select2-ubicacion"
+                      [(ngModel)]="formulario.responsable_id" id="responsable_id_select" name="responsable_id">
+                      <option value="">Buscar responsable...</option>
+                      <option *ngFor="let r of responsables" [value]="r.id">{{ r.name }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: MEDIA -->
+            <div class="tab-pane fade" [class.show]="tabActivo === 'media'" [class.active]="tabActivo === 'media'">
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <h6 class="text-primary font-weight-bold">Estado e Imágenes</h6>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Estado</label>
+                    <select class="form-control form-control-sm ds-select2" [(ngModel)]="formulario.estado"
+                      name="estado">
+                      <option value="activo">Activo</option>
+                      <option value="baja">Baja</option>
+                      <option value="transferido">Transferido</option>
+                      <option value="extraviado">Extraviado</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Condición</label>
+                    <select class="form-control form-control-sm ds-select2" [(ngModel)]="formulario.condicion"
+                      name="condicion">
+                      <option value="bueno">Bueno</option>
+                      <option value="regular">Regular</option>
+                      <option value="malo">Malo</option>
+                      <option value="obsoleto">Obsoleto</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>¿Depreciable?</label>
+                    <div class="custom-control custom-switch pt-1">
+                      <input type="checkbox" class="custom-control-input" id="depreciable"
+                        [(ngModel)]="formulario.depreciable" name="depreciable">
+                      <label class="custom-control-label" for="depreciable">{{formulario.depreciable ? 'Sí' :
+                        'No'}}</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea class="form-control form-control-sm" [(ngModel)]="formulario.observaciones"
+                      name="observaciones" rows="2" placeholder="Observaciones adicionales"></textarea>
+                  </div>
+                </div>
+
+                <!-- Imágenes -->
+                <div class="col-md-12 mt-3" *ngIf="modoEdicion && imagenesActuales.length > 0">
+                  <label class="d-block mb-2 font-weight-bold">Imágenes Actuales:</label>
+                  <div class="row">
+                    <div class="col-md-2 col-sm-3 col-4 mb-3" *ngFor="let imagen of imagenesActuales">
+                      <div class="card border shadow-sm">
+                        <img [src]="getImageUrl(imagen)" class="card-img-top" style="height: 100px; object-fit: cover;"
+                          alt="Imagen" (error)="onImageError($event)">
+                        <div class="card-body p-1 text-center">
+                          <button type="button" class="btn btn-danger btn-xs btn-block"
+                            (click)="eliminarImagenActual(imagen)"><i class="fas fa-trash"></i></button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label class="font-weight-bold">Cargar Imágenes <small class="text-muted">(Máx. 10)</small></label>
+                    <div class="drop-zone border border-primary rounded p-3 text-center" (drop)="onDrop($event)"
+                      (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" [class.drag-over]="isDragging"
+                      (click)="triggerFileInput()">
+                      <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-2"></i>
+                      <p class="mb-0 small">Arrastra o haz click para subir imágenes</p>
+                    </div>
+                    <input type="file" #fileInput class="d-none" id="imagenesInput"
+                      (change)="onImagenesSeleccionadas($event)" accept="image/*" multiple>
+                  </div>
+                </div>
+
+                <div class="col-md-12" *ngIf="imagenesPrevisualizacion.length > 0">
+                  <div class="row mt-2">
+                    <div class="col-md-2 col-sm-3 col-4 mb-3"
+                      *ngFor="let preview of imagenesPrevisualizacion; let i = index">
+                      <div class="card border border-success shadow-sm">
+                        <img [src]="preview" class="card-img-top" style="height: 100px; object-fit: cover;"
+                          alt="Preview">
+                        <div class="card-body p-1 text-center">
+                          <button type="button" class="btn btn-danger btn-xs btn-block"
+                            (click)="eliminarImagenSeleccionada(i)"><i class="fas fa-times"></i></button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
+            <i class="fas fa-times mr-1"></i>Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="guardando">
+            <i class="fas" [ngClass]="guardando ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{guardando ? 'Guardando...' : (modoEdicion ? 'Actualizar' : 'Guardar')}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL VER DETALLE ==================== -->
+<div class="modal fade" id="modalDetalleActivo" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-eye mr-2"></i>Detalle del Activo
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" *ngIf="activoSeleccionado">
+        <div class="row">
+          <!-- Columna Izquierda -->
+          <div class="col-md-6">
+            <h6 class="text-primary">Información General</h6>
+            <table class="table table-sm table-borderless">
+              <tr>
+                <th style="width: 50%;">Código Patrimonial:</th>
+                <td><strong class="text-primary">{{activoSeleccionado.codigo_patrimonial}}</strong></td>
+              </tr>
+              <tr>
+                <th>Código SBN:</th>
+                <td>{{activoSeleccionado.codigo_sbn}}</td>
+              </tr>
+              <tr>
+                <th>Descripción:</th>
+                <td>{{activoSeleccionado.descripcion}}</td>
+              </tr>
+              <tr>
+                <th>Categoría:</th>
+                <td><span class="badge badge-secondary">{{activoSeleccionado.categoria?.nombre}}</span></td>
+              </tr>
+              <tr>
+                <th>Marca/Modelo:</th>
+                <td>{{activoSeleccionado.marca}} {{activoSeleccionado.modelo}}</td>
+              </tr>
+              <tr>
+                <th>Serie:</th>
+                <td>{{activoSeleccionado.serie}}</td>
+              </tr>
+              <tr>
+                <th>Color:</th>
+                <td>{{activoSeleccionado.color}}</td>
+              </tr>
+            </table>
+
+            <h6 class="text-primary mt-3">Valores</h6>
+            <table class="table table-sm table-borderless">
+              <tr>
+                <th>Valor Adquisición:</th>
+                <td class="text-right"><strong>S/ {{formatNumber(activoSeleccionado.valor_adquisicion)}}</strong></td>
+              </tr>
+              <tr>
+                <th>Depreciación Acumulada:</th>
+                <td class="text-right text-danger">S/ {{formatNumber(activoSeleccionado.depreciacion_acumulada)}}</td>
+              </tr>
+              <tr>
+                <th>Valor Neto:</th>
+                <td class="text-right"><strong class="text-success">S/
+                    {{formatNumber(activoSeleccionado.valor_neto)}}</strong></td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Columna Derecha -->
+          <div class="col-md-6">
+            <h6 class="text-primary">Ubicación y Asignación</h6>
+            <table class="table table-sm table-borderless">
+              <tr>
+                <th style="width: 50%;">Ubicación:</th>
+                <td>{{activoSeleccionado.ubicacion?.nombre}}</td>
+              </tr>
+              <tr>
+                <th>Unidad orgánica:</th>
+                <td>{{activoSeleccionado.unidad_organica?.name || 'Sin asignar'}}</td>
+              </tr>
+              <tr>
+                <th>Responsable:</th>
+                <td>
+                  <i class="fas fa-user mr-1"></i>
+                  {{activoSeleccionado.responsable?.name || 'Sin asignar'}}
+                </td>
+              </tr>
+              <tr>
+                <th>Fecha Asignación:</th>
+                <td>{{formatDate(activoSeleccionado.fecha_asignacion)}}</td>
+              </tr>
+            </table>
+
+            <h6 class="text-primary mt-3">Estado y Condición</h6>
+            <table class="table table-sm table-borderless">
+              <tr>
+                <th>Estado:</th>
+                <td>
+                  <span class="badge" [ngClass]="getEstadoBadgeClass(activoSeleccionado.estado)">
+                    {{activoSeleccionado.estado | titlecase}}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <th>Condición:</th>
+                <td>
+                  <span class="badge" [ngClass]="getCondicionBadgeClass(activoSeleccionado.condicion)">
+                    {{activoSeleccionado.condicion | titlecase}}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <th>Depreciable:</th>
+                <td>
+                  <span class="badge" [ngClass]="activoSeleccionado.depreciable ? 'badge-success' : 'badge-secondary'">
+                    {{activoSeleccionado.depreciable ? 'Sí' : 'No'}}
+                  </span>
+                </td>
+              </tr>
+            </table>
+
+            <h6 class="text-primary mt-3">Códigos de Identificación</h6>
+            <div class="text-center p-3 bg-light rounded">
+              <p class="mb-2"><strong>Código QR:</strong></p>
+              <div class="qr-placeholder bg-white p-3 border">
+                <img *ngIf="activoSeleccionado.codigo_qr" [src]="getQRImageUrl(activoSeleccionado)" alt="Código QR"
+                  style="max-width: 180px; height: auto;">
+                <small *ngIf="!activoSeleccionado.codigo_qr" class="text-muted">Sin código QR</small>
+              </div>
+              <p class="mt-3 mb-1"><strong>Código de Barras:</strong></p>
+              <div class="barcode-container">
+                <canvas id="barcodeCanvasDetalle"></canvas>
+              </div>
+              <p *ngIf="activoSeleccionado.codigo_barras" class="font-monospace mt-1 small">
+                {{activoSeleccionado.codigo_barras}}</p>
+              <p *ngIf="!activoSeleccionado.codigo_barras" class="text-muted small">Sin código de barras</p>
+            </div>
+          </div>
+
+          <div class="col-md-12 mt-3" *ngIf="activoSeleccionado.observaciones">
+            <h6 class="text-primary">Observaciones</h6>
+            <p class="text-muted">{{activoSeleccionado.observaciones}}</p>
+          </div>
+
+          <!-- Historial de movimientos -->
+          <div class="col-md-12 mt-3">
+            <h6 class="text-primary"><i class="fas fa-exchange-alt mr-2"></i>Historial de movimientos
+              ({{activoSeleccionado.movimientos?.length || 0}})</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered table-hover mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th style="width: 40px;">#</th>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Desde (Unidad/Ubicación)</th>
+                    <th>Hacia (Unidad/Ubicación)</th>
+                    <th>Motivo / Observaciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let mov of activoSeleccionado.movimientos; let i = index">
+                    <td>{{i + 1}}</td>
+                    <td>{{formatDate(mov.fecha_movimiento)}}</td>
+                    <td>
+                      <span class="badge badge-pill" [ngClass]="getTipoMovimientoBadgeClass(mov.tipo_movimiento)">
+                        {{getTipoMovimientoLabel(mov.tipo_movimiento)}}
+                      </span>
+                    </td>
+                    <td><small>{{mov.unidad_organica_origen?.name || mov.ubicacion_origen?.nombre || '-'}}</small>
+                    </td>
+                    <td><small>{{mov.unidad_organica_destino?.name || mov.ubicacion_destino?.nombre || '-'}}</small>
+                    </td>
+                    <td><small class="text-muted">{{mov.motivo || mov.observaciones || '-'}}</small></td>
+                  </tr>
+                  <tr *ngIf="!activoSeleccionado.movimientos || activoSeleccionado.movimientos.length === 0">
+                    <td colspan="6" class="text-center py-4 text-muted">
+                      <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                      No hay movimientos registrados para este activo
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Galería de Imágenes -->
+          <div class="col-md-12 mt-3" *ngIf="activoSeleccionado.imagenes && activoSeleccionado.imagenes.length > 0">
+            <h6 class="text-primary"><i class="fas fa-images mr-2"></i>Galería de Imágenes
+              ({{activoSeleccionado.imagenes.length}})</h6>
+            <div class="row">
+              <div class="col-md-3 col-sm-4 col-6 mb-3"
+                *ngFor="let imagen of activoSeleccionado.imagenes; let idx = index">
+                <div class="card border">
+                  <img [src]="getImageUrl(imagen)" class="card-img-top"
+                    style="height: 150px; object-fit: cover; cursor: pointer;" alt="Imagen del activo"
+                    (click)="verImagenCompleta(imagen, activoSeleccionado.imagenes)" (error)="onImageError($event)">
+                  <div class="card-footer p-1 text-center bg-light">
+                    <small class="text-muted">Imagen {{idx + 1}}</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" (click)="editarDesdeDetalle()" *ngIf="activoSeleccionado">
+          <i class="fas fa-edit mr-1"></i>Editar
+        </button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL CONFIRMAR ELIMINACIÓN ==================== -->
+<div class="modal fade" id="modalEliminarActivo" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Confirmar Eliminación
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" *ngIf="activoSeleccionado">
+        <p>¿Está seguro que desea eliminar el siguiente activo?</p>
+        <div class="alert alert-warning">
+          <strong>Código:</strong> {{activoSeleccionado.codigo_patrimonial}}<br>
+          <strong>Descripción:</strong> {{activoSeleccionado.descripcion}}<br>
+          <strong>Valor Neto:</strong> S/ {{formatNumber(activoSeleccionado.valor_neto)}}
+        </div>
+        <p class="text-danger"><i class="fas fa-exclamation-circle"></i> Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-danger" (click)="eliminarActivo()" [disabled]="eliminando">
+          <i class="fas" [ngClass]="eliminando ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+          {{eliminando ? 'Eliminando...' : 'Eliminar'}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL QR CODE ==================== -->
+<div class="modal fade" id="modalQRCode" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-qrcode mr-2"></i>Código QR
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-center" *ngIf="activoSeleccionado">
+        <h6>{{activoSeleccionado.codigo_patrimonial}}</h6>
+        <p class="text-muted small">{{activoSeleccionado.descripcion}}</p>
+        <div class="qr-placeholder bg-light p-4 border rounded">
+          <img *ngIf="activoSeleccionado.codigo_qr" [src]="getQRImageUrl(activoSeleccionado)" alt="Código QR"
+            style="max-width: 200px; height: auto;">
+          <p *ngIf="!activoSeleccionado.codigo_qr" class="text-muted small mb-0">Sin código QR</p>
+        </div>
+        <p class="mt-3 mb-1"><strong>Código de Barras:</strong></p>
+        <div class="barcode-container">
+          <canvas id="barcodeCanvasQR"></canvas>
+        </div>
+        <p *ngIf="activoSeleccionado.codigo_barras" class="font-monospace small mt-1">
+          {{activoSeleccionado.codigo_barras}}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary btn-sm">
+          <i class="fas fa-print mr-1"></i>Imprimir Etiqueta
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL LIGHTBOX - VER IMAGEN COMPLETA ==================== -->
+<div class="modal fade" id="modalImagenCompleta" tabindex="-1" role="dialog" data-backdrop="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content bg-dark">
+      <div class="modal-header bg-dark border-0">
+        <h5 class="modal-title text-white">
+          <i class="fas fa-image mr-2"></i>Vista de Imagen
+          <span class="badge badge-secondary ml-2" *ngIf="imagenActualIndex !== -1 && imagenesGaleria.length > 1">
+            {{imagenActualIndex + 1}} / {{imagenesGaleria.length}}
+          </span>
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-center p-2 position-relative" style="min-height: 500px;">
+        <!-- Navegación Izquierda -->
+        <button type="button" class="btn btn-light btn-nav-image btn-nav-prev"
+          *ngIf="imagenesGaleria.length > 1 && imagenActualIndex > 0" (click)="navegarImagen(-1)" title="Anterior">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+
+        <!-- Imagen Principal -->
+        <img [src]="getImageUrl(imagenSeleccionadaUrl)" class="img-fluid rounded"
+          style="max-height: 80vh; max-width: 100%; object-fit: contain;" alt="Imagen completa"
+          (error)="onImageError($event)">
+
+        <!-- Navegación Derecha -->
+        <button type="button" class="btn btn-light btn-nav-image btn-nav-next"
+          *ngIf="imagenesGaleria.length > 1 && imagenActualIndex < imagenesGaleria.length - 1"
+          (click)="navegarImagen(1)" title="Siguiente">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <!-- Miniaturas de navegación -->
+        <div class="thumbnails-nav mt-3" *ngIf="imagenesGaleria.length > 1">
+          <div class="d-flex justify-content-center flex-wrap">
+            <div *ngFor="let img of imagenesGaleria; let i = index" class="thumbnail-item m-1"
+              [class.active]="i === imagenActualIndex" (click)="seleccionarImagenGaleria(i)">
+              <img [src]="getImageUrl(img)" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;"
+                class="border rounded" [class.border-primary]="i === imagenActualIndex"
+                [class.border-3]="i === imagenActualIndex" alt="Miniatura">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-dark border-0">
+        <button type="button" class="btn btn-success btn-sm" (click)="descargarImagen()">
+          <i class="fas fa-download mr-1"></i>Descargar
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,166 @@
+<app-page-header title="Departamentos" subtitle="Gestión de departamentos" [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Planillas'}, {label: 'Departamentos'}]"></app-page-header>
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+              <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                <i class="fas fa-building mr-1"></i> Listado de Departamentos
+              </h3>
+              <ng-container *ngIf="cv.showExportButtons">
+                <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass" (click)="onExportExcel()"><i [class]="cv.excelBtnIcon"></i> {{ cv.excelBtnLabel }}</button>
+                <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass" (click)="onExportPdf()"><i [class]="cv.pdfBtnIcon"></i> {{ cv.pdfBtnLabel }}</button>
+                <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass" (click)="onExportPrint()"><i [class]="cv.printBtnIcon"></i> {{ cv.printBtnLabel }}</button>
+              </ng-container>
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.exportBtnClass"><i [class]="cv.exportBtnIcon"></i> {{ cv.exportBtnLabel }}</button>
+            </div>
+            <div class="ms-auto flex-shrink-0">
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                <i [class]="cv.newBtnIcon"></i> Nuevo Departamento
+              </button>
+            </div>
+          </div>
+          <div class="card-body px-0 pt-0 pb-2">
+            <div class="alert alert-info m-3" *ngIf="departamentos.length === 0">
+              <i class="fas fa-info-circle"></i> Cargando departamentos... (Total: {{ departamentos.length }})
+            </div>
+            
+            <div class="table-responsive p-4">
+              <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize" class="table mb-0 w-100">
+                <thead class="bg-light">
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize">Código</th>
+                    <th [style.font-size]="cv.headerFontSize">Nombre</th>
+                    <th [style.font-size]="cv.headerFontSize">Descripción</th>
+                    <th [style.font-size]="cv.headerFontSize">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let departamento of departamentos">
+                    <td><span class="badge bg-dark">{{ departamento.code }}</span></td>
+                    <td><strong>{{ departamento.name }}</strong></td>
+                    <td>{{ departamento.description || 'Sin descripción' }}</td>
+                    <td class="text-center">
+                      <app-status-badge [status]="departamento.status === 'active'"></app-status-badge>
+                    </td>
+                    <td class="text-center">
+                      <app-crud-actions [showView]="true" [showEdit]="true" [showDelete]="true" (onView)="openViewModal(departamento)" (onEdit)="openEditModal(departamento)" (onDelete)="confirmDelete(departamento)"></app-crud-actions>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Crear/Editar -->
+<div class="modal fade" id="departamentoModal" tabindex="-1" aria-hidden="true" #departamentoModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title">
+          <i class="fas" [ngClass]="isEditMode ? 'fa-edit' : 'fa-plus'"></i>
+          {{ isEditMode ? 'Editar' : 'Nuevo' }} Departamento
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg">
+        <form [formGroup]="departamentoForm">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Código <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="code" placeholder="DEPT-001">
+              <div class="text-danger small" *ngIf="departamentoForm.get('code')?.invalid && departamentoForm.get('code')?.touched">
+                Código es requerido
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Estado <span class="text-danger">*</span></label>
+              <select class="form-control" [ngClass]="mc.inputSize" formControlName="status">
+                <option value="active">Activo</option>
+                <option value="inactive">Inactivo</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Nombre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="name" placeholder="Nombre del departamento">
+            <div class="text-danger small" *ngIf="departamentoForm.get('name')?.invalid && departamentoForm.get('name')?.touched">
+              Nombre es requerido
+            </div>
+          </div>
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Descripción</label>
+            <textarea class="form-control" [ngClass]="mc.inputSize" formControlName="description" rows="3" placeholder="Descripción del departamento"></textarea>
+          </div>
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Departamento Padre</label>
+            <select class="form-control" [ngClass]="mc.inputSize" formControlName="parent_id">
+              <option [value]="null">Ninguno (Departamento raíz)</option>
+              <option *ngFor="let dept of departamentos" [value]="dept.id">
+                {{ dept.name }}
+              </option>
+            </select>
+            <small class="form-text text-muted">Seleccione si este departamento pertenece a otro departamento</small>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeModal()"><i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}</button>
+        <button type="button" class="btn btn-sm" [ngClass]="mc.saveBtnClass" (click)="saveDepartamento()" [disabled]="departamentoForm.invalid || saving"><i [class]="mc.saveBtnIcon + ' mr-1'"></i> {{ isEditMode ? 'Actualizar' : mc.saveBtnLabel }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ver -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true" #viewModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detalles del Departamento</h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeViewModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg" *ngIf="selectedDepartamento">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Código:</strong>
+            <p>{{ selectedDepartamento.code }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Estado:</strong>
+            <p>
+              <app-status-badge [status]="selectedDepartamento.status === 'active'"></app-status-badge>
+            </p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Nombre:</strong>
+            <p>{{ selectedDepartamento.name }}</p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Descripción:</strong>
+            <p>{{ selectedDepartamento.description || 'Sin descripción' }}</p>
+          </div>
+          <div class="col-md-6 mb-3" *ngIf="selectedDepartamento.created_at">
+            <strong [style.color]="mc.labelColor">Fecha de Creación:</strong>
+            <p>{{ selectedDepartamento.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+          <div class="col-md-6 mb-3" *ngIf="selectedDepartamento.updated_at">
+            <strong [style.color]="mc.labelColor">Última Actualización:</strong>
+            <p>{{ selectedDepartamento.updated_at | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeViewModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

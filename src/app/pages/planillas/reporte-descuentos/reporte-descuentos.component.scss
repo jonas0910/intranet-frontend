@@ -1,0 +1,43 @@
+// Reporte de Descuentos styles
+
+.small-box {
+  border-radius: 0.25rem;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.125), 0 1px 3px rgba(0, 0, 0, 0.2);
+  display: block;
+  margin-bottom: 20px;
+  position: relative;
+
+  .inner {
+    padding: 10px;
+
+    h3 {
+      font-size: 38px;
+      font-weight: bold;
+      margin: 0 0 10px 0;
+      padding: 0;
+      white-space: nowrap;
+    }
+
+    p {
+      font-size: 15px;
+      margin: 0;
+    }
+  }
+
+  .icon {
+    color: rgba(0, 0, 0, 0.15);
+    z-index: 0;
+
+    i {
+      font-size: 70px;
+      position: absolute;
+      right: 15px;
+      top: 15px;
+    }
+  }
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+

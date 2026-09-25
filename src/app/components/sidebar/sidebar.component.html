@@ -1,0 +1,297 @@
+<!-- Main Sidebar Container -->
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+  <!-- Brand -->
+  <a [routerLink]="['/dashboard']" class="brand-link">
+    <span class="brand-text font-weight-light"><b>Intranet</b> Notaria</span>
+  </a>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <!-- Search -->
+    <div class="form-inline mt-2 pb-2 px-3">
+      <div class="input-group input-group-sm w-100">
+        <input class="form-control form-control-sidebar" type="search" placeholder="Buscar menú..." aria-label="Search"
+          [(ngModel)]="searchQuery" (input)="onSearchMenu($event)">
+        <div class="input-group-append">
+          <button class="btn btn-sidebar" *ngIf="searchQuery" (click)="clearSearch()">
+            <i class="fas fa-times"></i>
+          </button>
+          <button class="btn btn-sidebar" *ngIf="!searchQuery">
+            <i class="fas fa-search fa-fw"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Menu -->
+    <nav class="mt-2">
+      <ul class="nav nav-pills nav-sidebar flex-column nav-child-indent" role="menu" data-accordion="false">
+
+        <!-- Dashboard -->
+        <li class="nav-item">
+          <a [routerLink]="['/dashboard']" class="nav-link" routerLinkActive="active">
+            <i class="nav-icon fas fa-tachometer-alt"></i>
+            <p>Dashboard</p>
+          </a>
+        </li>
+
+        <!-- SISTEMAS -->
+        <li class="nav-header">SISTEMAS</li>
+
+        <!-- Sistemas Integrados -->
+        <ng-container *ngFor="let sistema of sistemasIntegrados; let i = index">
+          <li class="nav-item" [class.menu-open]="isMenuOpen('sistema-' + i)">
+            <a class="nav-link" (click)="toggleMenu('sistema-' + i, $event)" href="javascript:void(0)">
+              <i class="nav-icon" [ngClass]="getSistemaIcon(sistema.nombre)"></i>
+              <p>{{ sistema.nombre }}
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview" [ngbCollapse]="!isMenuOpen('sistema-' + i)">
+              <ng-container *ngFor="let menu of sistema.menus; let j = index">
+
+                <!-- Menú con submenús -->
+                <li class="nav-item" *ngIf="menu.submenus && menu.submenus.length > 0"
+                  [class.menu-open]="isMenuOpen('menu-' + i + '-' + j)">
+                  <a class="nav-link" (click)="toggleMenu('menu-' + i + '-' + j, $event)" href="javascript:void(0)">
+                    <i class="nav-icon" [ngClass]="menu.icono || 'far fa-circle'"></i>
+                    <p>{{ menu.nombre || menu.titulo }}
+                      <i class="fas fa-angle-left right"></i>
+                    </p>
+                  </a>
+                  <ul class="nav nav-treeview" [ngbCollapse]="!isMenuOpen('menu-' + i + '-' + j)">
+                    <ng-container *ngFor="let submenu of menu.submenus; let k = index">
+
+                      <!-- Submenu con hijos (nivel 3) -->
+                      <li class="nav-item" *ngIf="submenu.submenus && submenu.submenus.length > 0"
+                        [class.menu-open]="isMenuOpen('submenu-' + i + '-' + j + '-' + k)">
+                        <a class="nav-link" (click)="toggleMenu('submenu-' + i + '-' + j + '-' + k, $event)"
+                          href="javascript:void(0)">
+                          <i class="nav-icon" [ngClass]="submenu.icono || 'far fa-dot-circle'"></i>
+                          <p>{{ submenu.nombre || submenu.titulo }}
+                            <i class="fas fa-angle-left right"></i>
+                          </p>
+                        </a>
+                        <ul class="nav nav-treeview" [ngbCollapse]="!isMenuOpen('submenu-' + i + '-' + j + '-' + k)">
+                          <li class="nav-item" *ngFor="let sub3 of submenu.submenus; let l = index">
+                            <a class="nav-link" *ngIf="getMenuUrl(sub3) && getMenuUrl(sub3) !== '#'; else sub3NoLink"
+                              [routerLink]="[getMenuUrl(sub3)]">
+                              <i class="nav-icon" [ngClass]="sub3.icono || 'far fa-circle'"></i>
+                              <p>{{ sub3.nombre || sub3.titulo }}</p>
+                            </a>
+                            <ng-template #sub3NoLink>
+                              <a class="nav-link" (click)="handleMenuClick($event, sub3)" href="javascript:void(0)">
+                                <i class="nav-icon" [ngClass]="sub3.icono || 'far fa-circle'"></i>
+                                <p>{{ sub3.nombre || sub3.titulo }}</p>
+                              </a>
+                            </ng-template>
+                          </li>
+                        </ul>
+                      </li>
+
+                      <!-- Submenu simple -->
+                      <li class="nav-item" *ngIf="!submenu.submenus || submenu.submenus.length === 0">
+                        <a class="nav-link"
+                          *ngIf="getMenuUrl(submenu) && getMenuUrl(submenu) !== '#'; else submenuNoLink"
+                          [routerLink]="[getMenuUrl(submenu)]">
+                          <i class="nav-icon" [ngClass]="submenu.icono || 'far fa-circle'"></i>
+                          <p>{{ submenu.nombre || submenu.titulo }}</p>
+                        </a>
+                        <ng-template #submenuNoLink>
+                          <a class="nav-link" (click)="handleMenuClick($event, submenu)" href="javascript:void(0)">
+                            <i class="nav-icon" [ngClass]="submenu.icono || 'far fa-circle'"></i>
+                            <p>{{ submenu.nombre || submenu.titulo }}</p>
+                          </a>
+                        </ng-template>
+                      </li>
+
+                    </ng-container>
+                  </ul>
+                </li>
+
+                <!-- Menú simple (sin submenús) -->
+                <li class="nav-item" *ngIf="!menu.submenus || menu.submenus.length === 0">
+                  <a class="nav-link" *ngIf="getMenuUrl(menu) && getMenuUrl(menu) !== '#'; else simpleMenuNoLink"
+                    [routerLink]="[getMenuUrl(menu)]">
+                    <i class="nav-icon" [ngClass]="menu.icono || 'far fa-circle'"></i>
+                    <p>{{ menu.nombre || menu.titulo }}</p>
+                  </a>
+                  <ng-template #simpleMenuNoLink>
+                    <a class="nav-link" (click)="handleMenuClick($event, menu)" href="javascript:void(0)">
+                      <i class="nav-icon" [ngClass]="menu.icono || 'far fa-circle'"></i>
+                      <p>{{ menu.nombre || menu.titulo }}</p>
+                    </a>
+                  </ng-template>
+                </li>
+
+              </ng-container>
+
+              <li class="nav-item" *ngIf="sistema.menus.length === 0">
+                <a class="nav-link disabled">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Sin menús</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+        </ng-container>
+
+        <li class="nav-item" *ngIf="sistemasIntegrados.length === 0">
+          <a class="nav-link disabled">
+            <i class="far fa-circle nav-icon"></i>
+            <p>Sin sistemas integrados</p>
+          </a>
+        </li>
+
+        <!-- INTRANET (menús dinámicos desde menu_intranet o consumibles como fallback) -->
+        <li class="nav-header">INTRANET</li>
+
+        <!-- Menús dinámicos desde menu_intranet -->
+        <ng-container *ngIf="menusIntranetDinamicos.length > 0">
+          <li class="nav-item" *ngFor="let item of menusIntranetDinamicos" [class.menu-open]="isMenuOpen(item.codigo)">
+            <a *ngIf="item.tiene_hijos" class="nav-link" (click)="toggleMenu(item.codigo, $event)" href="javascript:void(0)">
+              <i class="nav-icon" [ngClass]="item.icono || 'fas fa-circle'"></i>
+              <p>{{ item.nombre }}
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <a *ngIf="!item.tiene_hijos && item.ruta" class="nav-link" [routerLink]="item.ruta" routerLinkActive="active">
+              <i class="nav-icon" [ngClass]="item.icono || 'fas fa-circle'"></i>
+              <p>{{ item.nombre }}</p>
+            </a>
+            <ul *ngIf="item.tiene_hijos" class="nav nav-treeview" [ngbCollapse]="!isMenuOpen(item.codigo)">
+              <ng-container *ngFor="let hijo of item.hijos">
+                <li *ngIf="hijo.hijos?.length" class="nav-item" [class.menu-open]="isMenuOpen(item.codigo + '-' + hijo.id)">
+                  <a class="nav-link" (click)="toggleMenu(item.codigo + '-' + hijo.id, $event)" href="javascript:void(0)">
+                    <i class="nav-icon" [ngClass]="hijo.icono || 'far fa-circle'"></i>
+                    <p>{{ hijo.nombre }}
+                      <i class="fas fa-angle-left right"></i>
+                    </p>
+                  </a>
+                  <ul class="nav nav-treeview" [ngbCollapse]="!isMenuOpen(item.codigo + '-' + hijo.id)">
+                    <li class="nav-item" *ngFor="let sub of hijo.hijos">
+                      <a class="nav-link" [routerLink]="getIntranetDinamicoRuta(sub)" [queryParams]="getIntranetDinamicoQueryParams(sub) || {}" routerLinkActive="active">
+                        <i class="nav-icon" [ngClass]="sub.icono || 'far fa-circle'"></i>
+                        <p>{{ sub.nombre }}</p>
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+                <li *ngIf="!hijo.hijos?.length" class="nav-item">
+                  <a class="nav-link" [routerLink]="getIntranetDinamicoRuta(hijo)" [queryParams]="getIntranetDinamicoQueryParams(hijo) || {}" routerLinkActive="active">
+                    <i class="nav-icon" [ngClass]="hijo.icono || 'far fa-circle'"></i>
+                    <p>{{ hijo.nombre }}</p>
+                  </a>
+                </li>
+              </ng-container>
+            </ul>
+          </li>
+        </ng-container>
+
+        <!-- Fallback: menús consumibles (visible_en_intranet) si no hay menu_intranet -->
+        <ng-container *ngIf="menusIntranetDinamicos.length === 0 && menusIntranetConsumibles.length > 0">
+          <li class="nav-item" *ngFor="let item of menusIntranetConsumibles">
+            <a class="nav-link" [routerLink]="[getIntranetConsumibleUrl(item)]" routerLinkActive="active">
+              <i class="nav-icon" [ngClass]="item.icono || 'far fa-circle'"></i>
+              <p>{{ item.nombre }}</p>
+            </a>
+          </li>
+        </ng-container>
+        <li class="nav-item" *ngIf="menusIntranetDinamicos.length === 0 && menusIntranetConsumibles.length === 0">
+          <a class="nav-link disabled">
+            <i class="far fa-circle nav-icon"></i>
+            <p>Sin ítems para la intranet</p>
+          </a>
+        </li>
+
+        <!-- ADMINISTRACIÓN: visibilidad por permisos Spatie (Gestión de roles); Super Admin ve todo. -->
+        <ng-container *ngIf="showAdministrationSection">
+          <li class="nav-header">ADMINISTRACION</li>
+
+          <li class="nav-item" [class.menu-open]="isMenuOpen('config')" *ngIf="showAdminConfigBranch">
+            <a class="nav-link" (click)="toggleMenu('config', $event)" href="javascript:void(0)">
+              <i class="nav-icon fas fa-cogs"></i>
+              <p>Configuración
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview" [ngbCollapse]="!isMenuOpen('config')">
+              <li class="nav-item" *ngIf="canAdminNavItem(adminSidebarPerms.perfil)">
+                <a [routerLink]="['/perfil']" class="nav-link" routerLinkActive="active">
+                  <i class="fas fa-user-circle nav-icon"></i>
+                  <p>Mi Perfil</p>
+                </a>
+              </li>
+              <li class="nav-item" *ngIf="canAdminNavItem(adminSidebarPerms.panelAdmin)">
+                <a [routerLink]="['/admin-menu-management']" class="nav-link" routerLinkActive="active">
+                  <i class="fas fa-server nav-icon"></i>
+                  <p>Panel Principal</p>
+                </a>
+              </li>
+              <li class="nav-item" *ngIf="canAdminNavItem(adminSidebarPerms.usuarios)">
+                <a [routerLink]="['/admin-menu-management/users']" class="nav-link" routerLinkActive="active">
+                  <i class="fas fa-users nav-icon"></i>
+                  <p>Usuarios</p>
+                </a>
+              </li>
+              <li class="nav-item" *ngIf="canAdminNavItem(adminSidebarPerms.roles)">
+                <a [routerLink]="['/admin-menu-management/roles']" class="nav-link" routerLinkActive="active">
+                  <i class="fas fa-user-shield nav-icon"></i>
+                  <p>Gestión de Roles</p>
+                </a>
+              </li>
+              <li class="nav-item" *ngIf="canAdminNavItem(adminSidebarPerms.auditoria)">
+                <a [routerLink]="['/admin-menu-management/audit']" class="nav-link" routerLinkActive="active">
+                  <i class="fas fa-history nav-icon"></i>
+                  <p>Sistema de Auditoría</p>
+                </a>
+              </li>
+              <li class="nav-item" *ngIf="canAdminNavItem(adminSidebarPerms.patrones)">
+                <a [routerLink]="['/patrones']" class="nav-link" routerLinkActive="active">
+                  <i class="fas fa-palette nav-icon"></i>
+                  <p>Patrones de Diseño</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <li class="nav-item" [class.menu-open]="isMenuOpen('maestro')" *ngIf="showAdminMaestroBranch">
+            <a class="nav-link" (click)="toggleMenu('maestro', $event)" href="javascript:void(0)">
+              <i class="nav-icon fas fa-database"></i>
+              <p>Maestro
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview" [ngbCollapse]="!isMenuOpen('maestro')">
+              <li class="nav-item" *ngIf="canAdminNavItem(adminSidebarPerms.organizacion)">
+                <a [routerLink]="['/organizacion']" class="nav-link" routerLinkActive="active">
+                  <i class="fas fa-building nav-icon"></i>
+                  <p>Gestión de Organización</p>
+                </a>
+              </li>
+              <li class="nav-item" *ngIf="canAdminNavItem(adminSidebarPerms.tramiteAreas)">
+                <a [routerLink]="['/areas']" class="nav-link" routerLinkActive="active">
+                  <i class="fas fa-sitemap nav-icon"></i>
+                  <p>Áreas / Oficinas</p>
+                </a>
+              </li>
+              <li class="nav-item" *ngIf="canAdminNavItem(adminSidebarPerms.tramiteTipos)">
+                <a [routerLink]="['/tramite-documentario/admin/tipos']" class="nav-link" routerLinkActive="active">
+                  <i class="fas fa-list-alt nav-icon"></i>
+                  <p>Tipos de Trámite</p>
+                </a>
+              </li>
+              <li class="nav-item" *ngIf="canAdminNavItem(adminSidebarPerms.tramiteUsuarios)">
+                <a [routerLink]="['/tramite-documentario/admin/usuarios']" class="nav-link" routerLinkActive="active">
+                  <i class="fas fa-users nav-icon"></i>
+                  <p>Usuarios</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+        </ng-container>
+
+      </ul>
+    </nav>
+  </div>
+</aside>

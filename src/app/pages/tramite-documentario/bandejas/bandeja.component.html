@@ -1,0 +1,831 @@
+<!-- Content Header -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">
+          <i class="fas fa-inbox mr-2"></i>
+          {{ titulosBandeja[tipoBandeja] || 'Bandeja' }}
+        </h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a [routerLink]="['/dashboard']">Inicio</a></li>
+          <li class="breadcrumb-item"><a [routerLink]="['/tramite-documentario/dashboard']">Trámite</a></li>
+          <li class="breadcrumb-item active">{{ titulosBandeja[tipoBandeja] }}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="content">
+  <div class="container-fluid">
+    
+    <!-- Filtros -->
+    <div class="card card-primary card-outline collapsed-card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-filter mr-2"></i>
+          Filtros
+        </h3>
+        <div class="card-tools">
+          <button type="button" class="btn btn-tool" data-card-widget="collapse">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="card-body" style="display: none;">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Prioridad:</label>
+              <select class="form-control" [(ngModel)]="filtros.prioridad" (change)="aplicarFiltros()">
+                <option value="">Todas</option>
+                <option value="baja">Baja</option>
+                <option value="normal">Normal</option>
+                <option value="alta">Alta</option>
+                <option value="urgente">Urgente</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Estado:</label>
+              <select class="form-control" [(ngModel)]="filtros.estado" (change)="aplicarFiltros()">
+                <option value="">Todos</option>
+                <option value="registrado">Registrado</option>
+                <option value="en_tramite">En Trámite</option>
+                <option value="derivado">Derivado</option>
+                <option value="atendido">Atendido</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de Documentos -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-list mr-2"></i>
+          Documentos ({{ documentos.length }})
+        </h3>
+      </div>
+      <div class="card-body">
+        <table id="tablaBandeja" class="table table-hover table-striped" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger">
+          <thead>
+            <tr>
+              <th>Expediente</th>
+              <th>Tipo</th>
+              <th>Asunto</th>
+              <th>Remitente</th>
+              <th>Estado</th>
+              <th *ngIf="tipoBandeja === 'firmas'">Firmas Pend.</th>
+              <th>Prioridad</th>
+              <th>Fecha</th>
+              <th>Plazo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody *ngIf="!loading">
+            <tr *ngFor="let doc of documentos" [class.table-danger]="doc.vencido">
+              <td>
+                <strong>{{ doc.numero_expediente }}</strong>
+                <span *ngIf="doc.vencido" class="badge badge-danger ml-2">VENCIDO</span>
+              </td>
+              <td>{{ doc.tipo_documento?.nombre }}</td>
+              <td class="text-truncate" style="max-width: 250px;">{{ doc.asunto }}</td>
+              <td>
+                <span *ngIf="doc.remitentes && doc.remitentes.length > 0">
+                  {{ doc.remitentes[0].nombre_completo || doc.remitentes[0].razon_social }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getEstadoClass(doc.estado)">
+                  {{ doc.estado }}
+                </span>
+              </td>
+              <td *ngIf="tipoBandeja === 'firmas'">
+                <span class="badge badge-warning" *ngIf="doc.firmas_pendientes">
+                  <i class="fas fa-signature mr-1"></i>
+                  {{ doc.firmas_pendientes }}
+                </span>
+                <span class="badge badge-secondary" *ngIf="!doc.firmas_pendientes">0</span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getPrioridadClass(doc.prioridad)">
+                  {{ doc.prioridad }}
+                </span>
+              </td>
+              <td>
+                <small>{{ doc.fecha_registro | date:'short' }}</small>
+              </td>
+              <td>
+                <small>{{ doc.fecha_plazo | date:'shortDate' }}</small>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-info" title="Ver detalle" (click)="verDetalle(doc)">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn btn-primary" *ngIf="tipoBandeja === 'firmas'" title="Firmar documento" (click)="firmarDocumento(doc)">
+                    <i class="fas fa-signature"></i>
+                  </button>
+                  <button class="btn btn-success" *ngIf="tipoBandeja === 'entrada'" title="Derivar">
+                    <i class="fas fa-share"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Loading -->
+        <div *ngIf="loading" class="text-center p-5">
+          <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+          <p class="mt-3">Cargando documentos...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Detalle del Documento -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-info">
+        <h5 class="modal-title">
+          <i class="fas fa-file-alt mr-2"></i>
+          Detalle del Documento
+        </h5>
+        <button type="button" class="close text-white" (click)="cerrarModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Loading -->
+        <div *ngIf="loadingDetalle" class="text-center p-5">
+          <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+          <p class="mt-3">Cargando detalle...</p>
+        </div>
+
+        <!-- Contenido -->
+        <div *ngIf="!loadingDetalle && documentoDetalle">
+          <div class="row">
+            
+            <!-- Columna Izquierda: Información del Documento -->
+            <div class="col-md-8">
+              
+              <!-- Información Básica -->
+              <div class="card">
+                <div class="card-header bg-primary">
+                  <h3 class="card-title text-white">
+                    <i class="fas fa-info-circle mr-2"></i>Información del Documento
+                  </h3>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <dl class="row">
+                        <dt class="col-sm-5">Expediente:</dt>
+                        <dd class="col-sm-7">
+                          <strong class="text-primary">{{ documentoDetalle.documento?.numero_expediente || documentoDetalle.numero_expediente }}</strong>
+                        </dd>
+                        
+                        <dt class="col-sm-5">Tipo:</dt>
+                        <dd class="col-sm-7">{{ documentoDetalle.documento?.tipo_documento_nombre || documentoDetalle.tipo_documento_nombre || 'N/A' }}</dd>
+                        
+                        <dt class="col-sm-5">Origen:</dt>
+                        <dd class="col-sm-7">
+                          <span class="badge" [class.badge-info]="(documentoDetalle.documento?.origen || documentoDetalle.origen) === 'externo'" [class.badge-secondary]="(documentoDetalle.documento?.origen || documentoDetalle.origen) === 'interno'">
+                            <i class="fas" [class.fa-external-link-alt]="(documentoDetalle.documento?.origen || documentoDetalle.origen) === 'externo'" [class.fa-building]="(documentoDetalle.documento?.origen || documentoDetalle.origen) === 'interno'"></i>
+                            {{ (documentoDetalle.documento?.origen || documentoDetalle.origen) | titlecase }}
+                          </span>
+                        </dd>
+                        
+                        <dt class="col-sm-5">Folio:</dt>
+                        <dd class="col-sm-7">
+                          <span class="badge badge-light">{{ documentoDetalle.documento?.folio || documentoDetalle.folio }} hojas</span>
+                        </dd>
+                      </dl>
+                    </div>
+                    <div class="col-md-6">
+                      <dl class="row">
+                        <dt class="col-sm-5">Estado Actual:</dt>
+                        <dd class="col-sm-7">
+                          <span class="badge badge-lg" [ngClass]="getEstadoClass(documentoDetalle.documento?.estado || documentoDetalle.estado)">
+                            <i class="fas fa-circle mr-1"></i>
+                            {{ (documentoDetalle.documento?.estado || documentoDetalle.estado).replace('_', ' ') | titlecase }}
+                          </span>
+                        </dd>
+                        
+                        <dt class="col-sm-5">Prioridad:</dt>
+                        <dd class="col-sm-7">
+                          <span class="badge badge-lg" [ngClass]="getPrioridadClass(documentoDetalle.documento?.prioridad || documentoDetalle.prioridad)">
+                            <i class="fas" [class.fa-exclamation-triangle]="(documentoDetalle.documento?.prioridad || documentoDetalle.prioridad) === 'urgente'" [class.fa-exclamation-circle]="(documentoDetalle.documento?.prioridad || documentoDetalle.prioridad) === 'alta'" [class.fa-minus]="(documentoDetalle.documento?.prioridad || documentoDetalle.prioridad) === 'normal'"></i>
+                            {{ (documentoDetalle.documento?.prioridad || documentoDetalle.prioridad) | titlecase }}
+                          </span>
+                        </dd>
+                        
+                        <dt class="col-sm-5">Registrado:</dt>
+                        <dd class="col-sm-7">
+                          <small>{{ (documentoDetalle.documento?.fecha_registro || documentoDetalle.fecha_registro) | date:'dd/MM/yyyy HH:mm' }}</small>
+                        </dd>
+                        
+                        <dt class="col-sm-5">Plazo:</dt>
+                        <dd class="col-sm-7">
+                          <small>{{ (documentoDetalle.documento?.fecha_plazo || documentoDetalle.fecha_plazo) | date:'dd/MM/yyyy' }}</small>
+                          <span *ngIf="documentoDetalle.documento?.vencido || documentoDetalle.vencido" class="badge badge-danger ml-1">
+                            <i class="fas fa-exclamation-triangle"></i> VENCIDO
+                          </span>
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
+                  
+                  <!-- Asunto en bloque separado -->
+                  <div class="alert alert-light mb-0 mt-2">
+                    <strong><i class="fas fa-file-alt mr-2"></i>Asunto:</strong><br>
+                    <p class="mb-0 mt-2">{{ documentoDetalle.documento?.asunto || documentoDetalle.asunto }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TRAZABILIDAD PROFESIONAL CON TIMELINE -->
+              <div class="card">
+                <div class="card-header bg-success">
+                  <h3 class="card-title text-white">
+                    <i class="fas fa-route mr-2"></i>Trazabilidad del Documento
+                  </h3>
+                  <div class="card-tools">
+                    <span class="badge badge-light">
+                      {{ documentoDetalle.derivaciones?.length || 0 }} movimiento(s)
+                    </span>
+                  </div>
+                </div>
+                <div class="card-body">
+                  
+                  <!-- Timeline Profesional -->
+                  <div class="timeline timeline-inverse" *ngIf="documentoDetalle.derivaciones && documentoDetalle.derivaciones.length > 0">
+                    
+                    <!-- Evento: Registro del Documento -->
+                    <div>
+                      <i class="fas fa-file-plus bg-primary"></i>
+                      <div class="timeline-item">
+                        <span class="time">
+                          <i class="fas fa-clock"></i> 
+                          {{ (documentoDetalle.documento?.fecha_registro || documentoDetalle.fecha_registro) | date:'dd/MM/yyyy HH:mm' }}
+                        </span>
+                        <h3 class="timeline-header">
+                          <strong>Documento Registrado</strong>
+                        </h3>
+                        <div class="timeline-body">
+                          <p class="mb-0">
+                            <i class="fas fa-user mr-2"></i>Registrado en Mesa de Partes<br>
+                            <i class="fas fa-file mr-2"></i>Expediente: <strong>{{ documentoDetalle.documento?.numero_expediente || documentoDetalle.numero_expediente }}</strong><br>
+                            <i class="fas fa-tag mr-2"></i>Estado inicial: <span class="badge badge-secondary">Registrado</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Eventos: Derivaciones -->
+                    <div *ngFor="let der of documentoDetalle.derivaciones; let i = index">
+                      <i class="fas" 
+                         [class.fa-share]="der.tipo_derivacion === 'para_atencion'"
+                         [class.fa-eye]="der.tipo_derivacion === 'con_conocimiento'"
+                         [class.fa-undo]="der.tipo_derivacion === 'devolucion'"
+                         [class.bg-warning]="der.estado === 'pendiente'"
+                         [class.bg-info]="der.estado === 'recibido'"
+                         [class.bg-success]="der.estado === 'leido'"></i>
+                      <div class="timeline-item">
+                        <span class="time">
+                          <i class="fas fa-clock"></i> 
+                          {{ der.fecha_derivacion | date:'dd/MM/yyyy HH:mm' }}
+                        </span>
+                        <h3 class="timeline-header">
+                          <span class="badge" [class.badge-warning]="der.tipo_derivacion === 'para_atencion'" [class.badge-info]="der.tipo_derivacion === 'con_conocimiento'" [class.badge-secondary]="der.tipo_derivacion === 'devolucion'">
+                            {{ der.tipo_derivacion.replace('_', ' ') | titlecase }}
+                          </span>
+                          <strong class="ml-2">Derivación {{ i + 1 }}</strong>
+                        </h3>
+                        <div class="timeline-body">
+                          <div class="row">
+                            <div class="col-md-6">
+                              <p class="mb-2">
+                                <i class="fas fa-building text-muted mr-2"></i>
+                                <strong>Área:</strong> ID {{ der.destino_unidad_organica_id }}
+                              </p>
+                              <p class="mb-2">
+                                <i class="fas fa-calendar text-muted mr-2"></i>
+                                <strong>Plazo:</strong> {{ der.plazo_dias }} días
+                              </p>
+                            </div>
+                            <div class="col-md-6">
+                              <p class="mb-2">
+                                <i class="fas fa-flag text-muted mr-2"></i>
+                                <strong>Prioridad:</strong>
+                                <span class="badge badge-sm" [ngClass]="getPrioridadClass(der.prioridad)">
+                                  {{ der.prioridad | titlecase }}
+                                </span>
+                              </p>
+                              <p class="mb-2">
+                                <i class="fas fa-info-circle text-muted mr-2"></i>
+                                <strong>Estado:</strong>
+                                <span class="badge badge-sm" 
+                                      [class.badge-warning]="der.estado === 'pendiente'"
+                                      [class.badge-info]="der.estado === 'recibido'"
+                                      [class.badge-success]="der.estado === 'leido'"
+                                      [class.badge-danger]="der.estado === 'devuelto'">
+                                  {{ der.estado | titlecase }}
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <!-- Instrucciones -->
+                          <div class="alert alert-light mb-0 mt-2" *ngIf="der.instrucciones">
+                            <small>
+                              <i class="fas fa-sticky-note text-warning mr-2"></i>
+                              <strong>Instrucciones:</strong><br>
+                              {{ der.instrucciones }}
+                            </small>
+                          </div>
+
+                          <!-- Fechas de Seguimiento -->
+                          <div class="mt-2">
+                            <small class="text-muted">
+                              <span *ngIf="der.fecha_recepcion">
+                                <i class="fas fa-inbox mr-1"></i>
+                                Recibido: {{ der.fecha_recepcion | date:'dd/MM/yyyy HH:mm' }}
+                              </span>
+                              <span *ngIf="der.fecha_lectura" class="ml-3">
+                                <i class="fas fa-eye mr-1"></i>
+                                Leído: {{ der.fecha_lectura | date:'dd/MM/yyyy HH:mm' }}
+                              </span>
+                            </small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Evento Final: Estado Actual -->
+                    <div>
+                      <i class="fas fa-flag-checkered bg-gray"></i>
+                      <div class="timeline-item">
+                        <span class="time">
+                          <i class="fas fa-clock"></i> Ahora
+                        </span>
+                        <h3 class="timeline-header">
+                          <strong>Estado Actual del Documento</strong>
+                        </h3>
+                        <div class="timeline-body">
+                          <p class="mb-0">
+                            El documento se encuentra en estado: 
+                            <span class="badge badge-lg" [ngClass]="getEstadoClass(documentoDetalle.documento?.estado || documentoDetalle.estado)">
+                              <i class="fas fa-circle mr-1"></i>
+                              {{ (documentoDetalle.documento?.estado || documentoDetalle.estado).replace('_', ' ') | titlecase }}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <!-- Sin derivaciones -->
+                  <div *ngIf="!documentoDetalle.derivaciones || documentoDetalle.derivaciones.length === 0" class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    Este documento no ha sido derivado aún. Se encuentra en estado inicial.
+                  </div>
+
+                </div>
+              </div>
+
+
+              <!-- Adjuntos -->
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <i class="fas fa-paperclip mr-2"></i>
+                    Archivos Adjuntos
+                    <span class="badge badge-light ml-2">{{ documentoDetalle.adjuntos?.length || 0 }}</span>
+                  </h3>
+                </div>
+                <div class="card-body p-0">
+                  <table class="table table-sm mb-0" *ngIf="documentoDetalle.adjuntos && documentoDetalle.adjuntos.length > 0">
+                    <thead>
+                      <tr>
+                        <th>Archivo</th>
+                        <th>Tipo</th>
+                        <th>Tamaño</th>
+                        <th>Principal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let adj of documentoDetalle.adjuntos">
+                        <td>
+                          <i class="fas fa-file-pdf text-danger mr-1"></i>
+                          {{ adj.nombre_archivo }}
+                        </td>
+                        <td><small>{{ adj.tipo_mime }}</small></td>
+                        <td><small>{{ (adj.tamanio / 1024).toFixed(2) }} KB</small></td>
+                        <td>
+                          <span *ngIf="adj.es_principal" class="badge badge-success">
+                            <i class="fas fa-check"></i> Principal
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <!-- Sin adjuntos -->
+                  <div class="p-3" *ngIf="!documentoDetalle.adjuntos || documentoDetalle.adjuntos.length === 0">
+                    <span class="text-muted">
+                      <i class="fas fa-info-circle mr-1"></i>
+                      Este documento no tiene archivos adjuntos.
+                    </span>
+                  </div>
+
+                  <!-- Subir nuevo PDF -->
+                  <div class="border-top p-3">
+                    <label class="small font-weight-bold d-block mb-1">
+                      <i class="fas fa-upload mr-1"></i>
+                      Adjuntar nuevo PDF
+                    </label>
+                    <div class="input-group input-group-sm">
+                      <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="archivoPdfAdjunto" accept="application/pdf" (change)="onArchivoSeleccionado($event)">
+                        <label class="custom-file-label" for="archivoPdfAdjunto">
+                          {{ archivoSeleccionado?.name || 'Seleccionar archivo PDF...' }}
+                        </label>
+                      </div>
+                      <div class="input-group-append">
+                        <button class="btn btn-primary" type="button" (click)="subirAdjunto()" [disabled]="!archivoSeleccionado || loadingDetalle">
+                          <i class="fas fa-save mr-1"></i> Subir
+                        </button>
+                      </div>
+                    </div>
+                    <small class="form-text text-muted mt-1">
+                      Solo archivos PDF. El último marcado como principal se mostrará como PDF del documento.
+                    </small>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Columna Derecha: Info Adicional y Firmas -->
+            <div class="col-md-4">
+              
+              <!-- Estadísticas Rápidas -->
+              <div class="card bg-light">
+                <div class="card-body">
+                  <div class="info-box mb-2">
+                    <span class="info-box-icon bg-info"><i class="fas fa-share"></i></span>
+                    <div class="info-box-content">
+                      <span class="info-box-text">Derivaciones</span>
+                      <span class="info-box-number">{{ documentoDetalle.derivaciones?.length || 0 }}</span>
+                    </div>
+                  </div>
+                  <div class="info-box mb-2">
+                    <span class="info-box-icon bg-warning"><i class="fas fa-signature"></i></span>
+                    <div class="info-box-content">
+                      <span class="info-box-text">Firmas</span>
+                      <span class="info-box-number">{{ documentoDetalle.firmas?.length || 0 }}</span>
+                    </div>
+                  </div>
+                  <div class="info-box mb-0">
+                    <span class="info-box-icon bg-success"><i class="fas fa-paperclip"></i></span>
+                    <div class="info-box-content">
+                      <span class="info-box-text">Adjuntos</span>
+                      <span class="info-box-number">{{ documentoDetalle.adjuntos?.length || 0 }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Firmas -->
+              <div class="card" *ngIf="documentoDetalle.firmas && documentoDetalle.firmas.length > 0">
+                <div class="card-header bg-warning">
+                  <h3 class="card-title text-white"><i class="fas fa-signature mr-2"></i>Firmas Electrónicas</h3>
+                </div>
+                <div class="card-body">
+                  <div *ngFor="let firma of documentoDetalle.firmas; let last = last" [class.mb-3]="!last" [class.pb-3]="!last" [class.border-bottom]="!last">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <div>
+                        <strong>Firma {{ firma.orden_firma }}</strong><br>
+                        <small class="text-muted">{{ firma.tipo_firma | titlecase }}</small>
+                      </div>
+                      <span class="badge" [class.badge-success]="firma.estado === 'firmado'" [class.badge-warning]="firma.estado === 'pendiente'">
+                        <i [class.fas]="true" [class.fa-check]="firma.estado === 'firmado'" [class.fa-clock]="firma.estado === 'pendiente'"></i>
+                        {{ firma.estado | titlecase }}
+                      </span>
+                    </div>
+                    <div class="small text-muted">
+                      <div><strong>Solicitado:</strong> {{ firma.fecha_solicitud | date:'dd/MM/yyyy HH:mm' }}</div>
+                      <div *ngIf="firma.fecha_firma"><strong>Firmado:</strong> {{ firma.fecha_firma | date:'dd/MM/yyyy HH:mm' }}</div>
+                      <div *ngIf="firma.hash_documento"><strong>Hash:</strong> <code class="small">{{ firma.hash_documento.substring(0, 20) }}...</code></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sin firmas -->
+              <div class="alert alert-info" *ngIf="!documentoDetalle.firmas || documentoDetalle.firmas.length === 0">
+                <i class="fas fa-info-circle"></i> Este documento no requiere firmas electrónicas.
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
+          <i class="fas fa-times mr-1"></i> Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showModal" *ngIf="showModal" (click)="cerrarModal()"></div>
+
+<!-- Modal Firma con Preview Mejorado -->
+<div class="modal fade" [class.show]="showModalFirma" [style.display]="showModalFirma ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl" role="document" style="max-width: 98%; max-height: 95vh;">
+    <div class="modal-content" style="height: 95vh; display: flex; flex-direction: column;">
+      <div class="modal-header bg-gradient-primary" style="flex-shrink: 0;">
+        <h5 class="modal-title text-white">
+          <i class="fas fa-signature mr-2"></i>
+          Firmar Documento: {{ documentoAFirmar?.numero_expediente }}
+        </h5>
+        <button type="button" class="close text-white" (click)="cerrarModalFirma()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 1rem;">
+        
+        <!-- Loading -->
+        <div *ngIf="loadingFirma" class="text-center p-5">
+          <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+          <p class="mt-3">Cargando documento para firma...</p>
+        </div>
+
+        <!-- Contenido del Modal -->
+        <div *ngIf="!loadingFirma && documentoAFirmar">
+          
+          <!-- Información del Documento Mejorada -->
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <h5 class="alert-heading">
+                  <i class="fas fa-lightbulb mr-2"></i>Instrucciones para Firmar
+                </h5>
+                <hr>
+                <ol class="mb-0 pl-3">
+                  <li class="mb-2"><strong>Visualice el documento</strong> en el panel izquierdo</li>
+                  <li class="mb-2"><strong>Seleccione la posición</strong> de la firma haciendo clic en el documento o usando las plantillas predefinidas</li>
+                  <li class="mb-2"><strong>Ajuste el zoom</strong> si necesita ver mejor el documento</li>
+                  <li class="mb-2"><strong>Revise la vista previa</strong> de cómo se verá la firma</li>
+                  <li class="mb-0"><strong>Confirme la firma</strong> cuando esté satisfecho con la posición</li>
+                </ol>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row" style="height: 100%; margin: 0;">
+            <!-- Visor PDF Profesional -->
+            <div class="col-lg-8" style="padding: 0; height: 100%;">
+              <div class="card shadow-sm" style="height: 100%; margin: 0; display: flex; flex-direction: column;">
+                <div class="card-header bg-gradient-primary text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-file-pdf mr-2"></i>Visualizador de PDF - Haga clic para posicionar la firma
+                  </h6>
+                </div>
+                <div class="card-body p-0" style="flex: 1; overflow: hidden;">
+                  <!-- Visor PDF profesional -->
+                  <app-pdf-viewer 
+                    *ngIf="pdfUrlParaFirma"
+                    [pdfUrl]="pdfUrlParaFirma"
+                    [enableSignature]="true"
+                    [signaturePosition]="posicionFirma"
+                    (signaturePositionSelected)="onPosicionFirmaSeleccionada($event)"
+                    style="height: 100%;">
+                  </app-pdf-viewer>
+
+                  <!-- Mensaje cuando no hay PDF -->
+                  <div class="p-5 text-center" *ngIf="!pdfUrlParaFirma">
+                    <div class="alert alert-warning">
+                      <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                      <h5>No hay PDF disponible</h5>
+                      <p>Adjunte un PDF principal en el detalle del documento para poder firmarlo.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel de Control Mejorado -->
+            <div class="col-lg-4">
+              
+              <!-- Card: Instrucciones -->
+              <div class="card shadow-sm mb-3">
+                <div class="card-header bg-gradient-info text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-info-circle mr-2"></i>Instrucciones
+                  </h6>
+                </div>
+                <div class="card-body p-2">
+                  <small class="text-muted">
+                    <ol class="mb-0 pl-3">
+                      <li>Haga clic en el PDF para seleccionar una posición inicial</li>
+                      <li>Arrastre el indicador de firma para moverlo a la posición deseada</li>
+                      <li>Use las plantillas para posiciones rápidas</li>
+                      <li>Confirme cuando esté listo</li>
+                    </ol>
+                  </small>
+                </div>
+              </div>
+
+              <!-- Card: Plantillas de Posición -->
+              <div class="card shadow-sm mb-3">
+                <div class="card-header bg-gradient-success text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-th mr-2"></i>Plantillas de Posición
+                  </h6>
+                </div>
+                <div class="card-body p-2">
+                  <div class="btn-group-vertical w-100" role="group">
+                    <button 
+                      *ngFor="let plantilla of plantillasPosicion"
+                      type="button" 
+                      class="btn btn-sm btn-outline-success mb-1 text-left"
+                      (click)="aplicarPlantillaPosicion(plantilla)"
+                      [title]="plantilla.nombre">
+                      <i class="fas {{ plantilla.icono }} mr-2"></i>
+                      {{ plantilla.nombre }}
+                    </button>
+                  </div>
+                  <small class="text-muted d-block mt-2">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Haga clic en una plantilla para ubicar la firma automáticamente
+                  </small>
+                </div>
+              </div>
+              
+              <!-- Selección de PDF a firmar -->
+              <div class="card shadow-sm mb-3" *ngIf="adjuntosFirma && adjuntosFirma.length > 0">
+                <div class="card-header bg-gradient-danger text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-file-pdf mr-2"></i>Archivos PDF Disponibles
+                  </h6>
+                </div>
+                <div class="card-body p-2">
+                  <select class="form-control form-control-sm" [(ngModel)]="adjuntoSeleccionadoId" (change)="cambiarAdjuntoFirma()">
+                    <option *ngFor="let adj of adjuntosFirma" [ngValue]="adj.id">
+                      {{ adj.nombre_archivo }} 
+                      <span *ngIf="adj.es_principal"> ⭐ Principal</span>
+                    </option>
+                  </select>
+                  <small class="text-muted d-block mt-2">
+                    Seleccione el PDF que desea firmar
+                  </small>
+                </div>
+              </div>
+
+              <!-- Configuración Manual -->
+              <div class="card shadow-sm mb-3" *ngIf="posicionFirma">
+                <div class="card-header bg-gradient-warning text-dark">
+                  <h6 class="mb-0">
+                    <i class="fas fa-sliders-h mr-2"></i>Posición de Firma
+                  </h6>
+                </div>
+                <div class="card-body p-2">
+                  
+                  <div class="form-group mb-2">
+                    <label class="small font-weight-bold">Página:</label>
+                    <input 
+                      type="number" 
+                      class="form-control form-control-sm" 
+                      [(ngModel)]="posicionFirma.page"
+                      min="1"
+                      max="100">
+                  </div>
+
+                  <div class="form-group mb-2">
+                    <label class="small font-weight-bold">Posición X (%):</label>
+                    <div class="d-flex align-items-center">
+                      <input 
+                        type="range" 
+                        class="form-control-range flex-grow-1 mr-2" 
+                        [(ngModel)]="posicionFirma.x"
+                        min="0"
+                        max="100"
+                        step="1">
+                      <input 
+                        type="number" 
+                        class="form-control form-control-sm" 
+                        [(ngModel)]="posicionFirma.x"
+                        min="0"
+                        max="100"
+                        step="1"
+                        style="max-width: 70px;">
+                    </div>
+                    <small class="text-muted">0% = Izquierda, 100% = Derecha</small>
+                  </div>
+
+                  <div class="form-group mb-0">
+                    <label class="small font-weight-bold">Posición Y (%):</label>
+                    <div class="d-flex align-items-center">
+                      <input 
+                        type="range" 
+                        class="form-control-range flex-grow-1 mr-2" 
+                        [(ngModel)]="posicionFirma.y"
+                        min="0"
+                        max="100"
+                        step="1">
+                      <input 
+                        type="number" 
+                        class="form-control form-control-sm" 
+                        [(ngModel)]="posicionFirma.y"
+                        min="0"
+                        max="100"
+                        step="1"
+                        style="max-width: 70px;">
+                    </div>
+                    <small class="text-muted">0% = Arriba, 100% = Abajo</small>
+                  </div>
+
+                </div>
+              </div>
+              
+              <!-- Información del Documento -->
+              <div class="card shadow-sm mb-3">
+                <div class="card-header bg-gradient-primary text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-info-circle mr-2"></i>Información del Documento
+                  </h6>
+                </div>
+                <div class="card-body p-2">
+                  <p class="mb-1"><strong>Expediente:</strong><br><small class="text-primary">{{ documentoAFirmar.numero_expediente }}</small></p>
+                  <p class="mb-1"><strong>Tipo:</strong><br><small>{{ documentoAFirmar.tipo_documento?.nombre || 'N/A' }}</small></p>
+                  <p class="mb-1"><strong>Asunto:</strong><br><small class="text-truncate d-block">{{ documentoAFirmar.asunto }}</small></p>
+                  <p class="mb-0"><strong>Estado:</strong><br>
+                    <span class="badge badge-primary">{{ documentoAFirmar.estado | titlecase }}</span>
+                  </p>
+                </div>
+              </div>
+              
+              <!-- Estado de la Firma -->
+              <div class="card shadow-sm mb-3">
+                <div class="card-body p-2 text-center">
+                  <div class="alert alert-success p-2 mb-2" *ngIf="posicionFirma">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <strong>Posición seleccionada</strong><br>
+                    <small>Página: {{ posicionFirma.page }} | X: {{ posicionFirma.x.toFixed(1) }}% | Y: {{ posicionFirma.y.toFixed(1) }}%</small>
+                  </div>
+                  <div class="alert alert-warning p-2 mb-2" *ngIf="!posicionFirma">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <small>Haga clic en el PDF para seleccionar la posición</small>
+                  </div>
+                  
+                  <button 
+                    class="btn btn-success btn-lg btn-block mb-2"
+                    (click)="confirmarFirma()"
+                    [disabled]="!posicionFirma || loadingFirma">
+                    <i class="fas fa-signature mr-2"></i>
+                    {{ loadingFirma ? 'Firmando...' : 'Confirmar Firma' }}
+                  </button>
+                  <button 
+                    class="btn btn-outline-secondary btn-block"
+                    (click)="cerrarModalFirma()"
+                    [disabled]="loadingFirma">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop para Firma -->
+<div class="modal-backdrop fade" [class.show]="showModalFirma" *ngIf="showModalFirma" (click)="cerrarModalFirma()"></div>
+

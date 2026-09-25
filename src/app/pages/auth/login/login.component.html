@@ -1,0 +1,105 @@
+<div class="login-wrapper">
+  <div class="login-container">
+    <div class="login-sidebar">
+      <div class="branding-content">
+        <div class="logo-wrapper mb-4">
+          <i class="fas fa-balance-scale fa-4x"></i>
+        </div>
+        <h1 class="institution-name">Notaria Bohorquez Vega</h1>
+        <p class="institution-slogan">Excelencia en el servicio notarial
+        </p>
+      </div>
+    </div>
+    
+    <div class="login-main">
+      <div class="login-card">
+        <div class="login-header">
+          <h2 class="login-title">Inicio de Sesión</h2>
+          <p class="login-subtitle">Intranet Institucional</p>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+          <!-- Email -->
+          <div class="form-group">
+            <label for="email" class="form-label">Correo Electrónico</label>
+            <div class="input-group">
+              <span class="input-icon"><i class="fas fa-envelope"></i></span>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                class="form-control"
+                [(ngModel)]="credentials.email"
+                required
+                email
+                placeholder="ejemplo@notariostacna.org.pe"
+                [disabled]="loading">
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="form-group">
+            <label for="password" class="form-label">Contraseña</label>
+            <div class="input-group">
+              <span class="input-icon"><i class="fas fa-lock"></i></span>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-control"
+                [(ngModel)]="credentials.password"
+                required
+                placeholder="••••••••"
+                [disabled]="loading">
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <div *ngIf="error" class="error-alert" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            {{ error }}
+          </div>
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            class="btn-login"
+            [disabled]="loading || loginForm.invalid">
+            <span *ngIf="loading" class="spinner"></span>
+            <span *ngIf="!loading">Ingresar al Sistema</span>
+            <span *ngIf="loading">Procesando...</span>
+          </button>
+        </form>
+      </div>
+      
+      <div class="login-footer">
+        <p>&copy; 2026 Notaria Bohorquez. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #areaModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title"><i class="fas fa-building me-2"></i>Seleccione su área</h4>
+  </div>
+  <div class="modal-body">
+    <p class="text-muted small mb-4">Tiene varias áreas asignadas. Elija una para continuar.</p>
+    <div class="form-group">
+      <label class="form-label" for="selAreaIntranet">Área / Dependencia</label>
+      <select
+        id="selAreaIntranet"
+        class="form-select"
+        [(ngModel)]="selectedAreaId"
+        name="areaIntranet">
+        <option *ngFor="let a of areasTramite" [ngValue]="a.id">{{ areaLabel(a) }}</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancelar</button>
+    <button type="button" class="btn btn-primary" (click)="modal.close(selectedAreaId)">
+      Confirmar Ingreso
+    </button>
+  </div>
+</ng-template>

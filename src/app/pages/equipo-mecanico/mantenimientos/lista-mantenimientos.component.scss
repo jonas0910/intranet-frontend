@@ -1,0 +1,33 @@
+// Estilos específicos para el componente de Mantenimientos
+
+/* Patrón CRUD: texto de columnas en negro (#212529). Cabecera legible aunque cv.tableClasses traiga table-dark. */
+$col-text: #212529;
+
+:host .lista-mantenimientos-thead th {
+  background-color: var(--ds-table-header-bg, #f8f9fa) !important;
+  color: $col-text !important;
+  border-bottom: 2px solid #dee2e6 !important;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+:host .lista-mantenimientos-crud-table.ds-crud-table tbody td {
+  color: $col-text !important;
+}
+
+/* Badges con fondo de color: mantener contraste del badge, no el negro heredado del td. */
+:host .lista-mantenimientos-crud-table tbody td .badge.bg-info,
+:host .lista-mantenimientos-crud-table tbody td .badge.bg-success,
+:host .lista-mantenimientos-crud-table tbody td .badge.bg-danger {
+  color: #fff !important;
+}
+
+:host .lista-mantenimientos-crud-table tbody td .badge.bg-light.text-dark {
+  color: $col-text !important;
+}
+
+/* Tipos preventivo/correctivo (clases bg-*-light text-*): el texto del badge debe verse sobre su fondo. */
+:host .lista-mantenimientos-crud-table tbody td .badge.bg-info-light,
+:host .lista-mantenimientos-crud-table tbody td .badge.bg-warning-light {
+  color: inherit;
+}

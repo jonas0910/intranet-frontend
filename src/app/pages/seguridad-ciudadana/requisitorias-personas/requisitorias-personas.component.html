@@ -1,0 +1,352 @@
+<app-system-layout [title]="'Personas Requisitoriadas'" [subtitle]="'Registro y seguimiento de personas con órdenes de captura'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Seguridad Ciudadana', url: '/seguridad-ciudadana'}, {label: 'Personas Requisitoriadas'}]"
+  [subsystem]="'seguridad-ciudadana'">
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card elevation-1 mb-3" [class.card-outline]="true" [ngClass]="cv.cardOutlineColor"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+        
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-user-secret mr-1"></i> Listado de Personas Requisitoriadas
+            </h3>
+            <span class="badge badge-primary">{{ paginacion.total }}</span>
+            <button class="btn btn-sm btn-outline-info ml-1 px-2" (click)="isFiltersCollapsed = !isFiltersCollapsed"
+              [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'" style="height: 24px; line-height: 1;">
+              <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+            </button>
+            <ng-container *ngIf="cv.showExportButtons">
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'" (click)="onExportExcel()">
+                <i class="fas fa-file-excel mr-1"></i> Excel
+              </button>
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'" (click)="onExportPdf()">
+                <i class="fas fa-file-pdf mr-1"></i> PDF
+              </button>
+            </ng-container>
+          </div>
+          <div class="ms-auto flex-shrink-0">
+            <button type="button" class="btn btn-sm btn-primary" (click)="openCreate()">
+              <i class="fas fa-plus mr-1"></i> Nueva Requisitoria
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="border-bottom bg-light overflow-hidden" [style.max-height]="isFiltersCollapsed ? '0px' : '500px'"
+          [style.padding]="isFiltersCollapsed ? '0px' : '0.5rem'"
+          style="transition: max-height 0.3s ease, padding 0.3s ease;">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="mb-1 ds-crud-label">Buscar</label>
+              <input type="text" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.search"
+                (ngModelChange)="onFilterChange()" placeholder="DNI, nombres o apellidos...">
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Peligrosidad</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.nivel_peligrosidad" (ngModelChange)="onFilterChange()">
+                <option value="">Todas</option>
+                <option *ngFor="let nivel of nivelesPeligrosidad" [value]="nivel.value">{{ nivel.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Estado</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.estado" (ngModelChange)="onFilterChange()">
+                <option value="">Todos</option>
+                <option *ngFor="let est of estados" [value]="est.value">{{ est.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Por página</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.per_page" (ngModelChange)="onFilterChange()">
+                <option *ngFor="let size of [10, 25, 50, 100]" [ngValue]="size">{{size}}</option>
+              </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-sm btn-secondary w-100" (click)="limpiarFiltros()">
+                <i class="fas fa-redo mr-1"></i> Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <div *ngIf="loading" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+            <p class="text-muted">Cargando datos...</p>
+          </div>
+          
+          <div class="table-responsive p-3" *ngIf="!loading">
+            <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" id="tablaPersonasReq"
+              class="table table-hover table-striped align-middle mb-0 w-100 ds-crud-table">
+              <thead [style.background-color]="cv.tableHeaderBg" [style.color]="cv.tableHeaderColor">
+                <tr>
+                  <th class="border-0">DNI</th>
+                  <th class="border-0">Apellidos y Nombres</th>
+                  <th class="border-0" style="max-width: 300px;">Motivo / Delito</th>
+                  <th class="border-0">Autoridad</th>
+                  <th class="text-center border-0">Peligrosidad</th>
+                  <th class="text-center border-0">Estado</th>
+                  <th class="text-center border-0" style="width: 150px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of personas; let i = index" class="fade-in">
+                  <td><strong class="text-danger">{{ p.dni }}</strong></td>
+                  <td>{{ p.apellido_paterno }} {{ p.apellido_materno }}, {{ p.nombres }}</td>
+                  <td>
+                    <small class="text-muted d-block" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      {{ p.motivo_requisitoria }}
+                    </small>
+                  </td>
+                  <td><small>{{ p.autoridad_emite }}</small></td>
+                  <td class="text-center">
+                    <span class="badge" [ngClass]="getPeligrosidadBadgeClass(p.nivel_peligrosidad)">
+                      {{ getPeligrosidadLabel(p.nivel_peligrosidad) }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge" [ngClass]="getEstadoBadgeClass(p.estado)">
+                      {{ getEstadoLabel(p.estado) }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm shadow-sm" style="gap: 2px;">
+                      <button class="btn" [ngClass]="cv.viewBtnClass || 'btn-info'" (click)="openView(p)" title="Ver Detalle">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="btn btn-success" (click)="marcarCapturada(p)" *ngIf="p.estado === 'activa'" title="Marcar Capturada">
+                        <i class="fas fa-handcuffs"></i>
+                      </button>
+                      <button class="btn" [ngClass]="cv.editBtnClass || 'btn-warning'" (click)="openEdit(p)" title="Editar">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn" [ngClass]="cv.deleteBtnClass || 'btn-danger'" (click)="delete(p)" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Paginación Footer -->
+        <div *ngIf="!loading && paginacion.total > 0" class="card-footer clearfix bg-white border-top">
+          <div class="row align-items-center">
+            <div class="col-sm-12 col-md-5">
+              <div class="text-muted small">
+                Mostrando {{ (paginacion.currentPage - 1) * paginacion.perPage + 1 }} a {{
+                Math.min(paginacion.currentPage * paginacion.perPage, paginacion.total) }} de {{ paginacion.total }}
+              </div>
+            </div>
+            <div class="col-sm-12 col-md-7 text-right">
+              <ul class="pagination pagination-sm m-0 float-right" *ngIf="paginacion.lastPage > 1">
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1"><a class="page-link" (click)="onPageChange(1)">«</a></li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1"><a class="page-link" (click)="onPageChange(paginacion.currentPage - 1)">‹</a></li>
+                <li class="page-item" *ngFor="let page of getPaginationPages()" [class.active]="page === paginacion.currentPage" [class.disabled]="page === -1">
+                  <a class="page-link" (click)="page !== -1 && onPageChange(page)">{{ page === -1 ? '...' : page }}</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage"><a class="page-link" (click)="onPageChange(paginacion.currentPage + 1)">›</a></li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage"><a class="page-link" (click)="onPageChange(paginacion.lastPage)">»</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-system-layout>
+
+<!-- MODAL: REGISTRO / EDICION -->
+<div class="modal fade" id="modalPersonaReq" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content overflow-hidden shadow-lg border-0" [style.border-radius.px]="10">
+      <div class="modal-header text-white bg-danger">
+        <h5 class="modal-title font-weight-bold">
+          <i class="fas" [ngClass]="modoEdicion ? 'fa-edit' : 'fa-plus-circle'"></i> 
+          {{ modoEdicion ? 'Editar Requisitoria' : 'Nueva Requisitoria de Persona' }}
+        </h5>
+        <button type="button" class="close text-white" (click)="closeEdit()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      
+      <form (ngSubmit)="save()" #personaForm="ngForm">
+        <div class="modal-body bg-white py-3">
+          <h6 class="text-uppercase text-muted font-weight-bold small border-bottom pb-1 mb-3">Datos Personales</h6>
+          <div class="row">
+            <div class="col-md-3 form-group">
+              <label>DNI <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.dni" name="dni" required maxlength="8" pattern="\d{8}">
+            </div>
+            <div class="col-md-3 form-group">
+              <label>Apellido Paterno <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.apellido_paterno" name="ap1" required>
+            </div>
+            <div class="col-md-3 form-group">
+              <label>Apellido Materno <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.apellido_materno" name="ap2" required>
+            </div>
+            <div class="col-md-3 form-group">
+              <label>Nombres <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.nombres" name="nom" required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-3 form-group">
+              <label>Alias</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.alias" name="alias">
+            </div>
+            <div class="col-md-3 form-group">
+              <label>Sexo</label>
+              <select class="form-control form-control-sm" [(ngModel)]="formulario.sexo" name="sexo">
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+              </select>
+            </div>
+            <div class="col-md-3 form-group">
+              <label>Fecha Nacimiento</label>
+              <input type="date" class="form-control form-control-sm" [(ngModel)]="formulario.fecha_nacimiento" name="fnac">
+            </div>
+            <div class="col-md-3 form-group">
+              <label>¿Se encuentra armado?</label>
+              <div class="custom-control custom-switch pt-1">
+                <input type="checkbox" class="custom-control-input" id="swArmado" [(ngModel)]="formulario.armado" name="arm">
+                <label class="custom-control-label" for="swArmado">{{ formulario.armado ? 'Sí' : 'No' }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Características Físicas / Señas particulares</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.caracteristicas_fisicas" name="cara" placeholder="Estatura, tatuajes, cicatrices...">
+          </div>
+
+          <h6 class="text-uppercase text-muted font-weight-bold small border-bottom pb-1 mt-4 mb-3">Información de la Requisitoria</h6>
+          <div class="form-group">
+            <label>Motivo de Requisitoria / Delito Imputado <span class="text-danger">*</span></label>
+            <textarea class="form-control form-control-sm" rows="2" [(ngModel)]="formulario.motivo_requisitoria" name="motivo" required minlength="10"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-6 form-group">
+              <label>Autoridad que Emite / Juzgado <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.autoridad_emite" name="aut" required>
+            </div>
+            <div class="col-md-3 form-group">
+              <label>Nº de Oficio</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formulario.numero_oficio" name="oficio">
+            </div>
+            <div class="col-md-3 form-group">
+              <label>Fecha de Requisitoria <span class="text-danger">*</span></label>
+              <input type="date" class="form-control form-control-sm" [(ngModel)]="formulario.fecha_requisitoria" name="freq" required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4 form-group">
+              <label>Nivel de Peligrosidad <span class="text-danger">*</span></label>
+              <select class="form-control form-control-sm" [(ngModel)]="formulario.nivel_peligrosidad" name="peli" required>
+                <option *ngFor="let n of nivelesPeligrosidad" [value]="n.value">{{ n.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-4 form-group">
+              <label>Estado Actual <span class="text-danger">*</span></label>
+              <select class="form-control form-control-sm" [(ngModel)]="formulario.estado" name="est" required>
+                <option *ngFor="let s of estados" [value]="s.value">{{ s.label }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group mb-0">
+            <label>Observaciones Adicionales</label>
+            <textarea class="form-control form-control-sm" rows="2" [(ngModel)]="formulario.observaciones" name="obs"></textarea>
+          </div>
+        </div>
+        
+        <div class="modal-footer bg-light border-top shadow-sm">
+          <button type="button" class="btn btn-secondary px-4 shadow-sm" (click)="closeEdit()"><i class="fas fa-times mr-1"></i> Cancelar</button>
+          <button type="submit" class="btn btn-primary px-4 shadow-sm" [disabled]="personaForm.invalid || guardando">
+            <i class="fas" [ngClass]="guardando ? 'fa-spinner fa-spin' : 'fa-save'"></i> 
+            {{ guardando ? 'Guardando...' : (modoEdicion ? 'Actualizar Registro' : 'Registrar Requisitoria') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DETALLE VIEW -->
+<div class="modal fade" id="modalViewPersonaReq" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content overflow-hidden shadow-lg border-0" [style.border-radius.px]="10">
+      <div class="modal-header text-white bg-info">
+        <h5 class="modal-title font-weight-bold"><i class="fas fa-info-circle mr-2"></i>Detalle de Requisitoria</h5>
+        <button type="button" class="close text-white" (click)="closeView()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-0" *ngIf="personaSeleccionada">
+        <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+          <div>
+            <h4 class="mb-0 font-weight-bold text-primary">{{ personaSeleccionada.apellido_paterno }} {{ personaSeleccionada.apellido_materno }}, {{ personaSeleccionada.nombres }}</h4>
+            <span class="badge" [ngClass]="getEstadoBadgeClass(personaSeleccionada.estado)">{{ getEstadoLabel(personaSeleccionada.estado) }}</span>
+          </div>
+          <div class="text-right">
+            <small class="d-block text-muted">DNI:</small>
+            <span class="h5 font-weight-bold text-danger mb-0">{{ personaSeleccionada.dni }}</span>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="row">
+            <div class="col-md-6 border-right">
+              <h6 class="text-uppercase text-muted font-weight-bold small mb-3">Información Personal</h6>
+              <dl class="row mb-0">
+                <dt class="col-sm-5">Alias:</dt>
+                <dd class="col-sm-7">{{ personaSeleccionada.alias || 'N/A' }}</dd>
+                <dt class="col-sm-5">Sexo:</dt>
+                <dd class="col-sm-7">{{ personaSeleccionada.sexo === 'M' ? 'Masculino' : 'Femenino' }}</dd>
+                <dt class="col-sm-5">Nacimiento:</dt>
+                <dd class="col-sm-7">{{ personaSeleccionada.fecha_nacimiento | date:'dd/MM/yyyy' }}</dd>
+                <dt class="col-sm-5">Características:</dt>
+                <dd class="col-sm-7">{{ personaSeleccionada.caracteristicas_fisicas || 'No registradas' }}</dd>
+                <dt class="col-sm-5">¿Armado?:</dt>
+                <dd class="col-sm-7">
+                  <span class="badge" [ngClass]="personaSeleccionada.armado ? 'badge-danger' : 'badge-success'">
+                    {{ personaSeleccionada.armado ? 'SÍ' : 'NO' }}
+                  </span>
+                </dd>
+              </dl>
+            </div>
+            <div class="col-md-6 pl-md-4">
+              <h6 class="text-uppercase text-muted font-weight-bold small mb-3">Detalle Requisitoria</h6>
+              <div class="alert alert-danger py-2 mb-3">
+                <small class="d-block">Peligrosidad:</small>
+                <strong class="text-uppercase">{{ getPeligrosidadLabel(personaSeleccionada.nivel_peligrosidad) }}</strong>
+              </div>
+              <dl class="row mb-0">
+                <dt class="col-sm-5">Institución:</dt>
+                <dd class="col-sm-7">{{ personaSeleccionada.autoridad_emite }}</dd>
+                <dt class="col-sm-5">Nº Oficio:</dt>
+                <dd class="col-sm-7">{{ personaSeleccionada.numero_oficio || 'Pendiente' }}</dd>
+                <dt class="col-sm-5">Fecha:</dt>
+                <dd class="col-sm-7">{{ personaSeleccionada.fecha_requisitoria | date:'dd/MM/yyyy' }}</dd>
+              </dl>
+            </div>
+          </div>
+          <div class="mt-4">
+            <h6 class="text-uppercase text-muted font-weight-bold small border-bottom pb-1">Motivo / Delito</h6>
+            <p class="mt-2">{{ personaSeleccionada.motivo_requisitoria }}</p>
+          </div>
+          <div class="mt-3" *ngIf="personaSeleccionada.observaciones">
+            <h6 class="text-uppercase text-muted font-weight-bold small border-bottom pb-1">Observaciones</h6>
+            <p class="mt-2 text-muted small italic">{{ personaSeleccionada.observaciones }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light border-top">
+        <button type="button" class="btn btn-secondary px-4 shadow-sm" (click)="closeView()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

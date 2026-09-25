@@ -1,0 +1,17 @@
+/* Estilos para vehículos de servicio */
+:host {
+  display: block;
+}
+
+.bg-light-yellow {
+  background-color: rgba(255, 193, 7, 0.03);
+}
+
+.table-hover tbody tr.bg-light-yellow:hover {
+  background-color: rgba(255, 193, 7, 0.08);
+}
+
+.avatar-sm {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}

@@ -1,0 +1,498 @@
+<app-system-layout
+  [title]="'Mensajería Interna'"
+  [subtitle]="'Chat interno del sistema Notaria'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Mensajería'}]"
+  [subsystem]="'mensajeria'">
+
+  <!-- Chat Container -->
+  <div class="chat-container">
+
+    <!-- ═══ PANEL IZQUIERDO ═══ -->
+    <div class="chat-sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">
+          <i class="fas fa-comment-dots mr-1"></i> Mensajes
+        </span>
+        <button class="btn-new-chat" (click)="abrirModalNueva()" title="Nueva conversación">
+          <i class="fas fa-edit"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-search">
+        <div class="search-input-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Buscar conversación..." [(ngModel)]="busquedaConv" id="chat-busqueda-conv">
+        </div>
+        <button class="btn-privacy-toggle" 
+                [class.active]="!isOnlineHidden" 
+                (click)="togglePrivacyMode()" 
+                [title]="isOnlineHidden ? 'Activar visibilidad' : 'Ocultar mi estado (Incógnito)'">
+          <i class="fas" [ngClass]="isOnlineHidden ? 'fa-eye-slash' : 'fa-eye'"></i>
+        </button>
+      </div>
+
+      <div class="conv-list">
+        <!-- Loading skeleton -->
+        <ng-container *ngIf="cargandoConvs">
+          <div class="conv-skeleton" *ngFor="let sk of [1,2,3,4]">
+            <div class="sk-avatar"></div>
+            <div class="sk-lines">
+              <div class="sk-line sk-line-lg"></div>
+              <div class="sk-line sk-line-sm"></div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Lista -->
+        <div class="conv-item"
+             *ngFor="let c of convsFiltradas"
+             [class.active]="convActiva?.id === c.id"
+             (click)="seleccionarConversacion(c)"
+             [id]="'conv-' + c.id">
+          <div class="conv-avatar">
+            {{ getAvatar(c) }}
+            <span class="online-dot" *ngIf="isOnline(getOtroUserId(c))"></span>
+          </div>
+          <div class="conv-info">
+            <div class="conv-top">
+              <span class="conv-name">{{ getDisplayName(c) }}</span>
+              <span class="conv-time">{{ formatFechaConv(c.updated_at) }}</span>
+            </div>
+            <div class="conv-bottom">
+              <span class="conv-preview">
+                <ng-container *ngIf="c.conversation_type !== 'individual' && c.last_message?.sender_id === usuarioActual?.id">Tú: </ng-container>
+                {{ c.last_message?.content || 'Sin mensajes aún' }}
+              </span>
+              <span class="conv-badge" *ngIf="c.unread_count > 0">{{ c.unread_count > 9 ? '9+' : c.unread_count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vacío -->
+        <div class="conv-empty" *ngIf="!cargandoConvs && conversaciones.length === 0">
+          <i class="fas fa-comments"></i>
+          <p>Sin conversaciones</p>
+          <button (click)="abrirModalNueva()">Iniciar chat</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PANEL DERECHO ═══ -->
+    <div class="chat-main">
+
+      <!-- Estado vacío -->
+      <div class="chat-empty" *ngIf="!convActiva">
+        <div class="chat-empty-icon">
+          <i class="fas fa-comment-alt"></i>
+        </div>
+        <h6>Selecciona una conversación</h6>
+        <p>O crea una nueva para comenzar a chatear</p>
+        <button class="btn-empty-new" (click)="abrirModalNueva()">
+          <i class="fas fa-plus mr-1"></i> Nueva conversación
+        </button>
+      </div>
+
+      <!-- Chat activo -->
+      <ng-container *ngIf="convActiva">
+
+        <!-- Header del chat -->
+        <div class="chat-header">
+          <div class="chat-header-info">
+            <div class="chat-avatar-sm">{{ getAvatar(convActiva) }}</div>
+            <div class="chat-header-text">
+              <div class="chat-name">{{ getDisplayName(convActiva) }}</div>
+              <div class="chat-status">
+                <span *ngIf="typingUsuarios.length > 0" class="typing-indicator">
+                  <span class="typing-dots"><span></span><span></span><span></span></span>
+                  {{ typingUsuarios[0] }}{{ typingUsuarios.length > 1 ? ' y otros' : '' }} escrib{{typingUsuarios.length > 1 ? 'en' : 'e'}}...
+                </span>
+                <span *ngIf="typingUsuarios.length === 0" class="status-text">
+                  <span class="online-indicator" *ngIf="isOnline(getOtroUserId(convActiva))">
+                    <span class="status-dot online"></span> En línea
+                  </span>
+                  <span *ngIf="!isOnline(getOtroUserId(convActiva)) && convActiva.conversation_type === 'individual'" class="status-offline">
+                    Desconectado
+                  </span>
+                  <span *ngIf="convActiva.conversation_type !== 'individual'">
+                    <i class="fas fa-users mr-1"></i> Grupo
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="chat-header-actions">
+            <button class="btn-hdr" (click)="cargarConversaciones()" title="Actualizar">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="btn-hdr" (click)="toggleDetalles()" title="Detalles"
+                    [class.active]="mostrarDetalles" id="btn-detalles-conv">
+              <i class="fas fa-info-circle"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Área de mensajes -->
+        <div class="messages-area" #messagesContainer>
+
+          <!-- Cargar más -->
+          <div class="load-more" *ngIf="hayMasMsgs">
+            <button (click)="cargarMasMensajes()" [disabled]="cargandoMsgs" id="btn-cargar-mas">
+              <i class="fas fa-chevron-up mr-1"></i>
+              {{ cargandoMsgs ? 'Cargando...' : 'Ver mensajes anteriores' }}
+            </button>
+          </div>
+
+          <!-- Loading inicial -->
+          <div class="msgs-loading" *ngIf="cargandoMsgs && mensajes.length === 0">
+            <i class="fas fa-circle-notch fa-spin"></i>
+          </div>
+
+          <!-- Mensajes -->
+          <ng-container *ngFor="let m of mensajes; trackBy: trackMsg; let i = index">
+            <!-- Separador de fecha -->
+            <div class="date-separator"
+                 *ngIf="i === 0 || formatFechaConv(m.created_at) !== formatFechaConv(mensajes[i-1]?.created_at)">
+              <span>{{ m.created_at | date:'dd/MM/yyyy' }}</span>
+            </div>
+
+            <div class="msg-wrapper"
+                 [class.mine]="esMio(m)"
+                 [class.theirs]="!esMio(m)"
+                 [id]="'msg-' + m.id">
+
+              <!-- Avatar (solo mensajes ajenos) -->
+              <div class="msg-avatar" *ngIf="!esMio(m)">
+                {{ m.sender?.name?.charAt(0)?.toUpperCase() || '?' }}
+              </div>
+
+              <div class="msg-bubble-group">
+                <!-- Nombre remitente (solo grupos) -->
+                <div class="msg-sender"
+                     *ngIf="!esMio(m) && convActiva.conversation_type !== 'individual'">
+                  {{ m.sender?.name }}
+                </div>
+                <div class="msg-bubble">
+                  <!-- Multimedia Content -->
+                  <div *ngIf="m.attachments?.length > 0" class="msg-attachments">
+                    <div *ngFor="let att of m.attachments" class="att-item">
+                      <!-- Imagen -->
+                      <div *ngIf="att.mime_type?.startsWith('image/')" class="att-image">
+                        <img [src]="att.download_url" [alt]="att.original_name" (click)="abrirLightbox(att.download_url)">
+                      </div>
+                      <!-- Audio -->
+                      <div *ngIf="att.mime_type?.startsWith('audio/')" class="att-audio">
+                        <audio controls>
+                          <source [src]="att.download_url" [type]="att.mime_type">
+                        </audio>
+                      </div>
+                      <!-- Archivo genérico -->
+                      <div *ngIf="!att.mime_type?.startsWith('image/') && !att.mime_type?.startsWith('audio/')" class="att-file">
+                        <div class="att-file-info">
+                          <i [class]="att.icon_class || 'fas fa-file'"></i>
+                          <div class="att-file-details">
+                            <span class="att-name">{{ att.original_name }}</span>
+                            <span class="att-size">{{ att.human_file_size }}</span>
+                          </div>
+                        </div>
+                        <a [href]="att.download_url" class="btn-download-att" target="_blank" title="Descargar">
+                          <i class="fas fa-download"></i>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <span class="msg-content" *ngIf="m.content && m.content !== 'Archivo adjunto'">{{ m.content }}</span>
+                  <span class="msg-time">{{ formatHora(m.created_at) }}</span>
+                </div>
+              </div>
+
+            </div>
+          </ng-container>
+
+          <!-- Vacío -->
+          <div class="msgs-empty" *ngIf="!cargandoMsgs && mensajes.length === 0">
+            <i class="fas fa-comment-slash"></i>
+            <p>Sé el primero en escribir</p>
+          </div>
+
+        </div>
+
+        <!-- Input de mensaje -->
+        <div class="chat-input-area">
+          <div class="input-actions-left">
+            <div class="dropup" [class.open]="mostrarMediaMenu">
+              <button class="btn-media" id="btn-media-toggle" title="Adjuntar" (click)="toggleMediaMenu()">
+                <i class="fas fa-plus"></i>
+              </button>
+              <div class="media-menu">
+                <button (click)="abrirCarga('image')"><i class="fas fa-image"></i> Imagen</button>
+                <button (click)="abrirCarga('file')"><i class="fas fa-file-alt"></i> Archivo</button>
+                <button (click)="abrirCarga('audio')"><i class="fas fa-microphone"></i> Audio</button>
+              </div>
+            </div>
+          </div>
+
+          <textarea
+            id="msg-input-area"
+            class="msg-input"
+            [(ngModel)]="textoMensaje"
+            (input)="onTextareaInput($event)"
+            (keydown.enter)="onEnterKey($any($event))"
+            placeholder="Escribe un mensaje... (Enter para enviar)"
+            rows="1"
+            [disabled]="enviando">
+          </textarea>
+          <button class="btn-send"
+                  id="btn-enviar-msg"
+                  (click)="enviarMensaje()"
+                  [disabled]="!textoMensaje.trim() || enviando"
+                  title="Enviar">
+            <i class="fas" [class.fa-paper-plane]="!enviando" [class.fa-spinner]="enviando" [class.fa-spin]="enviando"></i>
+          </button>
+        </div>
+
+      </ng-container>
+
+      <!-- Overlay de Carga Multimedia -->
+      <div class="upload-overlay" *ngIf="showUploadOverlay">
+        <div class="upload-modal">
+          <div class="upload-header">
+            <h6>
+              <i class="fas" [class.fa-image]="uploadType==='image'" [class.fa-file-alt]="uploadType==='file'" [class.fa-microphone]="uploadType==='audio'"></i>
+              Adjuntar {{ uploadType === 'image' ? 'Imagen' : uploadType === 'audio' ? 'Nota de Voz' : 'Archivo' }}
+            </h6>
+            <button class="btn-close-overlay" (click)="cerrarCarga()"><i class="fas fa-times"></i></button>
+          </div>
+
+          <div class="upload-body">
+            <!-- Zona de Grabación de Audio -->
+            <div *ngIf="uploadType === 'audio'" class="audio-capture-zone">
+              <div class="recording-indicator" *ngIf="isRecording">
+                <span class="rec-dot"></span> Grabando: {{ formatTime(recordingTime) }}
+              </div>
+              <div class="audio-controls">
+                <button class="btn-rec" *ngIf="!isRecording && !audioUrlPre" (click)="iniciarGrabacion()">
+                  <i class="fas fa-microphone"></i> Iniciar Grabación
+                </button>
+                <button class="btn-stop" *ngIf="recordingTime < 1 && isRecording" disabled>
+                   Esperando...
+                </button>
+                <button class="btn-stop" *ngIf="isRecording" (click)="detenerGrabacion()">
+                  <i class="fas fa-stop"></i> Detener
+                </button>
+                <div class="audio-preview-zone" *ngIf="audioUrlPre">
+                  <audio #audioPreview [src]="audioUrlPre" controls></audio>
+                  <button class="btn-retry" (click)="limpiarGrabacion()">
+                    <i class="fas fa-undo"></i> Grabar de nuevo
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Zona de Archivos/Imágenes -->
+            <div *ngIf="uploadType !== 'audio'" 
+                 class="drop-zone" 
+                 [class.dragging]="isDragging"
+                 (dragover)="onDragOver($event)"
+                 (dragleave)="onDragLeave($event)"
+                 (drop)="onDrop($event)">
+              
+              <input type="file" #fileInput hidden multiple (change)="onFileSelected($event)">
+              
+              <div class="drop-prompt" *ngIf="selectedFiles.length === 0">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Arrastra tus archivos aquí o haz clic para buscarlos</p>
+                <button class="btn-browse" (click)="fileInput.click()">
+                  Buscar archivos
+                </button>
+              </div>
+
+              <!-- Previsualización de archivos seleccionados -->
+              <div class="previews-container" *ngIf="selectedFiles.length > 0">
+                <div class="preview-card" *ngFor="let p of previews; let i = index">
+                  <div class="preview-thumb" *ngIf="p.type === 'image'">
+                    <img [src]="p.url" [alt]="p.name">
+                  </div>
+                  <div class="preview-icon" *ngIf="p.type === 'file'">
+                    <i class="fas fa-file-alt"></i>
+                  </div>
+                  <div class="preview-info">
+                    <span class="preview-name">{{ p.name }}</span>
+                  </div>
+                  <button class="btn-remove-p" (click)="removerArchivo(i)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <button class="btn-add-more" (click)="fileInput.click()">
+                  <i class="fas fa-plus"></i> Añadir más
+                </button>
+              </div>
+            </div>
+
+            <!-- Comentario Opcional -->
+            <div class="upload-comment">
+              <label for="msg-adjunto">Mensaje opcional:</label>
+              <textarea id="msg-adjunto" [(ngModel)]="mensajeAdjunto" placeholder="Escribe algo sobre estos archivos..." rows="2"></textarea>
+            </div>
+          </div>
+
+          <div class="upload-footer">
+            <button class="btn-cancel-up" (click)="cerrarCarga()">Cancelar</button>
+            <button class="btn-send-up" 
+                    [disabled]="(selectedFiles.length === 0 && !audioUrlPre) || enviando"
+                    (click)="enviarMultimedia()">
+              <i class="fas fa-paper-plane mr-1" *ngIf="!enviando"></i>
+              <i class="fas fa-spinner fa-spin mr-1" *ngIf="enviando"></i>
+              {{ enviando ? 'Enviando...' : 'Enviar ahora' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /chat-main -->
+
+    <!-- ═══ PANEL DE DETALLES (hermano de chat-main en la fila flex) ═══ -->
+    <div class="conv-details-panel" [class.open]="mostrarDetalles && convActiva" *ngIf="convActiva">
+      <div class="details-header">
+        <span>Detalles</span>
+        <button (click)="mostrarDetalles = false" class="btn-close-details">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Individual -->
+      <div *ngIf="convActiva.conversation_type === 'individual'" class="details-body">
+        <div class="details-avatar-lg">{{ getAvatar(convActiva) }}</div>
+        <div class="details-name">{{ getDisplayName(convActiva) }}</div>
+        <div class="details-status">
+          <span *ngIf="isOnline(getOtroUserId(convActiva))" class="badge-online">
+            <span class="dot-online"></span> En línea
+          </span>
+          <span *ngIf="!isOnline(getOtroUserId(convActiva))" class="badge-offline">
+            <span class="dot-offline"></span> Desconectado
+          </span>
+        </div>
+        <div class="details-info-row" *ngIf="convActiva.active_participants">
+          <ng-container *ngFor="let p of convActiva.active_participants">
+            <div *ngIf="p.id !== usuarioActual?.id" class="details-contact-info">
+              <i class="fas fa-envelope"></i>
+              <span>{{ p.email || 'Sin email' }}</span>
+            </div>
+          </ng-container>
+        </div>
+        <div class="details-meta">
+          <span><i class="fas fa-calendar-alt"></i> Creado {{ convActiva.created_at | date:'dd/MM/yyyy' }}</span>
+        </div>
+      </div>
+
+      <!-- Grupo -->
+      <div *ngIf="convActiva.conversation_type !== 'individual'" class="details-body">
+        <div class="details-avatar-lg group-avatar">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="details-name">{{ convActiva.title || 'Grupo' }}</div>
+        <div class="details-members-title">
+          <i class="fas fa-user-friends"></i>
+          {{ convActiva.active_participants?.length || convActiva.participants_count || 0 }} participantes
+        </div>
+        <div class="details-members-list">
+          <div class="details-member-item" *ngFor="let p of convActiva.active_participants">
+            <div class="member-avatar">{{ p.name?.charAt(0)?.toUpperCase() }}</div>
+            <div class="member-info">
+              <div class="member-name">{{ p.name }} <span *ngIf="p.id === usuarioActual?.id">(tú)</span></div>
+              <div class="member-role" [class.role-admin]="p.role === 'admin'">
+                {{ p.role === 'admin' ? 'Administrador' : p.role === 'moderator' ? 'Moderador' : 'Participante' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /conv-details-panel -->
+
+  </div><!-- /chat-container -->
+
+</app-system-layout>
+
+<!-- ═══ MODAL NUEVA CONVERSACIÓN ═══ -->
+<div class="modal-overlay" *ngIf="mostrarModalNueva" (click)="cerrarModalNueva()" id="modal-nueva-conv-overlay">
+  <div class="modal-nueva" (click)="$event.stopPropagation()" id="modal-nueva-conv">
+
+    <div class="modal-nueva-header">
+      <h6><i class="fas fa-plus-circle mr-2 text-primary"></i>Nueva conversación</h6>
+      <button (click)="cerrarModalNueva()" id="btn-cerrar-modal-nueva"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Tabs tipo -->
+    <div class="tipo-tabs">
+      <button id="tab-individual"
+              [class.active]="tipoNueva === 'individual'"
+              (click)="tipoNueva = 'individual'; contactosSeleccionados = []">
+        <i class="fas fa-user mr-1"></i> Individual
+      </button>
+      <button id="tab-group"
+              [class.active]="tipoNueva === 'group'"
+              (click)="tipoNueva = 'group'">
+        <i class="fas fa-users mr-1"></i> Grupo
+      </button>
+    </div>
+
+    <!-- Nombre del grupo -->
+    <div *ngIf="tipoNueva === 'group'" class="grupo-title-input">
+      <input type="text" id="grupo-nombre-input" placeholder="Nombre del grupo..." [(ngModel)]="tituloGrupo">
+    </div>
+
+    <!-- Buscar contacto -->
+    <div class="contacto-search">
+      <i class="fas fa-search"></i>
+      <input type="text" id="contacto-search-input" placeholder="Buscar usuario..."
+             [(ngModel)]="busquedaContacto"
+             (ngModelChange)="onBusquedaContacto()">
+    </div>
+
+    <!-- Lista contactos -->
+    <div class="contacto-list">
+      <div class="contacto-loading" *ngIf="cargandoContactos">
+        <i class="fas fa-circle-notch fa-spin mr-1"></i> Cargando...
+      </div>
+
+      <div class="contacto-item"
+           *ngFor="let c of contactosFiltrados"
+           [id]="'contacto-' + c.id"
+           (click)="tipoNueva === 'individual' ? crearConvIndividual(c) : toggleContactoGrupo(c)"
+           [class.selected]="isContactoSeleccionado(c)">
+        <div class="contacto-avatar">{{ c.name?.charAt(0)?.toUpperCase() }}</div>
+        <div class="contacto-info">
+          <div class="contacto-name">{{ c.name }}</div>
+          <div class="contacto-email">{{ c.email }}</div>
+        </div>
+        <i class="fas fa-check check-icon" *ngIf="tipoNueva === 'group' && isContactoSeleccionado(c)"></i>
+      </div>
+
+      <div class="contacto-empty" *ngIf="!cargandoContactos && contactosFiltrados.length === 0">
+        <i class="fas fa-user-slash mr-1"></i> Sin resultados
+      </div>
+    </div>
+
+    <!-- Crear grupo -->
+    <div *ngIf="tipoNueva === 'group'" class="grupo-actions">
+      <span class="grupo-selected-count" *ngIf="contactosSeleccionados.length > 0">
+        {{ contactosSeleccionados.length }} seleccionado{{ contactosSeleccionados.length > 1 ? 's' : '' }}
+      </span>
+      <button class="btn-crear-grupo" id="btn-crear-grupo"
+              [disabled]="contactosSeleccionados.length < 1 || !tituloGrupo.trim() || creandoConv"
+              (click)="crearConvGrupal()">
+        <i class="fas fa-plus mr-1"></i>
+        {{ creandoConv ? 'Creando...' : 'Crear grupo' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ LIGHTBOX IMAGEN ═══ -->
+<div class="lightbox-overlay" *ngIf="lightboxVisible" (click)="cerrarLightbox()">
+  <div class="lightbox-content" (click)="$event.stopPropagation()">
+    <img [src]="lightboxUrl" alt="Vista ampliada">
+    <button class="btn-close-lightbox" (click)="cerrarLightbox()"><i class="fas fa-times"></i></button>
+  </div>
+</div>

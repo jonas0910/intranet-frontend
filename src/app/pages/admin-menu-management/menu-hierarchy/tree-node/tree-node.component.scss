@@ -1,0 +1,164 @@
+// Tree Node Styles
+.tree-node {
+  margin: 2px 0;
+}
+
+.tree-node-content {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.tree-node-content:hover {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.tree-node.selected .tree-node-content {
+  background-color: #e3f2fd;
+  border-color: #2196f3;
+  color: #1976d2;
+}
+
+.tree-toggle {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.tree-toggle:hover {
+  background-color: #e9ecef;
+}
+
+.tree-toggle-placeholder {
+  width: 20px;
+  margin-right: 8px;
+}
+
+.tree-icon {
+  width: 20px;
+  margin-right: 8px;
+  color: #6c757d;
+  text-align: center;
+}
+
+.tree-label {
+  flex: 1;
+  font-weight: 500;
+  color: #495057;
+}
+
+.tree-badges {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.tree-children {
+  margin-left: 20px;
+  border-left: 2px solid #e9ecef;
+  padding-left: 8px;
+}
+
+.tree-child {
+  position: relative;
+}
+
+.tree-child::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  width: 8px;
+  height: 2px;
+  background-color: #e9ecef;
+  transform: translateY(-50%);
+}
+
+// Badge Styles
+.badge {
+  display: inline-block;
+  padding: 0.25em 0.4em;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+}
+
+.badge-sm {
+  font-size: 0.65em;
+  padding: 0.2em 0.3em;
+}
+
+// Module Classes
+.module-core {
+  background-color: #007bff;
+  color: white;
+}
+
+.module-planillas {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.module-rrhh {
+  background-color: #28a745;
+  color: white;
+}
+
+.module-contabilidad {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.module-inventarios {
+  background-color: #dc3545;
+  color: white;
+}
+
+.module-default {
+  background-color: #6c757d;
+  color: white;
+}
+
+// Status Classes
+.status-active {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-inactive {
+  background-color: #6c757d;
+  color: white;
+}
+
+// Level Classes
+.level-root {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.level-primary {
+  font-weight: 600;
+}
+
+.level-secondary {
+  font-weight: 500;
+}
+
+.level-tertiary {
+  font-weight: 400;
+}

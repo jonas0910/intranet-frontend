@@ -1,0 +1,210 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-chart-bar mr-2"></i>Reportes</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/asesoria-legal">Asesoría Jurídica</a></li>
+          <li class="breadcrumb-item active">Reportes</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <!-- Filtros -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="row align-items-end">
+          <div class="col-md-3">
+            <label>Año</label>
+            <select class="form-control" [(ngModel)]="anio">
+              <option *ngFor="let y of anios" [value]="y">{{ y }}</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label>Mes (opcional)</label>
+            <select class="form-control" [(ngModel)]="mes">
+              <option value="">Todos</option>
+              <option *ngFor="let m of meses" [value]="m.value">{{ m.label }}</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-primary" (click)="cargar()" [disabled]="loading"><i class="fas fa-sync-alt mr-1"></i>Actualizar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-3x text-primary"></i><p class="mt-2">Cargando reportes...</p></div>
+
+    <div *ngIf="!loading && datos" class="reportes-content">
+      <!-- KPIs -->
+      <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+          <div class="card bg-primary text-white">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h4 class="mb-0">{{ datos.kpis?.total_casos || 0 }}</h4>
+                  <small>Total casos</small>
+                </div>
+                <i class="fas fa-folder-open fa-2x opacity-50"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+          <div class="card bg-success text-white">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h4 class="mb-0">{{ datos.kpis?.finalizados || 0 }}</h4>
+                  <small>Finalizados</small>
+                </div>
+                <i class="fas fa-check-circle fa-2x opacity-50"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+          <div class="card bg-info text-white">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h4 class="mb-0">{{ datos.kpis?.informes_emitidos || 0 }}</h4>
+                  <small>Con informe emitido</small>
+                </div>
+                <i class="fas fa-file-signature fa-2x opacity-50"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+          <div class="card bg-warning text-dark">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h4 class="mb-0">{{ datos.kpis?.pendientes || 0 }}</h4>
+                  <small>Pendientes</small>
+                </div>
+                <i class="fas fa-clock fa-2x opacity-50"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monitor usuarios: árbol de expedientes asignados -->
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-users-cog mr-1"></i>Monitor de usuarios — Expedientes asignados y fechas por vencerse</h5>
+          <span class="badge badge-secondary">{{ (datos.monitor_usuarios || []).length }} abogados</span>
+        </div>
+        <div class="card-body">
+          <div *ngIf="!(datos.monitor_usuarios || []).length" class="text-center py-4 text-muted">
+            <i class="fas fa-user-check fa-2x mb-2"></i>
+            <p class="mb-0">No hay expedientes asignados pendientes.</p>
+          </div>
+          <div class="tree-monitor" *ngIf="(datos.monitor_usuarios || []).length">
+            <div *ngFor="let u of datos.monitor_usuarios" class="tree-node-user mb-3">
+              <div class="tree-user-header" (click)="toggleUsuario(u.abogado_id)">
+                <i class="fas fa-chevron-down tree-toggle" [class.rotated]="!usuarioExpandido[u.abogado_id]"></i>
+                <i class="fas fa-user-tie text-primary mr-2"></i>
+                <strong>{{ u.abogado_nombre }}</strong>
+                <span class="badge badge-info ml-2">{{ u.expedientes?.length || 0 }} expedientes</span>
+                <span class="badge badge-danger ml-1" *ngIf="countVencidos(u) > 0">{{ countVencidos(u) }} vencidos</span>
+                <span class="badge badge-warning ml-1" *ngIf="countPorVencerse(u) > 0">{{ countPorVencerse(u) }} por vencerse</span>
+              </div>
+              <div class="tree-user-children" *ngIf="usuarioExpandido[u.abogado_id] !== false">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="thead-light">
+                    <tr>
+                      <th>Expediente</th>
+                      <th>Asunto</th>
+                      <th>Fecha inicio</th>
+                      <th>Fecha límite</th>
+                      <th class="text-center">Días por vencerse</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let exp of u.expedientes" class="tree-expediente-row" [class.vencido]="exp.vencido" [class.por-vencerse]="exp.por_vencerse" [routerLink]="['/asesoria-legal/casos', exp.solicitud_id]" style="cursor:pointer">
+                      <td><i class="fas fa-folder-open mr-1"></i><strong>{{ exp.numero_expediente }}</strong></td>
+                      <td>{{ exp.asunto }}</td>
+                      <td>{{ exp.fecha_inicio_tramite | date:'dd/MM/yyyy' }}</td>
+                      <td [class.text-danger]="exp.vencido" [class.text-warning]="exp.por_vencerse">
+                        {{ exp.fecha_limite | date:'dd/MM/yyyy' }}
+                      </td>
+                      <td class="text-center">
+                        <span *ngIf="exp.dias_por_vencerse > 0" class="badge badge-success">{{ exp.dias_por_vencerse }} días</span>
+                        <span *ngIf="exp.dias_por_vencerse === 0" class="badge badge-warning">Hoy</span>
+                        <span *ngIf="exp.dias_por_vencerse < 0" class="badge badge-danger">{{ -exp.dias_por_vencerse }} días vencido</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="row">
+        <div class="col-lg-8 mb-4">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-chart-line mr-1"></i>Evolución mensual</h5></div>
+            <div class="card-body" style="height: 280px;">
+              <canvas id="chartPorMes"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-chart-pie mr-1"></i>Por estado</h5></div>
+            <div class="card-body d-flex align-items-center justify-content-center" style="height: 280px;">
+              <canvas id="chartPorEstado"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-6 mb-4">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-chart-bar mr-1"></i>Casos por abogado</h5></div>
+            <div class="card-body" style="height: 300px;">
+              <canvas id="chartPorAbogado"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-exclamation-triangle mr-1"></i>Por prioridad</h5></div>
+            <div class="card-body" style="height: 300px;">
+              <canvas id="chartPorPrioridad"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla resumen por estado -->
+      <div class="card">
+        <div class="card-header"><h5 class="mb-0"><i class="fas fa-list mr-1"></i>Resumen por estado</h5></div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light"><tr><th>Estado</th><th class="text-right">Cantidad</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let item of itemsPorEstado" [routerLink]="['/asesoria-legal/casos']" [queryParams]="{estado: item.estado}" style="cursor:pointer">
+                <td>{{ item.estado }}</td>
+                <td class="text-right"><strong>{{ item.cantidad }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

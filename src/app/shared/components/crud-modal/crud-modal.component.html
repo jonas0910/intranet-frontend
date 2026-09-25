@@ -1,0 +1,37 @@
+<!-- Header -->
+<div class="cm-header" [style.background-color]="'var(--ds-modal-header-bg, ' + mc.headerBg + ')'"
+  [style.color]="'var(--ds-modal-header-text, ' + mc.headerText + ')'"
+  [style.padding]="'var(--ds-modal-header-padding, ' + mc.headerPadding + ')'"
+  [style.border-top-left-radius]="'var(--ds-modal-border-radius, ' + mc.borderRadius + 'px)'"
+  [style.border-top-right-radius]="'var(--ds-modal-border-radius, ' + mc.borderRadius + 'px)'">
+  <h5 class="cm-title" [style.font-size]="'var(--ds-modal-header-title-size, ' + mc.headerFontSize + ')'">
+    <i [class]="headerIcon + ' mr-2'"></i> {{ headerTitle }}
+  </h5>
+  <button type="button" class="cm-close" [style.color]="'var(--ds-modal-header-text, ' + mc.headerText + ')'"
+    aria-label="Close" (click)="cancel()">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<!-- Body (content projection) -->
+<div class="cm-body" [style.background-color]="'var(--ds-modal-body-bg, ' + mc.bodyBg + ')'"
+  [style.padding]="'var(--ds-form-padding, ' + mc.formPadding + ')'">
+  <ng-content></ng-content>
+</div>
+
+<!-- Footer -->
+<div class="cm-footer" [style.background-color]="'var(--ds-modal-footer-bg, ' + mc.footerBg + ')'"
+  [style.border-bottom-left-radius]="'var(--ds-modal-border-radius, ' + mc.borderRadius + 'px)'"
+  [style.border-bottom-right-radius]="'var(--ds-modal-border-radius, ' + mc.borderRadius + 'px)'">
+  <button *ngIf="showDelete && mode === 'edit'" type="button" class="btn btn-sm mr-auto" [ngClass]="mc.deleteBtnClass"
+    (click)="delete()">
+    <i [class]="mc.deleteBtnIcon + ' mr-1'"></i> {{ mc.deleteBtnLabel }}
+  </button>
+  <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="cancel()">
+    <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}
+  </button>
+  <button type="button" class="btn btn-sm ml-2" [ngClass]="mc.saveBtnClass" [disabled]="saving" (click)="save()">
+    <i [class]="saving ? 'fas fa-spinner fa-spin mr-1' : mc.saveBtnIcon + ' mr-1'"></i>
+    {{ saving ? 'Guardando...' : mc.saveBtnLabel }}
+  </button>
+</div>

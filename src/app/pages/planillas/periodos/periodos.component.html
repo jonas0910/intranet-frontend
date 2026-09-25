@@ -1,0 +1,228 @@
+<app-page-header title="Gestión de Períodos" subtitle="Administración de períodos de planilla" [breadcrumbs]="[{label:'Inicio',url:'/'},{label:'Planillas'},{label:'Períodos'}]"></app-page-header>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+          <div class="d-flex justify-content-between align-items-center flex-wrap px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+              <!-- Filtros -->
+              <div>
+                <label class="small mb-0 mr-1" [style.font-size]="cv.labelFontSize">Año</label>
+                <select class="form-control form-control-sm" [(ngModel)]="filterYear" (change)="onYearChange()">
+                  <option [value]="2024">2024</option>
+                  <option [value]="2025">2025</option>
+                  <option [value]="2026">2026</option>
+                </select>
+              </div>
+              <div>
+                <label class="small mb-0 mr-1" [style.font-size]="cv.labelFontSize">Estado</label>
+                <select class="form-control form-control-sm" [(ngModel)]="filterStatus" (change)="onStatusChange()">
+                  <option value="">Todos</option>
+                  <option *ngFor="let status of statuses" [value]="status.value">{{ status.name }}</option>
+                </select>
+              </div>
+              <!-- Botones exportación - izquierda -->
+              <ng-container *ngIf="cv.showExportButtons">
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"><i [class]="cv.excelBtnIcon"></i> {{ cv.excelBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"><i [class]="cv.pdfBtnIcon"></i> {{ cv.pdfBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass"><i [class]="cv.printBtnIcon"></i> {{ cv.printBtnLabel }}</button>
+              </ng-container>
+              <button class="btn btn-sm btn-flat btn-default" (click)="loadPeriods()" title="Recargar">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+            <div class="ms-auto flex-shrink-0">
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                <i [class]="cv.newBtnIcon"></i> Nuevo Período
+              </button>
+            </div>
+          </div>
+
+          <div class="card-body px-0 pt-0 pb-2">
+            <!-- Loading -->
+            <div *ngIf="loading" class="text-center py-5">
+              <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+              <p class="mt-2 small text-muted">Cargando períodos...</p>
+            </div>
+
+            <!-- Tabla DataTable -->
+            <div *ngIf="!loading" class="table-responsive px-3">
+              <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-striped table-bordered table-hover w-100" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize">
+                <thead>
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize" width="5%">#</th>
+                    <th [style.font-size]="cv.headerFontSize">Período</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Año</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Mes</th>
+                    <th [style.font-size]="cv.headerFontSize">Fecha Inicio</th>
+                    <th [style.font-size]="cv.headerFontSize">Fecha Fin</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let period of periods; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td><strong>{{ period.period_name }}</strong></td>
+                    <td class="text-center">{{ period.year }}</td>
+                    <td class="text-center">{{ getMonthName(period.month) }}</td>
+                    <td>{{ period.start_date | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ period.end_date | date:'dd/MM/yyyy' }}</td>
+                    <td class="text-center">
+                      <span class="badge badge-{{ getStatusBadge(period.status) }}">
+                        {{ getStatusName(period.status) }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <app-crud-actions
+                        [showView]="true"
+                        [showEdit]="true"
+                        [showDelete]="period.status !== 'closed'"
+                        (onView)="openViewModal(period)"
+                        (onEdit)="openEditModal(period)"
+                        (onDelete)="deletePeriod(period)">
+                      </app-crud-actions>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Crear/Editar -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'"
+     tabindex="-1" role="dialog" *ngIf="showModal">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+           [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title">
+          <i class="fas" [ngClass]="isEditMode ? 'fa-edit' : 'fa-plus'"></i>
+          {{ isEditMode ? 'Editar Período' : 'Nuevo Período' }}
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()" aria-label="Close">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg">
+        <form>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Año <span class="text-danger">*</span></label>
+              <select class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="periodForm.year" name="year" (change)="onMonthChange()">
+                <option [value]="2024">2024</option>
+                <option [value]="2025">2025</option>
+                <option [value]="2026">2026</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Mes <span class="text-danger">*</span></label>
+              <select class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="periodForm.month" name="month" (change)="onMonthChange()">
+                <option *ngFor="let month of months" [value]="month.value">{{ month.name }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Nombre del Período <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="periodForm.period_name" name="period_name" placeholder="Ej: Enero 2025">
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Fecha de Inicio <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="periodForm.start_date" name="start_date">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Fecha de Fin <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="periodForm.end_date" name="end_date">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Estado</label>
+            <select class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="periodForm.status" name="status">
+              <option *ngFor="let status of statuses" [value]="status.value">{{ status.name }}</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Notas</label>
+            <textarea class="form-control" [ngClass]="mc.inputSize" [(ngModel)]="periodForm.notes" name="notes" rows="2" placeholder="Notas adicionales..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeModal()">
+          <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}
+        </button>
+        <button type="button" class="btn btn-sm" [ngClass]="mc.saveBtnClass" (click)="savePeriod()" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm mr-1"></span>
+          <i *ngIf="!loading" [class]="mc.saveBtnIcon + ' mr-1'"></i>
+          {{ isEditMode ? 'Actualizar' : mc.saveBtnLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ver -->
+<div class="modal fade" [class.show]="showViewModal" [style.display]="showViewModal ? 'block' : 'none'"
+     tabindex="-1" role="dialog" *ngIf="showViewModal">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+           [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title"><i class="fas fa-info-circle mr-2"></i>Detalle del Período</h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeViewModal()" aria-label="Close">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg" *ngIf="selectedPeriod">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Nombre:</strong>
+            <p>{{ selectedPeriod.period_name }}</p>
+          </div>
+          <div class="col-md-3 mb-3">
+            <strong [style.color]="mc.labelColor">Año:</strong>
+            <p>{{ selectedPeriod.year }}</p>
+          </div>
+          <div class="col-md-3 mb-3">
+            <strong [style.color]="mc.labelColor">Mes:</strong>
+            <p>{{ getMonthName(selectedPeriod.month) }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Fecha Inicio:</strong>
+            <p>{{ selectedPeriod.start_date | date:'dd/MM/yyyy' }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Fecha Fin:</strong>
+            <p>{{ selectedPeriod.end_date | date:'dd/MM/yyyy' }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Estado:</strong>
+            <p><span class="badge badge-{{ getStatusBadge(selectedPeriod.status) }}">{{ getStatusName(selectedPeriod.status) }}</span></p>
+          </div>
+          <div class="col-12 mb-3" *ngIf="selectedPeriod.notes">
+            <strong [style.color]="mc.labelColor">Notas:</strong>
+            <p>{{ selectedPeriod.notes }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeViewModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal backdrop -->
+<div class="modal-backdrop fade show" *ngIf="showModal || showViewModal"></div>

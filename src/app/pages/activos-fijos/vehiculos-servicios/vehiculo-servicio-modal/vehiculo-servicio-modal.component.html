@@ -1,0 +1,322 @@
+<div class="modal-header shadow-sm" [ngClass]="isReadOnly ? 'bg-info' : (isEdit ? 'bg-warning' : (soloProgramacion ? 'bg-secondary' : 'bg-primary'))" 
+     style="color: white; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+  <h5 class="modal-title font-weight-bold">
+    <i class="fas" [ngClass]="soloProgramacion ? 'fa-calendar-alt' : (isVehicle ? 'fa-truck-pickup' : 'fa-box')"></i>
+    <ng-container *ngIf="soloProgramacion">Programación de mantenimiento</ng-container>
+    <ng-container *ngIf="!soloProgramacion">{{ isReadOnly ? (isVehicle ? 'Detalles del Vehículo' : 'Detalles del Activo') : (isEdit ? 'Editar Vehículo de Servicio' : 'Registrar Nuevo Vehículo de Servicio') }}</ng-container>
+  </h5>
+  <button type="button" class="close text-white border-0 bg-transparent" aria-label="Close" (click)="activeModal.dismiss()">
+    <span aria-hidden="true" style="font-size: 1.5rem;">&times;</span>
+  </button>
+</div>
+
+<div class="bg-white border-bottom px-4" *ngIf="!soloProgramacion">
+  <ul class="nav nav-tabs border-0 mt-3">
+    <li class="nav-item">
+      <a class="nav-link cursor-pointer border-0 py-2 px-4 font-weight-bold" 
+         [class.active]="activeTab === 'info'"
+         [class.text-primary]="activeTab === 'info'"
+         (click)="activeTab = 'info'">
+        <i class="fas fa-info-circle mr-2"></i> Información General
+      </a>
+    </li>
+    <li class="nav-item" *ngIf="isVehicle">
+      <a class="nav-link cursor-pointer border-0 py-2 px-4 font-weight-bold" 
+         [class.active]="activeTab === 'mantenimientos'"
+         [class.text-primary]="activeTab === 'mantenimientos'"
+         (click)="activeTab = 'mantenimientos'">
+        <i class="fas fa-tools mr-2"></i> {{ isReadOnly ? 'Mantenimientos Próximos' : 'Programación de Mantenimientos' }}
+      </a>
+    </li>
+  </ul>
+</div>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <div class="modal-body p-4 bg-light" style="min-height: 450px;">
+    
+    <div *ngIf="soloProgramacion" class="mb-3 small text-muted">
+      <strong>{{ activo?.placa || activo?.codigo_patrimonial }}</strong>
+      <span *ngIf="activo?.descripcion"> — {{ activo.descripcion }}</span>
+    </div>
+
+    <!-- TAB: INFORMACIÓN -->
+    <div *ngIf="activeTab === 'info' && !soloProgramacion">
+        <!-- Avisoinformativo -->
+        <div class="alert alert-info border-0 shadow-sm mb-3 py-2" *ngIf="!isReadOnly">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle fa-lg mr-3"></i>
+            <div>
+              <small class="font-weight-bold d-block">Vehículo de Servicio Externo</small>
+              <small>Este activo se registrará como alquiler/servicios y se asociará automáticamente a su departamento.</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-primary border-0 shadow-sm mb-3 py-2" *ngIf="isReadOnly && !isVehicle">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-box-open fa-lg mr-3"></i>
+            <div>
+              <small class="font-weight-bold d-block">Activo Patrimonial del Departamento</small>
+              <small>Mostrando los detalles del activo propio asignado a la unidad orgánica.</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección 1: Información Básica -->
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-header bg-white border-bottom-0 py-2">
+            <h6 class="mb-0 font-weight-bold text-primary small"><i class="fas fa-id-card mr-1"></i> Identificación del Vehículo</h6>
+          </div>
+          <div class="card-body py-3">
+            <div class="row g-3">
+              <div class="col-md-4" *ngIf="isVehicle">
+                <label class="form-label small font-weight-bold">Placa <span class="text-danger" *ngIf="!isReadOnly">*</span></label>
+                <input type="text" class="form-control form-control-sm text-uppercase font-weight-bold text-primary" placeholder="ABC-123" formControlName="placa"
+                       [class.is-invalid]="form.get('placa')?.touched && form.get('placa')?.invalid">
+              </div>
+              <div class="col-md-4" *ngIf="!isVehicle">
+                <label class="form-label small font-weight-bold">Código Patrimonial</label>
+                <input type="text" class="form-control form-control-sm text-uppercase font-weight-bold text-primary" formControlName="codigo_patrimonial">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small font-weight-bold">{{ isVehicle ? 'Tipo de Unidad' : 'Categoría' }} <span class="text-danger" *ngIf="!isReadOnly">*</span></label>
+                <select class="form-control form-control-sm" formControlName="tipo" *ngIf="isVehicle || !isReadOnly">
+                  <option *ngFor="let t of tiposVehiculo" [value]="t.value">{{t.label}}</option>
+                </select>
+                <input type="text" class="form-control form-control-sm bg-white" *ngIf="!isVehicle && isReadOnly" [value]="activo.categoria?.nombre || 'General'" readonly>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small font-weight-bold">Estado Actual <span class="text-danger" *ngIf="!isReadOnly">*</span></label>
+                <select class="form-control form-control-sm" formControlName="estado">
+                  <option *ngFor="let e of estadosVehiculo" [value]="e.value">{{e.label}}</option>
+                </select>
+              </div>
+              
+              <div class="col-md-3">
+                <label class="form-label small font-weight-bold">Marca <span class="text-danger" *ngIf="!isReadOnly">*</span></label>
+                <input type="text" class="form-control form-control-sm text-uppercase" placeholder="Toyota" formControlName="marca">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small font-weight-bold">Modelo <span class="text-danger" *ngIf="!isReadOnly">*</span></label>
+                <input type="text" class="form-control form-control-sm text-uppercase" placeholder="Hilux" formControlName="modelo">
+              </div>
+              <div class="col-md-3" *ngIf="isVehicle || !isReadOnly || activo?.anio">
+                <label class="form-label small font-weight-bold">Año <span class="text-danger" *ngIf="isVehicle && !isReadOnly">*</span></label>
+                <input type="number" class="form-control form-control-sm" placeholder="2024" formControlName="anio">
+              </div>
+              <div class="col-md-3" *ngIf="isVehicle || !isReadOnly || activo?.color">
+                <label class="form-label small font-weight-bold font-weight-bold">Color</label>
+                <input type="text" class="form-control form-control-sm text-uppercase" placeholder="" formControlName="color">
+              </div>
+              <div class="col-md-3" *ngIf="!isVehicle && isReadOnly && activo?.condicion">
+                <label class="form-label small font-weight-bold">Condición</label>
+                <input type="text" class="form-control form-control-sm text-uppercase bg-white" [value]="activo.condicion" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Sección 2: Identificadores Técnicos -->
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-header bg-white border-bottom-0 py-2">
+            <h6 class="mb-0 font-weight-bold text-primary small"><i class="fas fa-cog mr-1"></i> Especificaciones Técnicas</h6>
+          </div>
+          <div class="card-body py-3">
+            <div class="row g-3">
+              <div class="col-md-6" *ngIf="isVehicle || !isReadOnly">
+                <label class="form-label small font-weight-bold">Número de Motor</label>
+                <input type="text" class="form-control form-control-sm text-uppercase" placeholder="Identificador del motor" formControlName="numero_motor">
+              </div>
+              <div class="col-md-6" *ngIf="isVehicle || !isReadOnly">
+                <label class="form-label small font-weight-bold">Número de Serie / Chasis</label>
+                <input type="text" class="form-control form-control-sm text-uppercase" placeholder="Número de serie/chasis" formControlName="numero_chasis">
+              </div>
+              <div class="col-md-6" *ngIf="!isVehicle && isReadOnly && activo?.serie">
+                <label class="form-label small font-weight-bold">Número de Serie</label>
+                <input type="text" class="form-control form-control-sm text-uppercase bg-white" formControlName="serie" readonly>
+              </div>
+              <div class="col-md-6" *ngIf="!isVehicle && isReadOnly && (activo?.dimensiones || activo?.valor_adquisicion)">
+                <label class="form-label small font-weight-bold">Valor de Adquisición / Dimensiones</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text font-weight-bold">S/</span>
+                    <input type="number" class="form-control bg-white" formControlName="valor_adquisicion" readonly>
+                    <span class="input-group-text">{{ activo.dimensiones || '-' }}</span>
+                </div>
+              </div>
+              <div class="col-md-6" *ngIf="isVehicle">
+                <label class="form-label small font-weight-bold">Odómetro Actual (Km) <span class="text-danger" *ngIf="!isReadOnly">*</span></label>
+                <div class="input-group input-group-sm">
+                    <input type="number" class="form-control" formControlName="odometro_actual">
+                    <span class="input-group-text font-weight-bold">km</span>
+                </div>
+              </div>
+              <div class="col-md-6" *ngIf="isVehicle">
+                <label class="form-label small font-weight-bold">Horas de Motor (Opc.)</label>
+                <div class="input-group input-group-sm">
+                    <input type="number" class="form-control" formControlName="horas_motor_actual">
+                    <span class="input-group-text font-weight-bold">horas</span>
+                </div>
+              </div>
+              
+              <div class="col-md-12" *ngIf="isReadOnly && activo?.personal_asignado">
+                 <label class="form-label small font-weight-bold text-success border-top pt-2 mt-1 w-100">
+                    <i class="fas fa-user-check mr-1"></i> Personal Responsable del Activo
+                 </label>
+                 <div class="d-flex align-items-center bg-white p-2 border rounded">
+                    <div class="avatar-sm bg-success-subtle text-success rounded-circle mr-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                      <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-0 font-weight-bold small">{{ activo.personal_asignado.first_name }} {{ activo.personal_asignado.last_name }}</h6>
+                      <small class="text-muted">{{ activo.personal_asignado.position?.name }} | DNI: {{ activo.personal_asignado.dni }}</small>
+                    </div>
+                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-0">
+          <label class="form-label small font-weight-bold">Observaciones Generales</label>
+          <textarea class="form-control form-control-sm" rows="2" placeholder="Notas adicionales sobre el vehículo..." formControlName="observaciones"></textarea>
+        </div>
+    </div>
+
+    <!-- TAB: MANTENIMIENTOS -->
+    <div *ngIf="activeTab === 'mantenimientos' || soloProgramacion">
+        <div class="alert alert-warning border-0 shadow-sm mb-4">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-tools fa-2x mr-3 text-warning"></i>
+                <div>
+                    <h6 class="mb-0 font-weight-bold">Planes del catálogo</h6>
+                    <small>Seleccione tipos de mantenimiento globales del departamento.</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6" *ngFor="let tipo of tiposMantenimiento">
+                <div class="card border mb-3 shadow-none hover-shadow transition" 
+                     [class.border-primary]="isControlChecked(tipo.id)"
+                     style="border-radius: 10px; cursor: pointer;"
+                     (click)="!isReadOnly && toggleControl(tipo.id)">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-box mr-3" [class.bg-primary]="isControlChecked(tipo.id)" 
+                                     [class.bg-light]="!isControlChecked(tipo.id)"
+                                     style="width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-calendar-check" [class.text-white]="isControlChecked(tipo.id)" [class.text-muted]="!isControlChecked(tipo.id)"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 font-weight-bold small">{{ tipo.nombre }}</h6>
+                                    <div class="d-flex flex-wrap mt-1">
+                                        <small class="text-muted mr-2" *ngIf="tipo.frecuencia_kilometros"><i class="fas fa-road mr-1"></i> {{ tipo.frecuencia_kilometros }} km</small>
+                                        <small class="text-muted mr-2" *ngIf="tipo.frecuencia_horas"><i class="fas fa-clock mr-1"></i> {{ tipo.frecuencia_horas }} hrs</small>
+                                        <small class="text-muted" *ngIf="tipo.frecuencia_dias"><i class="fas fa-calendar-alt mr-1"></i> {{ tipo.frecuencia_dias }} días</small>
+                                    </div>
+                                    <div *ngIf="tipo.plan_items?.length || tipo.planItems?.length" class="mt-2 small border-top pt-2">
+                                      <div class="font-weight-bold text-secondary mb-1"><i class="fas fa-tasks mr-1"></i> Actividades / elementos por periodo</div>
+                                      <ul class="list-unstyled mb-0 pl-0">
+                                        <li *ngFor="let it of (tipo.plan_items || tipo.planItems)" class="mb-1 text-muted">
+                                          <span class="badge badge-light border mr-1">{{ it.tipo_item === 'elemento_cambio' ? 'Elemento' : 'Actividad' }}</span>
+                                          {{ it.descripcion }}
+                                          <span *ngIf="it.cantidad != null" class="text-dark">({{ it.cantidad }}<span *ngIf="it.unidad"> {{ it.unidad }}</span>)</span>
+                                        </li>
+                                      </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="custom-control custom-checkbox custom-control-lg" *ngIf="!isReadOnly">
+                                <input type="checkbox" class="custom-control-input" [checked]="isControlChecked(tipo.id)" (click)="$event.stopPropagation(); toggleControl(tipo.id)">
+                                <label class="custom-control-label"></label>
+                            </div>
+                            <div *ngIf="isReadOnly" class="ms-auto">
+                              <span class="badge" [ngClass]="isControlChecked(tipo.id) ? 'badge-success' : 'badge-light border'">
+                                {{ isControlChecked(tipo.id) ? 'Habilitado' : 'No configurado' }}
+                              </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div *ngIf="tiposMantenimiento.length === 0" class="text-center py-3">
+            <p class="text-muted small mb-0">No hay tipos en el catálogo global; puede usar solo programación personalizada abajo.</p>
+        </div>
+
+        <div class="card border-primary shadow-sm mt-4">
+          <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-0 font-weight-bold text-primary"><i class="fas fa-sliders-h mr-2"></i>Programación personalizada</h6>
+              <small class="text-muted">Indique al menos una frecuencia por fila. Use <strong>Elementos</strong> para abrir un cuadro de diálogo y registrar actividades y repuestos (filtro de aceite, limpieza, cambio de aceite, etc.).</small>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary" *ngIf="!isReadOnly" (click)="agregarPlanPersonalizado()">
+              <i class="fas fa-plus mr-1"></i> Añadir plan
+            </button>
+          </div>
+          <div class="card-body p-2">
+            <div class="table-responsive" *ngIf="programacionPersonalizada.length > 0">
+              <table class="table table-sm table-bordered mb-0 align-middle">
+                <thead class="bg-light">
+                  <tr>
+                    <th>Nombre del mantenimiento</th>
+                    <th class="text-center" style="width:110px">Km</th>
+                    <th class="text-center" style="width:110px">Horas</th>
+                    <th class="text-center" style="width:110px">Días</th>
+                    <th class="text-center" style="min-width:104px">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <ng-container *ngFor="let p of programacionPersonalizada; let i = index">
+                    <tr>
+                      <td>
+                        <input type="text" class="form-control form-control-sm" [(ngModel)]="p.nombre" [ngModelOptions]="{standalone: true}"
+                          placeholder="Ej. Cambio de aceite" [readonly]="isReadOnly">
+                      </td>
+                      <td><input type="number" class="form-control form-control-sm text-center" [(ngModel)]="p.frecuencia_kilometros" [ngModelOptions]="{standalone: true}" min="0" step="1" placeholder="—" [readonly]="isReadOnly"></td>
+                      <td><input type="number" class="form-control form-control-sm text-center" [(ngModel)]="p.frecuencia_horas" [ngModelOptions]="{standalone: true}" min="0" step="0.1" placeholder="—" [readonly]="isReadOnly"></td>
+                      <td><input type="number" class="form-control form-control-sm text-center" [(ngModel)]="p.frecuencia_dias" [ngModelOptions]="{standalone: true}" min="0" step="1" placeholder="—" [readonly]="isReadOnly"></td>
+                      <td class="text-center text-nowrap align-middle">
+                        <ng-container *ngIf="!isReadOnly">
+                          <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 mr-1"
+                                  (click)="abrirModalElementosPlan(i)"
+                                  title="Abrir lista de elementos y actividades para este periodo">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span *ngIf="(p.items?.length ?? 0) > 0" class="badge badge-light border ml-1">{{ p.items?.length }}</span>
+                          </button>
+                          <button type="button" class="btn btn-link text-danger btn-sm p-0 align-baseline" (click)="quitarPlanPersonalizado(i)" title="Quitar plan">
+                            <i class="fas fa-times"></i>
+                          </button>
+                        </ng-container>
+                        <ng-container *ngIf="isReadOnly && (p.items?.length ?? 0) > 0">
+                          <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" (click)="abrirModalElementosPlan(i)"
+                                  title="Ver actividades y elementos">
+                            <i class="fas fa-clipboard-list mr-1"></i>Ver ({{ p.items?.length }})
+                          </button>
+                        </ng-container>
+                      </td>
+                    </tr>
+                  </ng-container>
+                </tbody>
+              </table>
+            </div>
+            <p *ngIf="programacionPersonalizada.length === 0 && !isReadOnly" class="text-muted small mb-0 px-2 py-2">Sin planes personalizados. Use «Añadir plan» o solo el catálogo superior.</p>
+          </div>
+        </div>
+    </div>
+
+  </div>
+
+  <div class="modal-footer bg-white border-top-0 pt-0 pb-3 pr-3">
+    <button type="button" class="btn btn-sm btn-link font-weight-bold text-secondary text-decoration-none" (click)="activeModal.dismiss()">Cerrar</button>
+    <button type="submit" class="btn btn-sm px-4 shadow-sm" *ngIf="!isReadOnly"
+           [ngClass]="soloProgramacion ? 'btn-secondary text-white' : (isEdit ? 'btn-warning text-white' : 'btn-primary')" [disabled]="saving">
+      <i class="fas mr-1" [ngClass]="saving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+      {{ saving ? 'Guardando...' : (soloProgramacion ? 'Guardar programación' : (isEdit ? 'Actualizar Vehículo' : 'Registrar Vehículo')) }}
+    </button>
+  </div>
+</form>
+

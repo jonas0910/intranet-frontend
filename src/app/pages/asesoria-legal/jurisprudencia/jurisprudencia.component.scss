@@ -1,0 +1,8 @@
+.contenido-jurisprudencia {
+  white-space: pre-wrap;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.modal.show { background: rgba(0,0,0,0.5); }
+.modal-dialog { z-index: 1055; }
+.modal-backdrop { z-index: 1040; }

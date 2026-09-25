@@ -1,0 +1,160 @@
+<!-- Modal Backdrop -->
+<div *ngIf="showModal" class="modal-backdrop fade show"></div>
+
+<!-- Modal -->
+<div *ngIf="showModal"
+     class="modal fade show"
+     tabindex="-1"
+     style="display: block; padding-right: 17px;">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-comment-dots mr-2"></i>
+          Iniciar Conversación
+        </h5>
+        <button type="button" class="close text-white" (click)="close()">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- Search Bar -->
+        <div class="form-group">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">
+                <i class="fas fa-search"></i>
+              </span>
+            </div>
+            <input type="text"
+                   class="form-control"
+                   placeholder="Buscar usuarios por nombre o email..."
+                   [(ngModel)]="searchQuery">
+          </div>
+        </div>
+
+        <!-- Status Tabs -->
+        <ul class="nav nav-tabs mb-3">
+          <li class="nav-item">
+            <a class="nav-link"
+               [class.active]="activeTab === 'all'"
+               (click)="setActiveTab('all')"
+               style="cursor: pointer;">
+              <i class="fas fa-users mr-1"></i>
+              Todos ({{ users.length }})
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link"
+               [class.active]="activeTab === 'online'"
+               (click)="setActiveTab('online')"
+               style="cursor: pointer;">
+              <i class="fas fa-circle text-success mr-1"></i>
+              En Línea ({{ onlineCount }})
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link"
+               [class.active]="activeTab === 'offline'"
+               (click)="setActiveTab('offline')"
+               style="cursor: pointer;">
+              <i class="fas fa-circle text-secondary mr-1"></i>
+              Desconectados ({{ offlineCount }})
+            </a>
+          </li>
+        </ul>
+
+        <!-- Selected Users Summary -->
+        <div *ngIf="selectedUsers.size > 0" class="alert alert-info">
+          <i class="fas fa-users mr-2"></i>
+          <strong>{{ selectedUsers.size }}</strong> usuario{{ selectedUsers.size !== 1 ? 's' : '' }} seleccionado{{ selectedUsers.size !== 1 ? 's' : '' }}:
+          <span class="ml-2">{{ getSelectedUsersText() }}</span>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="text-center p-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Cargando usuarios...</span>
+          </div>
+        </div>
+
+        <!-- Users List -->
+        <div *ngIf="!loading" class="users-list" style="max-height: 400px; overflow-y: auto;">
+          <div *ngFor="let user of filteredUsers"
+               class="user-item d-flex align-items-center p-2 border-bottom"
+               [class.selected]="isSelected(user.id)"
+               (click)="toggleUserSelection(user.id)"
+               style="cursor: pointer;">
+            <!-- Checkbox -->
+            <div class="form-check mr-3">
+              <input class="form-check-input"
+                     type="checkbox"
+                     [checked]="isSelected(user.id)"
+                     [id]="'user-' + user.id">
+            </div>
+
+            <!-- Avatar with Online Status -->
+            <div class="user-avatar mr-3 position-relative">
+              <img [src]="user.avatar || 'assets/img/user-default.png'"
+                   class="img-circle img-size-32"
+                   alt="User Avatar"
+                   onerror="this.onerror=null; this.src='assets/img/user-default.png'">
+              <!-- Online Status Indicator -->
+              <span class="badge badge-pill position-absolute"
+                    [class.badge-success]="user.isOnline"
+                    [class.badge-secondary]="!user.isOnline"
+                    style="bottom: 0; right: 0; width: 12px; height: 12px; padding: 0; border: 2px solid white;">
+              </span>
+            </div>
+
+            <!-- User Info -->
+            <div class="flex-grow-1">
+              <div class="d-flex align-items-center">
+                <span class="font-weight-bold">{{ user.name }}</span>
+                <i *ngIf="user.isOnline"
+                   class="fas fa-circle text-success ml-2"
+                   style="font-size: 8px;"
+                   title="En línea"></i>
+              </div>
+              <small class="text-muted">{{ user.email }}</small>
+              <div *ngIf="!user.isOnline && user.lastSeen" class="text-muted" style="font-size: 11px;">
+                <i class="far fa-clock mr-1"></i>Última vez: {{ user.lastSeen | date:'short' }}
+              </div>
+            </div>
+
+            <!-- Selection Indicator -->
+            <div *ngIf="isSelected(user.id)" class="ml-2">
+              <i class="fas fa-check-circle text-success"></i>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="filteredUsers.length === 0" class="text-center p-4">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No se encontraron usuarios</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button"
+                class="btn btn-secondary"
+                (click)="close()">
+          <i class="fas fa-times mr-1"></i>
+          Cancelar
+        </button>
+        <button type="button"
+                class="btn btn-primary"
+                (click)="startConversation()"
+                [disabled]="selectedUsers.size === 0">
+          <i class="fas fa-comment-dots mr-1"></i>
+          Iniciar Conversación ({{ selectedUsers.size }})
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

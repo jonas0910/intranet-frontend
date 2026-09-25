@@ -1,0 +1,743 @@
+<div class="container-fluid py-4">
+  <!-- Modo solo previsualización: barra mínima y el modal se abre automáticamente -->
+  <div *ngIf="soloPreviewMode" class="row mb-3">
+    <div class="col-12">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="mb-0 text-muted">
+          <i class="fas fa-eye me-2"></i>Previsualización de planilla generada
+        </h5>
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="closeProcessedModal()">
+          <i class="fas fa-arrow-left me-1"></i>Volver al reporte de planillas
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wizard de procesar (oculto en modo solo previsualización) -->
+  <div *ngIf="!soloPreviewMode">
+  <div class="row">
+    <div class="col-12">
+      <div class="card mb-4">
+        <div class="card-header pb-0">
+          <h5 class="mb-0">
+            <i class="fas fa-play-circle me-2"></i>Procesar Planillas
+          </h5>
+        </div>
+        <div class="card-body">
+
+          <!-- Wizard Steps -->
+          <div class="wizard-steps mb-4">
+            <div class="step" [class.active]="!selectedPeriod">
+              <div class="step-number">1</div>
+              <div class="step-label">Seleccionar Período</div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step" [class.active]="selectedPeriod && !selectedTemplate">
+              <div class="step-number">2</div>
+              <div class="step-label">Seleccionar Plantilla</div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step" [class.active]="selectedPeriod && selectedTemplate && !showResults">
+              <div class="step-number">3</div>
+              <div class="step-label">Configurar y Procesar</div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step" [class.active]="showResults">
+              <div class="step-number">4</div>
+              <div class="step-label">Resultados</div>
+            </div>
+          </div>
+
+          <!-- Step 1: Selección de Período -->
+          <div *ngIf="!selectedPeriod" class="step-content">
+            <h6 class="mb-3">
+              <i class="fas fa-calendar-alt me-2"></i>Paso 1: Selecciona el Período de Planilla
+            </h6>
+
+            <!-- Filtros -->
+            <div class="row mb-4">
+              <div class="col-md-3">
+                <label class="form-label">Año</label>
+                <select class="form-select" [(ngModel)]="yearFilter" (change)="applyFilters()">
+                  <option *ngFor="let year of availableYears" [value]="year">{{ year }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Mes</label>
+                <select class="form-select" [(ngModel)]="monthFilter" (change)="applyFilters()">
+                  <option value="">Todos los meses</option>
+                  <option *ngFor="let month of availableMonths" [value]="month.value">{{ month.label }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Estado</label>
+                <select class="form-select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+                  <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Buscar</label>
+                <input type="text" class="form-control" [(ngModel)]="searchFilter" (keyup)="applyFilters()" placeholder="Buscar período...">
+              </div>
+            </div>
+            
+            <!-- Botones de filtro -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="d-flex justify-content-end">
+                  <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+                    <i class="fas fa-eraser me-1"></i>Limpiar Filtros
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de Períodos -->
+            <div *ngIf="loadingPeriods" class="text-center py-5">
+              <div class="spinner-border text-primary"></div>
+              <p class="mt-2 text-muted">Cargando períodos...</p>
+            </div>
+
+            <div *ngIf="!loadingPeriods && periods.length === 0" class="text-center py-5">
+              <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+              <p class="text-muted">No hay períodos disponibles</p>
+            </div>
+
+            <div *ngIf="!loadingPeriods && periods.length > 0" class="table-responsive">
+              <table datatable [dtOptions]="dtOptionsPeriods" [dtTrigger]="dtTriggerPeriods" class="table table-bordered table-hover table-striped mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Período</th>
+                    <th>Fechas</th>
+                    <th class="text-center">Empleados</th>
+                    <th class="text-end">Total neto</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center" style="width: 200px;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let period of periods">
+                    <td><strong>{{ period.period_name }}</strong></td>
+                    <td>{{ period.start_date | date:'dd/MM/yyyy' }} - {{ period.end_date | date:'dd/MM/yyyy' }}</td>
+                    <td class="text-center">{{ period.total_employees ?? '—' }}</td>
+                    <td class="text-end">{{ period.total_net_salary ? ('S/ ' + (period.total_net_salary | number:'1.2-2')) : '—' }}</td>
+                    <td class="text-center">
+                      <span class="badge" [class.bg-secondary]="period.status === 'draft'"
+                            [class.bg-info]="period.status === 'calculated'"
+                            [class.bg-success]="period.status === 'approved'"
+                            [class.bg-dark]="period.status === 'closed'">
+                        {{ getStatusLabel(period.status) }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <div class="btn-group btn-group-sm" role="group">
+                        <button *ngIf="canProcessPeriod(period)" type="button" class="btn btn-primary" (click)="selectPeriod(period)" title="Procesar planilla">
+                          <i class="fas fa-play me-1"></i> Procesar
+                        </button>
+                        <ng-container *ngIf="!canProcessPeriod(period)">
+                          <button type="button" class="btn btn-info btn-sm" (click)="viewProcessedPayroll(period)" title="Ver planilla procesada">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                          <button *ngIf="canDeleteProcess(period)" type="button" class="btn btn-warning btn-sm" (click)="deletePayrollProcess(period)" title="Volver a Borrador">
+                            <i class="fas fa-undo"></i>
+                          </button>
+                          <button *ngIf="canApprovePeriod(period)" type="button" class="btn btn-success btn-sm" (click)="approvePeriod(period)" title="Aprobar">
+                            <i class="fas fa-check"></i>
+                          </button>
+                          <button *ngIf="canUnapprovePeriod(period)" type="button" class="btn btn-outline-warning btn-sm" (click)="unapprovePeriod(period)" title="Desactivar aprobación">
+                            <i class="fas fa-undo"></i>
+                          </button>
+                          <button *ngIf="canClosePeriod(period)" type="button" class="btn btn-dark btn-sm" (click)="closePeriod(period)" title="Cerrar">
+                            <i class="fas fa-lock"></i>
+                          </button>
+                        </ng-container>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Step 2: Selección de Plantilla (después de seleccionar período) -->
+          <div *ngIf="selectedPeriod && !selectedTemplate" class="step-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h6 class="mb-0">
+                <i class="fas fa-file-invoice me-2"></i>Paso 2: Selecciona la Plantilla con Empleados
+              </h6>
+              <button class="btn btn-sm btn-outline-secondary" (click)="goBackToPeriods()">
+                <i class="fas fa-arrow-left me-1"></i>Cambiar Período
+              </button>
+            </div>
+
+            <!-- Período Seleccionado -->
+            <div class="alert alert-primary mb-4">
+              <strong><i class="fas fa-calendar-check me-2"></i>Período Seleccionado:</strong> {{ selectedPeriod.period_name }}
+              <br>
+              <small>{{ selectedPeriod.start_date | date:'dd/MM/yyyy' }} - {{ selectedPeriod.end_date | date:'dd/MM/yyyy' }}</small>
+            </div>
+            
+            <!-- Loading Plantillas -->
+            <div *ngIf="loadingTemplates" class="text-center py-5">
+              <div class="spinner-border text-primary"></div>
+              <p class="mt-2 text-muted">Cargando plantillas con empleados...</p>
+            </div>
+
+            <!-- Sin plantillas -->
+            <div *ngIf="!loadingTemplates && templates.length === 0" class="text-center py-5">
+              <i class="fas fa-file-excel fa-3x text-muted mb-3"></i>
+              <p class="text-muted">No hay plantillas con empleados con contratos vigentes</p>
+            </div>
+
+            <!-- Grid de plantillas como DataTable -->
+            <div *ngIf="!loadingTemplates && templates.length > 0" class="table-responsive">
+              <table datatable [dtOptions]="dtOptionsTemplates" [dtTrigger]="dtTriggerTemplates" class="table table-bordered table-hover table-striped mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Plantilla</th>
+                    <th>Tipo</th>
+                    <th>Categoría</th>
+                    <th class="text-center">Empleados</th>
+                    <th class="text-center">Conceptos</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center" style="width: 280px;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let template of templates">
+                    <td><strong>{{ template.name }}</strong></td>
+                    <td>{{ template.type }}</td>
+                    <td>{{ getCategoryLabel(template.category) }}</td>
+                    <td class="text-center">{{ template.active_employees_count || 0 }}</td>
+                    <td class="text-center">{{ template.selected_concepts?.length || 0 }}</td>
+                    <td class="text-center">
+                      <span class="badge" 
+                            [class.bg-secondary]="getTemplateProcessStatus(template.id!) === 'draft'"
+                            [class.bg-info]="getTemplateProcessStatus(template.id!) === 'calculated'"
+                            [class.bg-success]="getTemplateProcessStatus(template.id!) === 'approved'"
+                            [class.bg-dark]="getTemplateProcessStatus(template.id!) === 'closed'">
+                        {{ getStatusLabel(getTemplateProcessStatus(template.id!)) }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <div class="btn-group btn-group-sm" role="group">
+                        <button *ngIf="canProcessTemplate(template.id!)" type="button" class="btn btn-primary" (click)="selectTemplate(template)" title="Procesar plantilla">
+                          <i class="fas fa-play me-1"></i> Procesar
+                        </button>
+                        <ng-container *ngIf="!canProcessTemplate(template.id!)">
+                          <button type="button" class="btn btn-info btn-sm" (click)="viewProcessedPayroll(selectedPeriod!, template)" title="Ver planilla en tabla">
+                            <i class="fas fa-table"></i>
+                          </button>
+                          <button *ngIf="canReprocessTemplate(template.id!)" type="button" class="btn btn-warning btn-sm" (click)="reprocessTemplate(template)" title="Reprocesar plantilla">
+                            <i class="fas fa-sync-alt me-1"></i> Reprocesar
+                          </button>
+                          <button *ngIf="canDeleteTemplateProcess(template.id!)" type="button" class="btn btn-outline-danger btn-sm" (click)="deleteTemplateProcess(template)" title="Eliminar proceso">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                          <button *ngIf="canApproveTemplateProcess(template.id!)" type="button" class="btn btn-success btn-sm" (click)="approveTemplateProcess(template)" title="Aprobar">
+                            <i class="fas fa-check"></i>
+                          </button>
+                          <button *ngIf="canUnapproveTemplateProcess(template.id!)" type="button" class="btn btn-outline-warning btn-sm" (click)="unapproveTemplateProcess(template)" title="Desactivar aprobación">
+                            <i class="fas fa-undo"></i>
+                          </button>
+                          <button *ngIf="canCloseTemplateProcess(template.id!)" type="button" class="btn btn-dark btn-sm" (click)="closeTemplateProcess(template)" title="Bloquear">
+                            <i class="fas fa-lock"></i>
+                          </button>
+                        </ng-container>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Step 3: Configuración y Procesamiento -->
+          <div *ngIf="selectedPeriod && selectedTemplate && !showResults" class="step-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h6 class="mb-0">
+                <i class="fas fa-cogs me-2"></i>Paso 3: Configurar y Procesar
+              </h6>
+              <button class="btn btn-sm btn-outline-secondary" (click)="goBackToTemplates()">
+                <i class="fas fa-arrow-left me-1"></i>Cambiar Plantilla
+              </button>
+            </div>
+
+            <!-- Período Seleccionado -->
+            <div class="alert alert-primary mb-3">
+              <strong><i class="fas fa-calendar-check me-2"></i>Período:</strong> {{ selectedPeriod.period_name }}
+              <br>
+              <small>{{ selectedPeriod.start_date | date:'dd/MM/yyyy' }} - {{ selectedPeriod.end_date | date:'dd/MM/yyyy' }}</small>
+            </div>
+
+            <!-- Plantilla Seleccionada -->
+            <div class="alert alert-info mb-3">
+              <strong><i class="fas fa-file-invoice me-2"></i>Plantilla:</strong> {{ selectedTemplate.name }}
+              <br>
+              <small>
+                <i class="fas fa-users me-2"></i>{{ selectedTemplate.active_employees_count }} empleado(s)
+                | <i class="fas fa-tag me-2"></i>{{ selectedTemplate.type }}
+              </small>
+            </div>
+
+            <!-- Selección de Empleados -->
+            <div class="mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6><i class="fas fa-users me-2"></i>Empleados a Procesar</h6>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-success" (click)="selectAllEmployees()">
+                    <i class="fas fa-check-double me-1"></i>Seleccionar Todos
+                  </button>
+                  <button class="btn btn-outline-danger" (click)="clearEmployeeSelection()">
+                    <i class="fas fa-times me-1"></i>Limpiar
+                  </button>
+                </div>
+              </div>
+
+              <div *ngIf="loadingEmployees" class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-primary"></div>
+                <span class="ms-2">Cargando empleados...</span>
+              </div>
+
+              <div *ngIf="!loadingEmployees && employees.length === 0" class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                No hay empleados activos disponibles
+              </div>
+
+              <div *ngIf="!loadingEmployees && employees.length > 0" class="table-responsive">
+                <table datatable [dtOptions]="dtOptionsEmployees" [dtTrigger]="dtTriggerEmployees" class="table table-bordered table-hover table-striped mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="text-center" style="width: 50px;">
+                        <input type="checkbox" class="form-check-input" [checked]="areAllEmployeesSelected()" (change)="areAllEmployeesSelected() ? clearEmployeeSelection() : selectAllEmployees()" title="Seleccionar todos">
+                      </th>
+                      <th>Empleado</th>
+                      <th>Código</th>
+                      <th>Cargo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let employee of employees">
+                      <td class="text-center">
+                        <input type="checkbox" class="form-check-input" [id]="'emp-' + employee.id"
+                               [checked]="selectedEmployees.includes(employee.id!)"
+                               (change)="toggleEmployee(employee.id!)">
+                      </td>
+                      <td><strong>{{ employee.full_name }}</strong></td>
+                      <td><span class="badge bg-dark">{{ employee.employee_code }}</span></td>
+                      <td>{{ employee.position?.name || 'Sin cargo' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="mt-3 text-muted">
+                <strong>{{ getSelectedEmployeesCount() }}</strong> empleado(s) seleccionado(s)
+                <span *ngIf="getSelectedEmployeesCount() === 0"> - Si no seleccionas ninguno, se procesarán todos</span>
+              </div>
+            </div>
+
+            <!-- Opciones de Procesamiento -->
+            <div class="mb-4">
+              <h6><i class="fas fa-sliders-h me-2"></i>Opciones de Procesamiento</h6>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="autoApprove" id="autoApprove">
+                    <label class="form-check-label" for="autoApprove">
+                      <strong>Auto-Aprobar</strong>
+                      <br><small class="text-muted">Aprobar automáticamente después de calcular</small>
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="autoClose" id="autoClose">
+                    <label class="form-check-label" for="autoClose">
+                      <strong>Auto-Cerrar</strong>
+                      <br><small class="text-muted">Cerrar automáticamente después de aprobar</small>
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="notifyEmployees" id="notifyEmployees">
+                    <label class="form-check-label" for="notifyEmployees">
+                      <strong>Notificar Empleados</strong>
+                      <br><small class="text-muted">Enviar notificación por email</small>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botón Procesar -->
+            <div class="text-center">
+              <button class="btn btn-lg btn-success" 
+                      (click)="createPayroll()" 
+                      [disabled]="processing || getSelectedEmployeesCount() === 0">
+                <span *ngIf="processing" class="spinner-border spinner-border-sm me-2"></span>
+                <i *ngIf="!processing" class="fas fa-file-invoice-dollar me-2"></i>
+                {{ processing ? 'Creando Planilla...' : 'Crear Planilla' }}
+              </button>
+              <p class="text-muted mt-2">
+                <small *ngIf="getSelectedEmployeesCount() === 0" class="text-danger">
+                  <i class="fas fa-exclamation-triangle me-1"></i>
+                  Debes seleccionar al menos un empleado para crear la planilla
+                </small>
+                <small *ngIf="getSelectedEmployeesCount() > 0" class="text-success">
+                  <i class="fas fa-check-circle me-1"></i>
+                  Se creará la planilla para {{ getSelectedEmployeesCount() }} empleado(s)
+                </small>
+              </p>
+            </div>
+          </div>
+
+           <!-- Step 4: Resultados -->
+           <div *ngIf="showResults && processingResults" class="step-content">
+             <h6 class="mb-3">
+               <i class="fas fa-check-circle me-2 text-success"></i>Paso 4: Resultados del Procesamiento
+             </h6>
+
+            <div class="alert alert-success">
+              <h6 class="alert-heading">
+                <i class="fas fa-check-circle me-2"></i>¡Planilla Procesada Exitosamente!
+              </h6>
+              <hr>
+              <div class="row">
+                <div class="col-md-3">
+                  <strong>Empleados Procesados:</strong><br>
+                  {{ processingResults.employees_processed || 0 }}
+                </div>
+                <div class="col-md-3">
+                  <strong>Duración:</strong><br>
+                  {{ processingResults.duration || 'N/A' }}
+                </div>
+                <div class="col-md-3">
+                  <strong>Estado:</strong><br>
+                  <span class="badge bg-success">{{ processingResults.status || 'Completado' }}</span>
+                </div>
+                <div class="col-md-3">
+                  <strong>Fecha:</strong><br>
+                  {{ processingResults.processed_at || 'Ahora' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Detalles de Resultados (DataTable) -->
+            <div class="results-details" *ngIf="processingResults.details?.length">
+              <h6><i class="fas fa-list-ul me-2"></i>Detalles por Empleado</h6>
+              <div class="table-responsive">
+                <table datatable [dtOptions]="dtOptionsResults" [dtTrigger]="dtTriggerResults" class="table table-sm table-bordered table-striped table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Empleado</th>
+                      <th>Código</th>
+                      <th class="text-end">Haberes</th>
+                      <th class="text-end">Descuentos</th>
+                      <th class="text-end">Neto</th>
+                      <th class="text-center">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let detail of processingResults.details">
+                      <td>{{ detail.employee_name }}</td>
+                      <td><span class="badge bg-dark">{{ detail.employee_code }}</span></td>
+                      <td class="text-end">{{ detail.gross_salary || 'N/A' }}</td>
+                      <td class="text-end">{{ detail.total_deductions || 'N/A' }}</td>
+                      <td class="text-end"><strong>{{ detail.net_salary || 'N/A' }}</strong></td>
+                      <td class="text-center">
+                        <span class="badge bg-success"><i class="fas fa-check"></i></span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+             <!-- Acciones -->
+             <div class="text-center mt-4">
+               <button class="btn btn-primary" (click)="goBackToPeriods(); showResults = false">
+                 <i class="fas fa-redo me-1"></i>Procesar Otra Planilla
+               </button>
+              <button class="btn btn-outline-secondary ms-2" routerLink="/planillas/dashboard">
+                <i class="fas fa-chart-line me-1"></i>Ver Dashboard
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- Modal: Ver Planilla Procesada (mismo formato y estilo que Vista Previa en Cabecera) -->
+<div class="angular-modal-overlay" 
+     *ngIf="showProcessedModal"
+     [class.d-block]="showProcessedModal"
+     [style.background-color]="showProcessedModal ? 'rgba(0,0,0,0.5)' : ''"
+     (click)="onModalBackdropClick()">
+  <div class="angular-modal-container" (click)="$event.stopPropagation()">
+    <div class="angular-modal-header">
+      <div class="modal-title-container">
+        <i class="fas fa-file-invoice-dollar text-white"></i>
+        <h4 class="modal-title-text">Planilla Procesada: {{ processedPayrollData?.period?.period_name }}</h4>
+      </div>
+      <button class="modal-close-btn" (click)="closeProcessedModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="angular-modal-body" *ngIf="!loadingProcessedData && processedPayrollData">
+      <div class="preview-info-card">
+        <div class="preview-title-section">
+          <h3 class="preview-title">{{ processedPayrollData.template?.name || 'Planilla' }}</h3>
+          <p class="preview-description">Período: {{ processedPayrollData.period?.period_name }} ({{ processedPayrollData.period?.start_date | date:'dd/MM/yyyy' }} - {{ processedPayrollData.period?.end_date | date:'dd/MM/yyyy' }})</p>
+        </div>
+        <div class="preview-badges-section">
+          <div class="badge-row">
+            <span class="info-badge badge-tipo"><i class="fas fa-calendar-check"></i> {{ processedPayrollData.period?.period_name }}</span>
+            <span class="info-badge" [ngClass]="{'bg-info': processedPayrollData.period?.status === 'calculated', 'bg-success': processedPayrollData.period?.status === 'approved', 'bg-dark': processedPayrollData.period?.status === 'closed'}">{{ getStatusLabel(processedPayrollData.period?.status) }}</span>
+            <span class="info-badge badge-categoria">Nº {{ processedPayrollData.process_meta?.payroll_number || '—' }}</span>
+          </div>
+          <div class="stats-row">
+            <div class="stat-item stat-income"><i class="fas fa-plus-circle"></i><span class="stat-label">Ingresos</span><span class="stat-value">{{ uniqueIncomeConceptsForView.length }}</span></div>
+            <div class="stat-item stat-deduction"><i class="fas fa-minus-circle"></i><span class="stat-label">Descuentos</span><span class="stat-value">{{ uniqueDeductionConceptsForView.length }}</span></div>
+            <div class="stat-item stat-contribution"><i class="fas fa-hand-holding-usd"></i><span class="stat-label">Aportes</span><span class="stat-value">{{ uniqueContributionConceptsForView.length }}</span></div>
+          </div>
+          <div class="preview-summary mt-2">
+            <div class="summary-item"><i class="fas fa-users"></i><span class="summary-label">Empleados:</span><span class="summary-value">{{ processedPayrollData.summary?.total_employees ?? 0 }}</span></div>
+            <div class="summary-item"><i class="fas fa-wallet"></i><span class="summary-label">Total neto:</span><span class="summary-value">{{ formatCurrency(processedPayrollData.summary?.total_net_salary) }}</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="excel-concepts-table">
+        <div class="table-container">
+          <table class="excel-table">
+            <thead>
+              <tr class="section-headers">
+                <th class="employee-info-header" rowspan="2">DATOS EMPLEADO</th>
+                <th class="income-section-header" [attr.colspan]="uniqueIncomeConceptsForView.length"><i class="fas fa-plus-circle"></i> INGRESOS Y REMUNERACIONES</th>
+                <th class="total-income-header" rowspan="2">TOT ING. EN SOLES</th>
+                <th class="deduction-section-header" [attr.colspan]="uniqueDeductionConceptsForView.length"><i class="fas fa-minus-circle"></i> DESCUENTOS TRABAJADOR</th>
+                <th class="total-deduction-header" rowspan="2">TOT. DSCTS</th>
+                <th class="net-pay-header" rowspan="2">SALDO PAG.</th>
+                <th class="contribution-section-header" [attr.colspan]="uniqueContributionConceptsForView.length"><i class="fas fa-hand-holding-usd"></i> APORT. EMPLEADOR</th>
+                <th class="total-contribution-header" rowspan="2">T. APORTES</th>
+              </tr>
+              <tr class="concept-headers">
+                <th class="concept-header income-header" *ngFor="let c of uniqueIncomeConceptsForView"><div class="concept-abbreviation">{{ getConceptAbbreviation(c.concept_name) }}</div><div class="concept-full-name">{{ c.concept_name }}</div></th>
+                <th class="concept-header deduction-header" *ngFor="let c of uniqueDeductionConceptsForView"><div class="concept-abbreviation">{{ getConceptAbbreviation(c.concept_name) }}</div><div class="concept-full-name">{{ c.concept_name }}</div></th>
+                <th class="concept-header contribution-header" *ngFor="let c of uniqueContributionConceptsForView"><div class="concept-abbreviation">{{ getConceptAbbreviation(c.concept_name) }}</div><div class="concept-full-name">{{ c.concept_name }}</div></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="loadingProcessedData"><td [attr.colspan]="4 + uniqueIncomeConceptsForView.length + uniqueDeductionConceptsForView.length + uniqueContributionConceptsForView.length" class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Cargando planilla...</td></tr>
+              <tr *ngIf="!loadingProcessedData && (!processedPayrollData?.employees || processedPayrollData.employees.length === 0)"><td [attr.colspan]="4 + uniqueIncomeConceptsForView.length + uniqueDeductionConceptsForView.length + uniqueContributionConceptsForView.length" class="text-center py-4"><i class="fas fa-info-circle text-warning"></i> No hay datos de empleados</td></tr>
+              <tr class="employee-row" *ngFor="let employee of processedPayrollData?.employees || []">
+                <td class="employee-data">
+                  <div class="employee-name">{{ employee.employee_name }}</div>
+                  <div class="employee-position">Código: {{ employee.employee_code }}</div>
+                  <small *ngIf="employee.salary_scale_info" class="text-primary d-block mt-1"><i class="fas fa-layer-group me-1"></i>{{ employee.salary_scale_info?.scale_code }}: {{ formatCurrency(employee.salary_scale_info?.scale_base_salary) }}</small>
+                  <small *ngIf="!employee.salary_scale_info && employee.employee_base_salary" class="text-muted d-block mt-1">Base: {{ formatCurrency(employee.employee_base_salary) }}</small>
+                </td>
+                <td class="concept-cell income-cell" *ngFor="let c of uniqueIncomeConceptsForView"
+                    [class.editable-concept]="isConceptEditable(c)"
+                    (dblclick)="isConceptEditable(c) && startEditingConcept(employee, c, 'incomes')">
+                  <div *ngIf="!isEditingConcept(employee.employee_id, c.concept_id)" class="amount-value">{{ formatCurrency(getConceptValue(employee, c.concept_id, 'incomes')) }}</div>
+                  <input *ngIf="isEditingConcept(employee.employee_id, c.concept_id)"
+                    type="number" step="0.01" min="0"
+                    [ngModel]="getEditedValue(employee.employee_id, c.concept_id)"
+                    (ngModelChange)="updateEditedValue(employee.employee_id, c.concept_id, $event)"
+                    (blur)="saveConceptValue(employee, c, 'incomes')"
+                    (keydown.enter)="$any($event.target).blur()"
+                    class="form-control form-control-sm editable-input"
+                    autofocus>
+                </td>
+                <td class="total-income-cell"><div class="total-amount">{{ formatCurrency(employee.total_income) }}</div></td>
+                <td class="concept-cell deduction-cell" *ngFor="let c of uniqueDeductionConceptsForView"
+                    [class.editable-concept]="isConceptEditable(c)"
+                    (dblclick)="isConceptEditable(c) && startEditingConcept(employee, c, 'deductions')">
+                  <div *ngIf="!isEditingConcept(employee.employee_id, c.concept_id)" class="amount-value">{{ formatCurrency(getConceptValue(employee, c.concept_id, 'deductions')) }}</div>
+                  <input *ngIf="isEditingConcept(employee.employee_id, c.concept_id)"
+                    type="number" step="0.01" min="0"
+                    [ngModel]="getEditedValue(employee.employee_id, c.concept_id)"
+                    (ngModelChange)="updateEditedValue(employee.employee_id, c.concept_id, $event)"
+                    (blur)="saveConceptValue(employee, c, 'deductions')"
+                    (keydown.enter)="$any($event.target).blur()"
+                    class="form-control form-control-sm editable-input"
+                    autofocus>
+                </td>
+                <td class="total-deduction-cell"><div class="total-amount">{{ formatCurrency(employee.total_deductions) }}</div></td>
+                <td class="net-pay-cell"><div class="net-amount">{{ formatCurrency(employee.net_salary) }}</div></td>
+                <td class="concept-cell contribution-cell" *ngFor="let c of uniqueContributionConceptsForView"
+                    [class.editable-concept]="isConceptEditable(c)"
+                    (dblclick)="isConceptEditable(c) && startEditingConcept(employee, c, 'contributions')">
+                  <div *ngIf="!isEditingConcept(employee.employee_id, c.concept_id)" class="amount-value">{{ formatCurrency(getConceptValue(employee, c.concept_id, 'contributions')) }}</div>
+                  <input *ngIf="isEditingConcept(employee.employee_id, c.concept_id)"
+                    type="number" step="0.01" min="0"
+                    [ngModel]="getEditedValue(employee.employee_id, c.concept_id)"
+                    (ngModelChange)="updateEditedValue(employee.employee_id, c.concept_id, $event)"
+                    (blur)="saveConceptValue(employee, c, 'contributions')"
+                    (keydown.enter)="$any($event.target).blur()"
+                    class="form-control form-control-sm editable-input"
+                    autofocus>
+                </td>
+                <td class="total-contribution-cell"><div class="total-amount">{{ formatCurrency(employee.total_contributions) }}</div></td>
+              </tr>
+              <tr class="totals-row" *ngIf="processedPayrollData?.employees?.length">
+                <td class="totals-label"><strong>TOTALES</strong></td>
+                <td class="total-cell income-total" *ngFor="let c of uniqueIncomeConceptsForView"><div class="total-amount">{{ formatCurrency(getConceptTotal(c.concept_id, 'incomes')) }}</div></td>
+                <td class="total-income-total-cell"><div class="total-amount">{{ formatCurrency(processedPayrollData.summary?.total_gross_salary) }}</div></td>
+                <td class="total-cell deduction-total" *ngFor="let c of uniqueDeductionConceptsForView"><div class="total-amount">{{ formatCurrency(getConceptTotal(c.concept_id, 'deductions')) }}</div></td>
+                <td class="total-deduction-total-cell"><div class="total-amount">{{ formatCurrency(processedPayrollData.summary?.total_deductions) }}</div></td>
+                <td class="net-total-cell"><div class="net-total-amount">{{ formatCurrency(processedPayrollData.summary?.total_net_salary) }}</div></td>
+                <td class="total-cell contribution-total" *ngFor="let c of uniqueContributionConceptsForView"><div class="total-amount">{{ formatCurrency(getConceptTotal(c.concept_id, 'contributions')) }}</div></td>
+                <td class="total-contribution-total-cell"><div class="total-amount">{{ formatCurrency(processedPayrollData.summary?.total_employer_contributions) }}</div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="preview-summary">
+        <div class="summary-item summary-total"><i class="fas fa-wallet"></i><span class="summary-label">Total a pagar:</span><span class="summary-value">{{ formatCurrency(processedPayrollData?.summary?.total_net_salary) }}</span></div>
+      </div>
+
+      <!-- Pie de resumen (según formato Planilla Única) -->
+      <div class="pie-resumen" *ngIf="processedPayrollData?.employees?.length">
+        <p class="pie-resumen-ref"><strong>_REFERENCIA:</strong></p>
+        <div class="pie-resumen-grid">
+          <!-- 1. Afectación presupuestal -->
+          <div class="pie-resumen-card">
+            <div class="pie-resumen-title">AFECTACIÓN PRESUPUESTAL</div>
+            <div class="pie-resumen-table-wrapper">
+              <table class="pie-resumen-table">
+              <thead>
+                <tr><th>Fuente</th><th>Partida Presu.</th><th>Descripcion</th><th>Importe</th></tr>
+              </thead>
+              <tbody>
+                <ng-container *ngIf="getSummaryByPartida()?.length; else noPartidas">
+                  <tr *ngFor="let row of getSummaryByPartida()">
+                    <td>{{ getFundingSourceName() || '—' }}</td>
+                    <td>{{ row.partida_code || '—' }}</td>
+                    <td>{{ row.partida_name || row.description || '—' }}</td>
+                    <td class="text-end">{{ formatCurrency(row.importe) }}</td>
+                  </tr>
+                </ng-container>
+                <ng-template #noPartidas>
+                  <tr>
+                    <td>{{ getFundingSourceName() || '—' }}</td>
+                    <td>—</td>
+                    <td>Remuneración</td>
+                    <td class="text-end">{{ formatCurrency(processedPayrollData?.summary?.total_gross_salary) }}</td>
+                  </tr>
+                  <tr>
+                    <td>{{ getFundingSourceName() || '—' }}</td>
+                    <td>—</td>
+                    <td>Aportes</td>
+                    <td class="text-end">{{ formatCurrency(processedPayrollData?.summary?.total_employer_contributions) }}</td>
+                  </tr>
+                </ng-template>
+                <tr class="pie-total-row">
+                  <td colspan="3"><strong>Total</strong></td>
+                  <td class="text-end"><strong>{{ formatCurrency(getAfectacionPresupuestalTotal()) }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+            </div>
+          </div>
+          <!-- 2. Conceptos remunerativos (ingresos) -->
+          <div class="pie-resumen-card">
+            <div class="pie-resumen-title">CONCEPTOS REMUNERATIVOS</div>
+            <div class="pie-resumen-table-wrapper">
+              <table class="pie-resumen-table">
+              <thead>
+                <tr><th>Remuneración</th><th>Importe</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of uniqueIncomeConceptsForView">
+                  <td>{{ c.concept_name }}</td>
+                  <td class="text-end">{{ formatCurrency(getConceptTotal(c.concept_id, 'incomes')) }}</td>
+                </tr>
+                <tr class="pie-total-row">
+                  <td><strong>Total</strong></td>
+                  <td class="text-end"><strong>{{ formatCurrency(processedPayrollData?.summary?.total_gross_salary) }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+            </div>
+          </div>
+          <!-- 3. Descuentos y/o retenciones -->
+          <div class="pie-resumen-card">
+            <div class="pie-resumen-title">DESCUENTOS Y/O RETENCIONES</div>
+            <div class="pie-resumen-table-wrapper">
+              <table class="pie-resumen-table">
+              <thead>
+                <tr><th>Concepto</th><th>Importe</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of uniqueDeductionConceptsForView">
+                  <td>{{ c.concept_name }}</td>
+                  <td class="text-end">{{ formatCurrency(getConceptTotal(c.concept_id, 'deductions')) }}</td>
+                </tr>
+                <tr class="pie-total-row">
+                  <td><strong>Total</strong></td>
+                  <td class="text-end"><strong>{{ formatCurrency(processedPayrollData?.summary?.total_deductions) }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+            </div>
+          </div>
+          <!-- 4. Aportes y/o retenciones (empleador) -->
+          <div class="pie-resumen-card">
+            <div class="pie-resumen-title">APORTES Y/O RETENCIONES</div>
+            <div class="pie-resumen-table-wrapper">
+              <table class="pie-resumen-table">
+              <thead>
+                <tr><th>Concepto</th><th>Importe</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of uniqueContributionConceptsForView">
+                  <td>{{ c.concept_name }}</td>
+                  <td class="text-end">{{ formatCurrency(getConceptTotal(c.concept_id, 'contributions')) }}</td>
+                </tr>
+                <tr class="pie-total-row">
+                  <td><strong>Total</strong></td>
+                  <td class="text-end"><strong>{{ formatCurrency(processedPayrollData?.summary?.total_employer_contributions) }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+            </div>
+          </div>
+          <!-- 5. Resumen AFP / Aportes SPP (por AFP de empleados, columnas = descuentos) -->
+          <div class="pie-resumen-card">
+            <div class="pie-resumen-title">APORTES SPP-AFPS</div>
+            <div class="pie-resumen-table-wrapper">
+              <table class="pie-resumen-table">
+              <thead>
+                <tr>
+                  <th>AFP</th>
+                  <th *ngFor="let col of afpSummaryDeductionColumnsForView">{{ col.concept_name }}</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of getSummaryByAfp()">
+                  <td>{{ row.afp_name || 'Sin AFP' }}</td>
+                  <td *ngFor="let col of afpSummaryDeductionColumnsForView" class="text-end">{{ formatCurrency(getAfpDeductionTotal(row, col.concept_id)) }}</td>
+                  <td class="text-end"><strong>{{ formatCurrency(getAfpRowTotalAfpDeductions(row)) }}</strong></td>
+                </tr>
+                <tr *ngIf="!getSummaryByAfp()?.length"><td [attr.colspan]="afpSummaryDeductionColumnsForView.length + 2" class="text-muted small">—</td></tr>
+              </tbody>
+            </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="angular-modal-footer">
+      <button class="btn-secondary-modal" (click)="closeProcessedModal()"><i class="fas fa-times"></i> Cerrar</button>
+      <button class="btn-primary-modal" (click)="exportProcessedPDF()" [disabled]="!processedPayrollData?.employees?.length"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+      <button class="btn-primary-modal" (click)="exportProcessedExcel()" [disabled]="!processedPayrollData?.employees?.length"><i class="fas fa-file-excel"></i> Exportar Excel</button>
+    </div>
+  </div>
+</div>

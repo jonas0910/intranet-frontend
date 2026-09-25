@@ -1,0 +1,222 @@
+<!-- Page Header -->
+<app-page-header
+  title="Gestión de Empleados"
+  subtitle="Administración del personal de la institución"
+  [breadcrumbs]="breadcrumbs">
+</app-page-header>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+          <!-- Toolbar -->
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+              <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                <i class="fas fa-users mr-1"></i> Listado de Empleados
+              </h3>
+              <span class="badge bg-primary align-self-center">{{ totalItems }} registros</span>
+              <ng-container *ngIf="cv.showExportButtons && canExportEmployees">
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass" (click)="exportEmployees()">
+                  <i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}
+                </button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass">
+                  <i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}
+                </button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass">
+                  <i [class]="cv.printBtnIcon + ' mr-1'"></i> {{ cv.printBtnLabel }}
+                </button>
+              </ng-container>
+              <button *ngIf="!cv.showExportButtons && canExportEmployees" class="btn btn-sm btn-flat" [ngClass]="cv.exportBtnClass" (click)="exportEmployees()">
+                <i [class]="cv.exportBtnIcon + ' mr-1'"></i> {{ cv.exportBtnLabel }}
+              </button>
+            </div>
+            <div class="ms-auto flex-shrink-0">
+              <button *ngIf="canCreateEmployee" class="btn btn-sm btn-flat" [ngClass]="cv.newBtnClass" (click)="createEmployee()">
+                <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{ cv.newBtnLabel }} Empleado
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtros: layout flex con min-width 300px para que el texto de los combos no se corte -->
+          <div class="p-3 border-bottom bg-light filters-section">
+            <div class="filters-row">
+              <div class="col-filter">
+                <label class="form-label mb-1" [style.font-size]="cv.labelFontSize">Buscar</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text"><i class="fas fa-search"></i></span>
+                  <input type="text" class="form-control" [ngClass]="cv.filterInputSize" [style.font-size]="cv.filterInputFontSize"
+                         placeholder="Código, DNI, nombre..."
+                         [value]="filters.search"
+                         (input)="onSearchChange($any($event.target).value || '')">
+                </div>
+              </div>
+              <div class="col-filter">
+                <label class="form-label mb-1" [style.font-size]="cv.labelFontSize">Estado</label>
+                <select class="form-control filter-select" [ngClass]="cv.filterInputSize" [style.font-size]="cv.filterInputFontSize" [(ngModel)]="filters.status" (change)="onFilterChange()">
+                  <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+                </select>
+              </div>
+              <div class="col-filter">
+                <label class="form-label mb-1" [style.font-size]="cv.labelFontSize">Departamento</label>
+                <select class="form-control filter-select" [ngClass]="cv.filterInputSize" [style.font-size]="cv.filterInputFontSize" [(ngModel)]="filters.department_id" (change)="onFilterChange()">
+                  <option value="">Todos</option>
+                  <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
+                </select>
+              </div>
+              <div class="col-filter">
+                <label class="form-label mb-1" [style.font-size]="cv.labelFontSize">Cargo</label>
+                <select class="form-control filter-select" [ngClass]="cv.filterInputSize" [style.font-size]="cv.filterInputFontSize" [(ngModel)]="filters.position_id" (change)="onFilterChange()">
+                  <option value="">Todos</option>
+                  <option *ngFor="let pos of positions" [value]="pos.id">{{ pos.name }}</option>
+                </select>
+              </div>
+              <div class="col-filter">
+                <label class="form-label mb-1" [style.font-size]="cv.labelFontSize">Régimen Laboral</label>
+                <select class="form-control filter-select" [ngClass]="cv.filterInputSize" [style.font-size]="cv.filterInputFontSize" [(ngModel)]="filters.labor_regime" (change)="onFilterChange()">
+                  <option *ngFor="let option of laborRegimeOptions" [value]="option.value">{{ option.label }}</option>
+                </select>
+              </div>
+              <div class="col-filter">
+                <label class="form-label mb-1" [style.font-size]="cv.labelFontSize">Sistema Pensionario</label>
+                <select class="form-control filter-select" [ngClass]="cv.filterInputSize" [style.font-size]="cv.filterInputFontSize" [(ngModel)]="filters.pension_system" (change)="onFilterChange()">
+                  <option *ngFor="let option of pensionSystemOptions" [value]="option.value">{{ option.label }}</option>
+                </select>
+              </div>
+              <div class="col-filter col-filter-btn">
+                <button class="btn btn-outline-secondary btn-sm" (click)="clearFilters()" title="Limpiar Filtros">
+                  <i class="fas fa-times"></i> Limpiar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla -->
+          <div class="card-body p-0">
+      <app-loading-spinner [loading]="loading" message="Cargando empleados..."></app-loading-spinner>
+
+      <div *ngIf="!loading" class="table-responsive">
+        <table class="table mb-0" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize">
+          <thead class="bg-light">
+            <tr>
+              <th [style.font-size]="cv.headerFontSize" class="sortable" (click)="onSort('employee_code')" style="cursor:pointer;">
+                Código <i [class]="getSortIconClass('employee_code')"></i>
+              </th>
+              <th [style.font-size]="cv.headerFontSize" class="sortable" (click)="onSort('dni')" style="cursor:pointer;">
+                DNI <i [class]="getSortIconClass('dni')"></i>
+              </th>
+              <th [style.font-size]="cv.headerFontSize" class="sortable" (click)="onSort('first_name')" style="cursor:pointer;">
+                Nombre Completo <i [class]="getSortIconClass('first_name')"></i>
+              </th>
+              <th [style.font-size]="cv.headerFontSize">Departamento</th>
+              <th [style.font-size]="cv.headerFontSize">Cargo</th>
+              <th [style.font-size]="cv.headerFontSize" class="sortable" (click)="onSort('hire_date')" style="cursor:pointer;">
+                F. Ingreso <i [class]="getSortIconClass('hire_date')"></i>
+              </th>
+              <th [style.font-size]="cv.headerFontSize">Régimen</th>
+              <th [style.font-size]="cv.headerFontSize" class="sortable text-center" (click)="onSort('status')" style="cursor:pointer;">
+                Estado <i [class]="getSortIconClass('status')"></i>
+              </th>
+              <th [style.font-size]="cv.headerFontSize" class="text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let emp of employees; trackBy: trackByEmployeeId">
+              <td><strong>{{ emp.employee_code }}</strong></td>
+              <td>{{ emp.dni }}</td>
+              <td>
+                <div>
+                  <strong class="d-block">{{ getFullName(emp) }}</strong>
+                  <small class="text-muted" *ngIf="emp.email">
+                    <i class="fas fa-envelope mr-1"></i>{{ emp.email }}
+                  </small>
+                </div>
+              </td>
+              <td>
+                <span *ngIf="emp.department">{{ emp.department.name }}</span>
+                <span *ngIf="!emp.department" class="text-muted">-</span>
+              </td>
+              <td>
+                <span *ngIf="emp.position">{{ emp.position.name }}</span>
+                <span *ngIf="!emp.position" class="text-muted">-</span>
+              </td>
+              <td>{{ emp.hire_date | date:'dd/MM/yyyy' }}</td>
+              <td><small class="badge bg-info">{{ getLaborRegimeLabel(emp.labor_regime) }}</small></td>
+              <td class="text-center">
+                <app-status-badge
+                  [status]="emp.status === 'active'"
+                  [inactiveText]="emp.status === 'suspended' ? 'Suspendido' : ''">
+                </app-status-badge>
+              </td>
+              <td class="text-right">
+                <app-crud-actions
+                  [showView]="true"
+                  [showEdit]="canEditEmployee"
+                  [showDelete]="canDeleteEmployee"
+                  (onView)="viewEmployee(emp)"
+                  (onEdit)="editEmployee(emp)"
+                  (onDelete)="confirmDelete(emp)">
+                </app-crud-actions>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div *ngIf="employees.length === 0" class="text-center py-5">
+          <i class="fas fa-users fa-2x text-muted mb-3"></i>
+          <h6 class="text-muted">No se encontraron empleados</h6>
+          <p class="text-muted small">Ajusta los filtros o crea un nuevo empleado.</p>
+          <button *ngIf="canCreateEmployee" class="btn btn-sm" [ngClass]="cv.newBtnClass" (click)="createEmployee()">
+            <i [class]="cv.newBtnIcon + ' mr-1'"></i> Crear Empleado
+          </button>
+        </div>
+      </div>
+          </div>
+
+          <!-- Paginación -->
+          <div class="card-footer py-2 d-flex flex-wrap align-items-center justify-content-between" *ngIf="!loading && employees.length > 0">
+            <div class="d-flex align-items-center mb-1 mb-md-0">
+              <label class="mb-0 mr-2" [style.font-size]="cv.labelFontSize">Mostrar</label>
+              <select class="form-control form-control-sm" [ngClass]="cv.filterInputSize" [style.font-size]="cv.filterInputFontSize" [(ngModel)]="itemsPerPage" (ngModelChange)="onPageSizeChange($event)" style="width: auto; min-width: 60px;">
+                <option *ngFor="let n of pageSizeOptions" [value]="n">{{ n }}</option>
+              </select>
+              <span class="ml-2" [style.font-size]="cv.labelFontSize">registros</span>
+            </div>
+            <nav>
+              <ul class="pagination mb-0" [ngClass]="cv.paginationSize">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <button class="page-link" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1">
+                    <i class="fas fa-chevron-left"></i>
+                  </button>
+                </li>
+                <li *ngFor="let page of getPageNumbers()" class="page-item" [class.active]="page === currentPage">
+                  <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <button class="page-link" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages">
+                    <i class="fas fa-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Employee Detail Modal -->
+<app-employee-detail-modal
+  [employeeId]="selectedEmployeeId"
+  [isVisible]="showDetailModal"
+  (modalClosed)="closeDetailModal()">
+</app-employee-detail-modal>
+
+<!-- Employee Modal -->
+<app-employee-modal
+  [data]="employeeModalData"
+  [isVisible]="showEmployeeModal"
+  (modalClosed)="onEmployeeModalClosed($event)">
+</app-employee-modal>

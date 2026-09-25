@@ -1,0 +1,443 @@
+<!-- Groups Management -->
+<div class="groups-container">
+  
+  <!-- Header -->
+  <div class="card card-primary card-outline">
+    <div class="card-header bg-gradient-primary">
+      <h3 class="card-title text-white">
+        <i class="fas fa-users mr-2"></i>
+        Grupos y Comunidades
+        <span class="badge badge-light ml-2">{{ stats.total }}</span>
+      </h3>
+      <div class="card-tools">
+        <button type="button" class="btn btn-sm btn-light" (click)="openCreateModal()">
+          <i class="fas fa-plus mr-1"></i>
+          Crear Grupo
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="card-body">
+      <div class="row mb-4">
+        <div class="col-md-3 col-6">
+          <div class="info-box bg-gradient-info">
+            <span class="info-box-icon">
+              <i class="fas fa-users"></i>
+            </span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Grupos</span>
+              <span class="info-box-number">{{ stats.total }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="info-box bg-gradient-success">
+            <span class="info-box-icon">
+              <i class="fas fa-user-check"></i>
+            </span>
+            <div class="info-box-content">
+              <span class="info-box-text">Mis Grupos</span>
+              <span class="info-box-number">{{ stats.member }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="info-box bg-gradient-danger">
+            <span class="info-box-icon">
+              <i class="fas fa-crown"></i>
+            </span>
+            <div class="info-box-content">
+              <span class="info-box-text">Administrados</span>
+              <span class="info-box-number">{{ stats.admin }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="info-box bg-gradient-warning">
+            <span class="info-box-icon">
+              <i class="fas fa-globe"></i>
+            </span>
+            <div class="info-box-content">
+              <span class="info-box-text">Públicos</span>
+              <span class="info-box-number">{{ stats.public }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">
+                <i class="fas fa-search"></i>
+              </span>
+            </div>
+            <input type="text" 
+                   class="form-control" 
+                   [(ngModel)]="searchQuery"
+                   (input)="onSearchChange()"
+                   placeholder="Buscar grupos...">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <select class="form-control" [(ngModel)]="filterType" (change)="onFilterChange()">
+            <option value="all">Todos los tipos</option>
+            <option value="group">Grupos</option>
+            <option value="department">Departamentos</option>
+            <option value="public">Públicos</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <select class="form-control" [(ngModel)]="filterStatus" (change)="onFilterChange()">
+            <option value="all">Todos</option>
+            <option value="member">Soy miembro</option>
+            <option value="not_member">No soy miembro</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Groups Grid -->
+      <div class="row">
+        <!-- Loading State -->
+        <div class="col-12" *ngIf="loading">
+          <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="sr-only">Cargando grupos...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="col-12" *ngIf="!loading && filteredGroups.length === 0">
+          <div class="callout callout-info">
+            <h5><i class="fas fa-info-circle"></i> No hay grupos</h5>
+            <p>No se encontraron grupos que coincidan con tus criterios.</p>
+            <button type="button" class="btn btn-primary" (click)="openCreateModal()">
+              <i class="fas fa-plus mr-1"></i>
+              Crear Primer Grupo
+            </button>
+          </div>
+        </div>
+
+        <!-- Group Cards -->
+        <div class="col-md-6 col-lg-4" *ngFor="let group of filteredGroups">
+          <div class="card card-widget widget-user-2 shadow-sm">
+            <div class="card-header" [ngClass]="'bg-gradient-' + (group.is_member ? 'primary' : 'secondary')">
+              <div class="widget-user-header">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <h5 class="widget-user-username text-white mb-1">
+                      <i [class]="getGroupIcon(group)" class="mr-1"></i>
+                      {{ group.title }}
+                    </h5>
+                    <p class="widget-user-desc text-white-50 mb-0 small">
+                      {{ group.participant_count }} miembros · {{ group.message_count }} mensajes
+                    </p>
+                  </div>
+                  <span class="badge" [ngClass]="getGroupBadgeClass(group)">
+                    {{ getGroupTypeLabel(group.type) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="card-body p-3">
+              <p class="text-muted small mb-2" *ngIf="group.description">
+                {{ group.description }}
+              </p>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <small class="text-muted">
+                  <i class="far fa-clock mr-1"></i>
+                  {{ formatDate(group.updated_at) }}
+                </small>
+                <span class="badge badge-danger" *ngIf="group.unread_count > 0">
+                  {{ group.unread_count }} nuevos
+                </span>
+              </div>
+              <div class="latest-message" *ngIf="group.latest_message">
+                <small class="text-muted">
+                  <i class="fas fa-comment mr-1"></i>
+                  <strong>{{ group.latest_message.sender_name }}:</strong>
+                  {{ group.latest_message.content | slice:0:50 }}...
+                </small>
+              </div>
+            </div>
+            <div class="card-footer p-2">
+              <div class="btn-group btn-group-sm w-100" *ngIf="group.is_member">
+                <button type="button" class="btn btn-primary" (click)="openGroup(group.id)">
+                  <i class="fas fa-comment-dots"></i> Abrir
+                </button>
+                <button type="button" class="btn btn-info" (click)="openMembersModal(group)">
+                  <i class="fas fa-users"></i> Miembros
+                </button>
+                <button type="button" class="btn btn-warning" *ngIf="group.is_admin" (click)="openEditModal(group)">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="btn btn-danger" (click)="leaveGroup(group)">
+                  <i class="fas fa-sign-out-alt"></i>
+                </button>
+              </div>
+              <button type="button" class="btn btn-success btn-sm btn-block" 
+                      *ngIf="!group.is_member && (group.type === 'public')"
+                      (click)="joinGroup(group)">
+                <i class="fas fa-user-plus mr-1"></i>
+                Unirse al Grupo
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Group Modal -->
+<div class="modal fade" [class.show]="showCreateModal" [style.display]="showCreateModal ? 'block' : 'none'" 
+     *ngIf="showCreateModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-plus-circle mr-2"></i>
+          Crear Nuevo Grupo
+        </h5>
+        <button type="button" class="close text-white" (click)="closeCreateModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <form [formGroup]="createGroupForm" (ngSubmit)="createGroup()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Nombre del Grupo *</label>
+            <input type="text" class="form-control" formControlName="title" 
+                   placeholder="Ej: Equipo de Desarrollo">
+            <small class="form-text text-muted">Mínimo 3 caracteres</small>
+          </div>
+
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea class="form-control" formControlName="description" rows="3"
+                      placeholder="Descripción opcional del grupo"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Tipo de Grupo *</label>
+            <select class="form-control" formControlName="type">
+              <option value="group">Grupo Privado</option>
+              <option value="department">Departamento</option>
+              <option value="public">Público</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Miembros Iniciales</label>
+            <div class="members-list" style="max-height: 300px; overflow-y: auto;">
+              <div class="custom-control custom-checkbox" *ngFor="let user of availableUsers">
+                <input type="checkbox" 
+                       class="custom-control-input" 
+                       [id]="'user-' + user.id"
+                       [checked]="isUserSelected(user.id)"
+                       (change)="toggleUserSelection(user.id)">
+                <label class="custom-control-label" [for]="'user-' + user.id">
+                  <img [src]="user.avatar || 'assets/img/user-default.png'" 
+                       class="img-circle mr-2" 
+                       style="width: 30px; height: 30px;">
+                  {{ user.name }}
+                  <small class="text-muted d-block">{{ user.email }}</small>
+                </label>
+              </div>
+            </div>
+            <small class="form-text text-muted">
+              {{ selectedUsers.size }} miembro(s) seleccionado(s)
+            </small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!createGroupForm.valid">
+            <i class="fas fa-save mr-1"></i>
+            Crear Grupo
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showCreateModal" *ngIf="showCreateModal"></div>
+
+<!-- Edit Group Modal -->
+<div class="modal fade" [class.show]="showEditModal" [style.display]="showEditModal ? 'block' : 'none'" 
+     *ngIf="showEditModal && selectedGroup">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title">
+          <i class="fas fa-edit mr-2"></i>
+          Editar Grupo
+        </h5>
+        <button type="button" class="close" (click)="closeEditModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <form [formGroup]="editGroupForm" (ngSubmit)="updateGroup()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Nombre del Grupo</label>
+            <input type="text" class="form-control" formControlName="title">
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea class="form-control" formControlName="description" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input" id="groupActive" formControlName="is_active">
+              <label class="custom-control-label" for="groupActive">Grupo Activo</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeEditModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-warning" [disabled]="!editGroupForm.valid">
+            <i class="fas fa-save mr-1"></i>
+            Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showEditModal" *ngIf="showEditModal"></div>
+
+<!-- Members Modal -->
+<div class="modal fade" [class.show]="showMembersModal" [style.display]="showMembersModal ? 'block' : 'none'" 
+     *ngIf="showMembersModal && selectedGroup">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-users mr-2"></i>
+          Miembros de {{ selectedGroup.title }}
+          <span class="badge badge-light ml-2">{{ groupMembers.length }}</span>
+        </h5>
+        <button type="button" class="close text-white" (click)="closeMembersModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <button type="button" class="btn btn-primary btn-sm mb-3" 
+                *ngIf="selectedGroup.is_admin"
+                (click)="openAddMembersModal(selectedGroup)">
+          <i class="fas fa-user-plus mr-1"></i>
+          Agregar Miembros
+        </button>
+
+        <div *ngIf="loadingMembers" class="text-center p-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Cargando miembros...</span>
+          </div>
+        </div>
+
+        <div class="list-group" *ngIf="!loadingMembers">
+          <div class="list-group-item" *ngFor="let member of groupMembers">
+            <div class="d-flex align-items-center">
+              <img [src]="member.avatar || 'assets/img/user-default.png'" 
+                   class="img-circle mr-3" 
+                   style="width: 40px; height: 40px;">
+              <div class="flex-grow-1">
+                <h6 class="mb-0">
+                  {{ member.name }}
+                  <span class="badge badge-sm ml-2" [ngClass]="getRoleBadgeClass(member.role)">
+                    {{ getRoleLabel(member.role) }}
+                  </span>
+                  <span class="badge badge-success badge-sm ml-1" *ngIf="member.is_online">
+                    <i class="fas fa-circle"></i> Online
+                  </span>
+                </h6>
+                <small class="text-muted">{{ member.email }}</small>
+              </div>
+              <div class="btn-group btn-group-sm" *ngIf="selectedGroup.is_admin">
+                <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeMember(member)">
+                  <i class="fas fa-user-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeMembersModal()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showMembersModal" *ngIf="showMembersModal"></div>
+
+<!-- Add Members Modal -->
+<div class="modal fade" [class.show]="showAddMembersModal" [style.display]="showAddMembersModal ? 'block' : 'none'" 
+     *ngIf="showAddMembersModal && selectedGroup">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-user-plus mr-2"></i>
+          Agregar Miembros a {{ selectedGroup.title }}
+        </h5>
+        <button type="button" class="close text-white" (click)="closeAddMembersModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="members-list" style="max-height: 400px; overflow-y: auto;">
+          <div class="custom-control custom-checkbox mb-2" *ngFor="let user of availableUsers">
+            <input type="checkbox" 
+                   class="custom-control-input" 
+                   [id]="'add-user-' + user.id"
+                   [checked]="isUserSelected(user.id)"
+                   (change)="toggleUserSelection(user.id)">
+            <label class="custom-control-label" [for]="'add-user-' + user.id">
+              <img [src]="user.avatar || 'assets/img/user-default.png'" 
+                   class="img-circle mr-2" 
+                   style="width: 30px; height: 30px;">
+              {{ user.name }}
+              <small class="text-muted d-block">{{ user.email }}</small>
+            </label>
+          </div>
+        </div>
+        <div class="alert alert-info mt-3" *ngIf="selectedUsers.size > 0">
+          <i class="fas fa-info-circle mr-1"></i>
+          {{ selectedUsers.size }} usuario(s) seleccionado(s)
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAddMembersModal()">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-success" 
+                (click)="addMembersToGroup()"
+                [disabled]="selectedUsers.size === 0">
+          <i class="fas fa-user-plus mr-1"></i>
+          Agregar {{ selectedUsers.size }} Miembro(s)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showAddMembersModal" *ngIf="showAddMembersModal"></div>
+
+
+
+
+
+
+
+
+

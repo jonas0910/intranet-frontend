@@ -1,0 +1,50 @@
+/* Sidebar Component - AdminLTE Estilo Tradicional Limpio */
+
+/* Mejoras sutiles sin romper la estructura de AdminLTE */
+.brand-link {
+  transition: opacity 0.3s ease;
+}
+
+.brand-link:hover {
+  opacity: 0.8;
+  text-decoration: none;
+}
+
+.user-panel .info a {
+  color: #c2c7d0;
+  text-decoration: none;
+}
+
+.nav-sidebar .nav-link {
+  transition: background-color 0.3s ease;
+}
+
+.nav-sidebar .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Mantener estilo tradicional: fondo sutil para enlaces activos */
+.nav-sidebar .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: inherit;
+}
+
+/* Ajuste de iconos y paddings para un look más compacto */
+.nav-sidebar .nav-icon {
+  margin-right: 8px;
+}
+
+.nav-sidebar .nav-link {
+  padding: 8px 12px;
+}
+
+.nav-treeview .nav-link {
+  padding-left: 40px;
+  font-size: 0.9rem;
+}
+
+/* Mejorar la legibilidad del sidebar */
+.main-sidebar,
+.sidebar {
+  font-size: 0.9rem;
+}

@@ -1,0 +1,175 @@
+<!-- Page Header (patrón Design System) -->
+<app-page-header
+  title="Sistema de Auditoría"
+  subtitle="Registro y monitoreo de actividades del sistema"
+  [breadcrumbs]="breadcrumbs">
+</app-page-header>
+
+<section class="content">
+  <div class="container-fluid form-container">
+
+    <!-- Estadísticas (small-box con estilo unificado) -->
+    <div class="row mb-3" *ngIf="stats">
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-info audit-stat-card" [style.border-radius.px]="cv.cardBorderRadius">
+          <div class="inner">
+            <h3 [style.font-size]="cv.headerFontSize">{{ stats.total_actions }}</h3>
+            <p [style.font-size]="cv.labelFontSize">Acciones Registradas</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-success audit-stat-card" [style.border-radius.px]="cv.cardBorderRadius">
+          <div class="inner">
+            <h3 [style.font-size]="cv.headerFontSize">{{ stats.active_users }}</h3>
+            <p [style.font-size]="cv.labelFontSize">Usuarios Activos</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-users"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning audit-stat-card" [style.border-radius.px]="cv.cardBorderRadius">
+          <div class="inner">
+            <h3 [style.font-size]="cv.headerFontSize">{{ stats.failed_actions }}</h3>
+            <p [style.font-size]="cv.labelFontSize">Acciones Fallidas</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger audit-stat-card" [style.border-radius.px]="cv.cardBorderRadius">
+          <div class="inner">
+            <h3 [style.font-size]="cv.headerFontSize">{{ stats.security_alerts }}</h3>
+            <p [style.font-size]="cv.labelFontSize">Alertas de Seguridad</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card principal: Filtros y Tabla -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card elevation-1"
+             [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-primary card-outline'"
+             [style.border-radius.px]="cv.cardBorderRadius">
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-history mr-1"></i> Registro de Actividad
+            </h3>
+            <div class="d-flex align-items-center" style="gap: 6px;">
+              <button [class]="'btn btn-sm ' + cv.newBtnClass" (click)="generateTestLogs()">
+                <i [class]="cv.newBtnIcon + ' mr-1'"></i> Generar Datos
+              </button>
+              <button [class]="'btn btn-sm ' + cv.exportBtnClass" (click)="exportData()">
+                <i [class]="cv.exportBtnIcon + ' mr-1'"></i> {{ cv.exportBtnLabel }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="card-body">
+            <!-- Filtros -->
+            <div class="row mb-3">
+              <div class="col-md-3">
+                <label [style.font-size]="cv.labelFontSize">Usuario</label>
+                <input type="text"
+                       [class]="'form-control ' + cv.filterInputSize"
+                       [(ngModel)]="filters.user"
+                       placeholder="Nombre de usuario">
+              </div>
+              <div class="col-md-3">
+                <label [style.font-size]="cv.labelFontSize">Módulo</label>
+                <select [class]="'form-control ' + cv.filterInputSize" [(ngModel)]="filters.module">
+                  <option value="">Todos</option>
+                  <option value="Usuarios">Usuarios</option>
+                  <option value="Roles">Roles</option>
+                  <option value="Planillas">Planillas</option>
+                  <option value="Documentos">Documentos</option>
+                  <option value="Configuración">Configuración</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label [style.font-size]="cv.labelFontSize">Fecha Inicio</label>
+                <input type="date" [class]="'form-control ' + cv.filterInputSize" [(ngModel)]="filters.dateStart">
+              </div>
+              <div class="col-md-2">
+                <label [style.font-size]="cv.labelFontSize">Fecha Fin</label>
+                <input type="date" [class]="'form-control ' + cv.filterInputSize" [(ngModel)]="filters.dateEnd">
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <div class="btn-group w-100 mb-0">
+                  <button [class]="'btn btn-sm ' + cv.newBtnClass" (click)="search()">
+                    <i class="fas fa-search"></i> Buscar
+                  </button>
+                  <button class="btn btn-sm btn-secondary" (click)="clearFilters()">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabla DataTable (patrón sistema de diseño) -->
+            <app-loading-spinner [loading]="loadingLogs" message="Cargando logs..."></app-loading-spinner>
+
+            <div *ngIf="!loadingLogs" class="table-responsive">
+              <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger"
+                     class="table mb-0 w-100" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize">
+                <thead class="bg-light">
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize" style="width: 50px">ID</th>
+                    <th [style.font-size]="cv.headerFontSize">Usuario</th>
+                    <th [style.font-size]="cv.headerFontSize">Acción</th>
+                    <th [style.font-size]="cv.headerFontSize">Módulo</th>
+                    <th [style.font-size]="cv.headerFontSize">Descripción</th>
+                    <th [style.font-size]="cv.headerFontSize">IP</th>
+                    <th [style.font-size]="cv.headerFontSize">Fecha</th>
+                    <th [style.font-size]="cv.headerFontSize">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let log of logs">
+                    <td>{{ log.id }}</td>
+                    <td>
+                      <div class="user-block">
+                        <span class="username ml-0"><a href="#">{{ log.user?.name }}</a></span>
+                        <span class="description ml-0">{{ log.user?.role }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge badge-light">
+                        <i [class]="getActionIcon(log.action) + ' mr-1'"></i> {{ log.action }}
+                      </span>
+                    </td>
+                    <td>{{ log.module }}</td>
+                    <td>{{ log.description }}</td>
+                    <td>{{ log.ip_address }}</td>
+                    <td>{{ log.created_at | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getStatusClass(log.status)">
+                        {{ log.status | uppercase }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="logs.length === 0">
+                    <td colspan="8" class="text-center text-muted py-4">
+                      No se encontraron registros de auditoría.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

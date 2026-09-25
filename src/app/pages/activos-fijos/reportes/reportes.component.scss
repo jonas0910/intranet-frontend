@@ -1,0 +1,76 @@
+.small-box {
+  border-radius: 0.25rem;
+  box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+  
+  .inner {
+    padding: 10px;
+    
+    h3 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+      padding: 0;
+      white-space: nowrap;
+    }
+    
+    p {
+      font-size: 0.95rem;
+      margin-bottom: 0;
+    }
+  }
+  
+  .icon {
+    position: absolute;
+    top: auto;
+    bottom: 5px;
+    right: 10px;
+    z-index: 0;
+    font-size: 90px;
+    color: rgba(0,0,0,.15);
+  }
+  
+  .small-box-footer {
+    display: block;
+    padding: 3px 0;
+    color: rgba(255,255,255,.8);
+    font-size: 0.875rem;
+    text-align: center;
+    text-decoration: none;
+    z-index: 10;
+    background: rgba(0,0,0,.1);
+    
+    &:hover {
+      color: #fff;
+      background: rgba(0,0,0,.15);
+    }
+  }
+}
+
+.card-outline {
+  border-top: 3px solid;
+  
+  &.card-primary {
+    border-top-color: var(--ds-card-outline-color, #6c757d);
+  }
+  
+  &.card-success {
+    border-top-color: var(--ds-card-outline-color, #28a745);
+  }
+  
+  &.card-warning {
+    border-top-color: var(--ds-card-outline-color, #ffc107);
+  }
+  
+  &.card-danger {
+    border-top-color: var(--ds-card-outline-color, #dc3545);
+  }
+  
+  &.card-info {
+    border-top-color: var(--ds-card-outline-color, #17a2b8);
+  }
+  
+  &.card-secondary {
+    border-top-color: var(--ds-card-outline-color, #6c757d);
+  }
+}
+

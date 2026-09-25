@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Autenticación - Intranet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .debug-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success { background-color: #d4edda; color: #155724; }
+        .status.warning { background-color: #fff3cd; color: #856404; }
+        .status.error { background-color: #f8d7da; color: #721c24; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button.warning { background-color: #ffc107; color: #212529; }
+        button.danger { background-color: #dc3545; }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug de Autenticación - Intranet</h1>
+    
+    <div class="debug-panel">
+        <h2>Estado Actual del localStorage</h2>
+        <div id="status"></div>
+        <pre id="localStorageData"></pre>
+    </div>
+    
+    <div class="debug-panel">
+        <h2>Acciones de Debug</h2>
+        <button onclick="checkAuthState()">🔍 Verificar Estado</button>
+        <button onclick="clearAllData()" class="danger">🧹 Limpiar Todo</button>
+        <button onclick="simulateLogin()" class="warning">👤 Simular Login</button>
+        <button onclick="goToApp()">🚀 Ir a la App</button>
+    </div>
+    
+    <div class="debug-panel">
+        <h2>Log de Debug</h2>
+        <pre id="debugLog"></pre>
+    </div>
+
+    <script>
+        function log(message) {
+            const logElement = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+
+        function updateStatus() {
+            const statusElement = document.getElementById('status');
+            const dataElement = document.getElementById('localStorageData');
+            
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const user = localStorage.getItem('user');
+            const token = localStorage.getItem('token');
+            
+            const authData = {
+                isLoggedIn: isLoggedIn,
+                user: user ? JSON.parse(user) : null,
+                token: token
+            };
+            
+            dataElement.textContent = JSON.stringify(authData, null, 2);
+            
+            if (isLoggedIn === 'true' && user && user !== 'null') {
+                statusElement.innerHTML = '<div class="status success">✅ Usuario autenticado</div>';
+            } else if (isLoggedIn === 'true' && (!user || user === 'null')) {
+                statusElement.innerHTML = '<div class="status error">❌ Datos corruptos: isLoggedIn=true pero no hay usuario</div>';
+            } else {
+                statusElement.innerHTML = '<div class="status warning">⚠️ No autenticado</div>';
+            }
+        }
+
+        function checkAuthState() {
+            log('🔍 Verificando estado de autenticación...');
+            updateStatus();
+            
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const user = localStorage.getItem('user');
+            
+            if (isLoggedIn === 'true' && (!user || user === 'null' || user === 'undefined')) {
+                log('⚠️ PROBLEMA DETECTADO: Datos corruptos en localStorage');
+                log('💡 Recomendación: Hacer click en "Limpiar Todo"');
+            } else if (isLoggedIn === 'true' && user) {
+                log('✅ Estado de autenticación válido');
+            } else {
+                log('ℹ️ Usuario no autenticado (normal)');
+            }
+        }
+
+        function clearAllData() {
+            log('🧹 Limpiando todos los datos de autenticación...');
+            localStorage.removeItem('user');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('token');
+            updateStatus();
+            log('✅ Datos limpiados correctamente');
+        }
+
+        function simulateLogin() {
+            log('👤 Simulando login de desarrollo...');
+            const mockUser = {
+                id: 1,
+                name: 'Usuario Administrador',
+                email: 'admin@test.com',
+                roles: ['Super Admin', 'Admin'],
+                permissions: ['admin.menus', 'menus.gestionar', 'admin.roles', 'admin.usuarios']
+            };
+            
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('user', JSON.stringify(mockUser));
+            localStorage.setItem('token', 'mock-token-123');
+            
+            updateStatus();
+            log('✅ Login simulado correctamente');
+        }
+
+        function goToApp() {
+            log('🚀 Redirigiendo a la aplicación...');
+            window.location.href = '/';
+        }
+
+        // Inicializar
+        updateStatus();
+        log('🔍 Panel de debug inicializado');
+    </script>
+</body>
+</html>

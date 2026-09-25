@@ -1,0 +1,209 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1><i class="fas fa-file-alt mr-2"></i>{{ editMode ? 'Editar' : 'Nueva' }} Página</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/paginas">Páginas</a></li>
+          <li class="breadcrumb-item active">{{ editMode ? 'Editar' : 'Nueva' }}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="text-center py-5" *ngIf="loading"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+
+    <div class="row" *ngIf="!loading">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-edit mr-2"></i>Contenido</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Título <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="pagina.titulo" (ngModelChange)="generarSlug()" required>
+            </div>
+
+            <div class="form-group">
+              <label>Slug <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="fas fa-link"></i></span>
+                </div>
+                <input type="text" class="form-control" [(ngModel)]="pagina.slug" (input)="onSlugInput()" required>
+              </div>
+              <small class="form-text text-muted">URL amigable generada automáticamente</small>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Tipo</label>
+                  <select class="form-control" [(ngModel)]="pagina.tipo">
+                    <option value="pagina">Página</option>
+                    <option value="landing">Landing</option>
+                    <option value="seccion">Sección</option>
+                    <option value="servicios">Servicios</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Plantilla</label>
+                  <select class="form-control" [(ngModel)]="pagina.plantilla_id">
+                    <option [ngValue]="null">— Sin plantilla —</option>
+                    <option *ngFor="let pl of plantillas" [ngValue]="pl.id">{{ pl.nombre }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Descripción</label>
+              <textarea class="form-control" rows="3" [(ngModel)]="pagina.descripcion" placeholder="Descripción breve"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Contenido</label>
+              <div class="btn-group btn-group-sm mb-2" role="group">
+                <button type="button" class="btn" [ngClass]="modoHtml ? 'btn-outline-primary' : 'btn-primary'" (click)="cambiarModoHtml(false)">
+                  <i class="fas fa-paint-brush mr-1"></i> Visual
+                </button>
+                <button type="button" class="btn" [ngClass]="modoHtml ? 'btn-primary' : 'btn-outline-primary'" (click)="cambiarModoHtml(true)">
+                  <i class="fas fa-code mr-1"></i> HTML
+                </button>
+                <button type="button" class="btn btn-success btn-sm ml-2" (click)="insertarPlantillaRegidores()" title="Insertar plantilla con cards (regidores, autoridades, etc.)">
+                  <i class="fas fa-users mr-1"></i> Plantilla
+                </button>
+                <div class="btn-group btn-group-sm ml-2 dropdown-componentes" *ngIf="componentesReutilizables.length > 0" style="position: relative;">
+                  <button type="button" class="btn btn-info dropdown-toggle" (click)="mostrarDropdownComponentes = !mostrarDropdownComponentes" title="Insertar componente reutilizable">
+                    <i class="fas fa-puzzle-piece mr-1"></i> Insertar componente
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-right shadow dropdown-componentes" *ngIf="mostrarDropdownComponentes" style="max-height: 300px; overflow-y: auto; display: block; position: absolute; right: 0; top: 100%; z-index: 1000;">
+                    <a class="dropdown-item" *ngFor="let comp of componentesReutilizables" (click)="insertarComponente(comp)" href="javascript:void(0)">
+                      <i [ngClass]="comp.icono || 'fas fa-puzzle-piece'" class="mr-2"></i>{{ comp.nombre }}
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <small class="d-block text-muted mb-2">Use <strong>Modo HTML</strong> con vista previa editable y <strong>Plantilla</strong> para páginas con cards. <span *ngIf="esPaginaRegidores()" class="text-warning"><i class="fas fa-exclamation-triangle mr-1"></i>Regidores debe editarse en Modo HTML para conservar los estilos.</span></small>
+              <div *ngIf="!modoHtml" class="NgxEditor__Wrapper" style="min-height: 350px;">
+                <ngx-editor-menu [editor]="editor"></ngx-editor-menu>
+                <ngx-editor
+                  [editor]="editor"
+                  [(ngModel)]="pagina.contenido"
+                  [placeholder]="'Escriba el contenido de la página...'"
+                  outputFormat="html"
+                ></ngx-editor>
+              </div>
+              <div *ngIf="modoHtml">
+                <ul class="nav nav-tabs mb-2" role="tablist">
+                  <li class="nav-item">
+                    <a class="nav-link" [class.active]="tabContenido === 'preview'" (click)="tabContenido = 'preview'" href="javascript:void(0)" role="tab">
+                      <i class="fas fa-eye mr-1"></i>Vista previa
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" [class.active]="tabContenido === 'html'" (click)="tabContenido = 'html'" href="javascript:void(0)" role="tab">
+                      <i class="fas fa-code mr-1"></i>Código HTML
+                    </a>
+                  </li>
+                </ul>
+                <div class="tab-content border rounded p-3 bg-white">
+                  <div class="tab-pane" [class.active]="tabContenido === 'preview'" role="tabpanel">
+                    <div *ngIf="pagina.contenido && pagina.contenido.trim().length > 0; else sinContenido">
+                      <small class="d-block text-muted mb-2">Edite directamente en la vista previa; los cambios se sincronizan con el HTML.</small>
+                      <div style="max-height: 500px; overflow-y: auto;">
+                        <iframe #previewFrame [srcdoc]="previewHtml" class="w-100 border-0" style="min-height: 450px;" title="Vista previa editable" sandbox="allow-same-origin" (load)="onPreviewLoad()"></iframe>
+                      </div>
+                    </div>
+                    <ng-template #sinContenido>
+                      <p class="text-muted mb-0">No hay contenido. Cambie a la pestaña <strong>Código HTML</strong> para escribir o use <strong>Plantilla</strong> para insertar una estructura con cards.</p>
+                    </ng-template>
+                  </div>
+                  <div class="tab-pane" [class.active]="tabContenido === 'html'" role="tabpanel" style="min-height: 400px;">
+                    <textarea class="form-control font-monospace" rows="20" [(ngModel)]="pagina.contenido"
+                      (ngModelChange)="!syncFromPreview && actualizarPreview()"
+                      placeholder="Escriba o pegue HTML aquí. Las clases de Bootstrap (card, badge, row, col-md-6, etc.) se conservarán al guardar."
+                      style="font-size: 13px; min-height: 400px;"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <!-- Publicar -->
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="activa" [(ngModel)]="pagina.activa">
+                <label class="custom-control-label" for="activa">Página activa</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="mostrarMenu" [(ngModel)]="pagina.mostrar_en_menu">
+                <label class="custom-control-label" for="mostrarMenu">Mostrar en menú</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Orden</label>
+              <input type="number" class="form-control" [(ngModel)]="pagina.orden" min="0">
+            </div>
+
+            <button type="button" class="btn btn-primary btn-block" (click)="guardar()" [disabled]="saving || !pagina.titulo || !pagina.slug">
+              <i class="fas" [ngClass]="saving ? 'fa-spinner fa-spin' : 'fa-save'" class="mr-1"></i>
+              {{ saving ? 'Guardando...' : (editMode ? 'Actualizar' : 'Guardar') }}
+            </button>
+            <a routerLink="/gestor-contenidos/paginas" class="btn btn-secondary btn-block">
+              <i class="fas fa-times mr-1"></i>Cancelar
+            </a>
+          </div>
+        </div>
+
+        <!-- Imagen -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-image mr-2"></i>Imagen Principal</h3>
+          </div>
+          <div class="card-body">
+            <input type="text" class="form-control" [(ngModel)]="pagina.imagen_principal" placeholder="URL de la imagen">
+            <img *ngIf="pagina.imagen_principal" [src]="pagina.imagen_principal" class="img-fluid img-thumbnail mt-2" style="max-height:200px">
+          </div>
+        </div>
+
+        <!-- SEO -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-search mr-2"></i>SEO</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Meta Título</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="pagina.meta_titulo" maxlength="70" placeholder="Título para buscadores">
+              <small class="form-text text-muted">{{ (pagina.meta_titulo || '').length }}/70</small>
+            </div>
+            <div class="form-group">
+              <label>Meta Descripción</label>
+              <textarea class="form-control form-control-sm" rows="3" [(ngModel)]="pagina.meta_descripcion" maxlength="160" placeholder="Descripción para buscadores"></textarea>
+              <small class="form-text text-muted">{{ (pagina.meta_descripcion || '').length }}/160</small>
+            </div>
+            <div class="form-group mb-0">
+              <label>Meta Keywords</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="pagina.meta_keywords" placeholder="palabra1, palabra2">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

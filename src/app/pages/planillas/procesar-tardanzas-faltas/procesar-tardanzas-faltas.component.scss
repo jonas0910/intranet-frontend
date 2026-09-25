@@ -1,0 +1,97 @@
+// Estilos copiados de DescuentosComponent para replicar el diseño
+.card.elevation-1 {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.nav-tabs {
+  border-bottom: 2px solid #dee2e6;
+  
+  .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    
+    &:hover {
+      border-color: transparent;
+      background-color: #f8f9fa;
+    }
+    
+    &.active {
+      color: #0d6efd;
+      border-bottom-color: #0d6efd;
+      background-color: transparent;
+      
+      i {
+        animation: pulse 2s infinite;
+      }
+    }
+    
+    i {
+      font-size: 1.1em;
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.tab-content {
+  padding: 1.5rem;
+}
+
+// Estilos específicos de los componentes internos (badges, tablas, etc.)
+.table {
+  th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+  }
+
+  td {
+    vertical-align: middle;
+  }
+}
+
+.badge {
+  padding: 0.35em 0.65em;
+  font-size: 0.75em;
+  font-weight: 600;
+}
+
+.small-box {
+  .inner {
+    padding: 10px;
+  }
+  h3 {
+    font-size: 1.8rem;
+    margin-bottom: 0;
+  }
+  p {
+    font-size: 0.9rem;
+    margin-bottom: 0;
+  }
+  .icon {
+    top: 10px;
+    font-size: 50px;
+  }
+}
+
+// Animation for content
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

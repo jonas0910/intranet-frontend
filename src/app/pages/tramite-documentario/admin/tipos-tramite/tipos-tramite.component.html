@@ -1,0 +1,117 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-tags mr-2"></i>Tipos de Trámite</h1></div>
+      <div class="col-sm-6"><ol class="breadcrumb float-sm-right"><li class="breadcrumb-item"><a routerLink="/tramite-documentario/dashboard">Trámites</a></li><li class="breadcrumb-item active">Tipos</li></ol></div>
+    </div>
+  </div>
+</div>
+<div class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Lista de Tipos de Trámite <span class="badge badge-info">{{ tipos.length }}</span></h3>
+        <div class="card-tools"><button class="btn btn-primary btn-sm" (click)="abrirNuevo()"><i class="fas fa-plus mr-1"></i>Nuevo Tipo</button></div>
+      </div>
+      <div class="card-body p-0">
+        <div *ngIf="loading" class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div>
+        <table *ngIf="!loading" class="table table-bordered table-striped table-hover" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger">
+          <thead class="thead-dark">
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Área</th>
+              <th>Plazo</th>
+              <th>Costo</th>
+              <th>Trámites</th>
+              <th>Estado</th>
+              <th width="100">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of tipos">
+              <td><span class="badge badge-secondary">{{ t.codigo }}</span></td>
+              <td>
+                <strong>{{ t.nombre }}</strong>
+                <br *ngIf="t.requiere_documentos"><small class="text-muted" *ngIf="t.requiere_documentos"><i class="fas fa-paperclip"></i> Requiere documentos</small>
+              </td>
+              <td><small>{{ t.area_nombre || 'N/A' }}</small></td>
+              <td class="text-center">{{ t.plazo_dias }} días</td>
+              <td class="text-right">
+                <span *ngIf="t.costo > 0">S/ {{ t.costo | number:'1.2-2' }}</span>
+                <span *ngIf="!t.costo || t.costo == 0" class="badge badge-success">Gratuito</span>
+              </td>
+              <td class="text-center"><span class="badge badge-info">{{ t.tramites_count ?? 0 }}</span></td>
+              <td class="text-center">
+                <span *ngIf="t.activo" class="badge badge-success">Activo</span>
+                <span *ngIf="!t.activo" class="badge badge-danger">Inactivo</span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <button type="button" class="btn btn-primary" (click)="abrirEditar(t)" title="Editar"><i class="fas fa-edit"></i></button>
+                  <button type="button" class="btn btn-danger" (click)="eliminar(t.id)" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal?'block':'none'">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header" [ngClass]="editando ? 'bg-info' : 'bg-primary'"><h5 class="modal-title text-white"><i class="fas fa-tags mr-2"></i>{{ editando ? 'Editar' : 'Crear' }} Tipo de Trámite</h5><button class="close text-white" (click)="showModal=false">&times;</button></div>
+    <div class="modal-body">
+      <div class="row">
+        <div class="col-md-8 form-group"><label>Nombre *</label><input type="text" class="form-control" [(ngModel)]="form.nombre" maxlength="255"></div>
+        <div class="col-md-4 form-group"><label>Código *</label><input type="text" class="form-control" [(ngModel)]="form.codigo" maxlength="20" style="text-transform: uppercase"></div>
+      </div>
+      <div class="form-group"><label>Descripción</label><textarea class="form-control" rows="2" [(ngModel)]="form.descripcion"></textarea></div>
+      <div class="form-group"><label>Requisitos (uno por línea)</label><textarea class="form-control" rows="3" [(ngModel)]="form.requisitos" placeholder="Copia de DNI&#10;Documento original"></textarea></div>
+      <div class="row">
+        <div class="col-md-4 form-group"><label>Área Responsable</label><select class="form-control" [(ngModel)]="form.area_id"><option value="">Sin asignar</option><option *ngFor="let a of areas" [ngValue]="a.id">{{ a.nombre }}</option></select></div>
+        <div class="col-md-4 form-group"><label>Plazo (días) *</label><input type="number" class="form-control" [(ngModel)]="form.plazo_dias" min="1"></div>
+        <div class="col-md-4 form-group"><label>Costo (S/) *</label><input type="number" class="form-control" [(ngModel)]="form.costo" step="0.01" min="0"></div>
+      </div>
+      <div class="card card-outline card-info mb-2 py-2 px-3">
+        <div class="row align-items-center">
+          <div class="col-md-4">
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input" id="es_tupa" [(ngModel)]="form.es_tupa">
+              <label class="custom-control-label" for="es_tupa">Es TUPA</label>
+            </div>
+          </div>
+          <div class="col-md-4" [hidden]="!form.es_tupa">
+            <label class="small">Código TUPA</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="form.codigo_tupa" placeholder="TUPA-001" style="text-transform: uppercase">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="requiere_documentos" [(ngModel)]="form.requiere_documentos">
+            <label class="custom-control-label" for="requiere_documentos">Requiere Documentos</label>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="permite_seguimiento_online" [(ngModel)]="form.permite_seguimiento_online">
+            <label class="custom-control-label" for="permite_seguimiento_online">Seguimiento Online</label>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="activo" [(ngModel)]="form.activo">
+            <label class="custom-control-label" for="activo">Activo</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" (click)="showModal=false">Cancelar</button><button class="btn btn-primary" (click)="guardar()" [disabled]="!form.nombre || !form.codigo || processing">Guardar</button></div>
+  </div></div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showModal" (click)="showModal=false"></div>

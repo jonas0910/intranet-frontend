@@ -1,0 +1,1222 @@
+<!-- Page Header (patrón de diseño) -->
+<app-page-header
+  title="Cabecera de Planilla"
+  subtitle="Configuración de plantillas"
+  [breadcrumbs]="breadcrumbs">
+</app-page-header>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <!-- Instrucciones -->
+        <div class="alert alert-info mb-3">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>¿Qué es una Cabecera de Planilla?</strong><br>
+          Define qué conceptos (haberes, descuentos, aportes) se aplican a cada tipo de planilla.
+          Esto permite generar planillas automáticamente con los conceptos correctos según el tipo de empleado.
+        </div>
+
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+          <!-- Toolbar -->
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+              <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                <i class="fas fa-file-invoice mr-1"></i> Cabecera de Planilla
+              </h3>
+              <span class="badge bg-primary align-self-center">{{ templates.length }} registros</span>
+              <ng-container *ngIf="cv.showExportButtons">
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"><i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"><i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass"><i [class]="cv.printBtnIcon + ' mr-1'"></i> {{ cv.printBtnLabel }}</button>
+              </ng-container>
+              <button *ngIf="!cv.showExportButtons" class="btn btn-sm btn-flat" [ngClass]="cv.exportBtnClass"><i [class]="cv.exportBtnIcon + ' mr-1'"></i> {{ cv.exportBtnLabel }}</button>
+            </div>
+            <div class="ms-auto flex-shrink-0">
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{ cv.newBtnLabel }} Plantilla
+              </button>
+            </div>
+          </div>
+
+          <!-- Contenido: spinner + tabla (patrón de diseño) -->
+          <div class="card-body p-0">
+            <app-loading-spinner [loading]="loading" message="Cargando plantillas..."></app-loading-spinner>
+
+            <div *ngIf="!loading" class="table-responsive">
+              <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize" class="table mb-0 w-100">
+                <thead class="bg-light">
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize">Nombre</th>
+                    <th [style.font-size]="cv.headerFontSize">Tipo</th>
+                    <th [style.font-size]="cv.headerFontSize">Categoría</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Conceptos</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Por defecto</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let template of templates">
+                    <td>
+                      <strong>{{ template.name }}</strong>
+                      <p class="text-muted small mb-0" *ngIf="template.description">{{ template.description }}</p>
+                    </td>
+                    <td><span class="badge bg-info">{{ getTipoLabel(template.type) }}</span></td>
+                    <td><span class="badge bg-secondary">{{ getCategoriaLabel(template.category) }}</span></td>
+                    <td class="text-center">{{ getConceptsCount(template) }}</td>
+                    <td class="text-center">
+                      <span class="badge" [ngClass]="template.is_active ? 'bg-success' : 'bg-secondary'">
+                        {{ template.is_active ? 'Activa' : 'Inactiva' }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge bg-warning" *ngIf="template.is_default">Por Defecto</span>
+                      <span class="text-muted" *ngIf="!template.is_default">—</span>
+                    </td>
+                    <td class="text-center">
+                      <button class="btn btn-sm btn-outline-primary me-1" (click)="openPreviewModal(template)" title="Vista Previa">
+                        <i class="fas fa-file-invoice"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-info me-1" (click)="openEditModal(template)" title="Editar">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-success me-1" (click)="activateTemplate(template)" *ngIf="!template.is_active" title="Activar">
+                        <i class="fas fa-check-circle"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-warning me-1" (click)="duplicateTemplate(template)" title="Duplicar">
+                        <i class="fas fa-copy"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger" (click)="deleteTemplate(template)" *ngIf="!template.is_default" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div *ngIf="templates.length === 0" class="text-center py-5">
+                <i class="fas fa-file-invoice fa-2x text-muted mb-3"></i>
+                <h6 class="text-muted">No hay plantillas configuradas</h6>
+                <p class="text-muted small">Crea una plantilla para definir los conceptos de cada tipo de planilla.</p>
+                <button class="btn btn-sm" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                  <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{ cv.newBtnLabel }} Plantilla
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Vista Previa de Plantilla -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true" #previewModal>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content preview-modal-compact">
+      <div class="modal-header preview-modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-invoice me-2"></i>Vista Previa de Plantilla
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closePreviewModal()"></button>
+      </div>
+      <div class="modal-body preview-modal-body" *ngIf="previewTemplate">
+
+        <!-- Encabezado de la Vista Previa -->
+        <div class="preview-header text-center mb-3 p-2 rounded">
+          <h6 class="mb-1 preview-title">{{ previewTemplate.name }}</h6>
+          <p class="text-muted mb-1 small">{{ previewTemplate.description }}</p>
+          <div class="d-flex justify-content-center gap-2 mt-2 flex-wrap">
+            <span class="badge badge-preview badge-tipo">{{ getTipoLabel(previewTemplate.type) }}</span>
+            <span class="badge badge-preview badge-categoria">{{ getCategoriaLabel(previewTemplate.category) }}</span>
+            <span class="badge badge-preview badge-activa" *ngIf="previewTemplate.is_active">Activa</span>
+            <span class="badge badge-preview badge-default" *ngIf="previewTemplate.is_default">Por Defecto</span>
+            <span class="badge badge-preview badge-conceptos">{{ getConceptsCount(previewTemplate) }} Conceptos</span>
+          </div>
+        </div>
+
+        <!-- Tabla de Conceptos -->
+        <div class="row">
+          <!-- INGRESOS -->
+          <div class="col-12 mb-2">
+            <div class="card card-outline card-success preview-card">
+              <div class="card-header preview-card-header py-1 px-2">
+                <h6 class="card-title mb-0">
+                  <i class="fas fa-plus-circle me-1"></i>
+                  INGRESOS Y REMUNERACIONES
+                  <span class="badge badge-preview badge-count ms-1">{{ previewConceptsByType.income.length }}</span>
+                </h6>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover table-sm mb-0 preview-table">
+                  <thead class="table-success">
+                    <tr>
+                      <th>Código</th>
+                      <th>Concepto</th>
+                      <th>Cód. SUNAT</th>
+                      <th>Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let concept of previewConceptsByType.income; let i = index">
+                      <td><span class="badge bg-dark">{{ concept.code }}</span></td>
+                      <td><strong>{{ concept.name }}</strong></td>
+                      <td>
+                        <span class="badge bg-info" *ngIf="concept.sunat_code">{{ concept.sunat_code }}</span>
+                        <span class="text-muted" *ngIf="!concept.sunat_code">-</span>
+                      </td>
+                      <td><small class="text-muted">{{ concept.description || '-' }}</small></td>
+                    </tr>
+                    <tr *ngIf="previewConceptsByType.income.length === 0">
+                      <td colspan="4" class="text-center text-muted py-2 small">No hay conceptos de ingresos configurados</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- DESCUENTOS -->
+          <div class="col-12 mb-2">
+            <div class="card card-outline card-danger preview-card">
+              <div class="card-header preview-card-header py-1 px-2">
+                <h6 class="card-title mb-0">
+                  <i class="fas fa-minus-circle me-1"></i>
+                  DESCUENTOS Y RETENCIONES
+                  <span class="badge badge-preview badge-count ms-1">{{ previewConceptsByType.deduction.length }}</span>
+                </h6>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover table-sm mb-0 preview-table">
+                  <thead class="table-danger">
+                    <tr>
+                      <th>Código</th>
+                      <th>Concepto</th>
+                      <th>Cód. SUNAT</th>
+                      <th>Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let concept of previewConceptsByType.deduction; let i = index">
+                      <td><span class="badge bg-dark">{{ concept.code }}</span></td>
+                      <td><strong>{{ concept.name }}</strong></td>
+                      <td>
+                        <span class="badge bg-info" *ngIf="concept.sunat_code">{{ concept.sunat_code }}</span>
+                        <span class="text-muted" *ngIf="!concept.sunat_code">-</span>
+                      </td>
+                      <td><small class="text-muted">{{ concept.description || '-' }}</small></td>
+                    </tr>
+                    <tr *ngIf="previewConceptsByType.deduction.length === 0">
+                      <td colspan="4" class="text-center text-muted py-2 small">No hay conceptos de descuentos configurados</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- APORTES -->
+          <div class="col-12 mb-2">
+            <div class="card card-outline card-info preview-card">
+              <div class="card-header preview-card-header py-1 px-2">
+                <h6 class="card-title mb-0">
+                  <i class="fas fa-hand-holding-usd me-1"></i>
+                  APORTES DEL EMPLEADOR
+                  <span class="badge badge-preview badge-count ms-1">{{ previewConceptsByType.contribution.length }}</span>
+                </h6>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover table-sm mb-0 preview-table">
+                  <thead class="table-info">
+                    <tr>
+                      <th>Código</th>
+                      <th>Concepto</th>
+                      <th>Cód. SUNAT</th>
+                      <th>Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let concept of previewConceptsByType.contribution; let i = index">
+                      <td><span class="badge bg-dark">{{ concept.code }}</span></td>
+                      <td><strong>{{ concept.name }}</strong></td>
+                      <td>
+                        <span class="badge bg-info" *ngIf="concept.sunat_code">{{ concept.sunat_code }}</span>
+                        <span class="text-muted" *ngIf="!concept.sunat_code">-</span>
+                      </td>
+                      <td><small class="text-muted">{{ concept.description || '-' }}</small></td>
+                    </tr>
+                    <tr *ngIf="previewConceptsByType.contribution.length === 0">
+                      <td colspan="4" class="text-center text-muted py-2 small">No hay conceptos de aportes configurados</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen Total -->
+        <div class="card preview-summary-card">
+          <div class="card-body py-2 px-2">
+            <div class="row text-center g-1">
+              <div class="col-md-4">
+                <div class="info-box-preview info-box-ingresos">
+                  <span class="info-box-icon"><i class="fas fa-plus-circle"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Ingresos</span>
+                    <span class="info-box-number">{{ previewConceptsByType.income.length }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box-preview info-box-descuentos">
+                  <span class="info-box-icon"><i class="fas fa-minus-circle"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Descuentos</span>
+                    <span class="info-box-number">{{ previewConceptsByType.deduction.length }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box-preview info-box-aportes">
+                  <span class="info-box-icon"><i class="fas fa-hand-holding-usd"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Aportes</span>
+                    <span class="info-box-number">{{ previewConceptsByType.contribution.length }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="closePreviewModal()">
+          <i class="fas fa-times me-1"></i>Cerrar
+        </button>
+        <button type="button" class="btn btn-sm btn-primary" (click)="closePreviewModal(); openEditModal(previewTemplate!)">
+          <i class="fas fa-edit me-1"></i>Editar Plantilla
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Crear/Editar Plantilla -->
+<div class="modal fade" id="templateModal" tabindex="-1" aria-hidden="true" #templateModal>
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas" [ngClass]="isEditMode ? 'fa-edit' : 'fa-plus'"></i>
+          {{ isEditMode ? 'Editar' : 'Nueva' }} Plantilla de Planilla
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="templateForm">
+          
+          <!-- Información Básica -->
+          <div class="section-title">
+            <i class="fas fa-info-circle me-2"></i>Información Básica
+          </div>
+          <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Nombre de la Plantilla <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="name" placeholder="Ej: Planilla Mensual Estándar">
+              <div class="text-danger small" *ngIf="templateForm.get('name')?.invalid && templateForm.get('name')?.touched">
+                El nombre es requerido
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Tipo <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="type">
+                <option *ngFor="let tipo of tiposPlantilla" [value]="tipo.value">{{ tipo.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Categoría <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="category">
+                <option *ngFor="let cat of categoriasPlantilla" [value]="cat.value">{{ cat.label }}</option>
+              </select>
+            </div>
+            <div class="col-12 mb-3">
+              <label class="form-label">Descripción</label>
+              <textarea class="form-control" formControlName="description" rows="2" 
+                        placeholder="Descripción de la plantilla..."></textarea>
+            </div>
+          </div>
+
+          <!-- Conceptos de Planilla -->
+          <div class="section-title">
+            <i class="fas fa-list-alt me-2"></i>Conceptos de Planilla
+            <button type="button" class="btn btn-sm btn-outline-primary ms-3" (click)="openConceptsModal()">
+              <i class="fas fa-plus-circle me-1"></i>
+              Seleccionar Conceptos ({{ getSelectedConceptsCount() }} seleccionados)
+            </button>
+          </div>
+          <div class="mb-4">
+            <div *ngIf="getSelectedConceptsCount() === 0" class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              No has seleccionado ningún concepto. Haz clic en "Seleccionar Conceptos" para configurar la plantilla.
+            </div>
+            <div *ngIf="getSelectedConceptsCount() > 0" class="selected-concepts-summary">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="concept-type-box income">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    <strong>Haberes:</strong> {{ getConceptCountByType('income') }}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="concept-type-box deduction">
+                    <i class="fas fa-minus-circle me-2"></i>
+                    <strong>Descuentos:</strong> {{ getConceptCountByType('deduction') }}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="concept-type-box contribution">
+                    <i class="fas fa-hand-holding-usd me-2"></i>
+                    <strong>Aportes:</strong> {{ getConceptCountByType('contribution') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Configuración de Aplicabilidad -->
+          <div class="section-title">
+            <i class="fas fa-cogs me-2"></i>Aplicabilidad
+          </div>
+          <div class="row mb-4">
+            <div class="col-md-12 mb-3">
+              <label class="form-label">Regímenes Laborales Aplicables</label>
+              <div class="form-check" *ngFor="let regimen of regimenesLaborales">
+                <input class="form-check-input" type="checkbox" [value]="regimen.value" 
+                       [id]="'regimen-' + regimen.value">
+                <label class="form-check-label" [for]="'regimen-' + regimen.value">
+                  {{ regimen.label }}
+                </label>
+              </div>
+              <small class="text-muted">Dejar vacío para aplicar a todos los regímenes</small>
+            </div>
+          </div>
+
+          <!-- Opciones -->
+          <div class="section-title">
+            <i class="fas fa-toggle-on me-2"></i>Opciones
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" formControlName="is_default" id="isDefault">
+                <label class="form-check-label" for="isDefault">
+                  <strong>Plantilla por Defecto</strong>
+                  <br><small class="text-muted">Se usará cuando no haya plantilla específica</small>
+                </label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" formControlName="is_active" id="isActive">
+                <label class="form-check-label" for="isActive">
+                  <strong>Activa</strong>
+                  <br><small class="text-muted">Solo las plantillas activas se pueden usar</small>
+                </label>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="saveTemplate()" [disabled]="templateForm.invalid || saving">
+          <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!saving" class="fas fa-save me-1"></i>
+          {{ isEditMode ? 'Actualizar' : 'Guardar' }} Plantilla
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Vista Previa de Plantilla -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true" #previewModal>
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-gradient-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-file-invoice me-2"></i>Vista Previa de Plantilla
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closePreviewModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="previewTemplate">
+        
+        <!-- Encabezado de la Vista Previa -->
+        <div class="preview-header text-center mb-4 p-4 bg-light rounded">
+          <h4 class="mb-2">{{ previewTemplate.name }}</h4>
+          <p class="text-muted mb-2">{{ previewTemplate.description }}</p>
+          <div class="d-flex justify-content-center gap-3 mt-3">
+            <span class="badge bg-info">{{ getTipoLabel(previewTemplate.type) }}</span>
+            <span class="badge bg-secondary">{{ getCategoriaLabel(previewTemplate.category) }}</span>
+            <span class="badge bg-success" *ngIf="previewTemplate.is_active">Activa</span>
+            <span class="badge bg-warning" *ngIf="previewTemplate.is_default">Por Defecto</span>
+            <span class="badge bg-primary">{{ getConceptsCount(previewTemplate) }} Conceptos</span>
+          </div>
+        </div>
+
+        <!-- Tabla de Conceptos -->
+        <div class="row">
+          <!-- INGRESOS -->
+          <div class="col-12 mb-4">
+            <div class="card card-success card-outline">
+              <div class="card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-plus-circle me-2"></i>
+                  INGRESOS Y REMUNERACIONES
+                  <span class="badge bg-success ms-2">{{ previewConceptsByType.income.length }}</span>
+                </h5>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover table-sm mb-0">
+                  <thead class="table-success">
+                    <tr>
+                      <th width="10%">Código</th>
+                      <th width="40%">Concepto</th>
+                      <th width="15%">Código SUNAT</th>
+                      <th width="35%">Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let concept of previewConceptsByType.income; let i = index">
+                      <td><span class="badge bg-dark">{{ concept.code }}</span></td>
+                      <td><strong>{{ concept.name }}</strong></td>
+                      <td>
+                        <span class="badge bg-info" *ngIf="concept.sunat_code">
+                          <i class="fas fa-file-invoice"></i> {{ concept.sunat_code }}
+                        </span>
+                        <span class="text-muted" *ngIf="!concept.sunat_code">-</span>
+                      </td>
+                      <td><small class="text-muted">{{ concept.description || '-' }}</small></td>
+                    </tr>
+                    <tr *ngIf="previewConceptsByType.income.length === 0">
+                      <td colspan="4" class="text-center text-muted py-3">
+                        <i class="fas fa-info-circle me-2"></i>No hay conceptos de ingresos configurados
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- DESCUENTOS -->
+          <div class="col-12 mb-4">
+            <div class="card card-danger card-outline">
+              <div class="card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-minus-circle me-2"></i>
+                  DESCUENTOS Y RETENCIONES
+                  <span class="badge bg-danger ms-2">{{ previewConceptsByType.deduction.length }}</span>
+                </h5>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover table-sm mb-0">
+                  <thead class="table-danger">
+                    <tr>
+                      <th width="10%">Código</th>
+                      <th width="40%">Concepto</th>
+                      <th width="15%">Código SUNAT</th>
+                      <th width="35%">Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let concept of previewConceptsByType.deduction; let i = index">
+                      <td><span class="badge bg-dark">{{ concept.code }}</span></td>
+                      <td><strong>{{ concept.name }}</strong></td>
+                      <td>
+                        <span class="badge bg-info" *ngIf="concept.sunat_code">
+                          <i class="fas fa-file-invoice"></i> {{ concept.sunat_code }}
+                        </span>
+                        <span class="text-muted" *ngIf="!concept.sunat_code">-</span>
+                      </td>
+                      <td><small class="text-muted">{{ concept.description || '-' }}</small></td>
+                    </tr>
+                    <tr *ngIf="previewConceptsByType.deduction.length === 0">
+                      <td colspan="4" class="text-center text-muted py-3">
+                        <i class="fas fa-info-circle me-2"></i>No hay conceptos de descuentos configurados
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- APORTES -->
+          <div class="col-12 mb-4">
+            <div class="card card-info card-outline">
+              <div class="card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-hand-holding-usd me-2"></i>
+                  APORTES DEL EMPLEADOR
+                  <span class="badge bg-info ms-2">{{ previewConceptsByType.contribution.length }}</span>
+                </h5>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover table-sm mb-0">
+                  <thead class="table-info">
+                    <tr>
+                      <th width="10%">Código</th>
+                      <th width="40%">Concepto</th>
+                      <th width="15%">Código SUNAT</th>
+                      <th width="35%">Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let concept of previewConceptsByType.contribution; let i = index">
+                      <td><span class="badge bg-dark">{{ concept.code }}</span></td>
+                      <td><strong>{{ concept.name }}</strong></td>
+                      <td>
+                        <span class="badge bg-info" *ngIf="concept.sunat_code">
+                          <i class="fas fa-file-invoice"></i> {{ concept.sunat_code }}
+                        </span>
+                        <span class="text-muted" *ngIf="!concept.sunat_code">-</span>
+                      </td>
+                      <td><small class="text-muted">{{ concept.description || '-' }}</small></td>
+                    </tr>
+                    <tr *ngIf="previewConceptsByType.contribution.length === 0">
+                      <td colspan="4" class="text-center text-muted py-3">
+                        <i class="fas fa-info-circle me-2"></i>No hay conceptos de aportes configurados
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen Total -->
+        <div class="card bg-light">
+          <div class="card-body">
+            <div class="row text-center">
+              <div class="col-md-4">
+                <div class="info-box bg-success">
+                  <span class="info-box-icon"><i class="fas fa-plus-circle"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Total Ingresos</span>
+                    <span class="info-box-number">{{ previewConceptsByType.income.length }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box bg-danger">
+                  <span class="info-box-icon"><i class="fas fa-minus-circle"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Total Descuentos</span>
+                    <span class="info-box-number">{{ previewConceptsByType.deduction.length }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box bg-info">
+                  <span class="info-box-icon"><i class="fas fa-hand-holding-usd"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Total Aportes</span>
+                    <span class="info-box-number">{{ previewConceptsByType.contribution.length }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closePreviewModal()">
+          <i class="fas fa-times me-1"></i>Cerrar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="closePreviewModal(); openEditModal(previewTemplate!)">
+          <i class="fas fa-edit me-1"></i>Editar Plantilla
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Selección de Conceptos -->
+<div class="modal fade" id="conceptsModal" tabindex="-1" aria-hidden="true" #conceptsModal>
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-list-alt me-2"></i>Seleccionar Conceptos para la Plantilla
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeConceptsModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <span>
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>{{ getSelectedConceptsCount() }} conceptos seleccionados</strong>
+          </span>
+          <small class="text-muted">
+            Haberes: {{ getConceptCountByType('income') }} | Descuentos: {{ getConceptCountByType('deduction') }} | Aportes: {{ getConceptCountByType('contribution') }}
+          </small>
+        </div>
+
+        <!-- Filtro por tipo de concepto: cada pestaña = Ingresos, Descuentos o Aportes -->
+        <p class="small text-muted mb-2"><strong>Filtrar por tipo de concepto:</strong></p>
+        <ul class="nav nav-tabs mb-2" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeConceptTab === 'income'" (click)="switchConceptTab('income')" style="cursor: pointer;">
+              <i class="fas fa-plus-circle text-success me-1"></i>Ingresos
+              <span class="badge bg-success ms-1">{{ getConceptCountByType('income') }}/{{ conceptsByType['income'].length }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeConceptTab === 'deduction'" (click)="switchConceptTab('deduction')" style="cursor: pointer;">
+              <i class="fas fa-minus-circle text-danger me-1"></i>Descuentos
+              <span class="badge bg-danger ms-1">{{ getConceptCountByType('deduction') }}/{{ conceptsByType['deduction'].length }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeConceptTab === 'contribution'" (click)="switchConceptTab('contribution')" style="cursor: pointer;">
+              <i class="fas fa-hand-holding-usd text-info me-1"></i>Aportes
+              <span class="badge bg-info ms-1">{{ getConceptCountByType('contribution') }}/{{ conceptsByType['contribution'].length }}</span>
+            </a>
+          </li>
+        </ul>
+
+        <!-- Una sola tabla; los datos cambian por pestaña. Al cambiar de pestaña se recrea el nodo para no cerrar el Subject del trigger. -->
+        <div class="tab-pane-content">
+          <div class="table-responsive" *ngIf="conceptsTableVisible">
+            <table datatable [dtOptions]="dtOptionsConcepts" [dtTrigger]="dtTriggerConcepts" class="table table-sm table-bordered table-hover align-middle mb-0 concepts-select-table w-100">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 3rem;" class="text-center">Sel.</th>
+                  <th style="min-width: 6rem;">Código</th>
+                  <th>Nombre</th>
+                  <th style="width: 8rem;">Régimen</th>
+                  <th style="width: 6rem;" class="text-center">SUNAT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of conceptsTableData" [class.table-primary]="isConceptSelected(item.concept.id!)">
+                  <td class="concept-sel-cell">
+                    <div class="d-flex align-items-center justify-content-center">
+                      <input class="form-check-input" type="checkbox" [checked]="isConceptSelected(item.concept.id!)" (change)="toggleConcept(item.concept.id!)" [id]="'concept-' + activeConceptTab + '-' + item.concept.id">
+                    </div>
+                  </td>
+                  <td><label [attr.for]="'concept-' + activeConceptTab + '-' + item.concept.id" class="mb-0 cursor-pointer">{{ item.concept.code }}</label></td>
+                  <td>
+                    <label [attr.for]="'concept-' + activeConceptTab + '-' + item.concept.id" class="mb-0 cursor-pointer">{{ item.concept.name }}</label>
+                    <small class="text-muted d-block" *ngIf="item.concept.description">{{ item.concept.description }}</small>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="{'bg-success': item.concept.regime_type === 'public', 'bg-primary': item.concept.regime_type === 'private', 'bg-secondary': item.concept.regime_type === 'both' || !item.concept.regime_type}">{{ item.regimeLabel }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="text-muted small" *ngIf="item.concept.sunat_code">{{ item.concept.sunat_code }}</span>
+                    <span class="text-muted small" *ngIf="!item.concept.sunat_code">—</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-2 d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-outline-success" (click)="selectAllConcepts(activeConceptTab)"><i class="fas fa-check-double me-1"></i>Todos</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="clearConcepts(activeConceptTab)"><i class="fas fa-times me-1"></i>Limpiar</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="me-auto text-muted">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>{{ getSelectedConceptsCount() }}</strong> conceptos seleccionados
+        </div>
+        <button type="button" class="btn btn-success" (click)="closeConceptsModal()">
+          <i class="fas fa-check me-1"></i>Confirmar Selección
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Vista Previa de Plantilla -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true" #previewModal>
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-gradient-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-file-invoice me-2"></i>Vista Previa de Plantilla
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closePreviewModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="previewTemplate">
+        
+        <!-- Encabezado de la Vista Previa -->
+        <div class="preview-header text-center mb-4 p-4 bg-light rounded">
+          <h4 class="mb-2">{{ previewTemplate.name }}</h4>
+          <p class="text-muted mb-2">{{ previewTemplate.description }}</p>
+          <div class="d-flex justify-content-center gap-3 mt-3">
+            <span class="badge bg-info">{{ getTipoLabel(previewTemplate.type) }}</span>
+            <span class="badge bg-secondary">{{ getCategoriaLabel(previewTemplate.category) }}</span>
+            <span class="badge bg-success" *ngIf="previewTemplate.is_active">Activa</span>
+            <span class="badge bg-warning" *ngIf="previewTemplate.is_default">Por Defecto</span>
+            <span class="badge bg-primary">{{ getConceptsCount(previewTemplate) }} Conceptos</span>
+          </div>
+        </div>
+
+        <!-- Tabla de Conceptos -->
+        <div class="row">
+          <!-- INGRESOS -->
+          <div class="col-12 mb-4">
+            <div class="card card-success card-outline">
+              <div class="card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-plus-circle me-2"></i>
+                  INGRESOS Y REMUNERACIONES
+                  <span class="badge bg-success ms-2">{{ previewConceptsByType.income.length }}</span>
+                </h5>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover table-sm mb-0">
+                  <thead class="table-success">
+                    <tr>
+                      <th width="10%">Código</th>
+                      <th width="40%">Concepto</th>
+                      <th width="15%">Código SUNAT</th>
+                      <th width="35%">Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let concept of previewConceptsByType.income; let i = index">
+                      <td><span class="badge bg-dark">{{ concept.code }}</span></td>
+                      <td><strong>{{ concept.name }}</strong></td>
+                      <td>
+                        <span class="badge bg-info" *ngIf="concept.sunat_code">
+                          <i class="fas fa-file-invoice"></i> {{ concept.sunat_code }}
+                        </span>
+                        <span class="text-muted" *ngIf="!concept.sunat_code">-</span>
+                      </td>
+                      <td><small class="text-muted">{{ concept.description || '-' }}</small></td>
+                    </tr>
+                    <tr *ngIf="previewConceptsByType.income.length === 0">
+                      <td colspan="4" class="text-center text-muted py-3">
+                        <i class="fas fa-info-circle me-2"></i>No hay conceptos de ingresos configurados
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- DESCUENTOS -->
+          <div class="col-12 mb-4">
+            <div class="card card-danger card-outline">
+              <div class="card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-minus-circle me-2"></i>
+                  DESCUENTOS Y RETENCIONES
+                  <span class="badge bg-danger ms-2">{{ previewConceptsByType.deduction.length }}</span>
+                </h5>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover table-sm mb-0">
+                  <thead class="table-danger">
+                    <tr>
+                      <th width="10%">Código</th>
+                      <th width="40%">Concepto</th>
+                      <th width="15%">Código SUNAT</th>
+                      <th width="35%">Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let concept of previewConceptsByType.deduction; let i = index">
+                      <td><span class="badge bg-dark">{{ concept.code }}</span></td>
+                      <td><strong>{{ concept.name }}</strong></td>
+                      <td>
+                        <span class="badge bg-info" *ngIf="concept.sunat_code">
+                          <i class="fas fa-file-invoice"></i> {{ concept.sunat_code }}
+                        </span>
+                        <span class="text-muted" *ngIf="!concept.sunat_code">-</span>
+                      </td>
+                      <td><small class="text-muted">{{ concept.description || '-' }}</small></td>
+                    </tr>
+                    <tr *ngIf="previewConceptsByType.deduction.length === 0">
+                      <td colspan="4" class="text-center text-muted py-3">
+                        <i class="fas fa-info-circle me-2"></i>No hay conceptos de descuentos configurados
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- APORTES -->
+          <div class="col-12 mb-4">
+            <div class="card card-info card-outline">
+              <div class="card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-hand-holding-usd me-2"></i>
+                  APORTES DEL EMPLEADOR
+                  <span class="badge bg-info ms-2">{{ previewConceptsByType.contribution.length }}</span>
+                </h5>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover table-sm mb-0">
+                  <thead class="table-info">
+                    <tr>
+                      <th width="10%">Código</th>
+                      <th width="40%">Concepto</th>
+                      <th width="15%">Código SUNAT</th>
+                      <th width="35%">Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let concept of previewConceptsByType.contribution; let i = index">
+                      <td><span class="badge bg-dark">{{ concept.code }}</span></td>
+                      <td><strong>{{ concept.name }}</strong></td>
+                      <td>
+                        <span class="badge bg-info" *ngIf="concept.sunat_code">
+                          <i class="fas fa-file-invoice"></i> {{ concept.sunat_code }}
+                        </span>
+                        <span class="text-muted" *ngIf="!concept.sunat_code">-</span>
+                      </td>
+                      <td><small class="text-muted">{{ concept.description || '-' }}</small></td>
+                    </tr>
+                    <tr *ngIf="previewConceptsByType.contribution.length === 0">
+                      <td colspan="4" class="text-center text-muted py-3">
+                        <i class="fas fa-info-circle me-2"></i>No hay conceptos de aportes configurados
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen Total -->
+        <div class="card bg-light">
+          <div class="card-body">
+            <div class="row text-center">
+              <div class="col-md-4">
+                <div class="info-box bg-success">
+                  <span class="info-box-icon"><i class="fas fa-plus-circle"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Total Ingresos</span>
+                    <span class="info-box-number">{{ previewConceptsByType.income.length }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box bg-danger">
+                  <span class="info-box-icon"><i class="fas fa-minus-circle"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Total Descuentos</span>
+                    <span class="info-box-number">{{ previewConceptsByType.deduction.length }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box bg-info">
+                  <span class="info-box-icon"><i class="fas fa-hand-holding-usd"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Total Aportes</span>
+                    <span class="info-box-number">{{ previewConceptsByType.contribution.length }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closePreviewModal()">
+          <i class="fas fa-times me-1"></i>Cerrar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="closePreviewModal(); openEditModal(previewTemplate!)">
+          <i class="fas fa-edit me-1"></i>Editar Plantilla
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================
+     MODAL ANGULAR PURO - VISTA PREVIA PROFESIONAL  
+     ============================================= -->
+<div class="angular-modal-overlay" 
+     *ngIf="showPreviewModal"
+     [@backdropAnimation]
+     (click)="closePreviewModal()">
+  
+  <div class="angular-modal-container" 
+       [@modalAnimation]
+       (click)="$event.stopPropagation()">
+    
+    <!-- Modal Header -->
+    <div class="angular-modal-header">
+      <div class="modal-title-container">
+        <i class="fas fa-file-invoice-dollar text-white"></i>
+        <h4 class="modal-title-text">Vista Previa de Plantilla</h4>
+      </div>
+      <button class="modal-close-btn" (click)="closePreviewModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <!-- Modal Body -->
+    <div class="angular-modal-body" *ngIf="previewTemplate">
+      
+      <!-- Header Info -->
+      <div class="preview-info-card">
+        <div class="preview-title-section">
+          <h3 class="preview-title">{{ previewTemplate.name }}</h3>
+          <p class="preview-description">{{ previewTemplate.description || 'Sin descripción' }}</p>
+        </div>
+        
+        <div class="preview-badges-section">
+          <div class="badge-row">
+            <span class="info-badge badge-tipo">
+              <i class="fas fa-tag"></i> {{ getTipoLabel(previewTemplate.type) }}
+            </span>
+            <span class="info-badge badge-categoria">
+              <i class="fas fa-calendar-alt"></i> {{ getCategoriaLabel(previewTemplate.category) }}
+            </span>
+          </div>
+          <div class="stats-row">
+            <div class="stat-item stat-income">
+              <i class="fas fa-plus-circle"></i>
+              <span class="stat-label">Ingresos</span>
+              <span class="stat-value">{{ previewConceptsByType.income.length }}</span>
+            </div>
+            <div class="stat-item stat-deduction">
+              <i class="fas fa-minus-circle"></i>
+              <span class="stat-label">Descuentos</span>
+              <span class="stat-value">{{ previewConceptsByType.deduction.length }}</span>
+            </div>
+            <div class="stat-item stat-contribution">
+              <i class="fas fa-hand-holding-usd"></i>
+              <span class="stat-label">Aportes</span>
+              <span class="stat-value">{{ previewConceptsByType.contribution.length }}</span>
+            </div>
+          </div>
+          <div class="preview-afp-indicator mt-2 small">
+            <i class="fas fa-info-circle text-info me-1"></i>
+            <strong>Tasas descuentos:</strong> DES-001 (ONP) y DES-002 a DES-004 (AFP) usan la tabla AFP/ONP del empleado. Si no tiene asignada, el cálculo es 0 para evitar errores.
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de Conceptos en formato Excel horizontal -->
+      <div class="excel-concepts-table">
+        <div class="table-container">
+          <table class="excel-table">
+            <thead>
+              <!-- Fila 1: Títulos de secciones -->
+              <tr class="section-headers">
+                <th class="employee-info-header" rowspan="2">DATOS EMPLEADO</th>
+                <th class="income-section-header" [attr.colspan]="previewConceptsByType.income.length">
+                  <i class="fas fa-plus-circle"></i> INGRESOS Y REMUNERACIONES
+                </th>
+                <th class="total-income-header" rowspan="2">TOT ING. EN SOLES</th>
+                <th class="deduction-section-header" [attr.colspan]="previewConceptsByType.deduction.length">
+                  <i class="fas fa-minus-circle"></i> DESCUENTOS TRABAJADOR
+                </th>
+                <th class="total-deduction-header" rowspan="2">TOT. DSCTS</th>
+                <th class="net-pay-header" rowspan="2">SALDO PAG.</th>
+                <th class="contribution-section-header" [attr.colspan]="previewConceptsByType.contribution.length">
+                  <i class="fas fa-hand-holding-usd"></i> APORT. EMPLEADOR
+                </th>
+                <th class="total-contribution-header" rowspan="2">T. APORTES</th>
+              </tr>
+              
+              <!-- Fila 2: Nombres de conceptos abreviados -->
+              <tr class="concept-headers">
+                <!-- Ingresos -->
+                <th class="concept-header income-header" *ngFor="let concept of previewConceptsByType.income">
+                  <div class="concept-abbreviation">{{ getConceptAbbreviation(concept) }}</div>
+                  <div class="concept-full-name">{{ concept.name }}</div>
+                  <div class="concept-code" *ngIf="concept.sunat_code">{{ concept.sunat_code }}</div>
+                </th>
+                
+                <!-- Descuentos -->
+                <th class="concept-header deduction-header" *ngFor="let concept of previewConceptsByType.deduction">
+                  <div class="concept-abbreviation">{{ getConceptAbbreviation(concept) }}</div>
+                  <div class="concept-full-name">{{ concept.name }}</div>
+                  <div class="concept-code" *ngIf="concept.sunat_code">{{ concept.sunat_code }}</div>
+                </th>
+                
+                <!-- Aportes -->
+                <th class="concept-header contribution-header" *ngFor="let concept of previewConceptsByType.contribution">
+                  <div class="concept-abbreviation">{{ getConceptAbbreviation(concept) }}</div>
+                  <div class="concept-full-name">{{ concept.name }}</div>
+                  <div class="concept-code" *ngIf="concept.sunat_code">{{ concept.sunat_code }}</div>
+                </th>
+              </tr>
+            </thead>
+            
+            <tbody>
+              <!-- Mensaje si no hay empleados -->
+              <tr *ngIf="loadingPreviewEmployees">
+                <td [attr.colspan]="4 + previewConceptsByType.income.length + previewConceptsByType.deduction.length + previewConceptsByType.contribution.length" class="text-center py-4">
+                  <i class="fas fa-spinner fa-spin"></i> Cargando empleados...
+                </td>
+              </tr>
+              
+              <tr *ngIf="!loadingPreviewEmployees && previewEmployees.length === 0">
+                <td [attr.colspan]="4 + previewConceptsByType.income.length + previewConceptsByType.deduction.length + previewConceptsByType.contribution.length" class="text-center py-4">
+                  <i class="fas fa-info-circle text-warning"></i> No hay empleados con contratos vigentes para este tipo de planilla
+                </td>
+              </tr>
+              
+              <!-- Filas de empleados reales -->
+              <tr class="employee-row" *ngFor="let employee of previewEmployees; let i = index">
+                <td class="employee-data">
+                  <div class="employee-name">{{ employee.full_name }}</div>
+                  <div class="employee-position">{{ employee.position }}</div>
+                  <div class="employee-dni">DNI: {{ employee.dni }}</div>
+                  <div class="employee-afp-source" [class.afp-from-table]="previewUsesEmployeeAfp(employee)" [class.afp-default]="!previewUsesEmployeeAfp(employee)">
+                    <i class="fas fa-university me-1"></i>Tasas AFP: {{ getEmployeeAfpLabel(employee) }}
+                  </div>
+                </td>
+                
+                <!-- Ingresos -->
+                <td class="concept-cell income-cell" *ngFor="let concept of previewConceptsByType.income">
+                  <input *ngIf="isVariableConcept(concept)"
+                         type="number"
+                         step="0.01"
+                         min="0"
+                         class="form-control form-control-sm text-end variable-concept-input"
+                         [value]="getVariableConceptRawValue(employee, concept, 'income')"
+                         (input)="setVariableConceptAmount(employee, concept, 'income', $any($event.target).value)">
+                  <div *ngIf="!isVariableConcept(concept)" class="amount-value">{{ calculateConceptAmount(employee, concept) }}</div>
+                </td>
+                
+                <!-- Total Ingresos -->
+                <td class="total-income-cell">
+                  <div class="total-amount">{{ calculateEmployeeTotalIncome(employee) }}</div>
+                </td>
+                
+                <!-- Descuentos -->
+                <td class="concept-cell deduction-cell" *ngFor="let concept of previewConceptsByType.deduction">
+                  <input *ngIf="isVariableConcept(concept)"
+                         type="number"
+                         step="0.01"
+                         min="0"
+                         class="form-control form-control-sm text-end variable-concept-input"
+                         [value]="getVariableConceptRawValue(employee, concept, 'deduction')"
+                         (input)="setVariableConceptAmount(employee, concept, 'deduction', $any($event.target).value)">
+                  <div *ngIf="!isVariableConcept(concept)" class="amount-value">{{ calculateConceptAmount(employee, concept) }}</div>
+                </td>
+                
+                <!-- Total Descuentos -->
+                <td class="total-deduction-cell">
+                  <div class="total-amount">{{ calculateEmployeeTotalDeductions(employee) }}</div>
+                </td>
+                
+                <!-- Saldo Pagar -->
+                <td class="net-pay-cell">
+                  <div class="net-amount">{{ calculateEmployeeNetPay(employee) }}</div>
+                </td>
+                
+                <!-- Aportes -->
+                <td class="concept-cell contribution-cell" *ngFor="let concept of previewConceptsByType.contribution">
+                  <input *ngIf="isVariableConcept(concept)"
+                         type="number"
+                         step="0.01"
+                         min="0"
+                         class="form-control form-control-sm text-end variable-concept-input"
+                         [value]="getVariableConceptRawValue(employee, concept, 'contribution')"
+                         (input)="setVariableConceptAmount(employee, concept, 'contribution', $any($event.target).value)">
+                  <div *ngIf="!isVariableConcept(concept)" class="amount-value">{{ calculateConceptAmount(employee, concept) }}</div>
+                </td>
+                
+                <!-- Total Aportes -->
+                <td class="total-contribution-cell">
+                  <div class="total-amount">{{ calculateEmployeeTotalContributions(employee) }}</div>
+                </td>
+              </tr>
+              
+              <!-- Totales -->
+              <tr class="totals-row">
+                <td class="totals-label">
+                  <strong>TOTALES</strong>
+                </td>
+                
+                <!-- Totales Ingresos -->
+                <td class="total-cell income-total" *ngFor="let concept of previewConceptsByType.income">
+                  <div class="total-amount">{{ getSampleAmount(concept) }}</div>
+                </td>
+                
+                <!-- Total Ingresos -->
+                <td class="total-income-total-cell">
+                  <div class="total-amount">{{ getTotalAmount('income') }}</div>
+                </td>
+                
+                <!-- Totales Descuentos -->
+                <td class="total-cell deduction-total" *ngFor="let concept of previewConceptsByType.deduction">
+                  <div class="total-amount">{{ getSampleAmount(concept) }}</div>
+                </td>
+                
+                <!-- Total Descuentos -->
+                <td class="total-deduction-total-cell">
+                  <div class="total-amount">{{ getTotalAmount('deduction') }}</div>
+                </td>
+                
+                <!-- Total Neto -->
+                <td class="net-total-cell">
+                  <div class="net-total-amount">{{ getNetPayAmount() }}</div>
+                </td>
+                
+                <!-- Totales Aportes -->
+                <td class="total-cell contribution-total" *ngFor="let concept of previewConceptsByType.contribution">
+                  <div class="total-amount">{{ getSampleAmount(concept) }}</div>
+                </td>
+                
+                <!-- Total Aportes -->
+                <td class="total-contribution-total-cell">
+                  <div class="total-amount">{{ getTotalAmount('contribution') }}</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer Summary -->
+      <div class="preview-summary">
+        <div class="summary-item summary-total">
+          <i class="fas fa-list-ul"></i>
+          <span class="summary-label">Total Conceptos:</span>
+          <span class="summary-value">{{ (previewTemplate.selected_concepts || []).length }}</span>
+        </div>
+      </div>
+
+    </div>
+    
+    <!-- Modal Footer -->
+    <div class="angular-modal-footer">
+      <button class="btn-secondary-modal" (click)="closePreviewModal()">
+        <i class="fas fa-times"></i> Cerrar
+      </button>
+      <button class="btn-primary-modal" (click)="closePreviewModal(); openEditModal(previewTemplate!)">
+        <i class="fas fa-edit"></i> Editar Plantilla
+      </button>
+    </div>
+    
+  </div>
+</div>
+

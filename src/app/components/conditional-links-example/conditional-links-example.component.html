@@ -1,0 +1,244 @@
+<div class="container-fluid mt-4">
+  <div class="row">
+    
+    <!-- Ejemplo Principal: Patrón de Enlaces Condicionales -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5><i class="fas fa-link mr-2"></i>Patrón de Enlaces Condicionales</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-3">
+            ✅ Usando <code>*ngIf</code> para manejar enlaces con y sin URL
+          </p>
+          
+          <!-- ✅ PATRÓN IMPLEMENTADO -->
+          <div class="list-group">
+            <div *ngFor="let menu of navigationItems" class="list-group-item">
+              
+              <!-- ✅ ENLACE CON URL -->
+              <a 
+                *ngIf="menu.url; else noLink" 
+                class="nav-link" 
+                [routerLink]="menu.url"
+                routerLinkActive="active">
+                <i [class]="menu.icon" class="mr-2"></i>
+                {{ menu.nombre }}
+                <span *ngIf="menu.activo" class="badge badge-success ml-2">Activo</span>
+              </a>
+              
+              <!-- ✅ ENLACE SIN URL (DISABLED) -->
+              <ng-template #noLink>
+                <a 
+                  class="nav-link disabled" 
+                  href="javascript:void(0)"
+                  (click)="onDisabledAction(menu)">
+                  <i [class]="menu.icon" class="mr-2"></i>
+                  {{ menu.nombre }}
+                  <span class="badge badge-warning ml-2">En desarrollo</span>
+                </a>
+              </ng-template>
+              
+            </div>
+          </div>
+          
+          <hr>
+          <small class="text-success">
+            <i class="fas fa-check-circle mr-1"></i>
+            Los enlaces con URL navegan, los sin URL muestran mensaje informativo
+          </small>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Comparación: Antes vs Después -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-warning text-dark">
+          <h5><i class="fas fa-code mr-2"></i>Comparación: Antes vs Después</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            
+            <!-- ❌ ANTES (PROBLEMÁTICO) -->
+            <div class="col-md-6">
+              <h6 class="text-danger mb-3">
+                <i class="fas fa-times-circle mr-1"></i>
+                ❌ ANTES (Problemático):
+              </h6>
+              <div class="bg-light p-3 rounded">
+                <pre class="mb-0 text-danger"><code>&lt;a href="#" 
+   class="nav-link" 
+   (click)="navigateTo(menu.url); $event.preventDefault()"&gt;
+  {{ menu.nombre }}
+&lt;/a&gt;
+
+// ❌ Problemas:
+// - href="#" innecesario
+// - preventDefault() manual
+// - Lógica de navegación mezclada</code></pre>
+              </div>
+              <small class="text-danger mt-2 d-block">
+                ❌ Problemas: href="#", preventDefault(), lógica mezclada
+              </small>
+            </div>
+
+            <!-- ✅ DESPUÉS (CORRECTO) -->
+            <div class="col-md-6">
+              <h6 class="text-success mb-3">
+                <i class="fas fa-check-circle mr-1"></i>
+                ✅ DESPUÉS (Correcto):
+              </h6>
+              <div class="bg-light p-3 rounded">
+                <pre class="mb-0 text-success"><code>&lt;a *ngIf="menu.url; else noLink" 
+   class="nav-link" 
+   [routerLink]="menu.url"&gt;
+  {{ menu.nombre }}
+&lt;/a&gt;
+
+&lt;ng-template #noLink&gt;
+  &lt;a class="nav-link disabled" 
+     href="javascript:void(0)"&gt;
+    {{ menu.nombre }}
+  &lt;/a&gt;
+&lt;/ng-template&gt;</code></pre>
+              </div>
+              <small class="text-success mt-2 d-block">
+                ✅ Beneficios: routerLink nativo, semántica correcta, separación clara
+              </small>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Casos de Uso Específicos -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card border-info">
+        <div class="card-header bg-info text-white">
+          <h5><i class="fas fa-lightbulb mr-2"></i>Casos de Uso del Patrón</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            
+            <!-- Caso 1: Menús Dinámicos -->
+            <div class="col-md-4">
+              <h6>📋 Menús Dinámicos</h6>
+              <p class="small text-muted">
+                Cuando los menús vienen de una API y algunos pueden no tener URL aún.
+              </p>
+              <div class="bg-light p-2 rounded">
+                <code class="small">menu.url ? routerLink : disabled</code>
+              </div>
+            </div>
+
+            <!-- Caso 2: Permisos de Usuario -->
+            <div class="col-md-4">
+              <h6>🔐 Permisos de Usuario</h6>
+              <p class="small text-muted">
+                Mostrar enlaces deshabilitados para usuarios sin permisos.
+              </p>
+              <div class="bg-light p-2 rounded">
+                <code class="small">hasPermission ? routerLink : disabled</code>
+              </div>
+            </div>
+
+            <!-- Caso 3: Funcionalidades en Desarrollo -->
+            <div class="col-md-4">
+              <h6>🚧 En Desarrollo</h6>
+              <p class="small text-muted">
+                Mostrar funcionalidades próximas como deshabilitadas.
+              </p>
+              <div class="bg-light p-2 rounded">
+                <code class="small">isReady ? routerLink : disabled</code>
+              </div>
+            </div>
+
+          </div>
+          
+          <hr>
+          <div class="alert alert-info mb-0">
+            <strong>💡 Ventajas del Patrón:</strong>
+            <ul class="mb-0 mt-2">
+              <li><strong>Semántica clara:</strong> routerLink para navegación, disabled para no navegación</li>
+              <li><strong>Accesibilidad:</strong> Los screen readers entienden el estado disabled</li>
+              <li><strong>UX consistente:</strong> Comportamiento predecible para el usuario</li>
+              <li><strong>Mantenible:</strong> Lógica separada y fácil de entender</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Implementación Práctica -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card border-success">
+        <div class="card-header bg-success text-white">
+          <h5><i class="fas fa-cogs mr-2"></i>Implementación Práctica</h5>
+        </div>
+        <div class="card-body">
+          
+          <h6>📝 Estructura de Datos Recomendada:</h6>
+          <div class="bg-light p-3 rounded mb-3">
+            <pre class="mb-0"><code>interface MenuItem {
+  nombre: string;
+  url?: string | null;        // ✅ Opcional - puede ser null/undefined
+  icon?: string;
+  activo?: boolean;
+  permisos?: string[];
+}</code></pre>
+          </div>
+
+          <h6>🔧 Template Angular:</h6>
+          <div class="bg-light p-3 rounded mb-3">
+            <pre class="mb-0"><code>&lt;a *ngIf="menu.url; else noLink" 
+   class="nav-link" 
+   [routerLink]="menu.url"
+   routerLinkActive="active"&gt;
+  &lt;i [class]="menu.icon" class="mr-2"&gt;&lt;/i&gt;
+  {{ menu.nombre }}
+&lt;/a&gt;
+
+&lt;ng-template #noLink&gt;
+  &lt;a class="nav-link disabled" 
+     href="javascript:void(0)"
+     (click)="onDisabledAction(menu)"&gt;
+    &lt;i [class]="menu.icon" class="mr-2"&gt;&lt;/i&gt;
+    {{ menu.nombre }}
+    &lt;span class="badge badge-warning ml-2"&gt;Próximamente&lt;/span&gt;
+  &lt;/a&gt;
+&lt;/ng-template&gt;</code></pre>
+          </div>
+
+          <h6>⚙️ Método en el Componente:</h6>
+          <div class="bg-light p-3 rounded">
+            <pre class="mb-0"><code>onDisabledAction(menu: MenuItem): void {
+  // Mostrar mensaje informativo
+  this.notificationService.info(
+    `"${menu.nombre}" estará disponible próximamente`
+  );
+  
+  // O registrar analytics
+  this.analytics.track('disabled_menu_clicked', {
+    menu: menu.nombre
+  });
+}</code></pre>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+

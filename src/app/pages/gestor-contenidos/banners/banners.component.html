@@ -1,0 +1,117 @@
+<!-- Content Header -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0"><i class="fas fa-images mr-2"></i>Banners</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/dashboard">Inicio</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor de Contenidos</a></li>
+          <li class="breadcrumb-item active">Banners</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+
+    <div class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-th-large mr-2"></i>Galería de Banners</h3>
+        <div class="card-tools">
+          <a routerLink="/gestor-contenidos/banners/crear" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus mr-1"></i>Nuevo Banner
+          </a>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <!-- Loading -->
+        <div *ngIf="loading" class="text-center py-4">
+          <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+          <p class="mt-2 mb-0">Cargando banners...</p>
+        </div>
+
+        <!-- Grid -->
+        <div *ngIf="!loading && banners.length > 0" class="row">
+          <div class="col-md-4 mb-4" *ngFor="let b of banners">
+            <div class="card card-outline" [ngClass]="b.activo ? 'card-success' : 'card-secondary'" style="height:100%;">
+              <!-- Image preview -->
+              <div class="card-img-top position-relative" style="height:180px; overflow:hidden; background:#f4f6f9;">
+                <img *ngIf="b.tipo_media === 'imagen' && getImagenUrl(b)"
+                     [src]="getImagenUrl(b)"
+                     class="w-100 h-100" style="object-fit:cover;" [alt]="b.titulo">
+                <div *ngIf="b.tipo_media === 'video'" class="d-flex align-items-center justify-content-center h-100">
+                  <i class="fas fa-play-circle fa-4x text-danger"></i>
+                </div>
+                <div *ngIf="!b.tipo_media || (b.tipo_media === 'imagen' && !getImagenUrl(b))"
+                     class="d-flex align-items-center justify-content-center h-100">
+                  <i class="fas fa-image fa-3x text-muted"></i>
+                </div>
+                <span class="badge position-absolute" [ngClass]="getTipoMediaBadge(b.tipo_media)"
+                      style="top:8px; right:8px;">
+                  <i class="fas" [ngClass]="b.tipo_media === 'video' ? 'fa-video' : 'fa-image'"></i>
+                  {{ b.tipo_media || 'imagen' }}
+                </span>
+              </div>
+
+              <div class="card-body pb-2">
+                <h5 class="card-title text-truncate mb-1">{{ b.titulo || 'Sin título' }}</h5>
+                <p *ngIf="b.subtitulo" class="card-text text-muted small text-truncate mb-2">{{ b.subtitulo }}</p>
+
+                <div class="d-flex flex-wrap mb-2">
+                  <span class="badge mr-1 mb-1" [ngClass]="b.activo ? 'badge-success' : 'badge-secondary'">
+                    {{ b.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                  <span *ngIf="b.posicion" class="badge badge-light mr-1 mb-1">
+                    <i class="fas fa-map-marker-alt mr-1"></i>{{ b.posicion }}
+                  </span>
+                  <span *ngIf="b.orden !== undefined" class="badge badge-light mb-1">
+                    <i class="fas fa-sort mr-1"></i>{{ b.orden }}
+                  </span>
+                </div>
+
+                <div class="small text-muted">
+                  <div *ngIf="b.fecha_inicio">
+                    <i class="far fa-calendar-alt mr-1"></i>
+                    {{ b.fecha_inicio | date:'dd/MM/yyyy' }}
+                    <span *ngIf="b.fecha_fin"> — {{ b.fecha_fin | date:'dd/MM/yyyy' }}</span>
+                  </div>
+                  <div *ngIf="b.created_at && !b.fecha_inicio">
+                    <i class="far fa-clock mr-1"></i>Creado: {{ b.created_at | date:'dd/MM/yyyy' }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-footer bg-transparent">
+                <div class="btn-group btn-group-sm btn-block">
+                  <a [routerLink]="['/gestor-contenidos/banners', b.id, 'editar']" class="btn btn-info">
+                    <i class="fas fa-edit mr-1"></i>Editar
+                  </a>
+                  <button type="button" class="btn btn-danger" (click)="eliminar(b.id)">
+                    <i class="fas fa-trash mr-1"></i>Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div *ngIf="!loading && banners.length === 0" class="text-center p-5">
+          <i class="fas fa-images fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No se encontraron banners</h5>
+          <p class="text-muted">Crea tu primer banner para comenzar.</p>
+          <a routerLink="/gestor-contenidos/banners/crear" class="btn btn-primary">
+            <i class="fas fa-plus mr-1"></i>Nuevo Banner
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

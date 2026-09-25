@@ -1,0 +1,125 @@
+<!-- AdminLTE 3.2.0 Login Page -->
+<div class="login-page">
+  <div class="login-box">
+    
+    <!-- Logo -->
+    <div class="login-logo">
+      <a routerLink="/"><b>Intranet</b> Notaria</a>
+    </div>
+    
+    <!-- Login Box -->
+    <div class="card">
+      <div class="card-body login-card-body">
+        <p class="login-box-msg">Inicia sesión para acceder al sistema</p>
+
+        <!-- Login Form -->
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" *ngIf="loginForm">
+          
+          <!-- Email/Usuario -->
+          <div class="input-group mb-3">
+            <input 
+              type="email" 
+              class="form-control" 
+              formControlName="email"
+              placeholder="Email o Usuario"
+              [class.is-invalid]="isFieldInvalid('email')"
+            >
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-envelope"></span>
+              </div>
+            </div>
+            <!-- Error message -->
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('email')">
+              <small *ngIf="loginForm.get('email')?.errors?.['required']">
+                El email es requerido
+              </small>
+              <small *ngIf="loginForm.get('email')?.errors?.['email']">
+                Ingresa un email válido
+              </small>
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="input-group mb-3">
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              class="form-control" 
+              formControlName="password"
+              placeholder="Contraseña"
+              [class.is-invalid]="isFieldInvalid('password')"
+            >
+            <div class="input-group-append">
+              <div class="input-group-text" (click)="togglePasswordVisibility()" style="cursor: pointer;">
+                <span [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></span>
+              </div>
+            </div>
+            <!-- Error message -->
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('password')">
+              <small *ngIf="loginForm.get('password')?.errors?.['required']">
+                La contraseña es requerida
+              </small>
+              <small *ngIf="loginForm.get('password')?.errors?.['minlength']">
+                La contraseña debe tener al menos 6 caracteres
+              </small>
+            </div>
+          </div>
+
+          <!-- Remember Me & Submit -->
+          <div class="row">
+            <div class="col-8">
+              <div class="icheck-primary">
+                <input type="checkbox" id="remember" formControlName="remember">
+                <label for="remember">
+                  Recordarme
+                </label>
+              </div>
+            </div>
+            <div class="col-4">
+              <button 
+                type="submit" 
+                class="btn btn-primary btn-block"
+                [disabled]="isLoading || loginForm.invalid"
+              >
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm mr-2" role="status"></span>
+                {{ isLoading ? 'Ingresando...' : 'Ingresar' }}
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Error Alert -->
+        <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible mt-3">
+          <button type="button" class="close" (click)="clearError()">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <i class="icon fas fa-ban"></i>
+          {{ errorMessage }}
+        </div>
+
+        <!-- Success Alert -->
+        <div *ngIf="successMessage" class="alert alert-success alert-dismissible mt-3">
+          <button type="button" class="close" (click)="clearSuccess()">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <i class="icon fas fa-check"></i>
+          {{ successMessage }}
+        </div>
+
+        <!-- Divider -->
+        <div class="social-auth-links text-center mt-2 mb-3">
+          <p>- O -</p>
+        </div>
+
+
+        <!-- Links -->
+        <p class="mb-1 mt-3">
+          <a href="#" class="text-center">Olvidé mi contraseña</a>
+        </p>
+        <p class="mb-0">
+          <a href="#" class="text-center">Registrar nueva cuenta</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

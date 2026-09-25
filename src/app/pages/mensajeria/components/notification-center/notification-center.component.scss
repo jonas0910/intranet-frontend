@@ -1,0 +1,255 @@
+.notification-center {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+  
+  &.expanded {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    z-index: 1050;
+    max-height: 70vh;
+  }
+}
+
+.notification-header {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+  
+  h6 {
+    color: #495057;
+    font-weight: 600;
+  }
+}
+
+.notification-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.notification-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 350px;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem;
+  border-bottom: 1px solid #f1f3f4;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  
+  &:hover {
+    background-color: #f8f9fa;
+  }
+  
+  &.unread {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    
+    &:hover {
+      background-color: #bbdefb;
+    }
+  }
+  
+  &.urgent {
+    background-color: #ffebee;
+    border-left: 4px solid #f44336;
+    
+    &:hover {
+      background-color: #ffcdd2;
+    }
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.notification-icon {
+  margin-right: 0.75rem;
+  margin-top: 0.25rem;
+  
+  i {
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+  }
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.unread-indicator {
+  width: 8px;
+  height: 8px;
+  background-color: #2196f3;
+  border-radius: 50%;
+  margin-left: 0.5rem;
+}
+
+.notification-body {
+  color: #6c757d;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+  word-wrap: break-word;
+}
+
+.notification-meta {
+  font-size: 0.8rem;
+}
+
+.notification-actions-item {
+  margin-left: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.notification-item:hover .notification-actions-item {
+  opacity: 1;
+}
+
+.notification-footer {
+  padding: 1rem;
+  border-top: 1px solid #dee2e6;
+  background: #f8f9fa;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .notification-center.expanded {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    border: none;
+  }
+  
+  .notification-list {
+    max-height: none;
+    flex: 1;
+  }
+  
+  .notification-item {
+    padding: 1.25rem 1rem;
+  }
+}
+
+/* Animation for new notifications */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification-item.new {
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Loading animation */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Badge styles */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Button styles */
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* Color variants */
+.text-primary { color: #007bff !important; }
+.text-secondary { color: #6c757d !important; }
+.text-success { color: #28a745 !important; }
+.text-danger { color: #dc3545 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-info { color: #17a2b8 !important; }
+.text-muted { color: #6c757d !important; }
+
+.badge-primary { 
+  background-color: #007bff; 
+  color: white;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .notification-center {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+  }
+  
+  .notification-header {
+    background: #1a202c;
+    border-color: #4a5568;
+  }
+  
+  .notification-item {
+    border-color: #4a5568;
+    
+    &:hover {
+      background-color: #4a5568;
+    }
+    
+    &.unread {
+      background-color: #2b6cb0;
+      border-left-color: #3182ce;
+    }
+    
+    &.urgent {
+      background-color: #742a2a;
+      border-left-color: #e53e3e;
+    }
+  }
+  
+  .notification-footer {
+    background: #1a202c;
+    border-color: #4a5568;
+  }
+}
+
+

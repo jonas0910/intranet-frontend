@@ -1,0 +1,1351 @@
+<!-- Content Header (Page header) con tema AdminLTE -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0 text-gradient">
+          <i class="fas fa-cog mr-2 text-primary"></i>
+          Configuración del Sistema
+          <span class="badge badge-info ml-2">Admin</span>
+        </h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item">
+            <a routerLink="/dashboard">
+              <i class="fas fa-home mr-1"></i>Inicio
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a routerLink="/mensajeria">
+              <i class="fas fa-envelope mr-1"></i>Mensajería
+            </a>
+          </li>
+          <li class="breadcrumb-item active">
+            <i class="fas fa-cog mr-1"></i>Configuración
+          </li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content con layout AdminLTE -->
+<section class="content">
+  <div class="container-fluid">
+    <!-- Tabs Navigation con tema AdminLTE -->
+    <div class="card card-primary card-outline">
+      <div class="card-header p-0 border-bottom-0">
+        <ul class="nav nav-tabs" id="config-tabs" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'general'" 
+               (click)="setActiveTab('general')" href="javascript:void(0)" role="tab">
+              <i class="fas fa-cog mr-2"></i> 
+              Configuración General
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'estadisticas'" 
+               (click)="setActiveTab('estadisticas')" href="javascript:void(0)" role="tab">
+              <i class="fas fa-chart-bar mr-2"></i> 
+              Estadísticas
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'pruebas'" 
+               (click)="setActiveTab('pruebas')" href="javascript:void(0)" role="tab">
+              <i class="fas fa-vial mr-2"></i> 
+              Pruebas del Sistema
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'notificaciones'" 
+               (click)="setActiveTab('notificaciones')" href="javascript:void(0)" role="tab">
+              <i class="fas fa-bell mr-2"></i> 
+              Notificaciones
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'tema'" 
+               (click)="setActiveTab('tema')" href="javascript:void(0)" role="tab">
+              <i class="fas fa-palette mr-2"></i> 
+              Tema
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'privacidad'" 
+               (click)="setActiveTab('privacidad')" href="javascript:void(0)" role="tab">
+              <i class="fas fa-shield-alt mr-2"></i> 
+              Privacidad
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'storage'" 
+               (click)="setActiveTab('storage')" href="javascript:void(0)" role="tab">
+              <i class="fas fa-database mr-2"></i> 
+              Almacenamiento
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- General Configuration Tab -->
+    <div *ngIf="activeTab === 'general'" class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-cog mr-2"></i>
+          Configuración General del Sistema
+        </h3>
+        <div class="card-tools">
+          <button type="button" class="btn btn-tool" data-card-widget="collapse">
+            <i class="fas fa-minus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+          <form [formGroup]="configForm" (ngSubmit)="saveConfiguration()">
+            <!-- Límites del Sistema -->
+            <div class="row">
+              <div class="col-12">
+                <div class="callout callout-info">
+                  <h5><i class="fas fa-info-circle mr-2"></i> Límites del Sistema</h5>
+                  <p>Configure los límites máximos para el sistema de mensajería.</p>
+                </div>
+              </div>
+            </div>
+            <div class="row" formGroupName="limits">
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Máximo de Adjuntos</label>
+                  <input type="number" class="form-control" formControlName="max_attachments" 
+                         min="1" max="10">
+                  <small class="form-text text-muted">Número máximo de archivos por mensaje</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Tamaño Máximo de Archivo (KB)</label>
+                  <input type="number" class="form-control" formControlName="max_file_size" 
+                         min="1024" max="51200">
+                  <small class="form-text text-muted">Tamaño máximo en kilobytes</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Longitud Máxima del Mensaje</label>
+                  <input type="number" class="form-control" formControlName="max_message_length" 
+                         min="1000" max="50000">
+                  <small class="form-text text-muted">Caracteres máximos por mensaje</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Máximo de Destinatarios</label>
+                  <input type="number" class="form-control" formControlName="max_recipients" 
+                         min="10" max="1000">
+                  <small class="form-text text-muted">Destinatarios por mensaje</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Limpieza Automática -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="callout callout-warning">
+                  <h5><i class="fas fa-broom mr-2"></i> Limpieza Automática</h5>
+                  <p>Configure la limpieza automática de mensajes antiguos.</p>
+                </div>
+              </div>
+            </div>
+            <div class="row" formGroupName="cleanup">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Días para Mantener Mensajes</label>
+                  <input type="number" class="form-control" formControlName="days_to_keep" 
+                         min="30" max="365">
+                  <small class="form-text text-muted">Días antes de eliminar mensajes antiguos</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" formControlName="auto_cleanup">
+                    <label class="form-check-label">Habilitar Limpieza Automática</label>
+                  </div>
+                  <small class="form-text text-muted">Eliminar mensajes antiguos automáticamente</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notificaciones -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="callout callout-success">
+                  <h5><i class="fas fa-bell mr-2"></i> Notificaciones</h5>
+                  <p>Configure los tipos de notificaciones disponibles.</p>
+                </div>
+              </div>
+            </div>
+            <div class="row" formGroupName="notifications">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" formControlName="email_enabled">
+                    <label class="form-check-label">Notificaciones por Email</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" formControlName="push_enabled">
+                    <label class="form-check-label">Notificaciones Push</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" formControlName="sound_enabled">
+                    <label class="form-check-label">Sonidos de Notificación</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seguridad -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="callout callout-danger">
+                  <h5><i class="fas fa-shield-alt mr-2"></i> Seguridad</h5>
+                  <p>Configure las opciones de seguridad del sistema.</p>
+                </div>
+              </div>
+            </div>
+            <div class="row" formGroupName="security">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Límite de Mensajes por Minuto</label>
+                  <input type="number" class="form-control" formControlName="rate_limit" 
+                         min="10" max="300">
+                  <small class="form-text text-muted">Mensajes por minuto por usuario</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" formControlName="require_approval">
+                    <label class="form-check-label">Requerir Aprobación</label>
+                  </div>
+                  <small class="form-text text-muted">Para mensajes masivos</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" formControlName="scan_attachments">
+                    <label class="form-check-label">Escanear Adjuntos</label>
+                  </div>
+                  <small class="form-text text-muted">Buscar virus en archivos</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Funcionalidades -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="callout callout-primary">
+                  <h5><i class="fas fa-cogs mr-2"></i> Funcionalidades</h5>
+                  <p>Habilite o deshabilite las funcionalidades del sistema.</p>
+                </div>
+              </div>
+            </div>
+            <div class="row" formGroupName="features">
+              <div class="col-md-3">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" formControlName="broadcast_enabled">
+                    <label class="form-check-label">Mensajería Masiva</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" formControlName="templates_enabled">
+                    <label class="form-check-label">Plantillas</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" formControlName="folders_enabled">
+                    <label class="form-check-label">Carpetas</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" formControlName="search_enabled">
+                    <label class="form-check-label">Búsqueda Avanzada</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Caché -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="callout callout-secondary">
+                  <h5><i class="fas fa-memory mr-2"></i> Caché</h5>
+                  <p>Configure las opciones de caché del sistema.</p>
+                </div>
+              </div>
+            </div>
+            <div class="row" formGroupName="cache">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Tiempo de Vida del Caché (segundos)</label>
+                  <input type="number" class="form-control" formControlName="ttl" 
+                         min="60" max="3600">
+                  <small class="form-text text-muted">Duración del caché en segundos</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Prefijo del Caché</label>
+                  <input type="text" class="form-control" formControlName="prefix">
+                  <small class="form-text text-muted">Prefijo para las claves de caché</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="card-footer">
+                  <div class="btn-group" role="group">
+                    <button type="submit" class="btn btn-primary btn-lg" [disabled]="saving">
+                      <i class="fas fa-save mr-2" *ngIf="!saving"></i>
+                      <i class="fas fa-spinner fa-spin mr-2" *ngIf="saving"></i>
+                      {{ saving ? 'Guardando...' : 'Guardar Configuración' }}
+                    </button>
+                    <button type="button" class="btn btn-warning btn-lg" (click)="resetConfiguration()" 
+                            [disabled]="resetting">
+                      <i class="fas fa-undo mr-2" *ngIf="!resetting"></i>
+                      <i class="fas fa-spinner fa-spin mr-2" *ngIf="resetting"></i>
+                      {{ resetting ? 'Restableciendo...' : 'Restablecer' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    <!-- Statistics Tab -->
+    <div *ngIf="activeTab === 'estadisticas'" class="card card-success card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-chart-bar mr-2"></i>
+          Estadísticas del Sistema
+        </h3>
+        <div class="card-tools">
+          <button class="btn btn-sm btn-primary" (click)="loadStatistics()">
+            <i class="fas fa-sync mr-1"></i> Actualizar
+          </button>
+          <button type="button" class="btn btn-tool" data-card-widget="collapse">
+            <i class="fas fa-minus"></i>
+          </button>
+        </div>
+      </div>
+        <div class="card-body">
+          <div *ngIf="statistics" class="row">
+            <!-- Mensajes -->
+            <div class="col-md-6">
+              <div class="card card-primary stats-card">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <i class="fas fa-envelope mr-2"></i>
+                    Mensajes
+                  </h3>
+                  <div class="card-tools">
+                    <span class="badge badge-light">{{ statistics.messages.total }}</span>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-6">
+                      <div class="info-box mb-3">
+                        <span class="info-box-icon bg-primary">
+                          <i class="fas fa-envelope"></i>
+                        </span>
+                        <div class="info-box-content">
+                          <span class="info-box-text">Total Mensajes</span>
+                          <span class="info-box-number">{{ formatNumber(statistics.messages.total) }}</span>
+                          <div class="progress">
+                            <div class="progress-bar bg-primary" style="width: 100%"></div>
+                          </div>
+                          <span class="progress-description">
+                            Todos los mensajes del sistema
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="info-box mb-3">
+                        <span class="info-box-icon bg-warning">
+                          <i class="fas fa-envelope-open"></i>
+                        </span>
+                        <div class="info-box-content">
+                          <span class="info-box-text">No Leídos</span>
+                          <span class="info-box-number">{{ formatNumber(statistics.messages.unread) }}</span>
+                          <div class="progress">
+                            <div class="progress-bar bg-warning" 
+                                 [style.width.%]="getPercentage(statistics.messages.unread, statistics.messages.total)"></div>
+                          </div>
+                          <span class="progress-description">
+                            {{ getPercentage(statistics.messages.unread, statistics.messages.total) }}% del total
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mt-3">
+                    <div class="col-md-12">
+                      <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                          <thead>
+                            <tr>
+                              <th>Período</th>
+                              <th>Cantidad</th>
+                              <th>%</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td><i class="fas fa-calendar-day text-success mr-1"></i> Hoy</td>
+                              <td>{{ formatNumber(statistics.messages.today) }}</td>
+                              <td>{{ getPercentage(statistics.messages.today, statistics.messages.total) }}%</td>
+                            </tr>
+                            <tr>
+                              <td><i class="fas fa-calendar-week text-info mr-1"></i> Esta Semana</td>
+                              <td>{{ formatNumber(statistics.messages.this_week) }}</td>
+                              <td>{{ getPercentage(statistics.messages.this_week, statistics.messages.total) }}%</td>
+                            </tr>
+                            <tr>
+                              <td><i class="fas fa-calendar-alt text-warning mr-1"></i> Este Mes</td>
+                              <td>{{ formatNumber(statistics.messages.this_month) }}</td>
+                              <td>{{ getPercentage(statistics.messages.this_month, statistics.messages.total) }}%</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Conversaciones -->
+            <div class="col-md-6">
+              <div class="card card-success">
+                <div class="card-header">
+                  <h3 class="card-title">Conversaciones</h3>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-6">
+                      <div class="description-block border-right">
+                        <span class="description-percentage text-success">
+                          <i class="fas fa-comments"></i>
+                        </span>
+                        <h5 class="description-header">{{ formatNumber(statistics.conversations.total) }}</h5>
+                        <span class="description-text">Total</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="description-block">
+                        <span class="description-percentage text-info">
+                          <i class="fas fa-comment-dots"></i>
+                        </span>
+                        <h5 class="description-header">{{ formatNumber(statistics.conversations.active) }}</h5>
+                        <span class="description-text">Activas</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mt-2">
+                    <div class="col-6">
+                      <div class="description-block">
+                        <h5 class="description-header">{{ formatNumber(statistics.conversations.individual) }}</h5>
+                        <span class="description-text">Individuales</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="description-block">
+                        <h5 class="description-header">{{ formatNumber(statistics.conversations.group) }}</h5>
+                        <span class="description-text">Grupales</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Usuarios -->
+            <div class="col-md-6">
+              <div class="card card-info">
+                <div class="card-header">
+                  <h3 class="card-title">Usuarios</h3>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-6">
+                      <div class="description-block border-right">
+                        <span class="description-percentage text-info">
+                          <i class="fas fa-users"></i>
+                        </span>
+                        <h5 class="description-header">{{ formatNumber(statistics.users.total) }}</h5>
+                        <span class="description-text">Total</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="description-block">
+                        <span class="description-percentage text-success">
+                          <i class="fas fa-user-check"></i>
+                        </span>
+                        <h5 class="description-header">{{ formatNumber(statistics.users.active) }}</h5>
+                        <span class="description-text">Activos</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mt-2">
+                    <div class="col-12">
+                      <div class="description-block">
+                        <h5 class="description-header">{{ formatNumber(statistics.users.with_messages) }}</h5>
+                        <span class="description-text">Con Mensajes</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Almacenamiento -->
+            <div class="col-md-6">
+              <div class="card card-warning">
+                <div class="card-header">
+                  <h3 class="card-title">Almacenamiento</h3>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-6">
+                      <div class="description-block border-right">
+                        <span class="description-percentage text-warning">
+                          <i class="fas fa-hdd"></i>
+                        </span>
+                        <h5 class="description-header">{{ formatFileSize(statistics.storage.attachments_size) }}</h5>
+                        <span class="description-text">Tamaño Total</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="description-block">
+                        <span class="description-percentage text-info">
+                          <i class="fas fa-file"></i>
+                        </span>
+                        <h5 class="description-header">{{ formatNumber(statistics.storage.attachments_count) }}</h5>
+                        <span class="description-text">Archivos</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mt-2">
+                    <div class="col-12">
+                      <div class="description-block">
+                        <h5 class="description-header">{{ formatFileSize(statistics.storage.avg_file_size) }}</h5>
+                        <span class="description-text">Tamaño Promedio</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rendimiento -->
+            <div class="col-md-6">
+              <div class="card card-secondary">
+                <div class="card-header">
+                  <h3 class="card-title">Rendimiento</h3>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-6">
+                      <div class="description-block border-right">
+                        <span class="description-percentage text-success">
+                          <i class="fas fa-tachometer-alt"></i>
+                        </span>
+                        <h5 class="description-header">{{ statistics.performance.cache_hit_rate }}%</h5>
+                        <span class="description-text">Cache Hit Rate</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="description-block">
+                        <span class="description-percentage text-info">
+                          <i class="fas fa-clock"></i>
+                        </span>
+                        <h5 class="description-header">{{ statistics.performance.avg_response_time }}ms</h5>
+                        <span class="description-text">Tiempo Promedio</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mt-2">
+                    <div class="col-12">
+                      <div class="description-block">
+                        <h5 class="description-header">{{ formatNumber(statistics.performance.queue_size) }}</h5>
+                        <span class="description-text">Trabajos en Cola</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sistema -->
+            <div class="col-md-6">
+              <div class="card card-dark">
+                <div class="card-header">
+                  <h3 class="card-title">Sistema</h3>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-6">
+                      <div class="description-block border-right">
+                        <span class="description-percentage text-warning">
+                          <i class="fas fa-database"></i>
+                        </span>
+                        <h5 class="description-header">{{ formatFileSize(statistics.system.database_size) }}</h5>
+                        <span class="description-text">Tamaño BD</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="description-block">
+                        <span class="description-percentage text-info">
+                          <i class="fas fa-memory"></i>
+                        </span>
+                        <h5 class="description-header">{{ formatNumber(statistics.system.cache_entries) }}</h5>
+                        <span class="description-text">Entradas Cache</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mt-2">
+                    <div class="col-12">
+                      <div class="description-block">
+                        <h5 class="description-header">
+                          {{ statistics.system.last_cleanup ? (statistics.system.last_cleanup | date:'short') : 'Nunca' }}
+                        </h5>
+                        <span class="description-text">Última Limpieza</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- System Tests Tab -->
+    <div *ngIf="activeTab === 'pruebas'" class="card card-warning card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-vial mr-2"></i>
+          Pruebas del Sistema
+        </h3>
+        <div class="card-tools">
+          <button class="btn btn-sm btn-primary" (click)="testConfiguration()" [disabled]="testing">
+            <i class="fas fa-vial mr-1" *ngIf="!testing"></i>
+            <i class="fas fa-spinner fa-spin mr-1" *ngIf="testing"></i>
+            {{ testing ? 'Ejecutando...' : 'Ejecutar Pruebas' }}
+          </button>
+          <button type="button" class="btn btn-tool" data-card-widget="collapse">
+            <i class="fas fa-minus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div *ngIf="testResults" class="row">
+          <div class="col-12">
+            <div class="alert alert-info">
+              <h5><i class="fas fa-info-circle mr-2"></i> Resultados de las Pruebas</h5>
+              <p>Las siguientes pruebas verifican el funcionamiento correcto del sistema.</p>
+            </div>
+            <div class="row">
+              <div class="col-md-6" *ngFor="let test of testResults | keyvalue">
+                <div class="info-box">
+                  <span class="info-box-icon" [ngClass]="getTestClass(test.value)">
+                    <i class="fas" [ngClass]="'fa-' + getTestIcon(test.value)"></i>
+                  </span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">{{ test.key | titlecase }}</span>
+                    <span class="info-box-number">{{ test.value.message }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications Tab -->
+    <div *ngIf="activeTab === 'notificaciones'" class="card card-info card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-bell mr-2"></i>
+          Preferencias de Notificaciones
+        </h3>
+        <div class="card-tools">
+          <button class="btn btn-sm btn-primary" (click)="saveUserPreferences()" [disabled]="saving || userPreferencesForm.invalid">
+            <i class="fas fa-save mr-1" *ngIf="!saving"></i>
+            <i class="fas fa-spinner fa-spin mr-1" *ngIf="saving"></i>
+            {{ saving ? 'Guardando...' : 'Guardar Preferencias' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="userPreferencesForm">
+          <div class="row">
+            <!-- Notification Types -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-inbox mr-2"></i>Tipos de Notificaciones</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="email_notifications" formControlName="email_notifications">
+                      <label class="custom-control-label" for="email_notifications">
+                        <i class="fas fa-envelope mr-2"></i>Notificaciones por Email
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="push_notifications" formControlName="push_notifications">
+                      <label class="custom-control-label" for="push_notifications">
+                        <i class="fas fa-mobile-alt mr-2"></i>Notificaciones Push
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="sound_notifications" formControlName="sound_notifications">
+                      <label class="custom-control-label" for="sound_notifications">
+                        <i class="fas fa-volume-up mr-2"></i>Sonido de Notificaciones
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="desktop_notifications" formControlName="desktop_notifications">
+                      <label class="custom-control-label" for="desktop_notifications">
+                        <i class="fas fa-desktop mr-2"></i>Notificaciones de Escritorio
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <button type="button" class="btn btn-sm btn-info" (click)="requestNotificationPermission()">
+                      <i class="fas fa-bell mr-1"></i> Solicitar Permisos
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notification Events -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-filter mr-2"></i>Eventos a Notificar</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="notify_on_message" formControlName="notify_on_message">
+                      <label class="custom-control-label" for="notify_on_message">
+                        <i class="fas fa-comment mr-2"></i>Mensajes Directos
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="notify_on_mention" formControlName="notify_on_mention">
+                      <label class="custom-control-label" for="notify_on_mention">
+                        <i class="fas fa-at mr-2"></i>Menciones (&#64;usuario)
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="notify_on_reply" formControlName="notify_on_reply">
+                      <label class="custom-control-label" for="notify_on_reply">
+                        <i class="fas fa-reply mr-2"></i>Respuestas a mis Mensajes
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="notify_on_group_message" formControlName="notify_on_group_message">
+                      <label class="custom-control-label" for="notify_on_group_message">
+                        <i class="fas fa-users mr-2"></i>Mensajes de Grupos
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notification Sound -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-music mr-2"></i>Sonido de Notificación</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="notification_sound">Seleccionar Sonido</label>
+                    <select class="form-control" id="notification_sound" formControlName="notification_sound">
+                      <option value="default">Por Defecto</option>
+                      <option value="bell">Campana</option>
+                      <option value="chime">Campanita</option>
+                      <option value="pop">Pop</option>
+                      <option value="swoosh">Swoosh</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-success" (click)="testNotificationSound()">
+                    <i class="fas fa-play mr-1"></i> Probar Sonido
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quiet Hours -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-moon mr-2"></i>Horario Silencioso</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="quiet_hours_enabled" formControlName="quiet_hours_enabled">
+                      <label class="custom-control-label" for="quiet_hours_enabled">
+                        Habilitar Horario Silencioso
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="quiet_hours_start">Desde</label>
+                    <input type="time" class="form-control" id="quiet_hours_start" formControlName="quiet_hours_start" [disabled]="!userPreferencesForm.get('quiet_hours_enabled')?.value">
+                  </div>
+                  <div class="form-group">
+                    <label for="quiet_hours_end">Hasta</label>
+                    <input type="time" class="form-control" id="quiet_hours_end" formControlName="quiet_hours_end" [disabled]="!userPreferencesForm.get('quiet_hours_enabled')?.value">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Theme Tab -->
+    <div *ngIf="activeTab === 'tema'" class="card card-purple card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-palette mr-2"></i>
+          Personalización de Tema
+        </h3>
+        <div class="card-tools">
+          <button class="btn btn-sm btn-primary" (click)="saveUserPreferences()" [disabled]="saving || themeForm.invalid">
+            <i class="fas fa-save mr-1" *ngIf="!saving"></i>
+            <i class="fas fa-spinner fa-spin mr-1" *ngIf="saving"></i>
+            {{ saving ? 'Guardando...' : 'Aplicar Tema' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="themeForm">
+          <div class="row">
+            <!-- Theme Mode -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-adjust mr-2"></i>Modo de Tema</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="theme_mode">Seleccionar Modo</label>
+                    <select class="form-control" id="theme_mode" formControlName="theme_mode">
+                      <option value="light">Claro</option>
+                      <option value="dark">Oscuro</option>
+                      <option value="auto">Automático (según sistema)</option>
+                    </select>
+                  </div>
+                  <div class="alert alert-info">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    El modo automático se adapta a las preferencias de tu sistema operativo.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Font Size -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-text-height mr-2"></i>Tamaño de Fuente</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="font_size">Tamaño</label>
+                    <select class="form-control" id="font_size" formControlName="font_size">
+                      <option value="small">Pequeño</option>
+                      <option value="medium">Medio</option>
+                      <option value="large">Grande</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Colors -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-paint-brush mr-2"></i>Colores</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="primary_color">Color Primario</label>
+                    <input type="color" class="form-control" id="primary_color" formControlName="primary_color">
+                  </div>
+                  <div class="form-group">
+                    <label for="accent_color">Color de Acento</label>
+                    <input type="color" class="form-control" id="accent_color" formControlName="accent_color">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Display Options -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-eye mr-2"></i>Opciones de Visualización</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="compact_mode" formControlName="compact_mode">
+                      <label class="custom-control-label" for="compact_mode">
+                        Modo Compacto
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="show_avatars" formControlName="show_avatars">
+                      <label class="custom-control-label" for="show_avatars">
+                        Mostrar Avatares
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="show_timestamps" formControlName="show_timestamps">
+                      <label class="custom-control-label" for="show_timestamps">
+                        Mostrar Marcas de Tiempo
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="message_preview" formControlName="message_preview">
+                      <label class="custom-control-label" for="message_preview">
+                        Vista Previa de Mensajes
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="animations_enabled" formControlName="animations_enabled">
+                      <label class="custom-control-label" for="animations_enabled">
+                        Habilitar Animaciones
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Privacy Tab -->
+    <div *ngIf="activeTab === 'privacidad'" class="card card-danger card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-shield-alt mr-2"></i>
+          Configuración de Privacidad
+        </h3>
+        <div class="card-tools">
+          <button class="btn btn-sm btn-primary" (click)="saveUserPreferences()" [disabled]="saving || privacyForm.invalid">
+            <i class="fas fa-save mr-1" *ngIf="!saving"></i>
+            <i class="fas fa-spinner fa-spin mr-1" *ngIf="saving"></i>
+            {{ saving ? 'Guardando...' : 'Guardar Privacidad' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="privacyForm">
+          <div class="row">
+            <!-- Visibility Settings -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-eye mr-2"></i>Visibilidad</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="show_online_status" formControlName="show_online_status">
+                      <label class="custom-control-label" for="show_online_status">
+                        Mostrar Estado en Línea
+                      </label>
+                    </div>
+                    <small class="form-text text-muted">Los demás usuarios verán cuando estés en línea</small>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="show_last_seen" formControlName="show_last_seen">
+                      <label class="custom-control-label" for="show_last_seen">
+                        Mostrar Última Conexión
+                      </label>
+                    </div>
+                    <small class="form-text text-muted">Los demás verán cuándo fue tu última conexión</small>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="show_typing_indicator" formControlName="show_typing_indicator">
+                      <label class="custom-control-label" for="show_typing_indicator">
+                        Mostrar Indicador de Escritura
+                      </label>
+                    </div>
+                    <small class="form-text text-muted">Los demás verán cuando estés escribiendo</small>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="show_read_receipts" formControlName="show_read_receipts">
+                      <label class="custom-control-label" for="show_read_receipts">
+                        Enviar Confirmación de Lectura
+                      </label>
+                    </div>
+                    <small class="form-text text-muted">Los demás verán cuando leas sus mensajes</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Communication Settings -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-comments mr-2"></i>Comunicación</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="who_can_message">¿Quién puede enviarme mensajes?</label>
+                    <select class="form-control" id="who_can_message" formControlName="who_can_message">
+                      <option value="everyone">Todos</option>
+                      <option value="contacts">Solo mis Contactos</option>
+                      <option value="nobody">Nadie (solo administradores)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="who_can_add_to_groups">¿Quién puede agregarme a grupos?</label>
+                    <select class="form-control" id="who_can_add_to_groups" formControlName="who_can_add_to_groups">
+                      <option value="everyone">Todos</option>
+                      <option value="contacts">Solo mis Contactos</option>
+                      <option value="admins">Solo Administradores</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="allow_group_invites" formControlName="allow_group_invites">
+                      <label class="custom-control-label" for="allow_group_invites">
+                        Permitir Invitaciones a Grupos
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="allow_channel_invites" formControlName="allow_channel_invites">
+                      <label class="custom-control-label" for="allow_channel_invites">
+                        Permitir Invitaciones a Canales
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Security Settings -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-lock mr-2"></i>Seguridad</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="block_unknown_senders" formControlName="block_unknown_senders">
+                      <label class="custom-control-label" for="block_unknown_senders">
+                        Bloquear Remitentes Desconocidos
+                      </label>
+                    </div>
+                    <small class="form-text text-muted">Los mensajes de usuarios que no son tus contactos se archivarán automáticamente</small>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="auto_archive_read" formControlName="auto_archive_read">
+                      <label class="custom-control-label" for="auto_archive_read">
+                        Archivar Automáticamente Mensajes Leídos
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Data Retention -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-history mr-2"></i>Retención de Datos</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="data_retention_days">Días de Retención</label>
+                    <input type="number" class="form-control" id="data_retention_days" formControlName="data_retention_days" min="30" max="730">
+                    <small class="form-text text-muted">Los mensajes se eliminarán automáticamente después de este período</small>
+                  </div>
+                  <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Los mensajes eliminados no se pueden recuperar
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Storage Tab -->
+    <div *ngIf="activeTab === 'storage'" class="card card-success card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-database mr-2"></i>
+          Gestión de Almacenamiento
+        </h3>
+      </div>
+      <div class="card-body">
+        <!-- Storage Overview -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="info-box bg-gradient-info">
+              <span class="info-box-icon">
+                <i class="fas fa-hdd"></i>
+              </span>
+              <div class="info-box-content">
+                <span class="info-box-text">Almacenamiento Utilizado</span>
+                <span class="info-box-number">
+                  {{ storageInfo?.used_size | number: '1.0-0' }} / {{ storageInfo?.total_size | number: '1.0-0' }} bytes
+                </span>
+                <div class="progress">
+                  <div class="progress-bar" [ngClass]="'bg-' + getStorageBarColor()" [style.width.%]="getStoragePercentage()"></div>
+                </div>
+                <span class="progress-description">
+                  {{ getStoragePercentage() }}% del espacio total
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Storage Stats -->
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-chart-pie mr-2"></i>Estadísticas</h3>
+              </div>
+              <div class="card-body">
+                <div class="info-box">
+                  <span class="info-box-icon bg-info">
+                    <i class="fas fa-paperclip"></i>
+                  </span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Archivos Adjuntos</span>
+                    <span class="info-box-number">{{ storageInfo?.attachments_count || 0 }}</span>
+                  </div>
+                </div>
+                <div class="info-box">
+                  <span class="info-box-icon bg-success">
+                    <i class="fas fa-sync"></i>
+                  </span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Elementos en Caché</span>
+                    <span class="info-box-number">{{ storageInfo?.cached_items || 0 }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Auto Download Settings -->
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-download mr-2"></i>Descarga Automática</h3>
+              </div>
+              <div class="card-body">
+                <form [formGroup]="storageForm">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="auto_download_images" formControlName="auto_download_images">
+                      <label class="custom-control-label" for="auto_download_images">
+                        Descargar Imágenes Automáticamente
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="auto_download_files" formControlName="auto_download_files">
+                      <label class="custom-control-label" for="auto_download_files">
+                        Descargar Archivos Automáticamente
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="auto_download_max_size">Tamaño Máximo para Descarga Automática (KB)</label>
+                    <input type="number" class="form-control" id="auto_download_max_size" formControlName="auto_download_max_size" min="1024" max="10240">
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="cache_media" formControlName="cache_media">
+                      <label class="custom-control-label" for="cache_media">
+                        Guardar Media en Caché
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="compress_images" formControlName="compress_images">
+                      <label class="custom-control-label" for="compress_images">
+                        Comprimir Imágenes al Subir
+                      </label>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cleanup Options -->
+          <div class="col-md-12">
+            <div class="card card-warning">
+              <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-broom mr-2"></i>Opciones de Limpieza</h3>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <form [formGroup]="storageForm">
+                      <div class="form-group">
+                        <label for="delete_old_media_days">Eliminar Media Antiguo (días)</label>
+                        <input type="number" class="form-control" id="delete_old_media_days" formControlName="delete_old_media_days" min="30" max="365">
+                        <small class="form-text text-muted">Archivos adjuntos más antiguos que este período serán eliminados</small>
+                      </div>
+                    </form>
+                    <button type="button" class="btn btn-warning" (click)="clearOldAttachments()" [disabled]="cleaningStorage">
+                      <i class="fas fa-trash-alt mr-1" *ngIf="!cleaningStorage"></i>
+                      <i class="fas fa-spinner fa-spin mr-1" *ngIf="cleaningStorage"></i>
+                      Limpiar Archivos Antiguos
+                    </button>
+                  </div>
+                  <div class="col-md-6">
+                    <h5><i class="fas fa-sync mr-2"></i>Limpiar Caché</h5>
+                    <p class="text-muted">
+                      Elimina los datos en caché para liberar espacio y mejorar el rendimiento.
+                    </p>
+                    <button type="button" class="btn btn-info" (click)="clearCache()" [disabled]="cleaningStorage">
+                      <i class="fas fa-sync mr-1" *ngIf="!cleaningStorage"></i>
+                      <i class="fas fa-spinner fa-spin mr-1" *ngIf="cleaningStorage"></i>
+                      Limpiar Caché
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Largest Files -->
+          <div class="col-md-12" *ngIf="storageInfo?.largest_files?.length">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-file-archive mr-2"></i>Archivos Más Grandes</h3>
+              </div>
+              <div class="card-body">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Archivo</th>
+                      <th>Tamaño</th>
+                      <th>Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let file of storageInfo.largest_files">
+                      <td><i class="fas fa-file mr-2"></i>{{ file.name }}</td>
+                      <td>{{ file.size | number: '1.0-0' }} bytes</td>
+                      <td>{{ file.date }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="row mt-3">
+          <div class="col-12">
+            <button class="btn btn-primary" (click)="saveUserPreferences()" [disabled]="saving || storageForm.invalid">
+              <i class="fas fa-save mr-1" *ngIf="!saving"></i>
+              <i class="fas fa-spinner fa-spin mr-1" *ngIf="saving"></i>
+              {{ saving ? 'Guardando...' : 'Guardar Configuración' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

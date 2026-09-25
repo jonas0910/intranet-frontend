@@ -1,0 +1,245 @@
+<app-system-layout [title]="viewConfig.title"
+    [subtitle]="'Gestión de Inspecciones Técnicas de Seguridad en Edificaciones'"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comercialización', url: '/comercializacion'}, {label: 'Licencias', url: '/comercializacion/licencias'}, {label: 'ITSE'}]"
+    [subsystem]="'comercializacion'">
+
+    <div class="row">
+        <!-- Panel Izquierdo: Resumen y Navegación -->
+        <div class="col-md-4">
+            <div class="card card-outline card-success h-100 shadow-sm">
+                <div class="card-header border-0 mt-2">
+                    <h3 class="card-title text-success font-weight-bold">
+                        <i [class]="viewConfig.icon + ' mr-2'"></i> Evaluaciones ITSE
+                    </h3>
+                </div>
+                <div class="card-body bg-light">
+                    <div class="nav flex-column nav-pills">
+                        <a class="nav-link mb-2 cursor-pointer shadow-sm"
+                            [ngClass]="currentTab === 'PENDIENTE' ? 'active bg-white text-success font-weight-bold' : 'text-muted'"
+                            (click)="setTab('PENDIENTE')">
+                            <i class="fas fa-search-location mr-2"></i> Inspecciones Pendientes
+                            <span class="badge float-right"
+                                [ngClass]="currentTab === 'PENDIENTE' ? 'badge-success' : 'badge-secondary'">{{
+                                getCount('PENDIENTE') }}</span>
+                        </a>
+                        <a class="nav-link mb-2 cursor-pointer shadow-sm"
+                            [ngClass]="currentTab === 'EVALUADO' ? 'active bg-white text-success font-weight-bold' : 'text-muted'"
+                            (click)="setTab('EVALUADO')">
+                            <i class="fas fa-clipboard-check mr-2"></i> Informes Concluidos
+                            <span class="badge float-right"
+                                [ngClass]="currentTab === 'EVALUADO' ? 'badge-success' : 'badge-secondary'">{{
+                                getCount('EVALUADO') }}</span>
+                        </a>
+                        <a class="nav-link cursor-pointer shadow-sm"
+                            [ngClass]="currentTab === 'CERRADO' ? 'active bg-white text-success font-weight-bold' : 'text-muted'"
+                            (click)="setTab('CERRADO')">
+                            <i class="fas fa-file-signature mr-2"></i> Resoluciones Emitidas
+                            <span class="badge float-right"
+                                [ngClass]="currentTab === 'CERRADO' ? 'badge-success' : 'badge-secondary'">{{
+                                getCount('CERRADO') }}</span>
+                        </a>
+                    </div>
+
+                    <div class="mt-4 px-2">
+                        <button class="btn btn-success btn-block shadow-sm" (click)="onAction('create')">
+                            <i class="fas fa-plus mr-1"></i> Nueva Evaluación
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Derecho: Lista de Programación -->
+        <div class="col-md-8">
+            <div class="card card-outline card-success shadow-sm">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h3 class="card-title font-weight-bold">
+                        {{ currentTab === 'PENDIENTE' ? 'Programación Diaria' : (currentTab === 'EVALUADO' ? 'Historial
+                        de Informes' : 'Registro de Resoluciones') }}
+                    </h3>
+                    <div class="card-tools">
+                        <button class="btn btn-xs btn-light mr-1" (click)="onExportExcel()" title="Exportar Excel">
+                            <i class="fas fa-file-excel text-success"></i>
+                        </button>
+                        <button class="btn btn-xs btn-light" (click)="loadData()" title="Sincronizar">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li *ngFor="let item of filteredData"
+                            class="list-group-item d-flex justify-content-between align-items-center p-3 border-bottom list-hover">
+                            <div>
+                                <div class="d-flex align-items-center mb-1">
+                                    <span class="badge badge-light border mr-2">{{item.nro_expediente}}</span>
+                                    <h6 class="mb-0 font-weight-bold text-success">{{item.direccion}} - <small
+                                            class="text-muted">{{item.giro || 'Giro no especificado'}}</small></h6>
+                                </div>
+                                <div class="small">
+                                    <span class="text-muted mr-3"><i class="fas fa-user-hard-hat mr-1"></i> Inspector:
+                                        {{item.inspector || 'Por asignar'}}</span>
+                                    <span class="badge" [ngClass]="{
+                                        'badge-success': item.resultado === 'PROCEDENTE',
+                                        'badge-warning': item.resultado === 'OBSERVADO',
+                                        'badge-danger': item.resultado === 'NO PROCEDENTE'
+                                    }">{{item.resultado}}</span>
+                                    <span class="ml-2 text-xs text-muted"><i class="far fa-calendar-alt mr-1"></i>
+                                        {{item.fecha_inspeccion | date:'dd/MM/yyyy'}}</span>
+                                </div>
+                                <div class="mt-1 small text-dark font-italic">
+                                    Solicitante: {{item.solicitante}}
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column align-items-end">
+                                <button class="btn btn-sm btn-outline-success mb-1" (click)="onAction('edit', item)">
+                                    {{ currentTab === 'PENDIENTE' ? 'Registrar Resultado' : 'Editar Registro' }} <i
+                                        class="fas fa-arrow-right ml-1"></i>
+                                </button>
+                                <div class="d-flex">
+                                    <button class="btn btn-xs text-muted p-0 mr-3" (click)="onAction('view', item)"
+                                        title="Ver Detalle">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </button>
+                                    <button class="btn btn-xs text-danger p-0" (click)="deleteItem(item.id)"
+                                        title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- Empty State -->
+                        <li *ngIf="filteredData.length === 0" class="list-group-item text-center p-5 text-muted">
+                            <i class="fas fa-folder-open fa-3x mb-3 opacity-25"></i><br>
+                            No se encontraron registros en esta categoría.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Registro -->
+    <div class="modal fade show" *ngIf="showModal" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0" [style.border-radius.px]="cv.cardBorderRadius">
+                <div class="modal-header shadow-sm" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+                    [style.border-top-left-radius.px]="mc.borderRadius"
+                    [style.border-top-right-radius.px]="mc.borderRadius">
+                    <h5 class="modal-title font-weight-bold">
+                        <i [class]="mc.headerIcon + ' mr-2'"></i>
+                        {{ viewMode === 'view' ? 'Detalle ITSE' : (viewMode === 'edit' ? 'Actualizar Registro ITSE' :
+                        'Nueva Evaluación ITSE') }}
+                    </h5>
+                    <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <form [formGroup]="form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Nº de Expediente</label>
+                                    <input type="text" class="form-control" formControlName="nro_expediente"
+                                        placeholder="Ej: ITSE-2026-0XXX">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Fecha de Inspección</label>
+                                    <input type="date" class="form-control" formControlName="fecha_inspeccion">
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Nombre del Solicitante / Razón Social</label>
+                                    <input type="text" class="form-control" formControlName="solicitante">
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Dirección del Establecimiento</label>
+                                    <input type="text" class="form-control" formControlName="direccion">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Giro del Negocio</label>
+                                    <input type="text" class="form-control" formControlName="giro">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Inspector Designado</label>
+                                    <input type="text" class="form-control" formControlName="inspector">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Nivel de Riesgo</label>
+                                    <select class="form-control" formControlName="nivel_riesgo">
+                                        <option value="BAJO">BAJO</option>
+                                        <option value="MEDIO">MEDIO</option>
+                                        <option value="ALTO">ALTO</option>
+                                        <option value="MUY ALTO">MUY ALTO</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Resultado</label>
+                                    <select class="form-control" formControlName="resultado">
+                                        <option value="PROCEDENTE">PROCEDENTE</option>
+                                        <option value="OBSERVADO">OBSERVADO</option>
+                                        <option value="NO PROCEDENTE">NO PROCEDENTE</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Vigencia Desde</label>
+                                    <input type="date" class="form-control" formControlName="vigencia_inicio">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Vigencia Hasta</label>
+                                    <input type="date" class="form-control" formControlName="vigencia_fin">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold text-success">Estado del Trámite</label>
+                                    <select class="form-control border-success" formControlName="estado">
+                                        <option value="PENDIENTE">PENDIENTE (Programación)</option>
+                                        <option value="EVALUADO">EVALUADO (Informe Concluido)</option>
+                                        <option value="CERRADO">CERRADO (Resolución Emitida)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group mb-0">
+                                    <label class="font-weight-bold">Observaciones / Recomendaciones</label>
+                                    <textarea class="form-control" formControlName="observaciones" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-light shadow-sm" (click)="closeModal()">
+                        {{ viewMode === 'view' ? 'Cerrar' : 'Cancelar' }}
+                    </button>
+                    <button type="button" class="btn btn-success shadow-sm px-4" (click)="save()" [disabled]="isSaving"
+                        *ngIf="viewMode !== 'view'">
+                        <i class="fas fa-save mr-1"></i> {{ isSaving ? 'Guardando...' : (viewMode === 'edit' ?
+                        'Actualizar Registro' : 'Guardar') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>

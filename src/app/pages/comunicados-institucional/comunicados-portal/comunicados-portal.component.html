@@ -1,0 +1,90 @@
+<app-system-layout
+  title="Comunicados"
+  subtitle="Avisos institucionales vigentes (visibles para todo el personal)"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comunicados'}]"
+  subsystem="comunicados">
+
+  <div class="row mb-3">
+    <div class="col-md-6 col-lg-4">
+      <div class="small-box bg-info">
+        <div class="inner">
+          <h3>{{ stats.total }}</h3>
+          <p>Total</p>
+        </div>
+        <div class="icon"><i class="fas fa-bullhorn"></i></div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="small-box bg-primary">
+        <div class="inner">
+          <h3><i class="fas fa-file-pdf"></i></h3>
+          <p>Documentos PDF</p>
+        </div>
+        <a routerLink="/comunicados/documentos" class="small-box-footer">
+          Ver RIT, Directivas y más <i class="fas fa-arrow-circle-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0"><i class="fas fa-filter mr-2"></i>Filtros</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-3">
+          <input type="text" class="form-control" placeholder="Buscar..." [(ngModel)]="searchTerm" (ngModelChange)="onFilterChange()">
+        </div>
+        <div class="col-md-2">
+          <select class="form-control" [(ngModel)]="selectedTipo" (ngModelChange)="onFilterChange()">
+            <option value="todos">Tipo: Todos</option>
+            <option value="noticia">Noticias</option>
+            <option value="evento">Eventos</option>
+            <option value="alerta">Alertas</option>
+            <option value="anuncio">Anuncios</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-control" [(ngModel)]="selectedPrioridad" (ngModelChange)="onFilterChange()">
+            <option value="todos">Prioridad: Todas</option>
+            <option value="normal">Normal</option>
+            <option value="importante">Importante</option>
+            <option value="urgente">Urgente</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="d-flex align-items-center">
+            <input type="checkbox" [(ngModel)]="showAnclados" (ngModelChange)="onFilterChange()" class="mr-2"> Solo anclados
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+  </div>
+
+  <div *ngIf="!loading && filteredComunicados.length === 0" class="alert alert-info">
+    <i class="fas fa-info-circle mr-2"></i>No hay comunicados que coincidan con los filtros.
+  </div>
+
+  <div *ngFor="let c of filteredComunicados" class="card mb-3" [class.border-danger]="c.prioridad === 'urgente'">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="fas fa-bullhorn mr-2"></i>{{ c.titulo }}</h5>
+      <span>
+        <span class="badge mr-1" [ngClass]="getTipoBadge(c.tipo)">{{ c.tipo }}</span>
+        <span class="badge" [ngClass]="getPrioridadBadge(c.prioridad)">{{ c.prioridad }}</span>
+        <span class="badge badge-warning ml-1" *ngIf="c.es_anclado">Anclado</span>
+      </span>
+    </div>
+    <div class="card-body">
+      <p class="mb-2">{{ (c.contenido || '').substring(0, 300) }}{{ (c.contenido || '').length > 300 ? '...' : '' }}</p>
+      <small class="text-muted">
+        <i class="fas fa-user mr-1"></i>{{ c.created_by?.name || '-' }}
+        <i class="fas fa-calendar ml-2 mr-1"></i>{{ formatDate(c.fecha_publicacion) }}
+      </small>
+    </div>
+  </div>
+</app-system-layout>

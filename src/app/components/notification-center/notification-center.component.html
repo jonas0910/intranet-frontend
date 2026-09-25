@@ -1,0 +1,200 @@
+<!-- Notification Center Dropdown -->
+<div class="notification-center" (click)="onClickInside($event)">
+  <!-- Bell Icon with Badge -->
+  <button
+    type="button"
+    class="nav-link notification-bell"
+    [class.has-notifications]="hasUnread"
+    (click)="togglePanel()"
+    title="Centro de Notificaciones">
+    <i class="far fa-bell"></i>
+    <span class="badge badge-danger navbar-badge animate__animated animate__pulse"
+          *ngIf="hasUnread">
+      {{ getUnreadBadge() }}
+    </span>
+  </button>
+
+  <!-- Notification Panel -->
+  <div class="notification-panel"
+       [class.show]="isOpen"
+       *ngIf="isOpen">
+
+    <!-- Header -->
+    <div class="notification-header">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <h6 class="mb-0">
+            <i class="fas fa-bell mr-2"></i>
+            Notificaciones
+          </h6>
+          <small class="text-muted">
+            {{ stats.unread }} sin leer de {{ stats.total }} total
+          </small>
+        </div>
+        <div class="header-actions">
+          <button
+            type="button"
+            class="btn btn-sm btn-light"
+            (click)="toggleSettings()"
+            title="Configuración">
+            <i class="fas fa-cog"></i>
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-light"
+            (click)="closePanel()"
+            title="Cerrar">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="notification-filters">
+      <div class="filter-tabs">
+        <button
+          *ngFor="let filter of filterOptions"
+          type="button"
+          class="filter-tab"
+          [class.active]="activeFilter === filter.value"
+          (click)="setFilter(filter.value)"
+          [title]="filter.label">
+          <i [class]="filter.icon" [style.color]="filter.color"></i>
+          <span class="filter-label d-none d-md-inline">{{ filter.label }}</span>
+          <span class="filter-count" *ngIf="getFilterCount(filter.value) > 0">
+            {{ getFilterCount(filter.value) }}
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Actions REMOVED -->
+
+    <!-- Settings Panel -->
+    <div class="notification-settings" *ngIf="showSettings">
+      <div class="settings-header">
+        <button
+          type="button"
+          class="btn btn-sm btn-link"
+          (click)="toggleSettings()">
+          <i class="fas fa-arrow-left mr-1"></i>
+          Volver
+        </button>
+        <h6 class="mb-0">Configuración de Notificaciones</h6>
+      </div>
+      <div class="settings-content">
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="browserNotifs" checked>
+          <label class="form-check-label" for="browserNotifs">
+            Notificaciones del navegador
+          </label>
+        </div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="soundNotifs" checked>
+          <label class="form-check-label" for="soundNotifs">
+            Sonido de notificación
+          </label>
+        </div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="emailNotifs">
+          <label class="form-check-label" for="emailNotifs">
+            Notificaciones por email
+          </label>
+        </div>
+        <hr>
+        <button type="button" class="btn btn-sm btn-primary btn-block">
+          <i class="fas fa-save mr-1"></i>
+          Guardar Preferencias
+        </button>
+      </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="notification-list" *ngIf="!showSettings">
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!hasNotifications">
+        <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+        <h6 class="text-muted">No hay notificaciones</h6>
+        <p class="text-muted small">
+          Te mantendremos informado cuando recibas algo nuevo
+        </p>
+      </div>
+
+      <!-- Notification Items -->
+      <div class="notification-item"
+           *ngFor="let notification of filteredNotifications"
+           [class.unread]="!notification.read"
+           (click)="onNotificationClick(notification, $event)">
+
+        <!-- Icon -->
+        <div class="notification-icon" [style.background-color]="notification.iconColor + '15'">
+          <i [class]="notification.icon" [style.color]="notification.iconColor"></i>
+        </div>
+
+        <!-- Content -->
+        <div class="notification-content">
+          <div class="notification-title">
+            {{ notification.title }}
+            <span class="badge badge-sm ml-1"
+                  [class]="getPriorityBadgeClass(notification.priority)"
+                  *ngIf="notification.priority && notification.priority !== 'normal'">
+              {{ getPriorityText(notification.priority) }}
+            </span>
+          </div>
+          <div class="notification-message">
+            {{ notification.message }}
+          </div>
+          <div class="notification-meta">
+            <span class="notification-time">
+              <i class="far fa-clock mr-1"></i>
+              {{ getRelativeTime(notification.timestamp) }}
+            </span>
+            <button
+              *ngIf="notification.actionLabel"
+              type="button"
+              class="btn btn-link btn-sm p-0 ml-2"
+              (click)="onNotificationClick(notification, $event)">
+              {{ notification.actionLabel }}
+              <i class="fas fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="notification-actions-inline">
+          <button
+            *ngIf="!notification.read"
+            type="button"
+            class="btn btn-sm btn-light"
+            (click)="markAsRead(notification, $event)"
+            title="Marcar como leída">
+            <i class="fas fa-check"></i>
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-light"
+            (click)="removeNotification(notification, $event)"
+            title="Eliminar">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <!-- Unread Indicator -->
+        <div class="unread-indicator" *ngIf="!notification.read"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="notification-footer" *ngIf="hasNotifications && !showSettings">
+      <a routerLink="/notificaciones" class="btn btn-link btn-block" (click)="closePanel()">
+        Ver todas las notificaciones
+        <i class="fas fa-arrow-right ml-1"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+
+

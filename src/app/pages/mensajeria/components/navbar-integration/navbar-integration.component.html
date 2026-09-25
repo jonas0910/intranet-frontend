@@ -1,0 +1,167 @@
+<!-- Mensajería Navbar Integration -->
+<div class="mensajeria-navbar-integration">
+  <!-- Quick Compose Button -->
+  <div class="quick-compose-btn" *ngIf="showQuickCompose">
+    <button type="button" 
+            class="btn btn-primary btn-sm"
+            (click)="onQuickCompose()"
+            title="Nuevo mensaje">
+      <i class="fas fa-plus mr-1"></i>
+      <span class="d-none d-md-inline">Mensaje</span>
+    </button>
+  </div>
+
+  <!-- Notifications Dropdown -->
+  <div class="notifications-dropdown" 
+       *ngIf="showNotificationDropdown"
+       ngbDropdown
+       placement="bottom-right">
+    
+    <!-- Notification Bell -->
+    <button type="button" 
+            class="btn btn-link notification-bell"
+            ngbDropdownToggle
+            [class.has-notifications]="hasUnreadMessages"
+            title="Notificaciones de mensajería">
+      <i class="fas fa-envelope"></i>
+      <span class="notification-badge" 
+            *ngIf="hasUnreadMessages"
+            [class.badge-danger]="unreadCount > 0">
+        {{ formatUnreadCount(unreadCount) }}
+      </span>
+    </button>
+
+    <!-- Dropdown Menu -->
+    <div class="dropdown-menu dropdown-menu-right notification-menu" 
+         ngbDropdownMenu>
+      
+      <!-- Header -->
+      <div class="dropdown-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">
+            <i class="fas fa-envelope text-primary mr-2"></i>
+            Mensajes
+          </h6>
+          <button type="button" 
+                  class="btn btn-link btn-sm p-0"
+                  (click)="onMarkAllAsRead()"
+                  *ngIf="hasNotifications"
+                  title="Marcar todo como leído">
+            <i class="fas fa-check-double"></i>
+          </button>
+        </div>
+        
+        <!-- Stats Summary -->
+        <div class="stats-summary mt-2">
+          <div class="row text-center">
+            <div class="col-4">
+              <div class="stat-item">
+                <div class="stat-number">{{ stats.unreadMessages }}</div>
+                <div class="stat-label">No leídos</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="stat-item">
+                <div class="stat-number">{{ stats.unreadConversations }}</div>
+                <div class="stat-label">Conversaciones</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="stat-item">
+                <div class="stat-number">{{ stats.importantMessages }}</div>
+                <div class="stat-label">Importantes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications List -->
+      <div class="notifications-list" *ngIf="hasNotifications">
+        <div class="notification-item"
+             *ngFor="let notification of notifications"
+             (click)="onNotificationClick(notification)"
+             [class.unread]="!notification.read">
+          
+          <div class="notification-content">
+            <div class="notification-icon">
+              <i [class]="getNotificationIcon(notification)"
+                 [class]="getNotificationColorClass(notification)"></i>
+            </div>
+            
+            <div class="notification-body">
+              <div class="notification-title">
+                {{ notification.title }}
+              </div>
+              <div class="notification-message">
+                {{ notification.message }}
+              </div>
+              <div class="notification-time">
+                {{ formatNotificationTime(notification.timestamp) }}
+              </div>
+            </div>
+            
+            <div class="notification-actions">
+              <button type="button" 
+                      class="btn btn-link btn-sm p-0"
+                      (click)="onClearNotification(notification, $event)"
+                      title="Eliminar notificación">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-notifications" *ngIf="!hasNotifications">
+        <div class="text-center py-3">
+          <i class="fas fa-envelope-open fa-2x text-muted mb-2"></i>
+          <p class="text-muted mb-0">No hay notificaciones nuevas</p>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="dropdown-footer">
+        <a href="/mensajeria" class="btn btn-outline-primary btn-sm btn-block">
+          <i class="fas fa-envelope mr-1"></i>
+          Ver todos los mensajes
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Compose Modal -->
+<div class="modal fade" 
+     [class.show]="showQuickComposeModal"
+     [style.display]="showQuickComposeModal ? 'block' : 'none'"
+     *ngIf="showQuickComposeModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-edit mr-2"></i>
+          Nuevo Mensaje
+        </h5>
+        <button type="button" 
+                class="close" 
+                (click)="onCloseQuickCompose()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-0">
+        <app-message-compose
+          (messageSent)="onQuickComposeSuccess()"
+          (cancel)="onCloseQuickCompose()">
+        </app-message-compose>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show" 
+     *ngIf="showQuickComposeModal"
+     (click)="onCloseQuickCompose()">
+</div>

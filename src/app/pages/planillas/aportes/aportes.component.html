@@ -1,0 +1,175 @@
+<app-page-header title="Aportes y Contribuciones" subtitle="Gestión de aportes y contribuciones" [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Planillas'}, {label: 'Aportes y Contribuciones'}]"></app-page-header>
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+              <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                <i class="fas fa-percentage mr-1"></i> Listado de Aportes
+              </h3>
+              <ng-container *ngIf="cv.showExportButtons">
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"><i [class]="cv.excelBtnIcon"></i> {{ cv.excelBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"><i [class]="cv.pdfBtnIcon"></i> {{ cv.pdfBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass"><i [class]="cv.printBtnIcon"></i> {{ cv.printBtnLabel }}</button>
+              </ng-container>
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.exportBtnClass"><i [class]="cv.exportBtnIcon"></i> {{ cv.exportBtnLabel }}</button>
+            </div>
+            <div class="ms-auto flex-shrink-0">
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                <i [class]="cv.newBtnIcon"></i> Nuevo Aporte
+              </button>
+            </div>
+          </div>
+          <div class="card-body px-0 pt-0 pb-2">
+            <div class="table-responsive p-4">
+              <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-striped table-bordered table-hover w-100" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize">
+                <thead>
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize">Código</th>
+                    <th [style.font-size]="cv.headerFontSize">Nombre</th>
+                    <th [style.font-size]="cv.headerFontSize">Tipo</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Porcentaje (%)</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let aporte of aportes">
+                    <td><span class="badge bg-dark">{{ aporte.code }}</span></td>
+                    <td>
+                      <strong>{{ aporte.name }}</strong>
+                      <p class="text-muted small mb-0" *ngIf="aporte.sunat_code">
+                        <i class="fas fa-file-invoice text-info me-1"></i>SUNAT: {{ aporte.sunat_code }}
+                      </p>
+                    </td>
+                    <td><span class="badge bg-info">{{ getTipoLabel(aporte.type) }}</span></td>
+                    <td class="text-center"><strong>{{ aporte.percentage }}%</strong></td>
+                    <td class="text-center">
+                      <app-status-badge [status]="aporte.is_active"></app-status-badge>
+                    </td>
+                    <td class="text-center">
+                      <app-crud-actions [showView]="true" [showEdit]="true" [showDelete]="true" (onView)="openViewModal(aporte)" (onEdit)="openEditModal(aporte)" (onDelete)="confirmDelete(aporte)"></app-crud-actions>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Crear/Editar -->
+<div class="modal fade" id="aporteModal" tabindex="-1" aria-hidden="true" #aporteModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title">
+          <i class="fas" [ngClass]="isEditMode ? 'fa-edit' : 'fa-plus'"></i>
+          {{ isEditMode ? 'Editar' : 'Nuevo' }} Aporte
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()" aria-label="Close"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg">
+        <form [formGroup]="aporteForm">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Código <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="code" placeholder="APO-001">
+              <div class="text-danger small" *ngIf="aporteForm.get('code')?.invalid && aporteForm.get('code')?.touched">
+                Código es requerido
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Tipo <span class="text-danger">*</span></label>
+              <select class="form-control" [ngClass]="mc.inputSize" formControlName="type">
+                <option *ngFor="let tipo of tiposAporte" [value]="tipo.value">{{ tipo.label }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Nombre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="name" placeholder="Nombre del aporte">
+            <div class="text-danger small" *ngIf="aporteForm.get('name')?.invalid && aporteForm.get('name')?.touched">
+              Nombre es requerido
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Porcentaje (%) <span class="text-danger">*</span></label>
+              <input type="number" step="0.01" class="form-control" [ngClass]="mc.inputSize" formControlName="percentage" placeholder="9.00">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Código SUNAT</label>
+              <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="sunat_code" placeholder="0900">
+              <small class="text-muted">Código PDT-PLAME</small>
+            </div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" formControlName="is_active" id="isActive">
+            <label class="form-check-label" for="isActive">Activo</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeModal()">
+          <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}
+        </button>
+        <button type="button" class="btn btn-sm" [ngClass]="mc.saveBtnClass" (click)="saveAporte()" [disabled]="aporteForm.invalid || saving">
+          <span *ngIf="saving" class="spinner-border spinner-border-sm mr-1"></span>
+          <i *ngIf="!saving" [class]="mc.saveBtnIcon + ' mr-1'"></i>
+          {{ isEditMode ? 'Actualizar' : mc.saveBtnLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ver -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true" #viewModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title"><i class="fas fa-info-circle mr-2"></i>Detalles del Aporte</h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeViewModal()" aria-label="Close"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg" *ngIf="selectedAporte">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Código:</strong>
+            <p>{{ selectedAporte.code }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Tipo:</strong>
+            <p><span class="badge bg-info">{{ getTipoLabel(selectedAporte.type) }}</span></p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Nombre:</strong>
+            <p>{{ selectedAporte.name }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Porcentaje:</strong>
+            <p class="h4 text-primary">{{ selectedAporte.percentage }}%</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Código SUNAT:</strong>
+            <p>{{ selectedAporte.sunat_code || 'N/A' }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Estado:</strong>
+            <p>
+              <app-status-badge [status]="selectedAporte.is_active"></app-status-badge>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeViewModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

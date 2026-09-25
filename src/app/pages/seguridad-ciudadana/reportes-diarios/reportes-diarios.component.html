@@ -1,0 +1,464 @@
+<app-system-layout [title]="'Gestor de Reportes Diarios'"
+  [subtitle]="'Consulta y aprobación de informes de ocurrencias, zonas críticas y tiempos de respuesta'"
+  [subtitleItems]="subtitleItems"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Seguridad Ciudadana', url: '/seguridad-ciudadana'}, {label: 'Reportes Diarios'}]"
+  [subsystem]="'seguridad-ciudadana'">
+
+  <div class="card elevation-1 mb-3"
+    [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-primary'"
+    [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+
+    <!-- Institutional Toolbar -->
+    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom bg-white" style="border-top: 4px solid #1a237e;">
+      <div class="d-flex align-items-center flex-wrap" style="gap: 12px;">
+        <div class="icon-circle bg-light text-primary p-2 mr-1">
+          <i class="fas fa-file-shield fa-lg"></i>
+        </div>
+        <div>
+          <h3 class="font-weight-bold mb-0 text-dark" style="font-size: 1.1rem; letter-spacing: -0.2px;">
+            HISTORIAL DE REPORTES OPERATIVOS
+          </h3>
+          <small class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: 1px;">Gestión y Control de Incidentes Diarios</small>
+        </div>
+      </div>
+      <div class="d-flex" style="gap: 8px;">
+        <button class="btn btn-sm btn-primary px-3 rounded-pill shadow-sm" (click)="isFiltersCollapsed = !isFiltersCollapsed">
+          <i class="fas mr-2" [ngClass]="isFiltersCollapsed ? 'fa-times' : 'fa-plus-circle'"></i>
+          {{ isFiltersCollapsed ? 'CERRAR' : 'GENERAR NUEVO REPORTE' }}
+        </button>
+        <button class="btn btn-sm btn-light border-secondary px-2" (click)="cargarReportes()" title="Sincronizar Datos">
+          <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Report Generation Section -->
+    <div class="bg-light border-bottom overflow-hidden transition-all"
+      [style.max-height]="isFiltersCollapsed ? '500px' : '0px'" 
+      [style.padding]="isFiltersCollapsed ? '1.5rem' : '0px'">
+
+      <div class="card border shadow-none bg-white mb-0">
+        <div class="card-body p-3">
+          <div class="row align-items-end">
+            <div class="col-md-6">
+              <label class="mb-1 text-uppercase font-weight-bold text-muted small">Fecha de Consolidación</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text bg-light"><i class="fas fa-calendar-alt"></i></span>
+                </div>
+                <input type="date" class="form-control font-weight-bold" [(ngModel)]="fechaReporte" [max]="fechaMaxima">
+              </div>
+              <small class="text-muted italic mt-1 d-block">Se procesarán todas las alertas y gestiones registradas en esta fecha.</small>
+            </div>
+            <div class="col-md-3">
+              <button class="btn btn-dark btn-block font-weight-bold" (click)="generarReporte()"
+                [disabled]="generandoReporte || !fechaReporte">
+                <i class="fas fa-file-export mr-2" [class.fa-spin]="generandoReporte"></i>
+                {{ generandoReporte ? 'PROCESANDO...' : 'EJECUTAR REPORTE' }}
+              </button>
+            </div>
+            <div class="col-md-3">
+              <button class="btn btn-outline-secondary btn-block" (click)="isFiltersCollapsed = false">
+                <i class="fas fa-times mr-1"></i> CANCELAR
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center p-5">
+    <i class="fas fa-spinner fa-spin fa-3x text-primary border-primary"></i>
+    <div class="mt-3 font-weight-bold text-primary">Cargando historial de reportes...</div>
+  </div>  <!-- DataTable -->
+  <div *ngIf="!loading" class="card-body p-0">
+    <div class="table-responsive">
+      <table id="tablaReportes" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger"
+        class="table mb-0 w-100 table-hover">
+        <thead class="bg-light text-uppercase small font-weight-bold" style="border-top: 1px solid #ddd;">
+          <tr>
+            <th class="pl-4 py-3 border-0">Fecha Reporte</th>
+            <th class="py-3 border-0">Hora</th>
+            <th class="text-center py-3 border-0">Total</th>
+            <th class="text-center py-3 border-0 text-danger">Cr&iacute;t.</th>
+            <th class="text-center py-3 border-0 text-warning">Altas</th>
+            <th class="text-center py-3 border-0 text-success">Aprob.</th>
+            <th class="py-3 border-0">T. Resp.</th>
+            <th class="py-3 border-0">Estado</th>
+            <th class="text-right pr-4 py-3 border-0">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let reporte of reportes" class="transition border-bottom">
+            <td class="align-middle pl-4">
+              <div class="d-flex align-items-center">
+                <div class="report-icon mr-2">
+                  <i class="fas fa-file-contract text-muted"></i>
+                </div>
+                <span class="font-weight-bold text-dark">{{ reporte.fecha_reporte | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </td>
+            <td class="align-middle text-muted small">{{ reporte.hora_generacion }}</td>
+            <td class="align-middle text-center font-weight-bold text-primary">{{ reporte.total_ocurrencias }}</td>
+            <td class="align-middle text-center">
+              <span class="badge badge-danger px-2" *ngIf="reporte.ocurrencias_criticas > 0">{{ reporte.ocurrencias_criticas }}</span>
+              <span class="text-muted" *ngIf="reporte.ocurrencias_criticas == 0">-</span>
+            </td>
+            <td class="align-middle text-center">
+              <span class="badge badge-warning px-2" *ngIf="reporte.ocurrencias_altas > 0">{{ reporte.ocurrencias_altas }}</span>
+              <span class="text-muted" *ngIf="reporte.ocurrencias_altas == 0">-</span>
+            </td>
+            <td class="align-middle text-center">
+              <span class="badge badge-success px-2" *ngIf="reporte.ocurrencias_cerradas > 0">{{ reporte.ocurrencias_cerradas }}</span>
+              <span class="text-muted" *ngIf="reporte.ocurrencias_cerradas == 0">-</span>
+            </td>
+            <td class="align-middle small">
+              <i class="fas fa-stopwatch text-muted mr-1"></i>
+              {{ reporte.tiempo_respuesta_promedio | number:'1.0-0' }} min
+            </td>
+            <td class="align-middle">
+              <span class="badge badge-pill px-3 py-1 text-uppercase" [ngClass]="getEstadoBadgeClass(reporte.estado)" style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                {{ reporte.estado }}
+              </span>
+            </td>
+            <td class="text-right pr-4 align-middle">
+              <div class="btn-group shadow-none border rounded overflow-hidden">
+                <button class="btn btn-sm btn-white border-right" (click)="verDetalle(reporte)" title="Ver Detalle">
+                  <i class="fas fa-search text-info"></i>
+                </button>
+                <button class="btn btn-sm btn-white border-right" (click)="abrirModalEditarObservaciones(reporte)" title="Añadir Análisis">
+                  <i class="fas fa-comment-alt text-warning"></i>
+                </button>
+                <button class="btn btn-sm btn-white border-right" (click)="exportarPDF(reporte)" title="Generar PDF">
+                  <i class="fas fa-file-pdf text-danger"></i>
+                </button>
+                <button class="btn btn-sm btn-white" (click)="abrirModalAprobar(reporte)" *ngIf="reporte.estado === 'pendiente'" title="Aprobar">
+                  <i class="fas fa-check text-success"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLE PROFESSIONAL -->
+  <div class="modal fade" [class.show]="showModalDetalle" [style.display]="showModalDetalle ? 'block' : 'none'"
+    tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+      <div class="modal-content border-0 shadow-lg rounded-0">
+        <div class="modal-header border-bottom bg-dark py-3 rounded-0">
+          <h6 class="modal-title font-weight-bold text-white d-flex align-items-center">
+            <i class="fas fa-shield-alt mr-2 text-warning"></i> 
+            REPORTE DE OPERACIONES DE SEGURIDAD CIUDADANA - {{ reporteSeleccionado?.fecha_reporte | date:'longDate' | uppercase }}
+          </h6>
+          <button type="button" class="close text-white" (click)="cerrarModales()">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body bg-white p-5" *ngIf="reporteSeleccionado">
+
+          <!-- Formal Summary Header -->
+          <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+            <div>
+              <h5 class="font-weight-bold text-primary mb-1" style="letter-spacing: 0.5px;">RESUMEN EJECUTIVO DE OPERACIONES</h5>
+              <p class="text-muted small mb-0 font-italic">Periodo de consolidación operativa: 00:00:00 - 23:59:59</p>
+            </div>
+            <div class="text-right">
+              <span class="badge badge-pill px-3 py-2 border shadow-sm" [ngClass]="getEstadoBadgeClass(reporteSeleccionado.estado)" style="font-size: 0.75rem; font-weight: 600;">
+                ESTADO: {{ reporteSeleccionado.estado | uppercase }}
+              </span>
+            </div>
+          </div>
+ 
+          <!-- KPI Grid Institutional -->
+          <div class="row mb-5">
+            <div class="col-md-3">
+              <div class="card border-0 bg-light-gray h-100 p-3 text-center shadow-sm" style="border-top: 3.5px solid #1a237e !important; border-radius: 4px;">
+                <span class="text-uppercase font-weight-bold text-muted d-block mb-2" style="font-size: 0.65rem; letter-spacing: 0.8px;">Total Incidencias</span>
+                <span class="h2 font-weight-bold text-dark mb-0" style="font-size: 1.8rem;">{{ reporteSeleccionado.total_ocurrencias }}</span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 bg-light-gray h-100 p-3 text-center shadow-sm" style="border-top: 3.5px solid #dc3545 !important; border-radius: 4px;">
+                <span class="text-uppercase font-weight-bold text-muted d-block mb-2" style="font-size: 0.65rem; letter-spacing: 0.8px;">Casos Críticos</span>
+                <span class="h2 font-weight-bold text-danger mb-0" style="font-size: 1.8rem;">{{ reporteSeleccionado.ocurrencias_criticas }}</span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 bg-light-gray h-100 p-3 text-center shadow-sm" style="border-top: 3.5px solid #28a745 !important; border-radius: 4px;">
+                <span class="text-uppercase font-weight-bold text-muted d-block mb-2" style="font-size: 0.65rem; letter-spacing: 0.8px;">Resueltos/Cerrados</span>
+                <span class="h2 font-weight-bold text-success mb-0" style="font-size: 1.8rem;">{{ reporteSeleccionado.ocurrencias_cerradas }}</span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 bg-light-gray h-100 p-3 text-center shadow-sm" style="border-top: 3.5px solid #17a2b8 !important; border-radius: 4px;">
+                <span class="text-uppercase font-weight-bold text-muted d-block mb-2" style="font-size: 0.65rem; letter-spacing: 0.8px;">T. Respuesta Prom.</span>
+                <div class="d-flex align-items-baseline justify-content-center">
+                  <span class="h2 font-weight-bold text-info mb-0" style="font-size: 1.8rem;">{{ reporteSeleccionado.tiempo_respuesta_promedio | number:'1.0-1' }}</span>
+                  <small class="text-muted font-weight-bold ml-1" style="font-size: 0.65rem;">MIN</small>
+                </div>
+              </div>
+            </div>
+          </div>          <!-- Distribución y Zonas -->
+          <div class="row mb-4">
+            <div class="col-md-6 text-center border-right">
+              <div class="py-2">
+                <div class="small font-weight-bold text-muted uppercase mb-3 text-center">Distribución de Riesgo</div>
+                <div class="d-flex justify-content-center gap-4">
+                  <div class="px-3">
+                    <div class="h5 font-weight-bold text-danger mb-0">{{ reporteSeleccionado.ocurrencias_criticas }}</div>
+                    <div class="text-xs text-uppercase font-weight-bold text-muted">Críticas</div>
+                  </div>
+                  <div class="px-3 border-left border-right">
+                    <div class="h5 font-weight-bold text-warning mb-0">{{ reporteSeleccionado.ocurrencias_altas }}</div>
+                    <div class="text-xs text-uppercase font-weight-bold text-muted">Altas</div>
+                  </div>
+                  <div class="px-3">
+                    <div class="h5 font-weight-bold text-info mb-0">{{ reporteSeleccionado.total_ocurrencias - reporteSeleccionado.ocurrencias_criticas - reporteSeleccionado.ocurrencias_altas }}</div>
+                    <div class="text-xs text-uppercase font-weight-bold text-muted">Otras</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 pl-4">
+              <div class="small font-weight-bold text-muted uppercase mb-2">Ubicaciones Relevantes</div>
+              <div class="list-group list-group-flush" *ngIf="getKeys(parsearJSON(reporteSeleccionado.zonas_criticas)).length > 0">
+                <div class="list-group-item d-flex justify-content-between align-items-center py-1 bg-transparent border-0"
+                  *ngFor="let zona of getKeys(parsearJSON(reporteSeleccionado.zonas_criticas)).slice(0, 5)">
+                  <span class="small"><i class="fas fa-map-marker-alt text-muted mr-2"></i>{{ zona }}</span>
+                  <span class="badge badge-secondary badge-pill">{{ parsearJSON(reporteSeleccionado.zonas_criticas)[zona] }}</span>
+                </div>
+              </div>
+              <div *ngIf="getKeys(parsearJSON(reporteSeleccionado.zonas_criticas)).length === 0" class="text-center py-2 text-muted small italic">
+                Sin datos de sectores específicos.
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla Detalle Cronológico -->
+          <div class="card border shadow-none mb-4 overflow-hidden">
+            <div class="card-header bg-light border-bottom py-2">
+              <span class="small font-weight-bold text-muted uppercase">Bitácora Cronológica</span>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive" style="max-height: 350px;">
+                <table class="table table-sm table-striped mb-0">
+                  <thead class="bg-white">
+                    <tr>
+                      <th class="pl-3 border-0 small font-weight-bold py-2">HORA</th>
+                      <th class="border-0 small font-weight-bold py-2">CÓDIGO</th>
+                      <th class="border-0 small font-weight-bold py-2">MODALIDAD</th>
+                      <th class="border-0 small font-weight-bold py-2">UBICACIÓN</th>
+                      <th class="pr-3 border-0 small font-weight-bold py-2">ESTADO</th>
+                    </tr>
+                  </thead>
+                  <tbody class="small">
+                    <ng-container *ngFor="let o of parsearJSON(reporteSeleccionado.detalle_ocurrencias)">
+                      <tr class="border-top">
+                        <td class="pl-3 font-weight-bold py-2">{{ o.hora }}</td>
+                        <td class="text-primary font-weight-bold">{{ o.codigo }}</td>
+                        <td>{{ o.tipo }}</td>
+                        <td class="text-muted">{{ o.ubicacion }}</td>
+                        <td class="pr-3">
+                          <span class="badge" [ngClass]="o.estado === 'cerrada' ? 'badge-success-light' : 'badge-info-light'">{{ o.estado | uppercase }}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="5" class="pl-4 py-1 text-muted italic bg-white border-0">
+                          <small><strong>ACCIONES:</strong> {{ o.acciones_tomadas || 'Sin observaciones registradas' }}</small>
+                        </td>
+                      </tr>
+                    </ng-container>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Análisis Operativo -->
+          <div class="row">
+            <div class="col-md-9 border-right">
+              <div class="mb-3">
+                <span class="text-xs font-weight-bold text-muted uppercase d-block mb-1">Análisis de Operaciones y Servicios</span>
+                <p class="small text-justify mb-2">{{ reporteSeleccionado.observaciones_operativas || 'No se registraron observaciones operativas relevantes.' }}</p>
+              </div>
+              <div class="mb-3">
+                <span class="text-xs font-weight-bold text-muted uppercase d-block mb-1">Incidentes de Alto Impacto</span>
+                <p class="small text-justify mb-0">{{ reporteSeleccionado.incidentes_relevantes || 'Jornada sin incidentes críticos destacados.' }}</p>
+              </div>
+            </div>
+            <div class="col-md-3 pl-4">
+              <div class="mb-3">
+                <span class="text-xs font-weight-bold text-muted uppercase d-block mb-1">Recursos Utilizados</span>
+                <div class="d-flex justify-content-between small mb-1 border-bottom pb-1">
+                  <span>Personal:</span>
+                  <span class="font-weight-bold">{{ reporteSeleccionado.personal_activo }}</span>
+                </div>
+                <div class="d-flex justify-content-between small mb-1 border-bottom pb-1">
+                  <span>Vehículos:</span>
+                  <span class="font-weight-bold">{{ reporteSeleccionado.vehiculos_operativos }}</span>
+                </div>
+                <div class="d-flex justify-content-between small">
+                  <span>Requisitorias:</span>
+                  <span class="font-weight-bold text-danger">{{ reporteSeleccionado.nuevas_requisitorias_vehiculos + reporteSeleccionado.nuevas_requisitorias_personas }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer border-top bg-white py-3">
+          <button type="button" class="btn btn-outline-dark btn-sm rounded-0 px-4"
+            (click)="abrirModalEditarObservaciones(reporteSeleccionado)">
+            ACTUALIZAR ANÁLISIS
+          </button>
+          <button type="button" class="btn btn-dark btn-sm rounded-0 px-4 ml-2"
+            (click)="exportarPDF(reporteSeleccionado); cerrarModales()">
+            GENERAR DOCUMENTO PDF
+          </button>
+          <button type="button" class="btn btn-link text-muted btn-sm ml-2" (click)="cerrarModales()">
+            Cerrar ventana
+          </button>
+        </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- MODALES DE ACCIÓN (ESTILO PREMIUM) -->
+
+  <!-- Aprobar -->
+  <div class="modal fade" [class.show]="showModalAprobar" [style.display]="showModalAprobar ? 'block' : 'none'"
+    tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content border-0 shadow-lg" [style.border-radius.px]="mc.borderRadius || 12">
+        <div class="modal-header bg-success text-white border-0">
+          <h5 class="modal-title font-weight-bold text-center w-100">
+            <i class="fas fa-check-circle mr-2"></i> Aprobar Reporte Diario
+          </h5>
+        </div>
+        <div class="modal-body text-center p-4" *ngIf="reporteSeleccionado">
+          <div class="rounded-circle bg-success-light p-4 d-inline-block mb-3" style="background: rgba(40,167,69,0.1);">
+            <i class="fas fa-file-signature text-success fa-3x"></i>
+          </div>
+          <p class="mb-4">¿Desea validar y aprobar el reporte con fecha <br><strong>{{ reporteSeleccionado.fecha_reporte
+              | date:'dd/MM/yyyy' }}</strong>?</p>
+          <div class="form-group text-left">
+            <label class="small font-weight-bold text-muted uppercase">Observaciones de Revisión</label>
+            <textarea class="form-control bg-light border-0 shadow-none rounded-lg" rows="3"
+              [(ngModel)]="observacionesRevision" placeholder="Agregar nota de aprobación (opcional)..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3">
+          <button type="button" class="btn btn-outline-secondary btn-block font-weight-bold rounded-pill"
+            (click)="cerrarModales()">CANCELAR</button>
+          <button type="button" class="btn btn-success btn-block font-weight-bold rounded-pill mt-0 shadow-sm"
+            (click)="aprobarReporte()">CONFIRMAR APROBACIÓN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Observar -->
+  <div class="modal fade" [class.show]="showModalObservar" [style.display]="showModalObservar ? 'block' : 'none'"
+    tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content border-0 shadow-lg" [style.border-radius.px]="mc.borderRadius || 12">
+        <div class="modal-header bg-danger text-white border-0">
+          <h5 class="modal-title font-weight-bold text-center w-100">
+            <i class="fas fa-exclamation-triangle mr-2"></i> Observar Reporte
+          </h5>
+        </div>
+        <div class="modal-body text-center p-4" *ngIf="reporteSeleccionado">
+          <p class="mb-3">Se requiere corregir o revisar el reporte del <br><strong>{{ reporteSeleccionado.fecha_reporte
+              | date:'dd/MM/yyyy' }}</strong>.</p>
+          <div class="form-group text-left">
+            <label class="small font-weight-bold text-muted uppercase">Motivo de la Observación <span
+                class="text-danger">*</span></label>
+            <textarea class="form-control border-danger-light rounded-lg shadow-none" rows="4"
+              [(ngModel)]="observacionesRevision"
+              placeholder="Especifique el motivo (mín. 10 caracteres)..."></textarea>
+            <div class="text-xs text-muted mt-2 italic">* Este campo es obligatorio para marcar el reporte como
+              observado.</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3">
+          <button type="button" class="btn btn-outline-secondary btn-block font-weight-bold rounded-pill"
+            (click)="cerrarModales()">CANCELAR</button>
+          <button type="button" class="btn btn-danger btn-block font-weight-bold rounded-pill mt-0 shadow-sm"
+            (click)="observarReporte()">SOLICITAR CORRECCIÓN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editar Observaciones -->
+  <div class="modal fade" [class.show]="showModalEditarObservaciones"
+    [style.display]="showModalEditarObservaciones ? 'block' : 'none'" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" [style.border-radius.px]="mc.borderRadius || 12">
+        <div class="modal-header bg-warning text-white border-0">
+          <h5 class="modal-title font-weight-bold">
+            <i class="fas fa-edit mr-2"></i> Analizar Operaciones del Día
+          </h5>
+          <button type="button" class="close text-white" (click)="cerrarModales()"><span>×</span></button>
+        </div>
+        <div class="modal-body p-4 bg-light" *ngIf="reporteSeleccionado">
+          <div class="badge badge-info mb-3 p-2 px-3 rounded-pill shadow-sm">
+            <i class="fas fa-calendar mr-1"></i> Reporte del: {{ reporteSeleccionado.fecha_reporte | date:'dd/MM/yyyy'
+            }}
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12 mb-3">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                  <label class="ds-crud-label"><i class="fas fa-clipboard-list mr-2 text-primary"></i>Observaciones
+                    Operativas</label>
+                  <textarea class="form-control border-0 bg-light" rows="4" [(ngModel)]="observacionesOperativas"
+                    placeholder="Describa el despliegue, comunicación y coordinación del día..."></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 mb-3">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                  <label class="ds-crud-label"><i class="fas fa-fire mr-2 text-danger"></i>Incidentes de Alto
+                    Impacto</label>
+                  <textarea class="form-control border-0 bg-light" rows="4" [(ngModel)]="incidentesRelevantes"
+                    placeholder="Mencione casos críticos que requieran seguimiento especial..."></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                  <label class="ds-crud-label"><i class="fas fa-shield-alt mr-2 text-success"></i>Acciones Preventivas
+                    Recomendadas</label>
+                  <textarea class="form-control border-0 bg-light" rows="4" [(ngModel)]="accionesPreventivas"
+                    placeholder="Sugerencias para el próximo turno o refuerzo de zonas..."></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 bg-light p-3">
+          <button type="button" class="btn btn-outline-secondary font-weight-bold rounded-pill px-4"
+            (click)="cerrarModales()">CANCELAR</button>
+          <button type="button" class="btn btn-warning font-weight-bold rounded-pill px-4 shadow-sm"
+            (click)="guardarObservaciones()">GUARDAR ANÁLISIS</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Backdrop -->
+  <div class="modal-backdrop fade"
+    [class.show]="showModalDetalle || showModalAprobar || showModalObservar || showModalEditarObservaciones"
+    *ngIf="showModalDetalle || showModalAprobar || showModalObservar || showModalEditarObservaciones"
+    style="z-index: 1040;" (click)="cerrarModales()"></div>
+
+</app-system-layout>

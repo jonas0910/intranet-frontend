@@ -1,0 +1,528 @@
+$primary: #2563eb;
+$primary-dark: #1d4ed8;
+$gray-border: #e5e7eb;
+$dark-bg: #1c1f26;
+$dark-hover: #252830;
+
+:host {
+  display: block;
+  z-index: 1000;
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  height: 450px;
+
+  &.minimized {
+    height: 48px !important;
+  }
+}
+
+.mini-chat-box {
+  width: 320px;
+  height: 100%;
+  background: white;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+.chat-box-header {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: $dark-bg;
+  color: #dde2ed;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+
+  &:hover {
+    background: lighten($dark-bg, 5%);
+  }
+
+  .minimized & {
+    &:hover {
+      background: $primary;
+      color: white;
+    }
+  }
+
+  .chat-box-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    overflow: hidden;
+
+    .mini-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, $primary, #7c3aed);
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .mini-conv-name {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .chat-box-actions {
+    display: flex;
+    gap: 4px;
+
+    .btn-box-action {
+      background: none;
+      border: none;
+      color: #6b7489;
+      padding: 6px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 13px;
+      transition: background 0.2s, color 0.2s;
+
+      &:hover, &.active {
+        background: $dark-hover;
+        color: white;
+      }
+      
+      &.active {
+        color: $primary;
+      }
+    }
+  }
+}
+
+// ── Conv Details Panel ───────────────────────────────────────────────────
+.mini-details-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -2px 0 10px rgba(0,0,0,0.05);
+
+  &.open {
+    transform: translateX(0);
+  }
+
+  .mini-details-header {
+    height: 48px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid $gray-border;
+    background: #f8fafc;
+    
+    span {
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .btn-mini-close-details {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      &:hover {
+        background: #f1f5f9;
+        color: #ef4444;
+      }
+    }
+  }
+
+  .mini-details-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 15px;
+
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  }
+
+  .mini-details-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .mini-det-avatar {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, $primary, #7c3aed);
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+
+    &.group {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+  }
+
+  .mini-det-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .mini-det-status {
+    margin-bottom: 20px;
+    font-size: 11px;
+    
+    .mini-badge-online, .mini-badge-offline {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+
+    .mini-badge-online { background: #ecfdf5; color: #059669; }
+    .mini-badge-offline { background: #f8fafc; color: #64748b; }
+
+    .mini-dot-online { width: 6px; height: 6px; border-radius: 50%; background: #10b981; }
+    .mini-dot-offline { width: 6px; height: 6px; border-radius: 50%; background: #94a3b8; }
+  }
+
+  .mini-det-info {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid #f1f5f9;
+
+    .mini-det-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #475569;
+      font-size: 12px;
+      i { color: $primary; width: 14px; }
+    }
+  }
+
+  .mini-members-title {
+    width: 100%;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mini-members-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .mini-member-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #f8fafc;
+
+      .mini-m-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .mini-m-info {
+        display: flex;
+        flex-direction: column;
+        
+        .mini-m-name {
+          font-size: 12px;
+          font-weight: 500;
+          color: #334155;
+        }
+        
+        .mini-m-role {
+          font-size: 10px;
+          color: #94a3b8;
+          &.admin { color: $primary; font-weight: 600; }
+        }
+      }
+    }
+  }
+}
+
+.chat-box-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+// ── Messages Area ────────────────────────────────────────────────────────
+.mini-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  background: #f4f6f9;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+}
+
+.mini-msgs-loading {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  color: #94a3b8;
+}
+
+.mini-msg-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 85%;
+  
+  &.mine { 
+    align-self: flex-end; 
+    .mini-bubble {
+        background: #007bff;
+        color: white;
+        border-bottom-right-radius: 2px;
+    }
+  }
+
+  &.theirs { 
+    align-self: flex-start; 
+    .mini-bubble {
+        background: white;
+        color: #1e293b;
+        border-bottom-left-radius: 2px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    }
+  }
+
+  .mini-sender-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: #6366f1;
+    margin-bottom: 2px;
+    margin-left: 4px;
+    opacity: 0.8;
+  }
+}
+
+.mini-msg {
+  .mini-bubble {
+    padding: 8px 12px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.4;
+    position: relative;
+    word-break: break-all;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mini-time {
+    font-size: 9px;
+    align-self: flex-end;
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+}
+
+// ── Input Area ──────────────────────────────────────────────────────────
+.mini-input-area {
+  padding: 10px;
+  background: white;
+  border-top: 1px solid $gray-border;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .mini-input {
+    flex: 1;
+    border: 1px solid $gray-border;
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 13px;
+    outline: none;
+    background: #f8fafc;
+    transition: all 0.2s;
+
+    &:focus { border-color: $primary; background: white; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+  }
+
+  .mini-send {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: $primary;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+
+    &:hover:not(:disabled) { background: $primary-dark; transform: scale(1.05); }
+    &:disabled { background: #94a3b8; cursor: not-allowed; }
+  }
+}
+
+// ── Animations ──────────────────────────────────────────────────────────
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mini-typing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: $primary;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.typing-dots-mini {
+  display: flex;
+  gap: 2px;
+  span {
+    width: 3px; height: 3px; border-radius: 50%; background: $primary;
+    animation: typing-dots 1s infinite alternate;
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+}
+
+@keyframes typing-dots {
+  from { opacity: 0.3; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1.2); }
+}
+
+// Reuse other styles from bubble for media etc.
+.mini-dropup {
+  position: relative;
+  &.open .mini-media-menu { display: flex; transform: translateY(0); opacity: 1; pointer-events: auto; }
+}
+
+.btn-mini-media {
+  width: 28px; height: 28px; border-radius: 50%; border: none; background: #f1f5f9; color: #64748b;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  &:hover { background: #e2e8f0; color: $primary; }
+}
+
+.mini-media-menu {
+  position: absolute; bottom: 100%; left: 0; background: white; border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 4px; display: none; flex-direction: column;
+  gap: 2px; min-width: 42px; margin-bottom: 8px; opacity: 0; transform: translateY(10px);
+  transition: all 0.2s ease; z-index: 100;
+
+  button {
+    background: none; border: none; padding: 8px; cursor: pointer; border-radius: 6px;
+    i { color: $primary; font-size: 14px; }
+    &:hover { background: #f1f5f9; }
+  }
+}
+
+.mini-attachments {
+    margin-bottom: 6px; display: flex; flex-direction: column; gap: 4px;
+    .mini-att-image img { max-width: 100%; border-radius: 6px; }
+    .mini-att-audio audio { width: 100%; height: 28px; }
+    .mini-att-file { 
+        display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.04); 
+        padding: 5px 10px; border-radius: 6px; font-size: 12px;
+        .mine & { background: rgba(255,255,255,0.1); a { color: white; } }
+    }
+}
+
+// Upload Overlay
+.mini-upload-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: white;
+    z-index: 1000; display: flex; flex-direction: column;
+}
+.mini-upload-header {
+    padding: 10px 12px; border-bottom: 1px solid $gray-border; display: flex; justify-content: space-between;
+    font-size: 13px; font-weight: 600;
+    button { border: none; background: none; color: #64748b; cursor: pointer; }
+}
+.mini-upload-body {
+    flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+    textarea { width: 100%; border: 1px solid $gray-border; border-radius: 8px; padding: 8px; font-size: 12px; height: 60px; resize: none; }
+}
+.mini-drop-zone {
+    border: 2px dashed #cbd5e1; border-radius: 10px; padding: 20px; text-align: center; background: #f8fafc;
+    cursor: pointer; &:hover { border-color: $primary; background: #eff6ff; }
+    i { font-size: 24px; color: #94a3b8; margin-bottom: 8px; }
+    p { font-size: 12px; color: #64748b; margin: 0; }
+}
+.mini-previews {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    .mini-p-item {
+        background: $primary; color: white; border-radius: 4px; padding: 4px 8px; font-size: 10px;
+        display: flex; align-items: center; gap: 6px;
+        i { cursor: pointer; font-size: 10px; }
+    }
+}
+.mini-upload-footer {
+    padding: 12px; border-top: 1px solid $gray-border; display: flex; gap: 8px; justify-content: flex-end;
+    button { padding: 6px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+    .btn-mini-cancel { background: #f1f5f9; color: #475569; }
+    .btn-mini-send-up { background: $primary; color: white; }
+}
+.mini-audio-zone {
+    text-align: center;
+    .btn-mini-rec { background: #ef4444; color: white; }
+    .btn-mini-stop { background: #1e293b; color: white; }
+    audio { width: 100%; height: 32px; margin-top: 10px; }
+}

@@ -1,0 +1,20 @@
+<div class="content-header" [style.padding]="ph.padding" [style.background]="ph.bg" [style.border-bottom]="ph.borderBottom" [style.margin-bottom]="ph.headerToContentGap">
+  <div class="container-fluid">
+    <div class="row mb-1">
+      <div class="col-sm-6">
+        <h1 class="m-0" [style.font-size]="ph.titleSize" [style.font-weight]="ph.titleWeight" [style.color]="ph.titleColor">
+          {{ title }}
+          <small *ngIf="subtitle" class="ml-2" [style.font-size]="ph.subtitleSize" [style.color]="ph.subtitleColor">{{ subtitle }}</small>
+        </h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right" *ngIf="showBreadcrumbs && breadcrumbs.length > 0" [style.font-size]="ph.breadcrumbSize">
+          <li class="breadcrumb-item" *ngFor="let crumb of breadcrumbs; let last = last" [class.active]="last">
+            <a *ngIf="!last && crumb.url" [routerLink]="crumb.url">{{ crumb.label }}</a>
+            <span *ngIf="last || !crumb.url">{{ crumb.label }}</span>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>

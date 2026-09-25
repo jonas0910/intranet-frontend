@@ -1,0 +1,327 @@
+// Variables de diseño institucional
+$primary-color: #1a3a5f; // Azul Notarial
+$accent-color: #c5a059; // Dorado/Oro
+$text-dark: #2d3436;
+$text-light: #636e72;
+$background-gradient: linear-gradient(135deg, #1a3a5f 0%, #0d1b2a 100%);
+$card-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+
+.login-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $background-gradient;
+  padding: 20px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.login-container {
+  display: flex;
+  width: 100%;
+  max-width: 1000px;
+  min-height: 600px;
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: $card-shadow;
+  animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// Sidebar con Branding
+.login-sidebar {
+  flex: 1;
+  background: $primary-color;
+  background-image: linear-gradient(rgba(26, 58, 95, 0.85), rgba(13, 27, 42, 0.85)), 
+                    url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1000');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #ffffff;
+  text-align: center;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: $accent-color;
+  }
+
+  .branding-content {
+    max-width: 320px;
+    
+    .logo-wrapper {
+      color: $accent-color;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .institution-name {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+    }
+
+    .institution-slogan {
+      font-size: 1rem;
+      opacity: 0.9;
+      font-weight: 300;
+      line-height: 1.6;
+    }
+  }
+}
+
+// Área Principal de Login
+.login-main {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  padding: 60px;
+  background: #ffffff;
+  position: relative;
+}
+
+.login-card {
+  margin: auto;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-header {
+  margin-bottom: 40px;
+  
+  .login-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $primary-color;
+    margin-bottom: 8px;
+  }
+
+  .login-subtitle {
+    color: $text-light;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.85rem;
+  }
+}
+
+.form-group {
+  margin-bottom: 25px;
+
+  .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: $text-dark;
+  }
+
+  .input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .input-icon {
+      position: absolute;
+      left: 15px;
+      color: $text-light;
+      pointer-events: none;
+      transition: color 0.3s ease;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 14px 14px 14px 45px;
+      border: 2px solid #edf2f7;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: #f8fafc;
+
+      &:focus {
+        background: #ffffff;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 4px rgba(26, 58, 95, 0.1);
+        outline: none;
+
+        ~ .input-icon {
+          color: $primary-color;
+        }
+      }
+
+      &::placeholder {
+        color: #a0aec0;
+      }
+    }
+  }
+}
+
+.error-alert {
+  background: #fff5f5;
+  border-left: 4px solid #f56565;
+  color: #c53030;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.btn-login {
+  width: 100%;
+  padding: 16px;
+  background: $primary-color;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  &:hover:not(:disabled) {
+    background: lighten($primary-color, 10%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(26, 58, 95, 0.25);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-support {
+  margin-top: 30px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: $text-light;
+
+  a {
+    color: $primary-color;
+    text-decoration: none;
+    font-weight: 600;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.login-footer {
+  margin-top: 40px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #a0aec0;
+}
+
+// Media Queries
+@media (max-width: 900px) {
+  .login-sidebar {
+    display: none;
+  }
+  
+  .login-container {
+    max-width: 500px;
+  }
+
+  .login-main {
+    padding: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-wrapper {
+    padding: 10px;
+  }
+
+  .login-main {
+    padding: 30px 20px;
+  }
+
+  .login-title {
+    font-size: 1.5rem;
+  }
+}
+
+// Modal Styles
+::ng-deep {
+  .modal-content {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal-header {
+    background: $primary-color;
+    color: white;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 30px;
+
+    .modal-title {
+      font-weight: 700;
+    }
+  }
+
+  .modal-body {
+    padding: 30px;
+  }
+
+  .modal-footer {
+    padding: 20px 30px;
+    border-top: 1px solid #edf2f7;
+    
+    .btn {
+      padding: 10px 25px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+  }
+}

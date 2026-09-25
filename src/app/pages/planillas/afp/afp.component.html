@@ -1,0 +1,210 @@
+<app-page-header title="AFP y Entidades de Pensiones" subtitle="Gestión de AFP y entidades de pensiones" [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Planillas'}, {label: 'AFP y Entidades de Pensiones'}]"></app-page-header>
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+              <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                <i class="fas fa-university mr-1"></i> Listado de AFP
+              </h3>
+              <ng-container *ngIf="cv.showExportButtons">
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"><i [class]="cv.excelBtnIcon"></i> {{ cv.excelBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"><i [class]="cv.pdfBtnIcon"></i> {{ cv.pdfBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass"><i [class]="cv.printBtnIcon"></i> {{ cv.printBtnLabel }}</button>
+              </ng-container>
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.exportBtnClass"><i [class]="cv.exportBtnIcon"></i> {{ cv.exportBtnLabel }}</button>
+            </div>
+            <div class="ms-auto flex-shrink-0">
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                <i [class]="cv.newBtnIcon"></i> Nueva AFP
+              </button>
+            </div>
+          </div>
+          <div class="card-body px-0 pt-0 pb-2">
+            <div class="table-responsive p-4">
+              <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-striped table-bordered table-hover w-100" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize">
+                <thead>
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize">Código</th>
+                    <th [style.font-size]="cv.headerFontSize">Nombre</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Aporte (%)</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Comisión (%)</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Seguro (%)</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Total (%)</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let afp of afps">
+                    <td><span class="badge bg-dark">{{ afp.code }}</span></td>
+                    <td>
+                      <strong>{{ afp.name }}</strong>
+                      <p class="text-muted small mb-0" *ngIf="afp.sunat_code">
+                        <i class="fas fa-file-invoice text-info me-1"></i>SUNAT: {{ afp.sunat_code }}
+                      </p>
+                    </td>
+                    <td class="text-center">{{ afp.obligatory_rate }}%</td>
+                    <td class="text-center">{{ afp.commission_rate }}%</td>
+                    <td class="text-center">{{ afp.insurance_rate }}%</td>
+                    <td class="text-center"><strong>{{ afp.total_rate }}%</strong></td>
+                    <td class="text-center">
+                      <app-status-badge [status]="afp.is_active"></app-status-badge>
+                    </td>
+                    <td class="text-center">
+                      <app-crud-actions [showView]="true" [showEdit]="true" [showDelete]="true" (onView)="openViewModal(afp)" (onEdit)="openEditModal(afp)" (onDelete)="confirmDelete(afp)"></app-crud-actions>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Crear/Editar -->
+<div class="modal fade" id="afpModal" tabindex="-1" aria-hidden="true" #afpModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title">
+          <i class="fas" [ngClass]="isEditMode ? 'fa-edit' : 'fa-plus'"></i>
+          {{ isEditMode ? 'Editar' : 'Nueva' }} AFP
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()" aria-label="Close"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg">
+        <form [formGroup]="afpForm">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Código <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="code" placeholder="AFP-001">
+              <div class="text-danger small" *ngIf="afpForm.get('code')?.invalid && afpForm.get('code')?.touched">
+                Código es requerido
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Código SUNAT</label>
+              <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="sunat_code" placeholder="0900">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Nombre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="name" placeholder="Nombre de la AFP">
+            <div class="text-danger small" *ngIf="afpForm.get('name')?.invalid && afpForm.get('name')?.touched">
+              Nombre es requerido
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Tasa Aporte (%) <span class="text-danger">*</span></label>
+              <input type="number" step="0.01" class="form-control" [ngClass]="mc.inputSize" formControlName="obligatory_rate" placeholder="10.00">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Comisión (%) <span class="text-danger">*</span></label>
+              <input type="number" step="0.01" class="form-control" [ngClass]="mc.inputSize" formControlName="commission_rate" placeholder="1.55">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Seguro (%) <span class="text-danger">*</span></label>
+              <input type="number" step="0.01" class="form-control" [ngClass]="mc.inputSize" formControlName="insurance_rate" placeholder="1.74">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Vigencia Desde</label>
+              <input type="date" class="form-control" [ngClass]="mc.inputSize" formControlName="effective_from">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Vigencia Hasta</label>
+              <input type="date" class="form-control" [ngClass]="mc.inputSize" formControlName="effective_to">
+            </div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" formControlName="is_active" id="isActive">
+            <label class="form-check-label" for="isActive">Activo</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeModal()">
+          <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}
+        </button>
+        <button type="button" class="btn btn-sm" [ngClass]="mc.saveBtnClass" (click)="saveAfp()" [disabled]="afpForm.invalid || saving">
+          <span *ngIf="saving" class="spinner-border spinner-border-sm mr-1"></span>
+          <i *ngIf="!saving" [class]="mc.saveBtnIcon + ' mr-1'"></i>
+          {{ isEditMode ? 'Actualizar' : mc.saveBtnLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ver -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true" #viewModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title"><i class="fas fa-info-circle mr-2"></i>Detalles de la AFP</h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeViewModal()" aria-label="Close"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg" *ngIf="selectedAfp">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Código:</strong>
+            <p>{{ selectedAfp.code }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Código SUNAT:</strong>
+            <p>{{ selectedAfp.sunat_code || 'N/A' }}</p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Nombre:</strong>
+            <p>{{ selectedAfp.name }}</p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <strong [style.color]="mc.labelColor">Tasa de Aporte:</strong>
+            <p>{{ selectedAfp.obligatory_rate }}%</p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <strong [style.color]="mc.labelColor">Comisión:</strong>
+            <p>{{ selectedAfp.commission_rate }}%</p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <strong [style.color]="mc.labelColor">Seguro:</strong>
+            <p>{{ selectedAfp.insurance_rate }}%</p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Tasa Total:</strong>
+            <p class="h4 text-primary">{{ selectedAfp.total_rate }}%</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Vigencia Desde:</strong>
+            <p>{{ selectedAfp.effective_from || 'N/A' }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Vigencia Hasta:</strong>
+            <p>{{ selectedAfp.effective_to || 'N/A' }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Estado:</strong>
+            <p>
+              <app-status-badge [status]="selectedAfp.is_active"></app-status-badge>
+            </p>
+          </div>
+          <div class="col-md-6 mb-3" *ngIf="selectedAfp.employees_count !== undefined">
+            <strong [style.color]="mc.labelColor">Empleados:</strong>
+            <p>{{ selectedAfp.employees_count }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeViewModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,80 @@
+.small-box {
+  border-radius: 5px;
+  box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+  
+  .inner {
+    padding: 10px;
+    
+    h3 {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 0;
+    }
+    
+    p {
+      font-size: 0.85rem;
+      margin: 0;
+    }
+  }
+  
+  .icon {
+    font-size: 54px;
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    opacity: 0.3;
+  }
+}
+
+.badge-sm {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+}
+
+.table-responsive {
+  min-height: 300px;
+}
+
+/* DataTable-like styles */
+.datatable-container {
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.datatable-header {
+  padding: 0.25rem 0.5rem;
+  background: #fafafa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.datatable-body {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.dt-grid { width: 100%; }
+.dt-header, .dt-row { display: grid; grid-template-columns: 28px 56px 120px 1fr 120px 140px 110px 120px 100px 110px 150px; align-items: center; }
+.dt-header { position: sticky; top: 0; background: #fff; z-index: 1; border-bottom: 1px solid #e9ecef; font-weight: 600; font-size: 12px; }
+.dt-row { border-bottom: 1px solid #f4f5f7; }
+.dt-col { padding: .35rem .5rem; }
+.dt-row:hover { background: #f9fafb; }
+.nav-sidebar .nav-item .nav-link { cursor: pointer; }
+.nav-sidebar .nav-item .nav-link { padding: 4px 8px; font-size: 12px; }
+.nav-sidebar .menu-open > .nav-link .right { transform: rotate(90deg); }
+
+.card.position-absolute { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+
+.datatable-footer {
+  padding: 0.25rem 0.5rem;
+  background: #fafafa;
+  border-top: 1px solid #e9ecef;
+  font-size: 12px;
+}
+
+.pagination {
+  li {
+    cursor: pointer;
+  }
+}
+

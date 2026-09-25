@@ -1,0 +1,186 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0">Calls to Action (CTAs)</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor</a></li>
+          <li class="breadcrumb-item active">CTAs</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-bullhorn mr-2"></i>Listado de CTAs</h3>
+        <div class="card-tools">
+          <button class="btn btn-primary btn-sm" (click)="openCreate()">
+            <i class="fas fa-plus mr-1"></i>Nuevo CTA
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="text-center py-5" *ngIf="loading">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+        </div>
+        <div class="table-responsive" *ngIf="!loading">
+          <table class="table table-hover table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Título</th>
+                <th>Tipo</th>
+                <th>Ubicación</th>
+                <th>Activo</th>
+                <th>Orden</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="ctas.length === 0">
+                <td colspan="7" class="text-center text-muted py-4">No hay CTAs registrados</td>
+              </tr>
+              <tr *ngFor="let item of ctas">
+                <td>{{ item.nombre }}</td>
+                <td>{{ item.titulo }}</td>
+                <td><span class="badge badge-{{ getTipoBadge(item.tipo) }}">{{ item.tipo }}</span></td>
+                <td><span class="badge badge-{{ getUbicacionBadge(item.ubicacion) }}">{{ item.ubicacion }}</span></td>
+                <td>
+                  <span class="badge" [ngClass]="item.activo ? 'badge-success' : 'badge-danger'">
+                    {{ item.activo ? 'Sí' : 'No' }}
+                  </span>
+                </td>
+                <td>{{ item.orden }}</td>
+                <td class="text-right">
+                  <button class="btn btn-info btn-xs mr-1" (click)="openEdit(item)" title="Editar">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn btn-danger btn-xs" (click)="delete(item.id)" title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal -->
+<div class="modal fade show d-block" *ngIf="showModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ editing ? 'Editar' : 'Nuevo' }} CTA</h5>
+        <button type="button" class="close" (click)="showModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Nombre</label>
+              <input type="text" class="form-control" [(ngModel)]="form.nombre" placeholder="Nombre identificador">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Tipo</label>
+              <select class="form-control" [(ngModel)]="form.tipo">
+                <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Ubicación</label>
+              <select class="form-control" [(ngModel)]="form.ubicacion">
+                <option *ngFor="let u of ubicaciones" [value]="u">{{ u }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Título</label>
+              <input type="text" class="form-control" [(ngModel)]="form.titulo" placeholder="Título del CTA">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Subtítulo</label>
+              <input type="text" class="form-control" [(ngModel)]="form.subtitulo" placeholder="Subtítulo">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="form.descripcion" placeholder="Descripción del CTA"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Botón Principal - Texto</label>
+              <input type="text" class="form-control" [(ngModel)]="form.boton_principal_texto" placeholder="Texto del botón">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Botón Principal - URL</label>
+              <input type="text" class="form-control" [(ngModel)]="form.boton_principal_url" placeholder="URL destino">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Botón Secundario - Texto</label>
+              <input type="text" class="form-control" [(ngModel)]="form.boton_secundario_texto" placeholder="Texto del botón">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Botón Secundario - URL</label>
+              <input type="text" class="form-control" [(ngModel)]="form.boton_secundario_url" placeholder="URL destino">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Imagen URL</label>
+              <input type="text" class="form-control" [(ngModel)]="form.imagen" placeholder="URL de la imagen">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Orden</label>
+              <input type="number" class="form-control" [(ngModel)]="form.orden">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Activo</label>
+              <div class="custom-control custom-switch mt-2">
+                <input type="checkbox" class="custom-control-input" id="ctaActivo" [(ngModel)]="form.activo">
+                <label class="custom-control-label" for="ctaActivo">{{ form.activo ? 'Sí' : 'No' }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="showModal = false">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="save()">
+          <i class="fas fa-save mr-1"></i>{{ editing ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

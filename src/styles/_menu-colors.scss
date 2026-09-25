@@ -1,0 +1,74 @@
+/* ========== MENU COLOR HOVER EFFECTS ========== */
+
+/* Estilos para menús principales con colores personalizados */
+.nav-link[style*="color"] {
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.nav-link[style*="color"]:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-left-color: currentColor;
+  transform: translateX(2px);
+  background-color: rgba(var(--menu-color-r), var(--menu-color-g), var(--menu-color-b), 0.2);
+  box-shadow: 0 2px 8px rgba(var(--menu-color-r), var(--menu-color-g), var(--menu-color-b), 0.3);
+}
+
+.nav-link[style*="color"] .nav-icon {
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.nav-link[style*="color"]:hover .nav-icon {
+  transform: scale(1.1);
+}
+
+/* Specific color hover effects */
+.nav-link[style*="#2E86AB"]:hover { background-color: rgba(46, 134, 171, 0.2);  box-shadow: 0 2px 8px rgba(46, 134, 171, 0.3); }
+.nav-link[style*="#A23B72"]:hover { background-color: rgba(162, 59, 114, 0.2);  box-shadow: 0 2px 8px rgba(162, 59, 114, 0.3); }
+.nav-link[style*="#F18F01"]:hover { background-color: rgba(241, 143, 1, 0.2);   box-shadow: 0 2px 8px rgba(241, 143, 1, 0.3); }
+.nav-link[style*="#C73E1D"]:hover { background-color: rgba(199, 62, 29, 0.2);   box-shadow: 0 2px 8px rgba(199, 62, 29, 0.3); }
+.nav-link[style*="#28A745"]:hover { background-color: rgba(40, 167, 69, 0.2);   box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3); }
+.nav-link[style*="#6C757D"]:hover { background-color: rgba(108, 117, 125, 0.2); box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3); }
+.nav-link[style*="#17A2B8"]:hover { background-color: rgba(23, 162, 184, 0.2);  box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3); }
+.nav-link[style*="#4A90E2"]:hover { background-color: rgba(74, 144, 226, 0.2);  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3); }
+.nav-link[style*="#B8860B"]:hover { background-color: rgba(184, 134, 11, 0.2);  box-shadow: 0 2px 8px rgba(184, 134, 11, 0.3); }
+.nav-link[style*="#DC3545"]:hover { background-color: rgba(220, 53, 69, 0.2);   box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3); }
+.nav-link[style*="#FFC107"]:hover { background-color: rgba(255, 193, 7, 0.2);   box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3); }
+.nav-link[style*="#6F42C1"]:hover { background-color: rgba(111, 66, 193, 0.2);  box-shadow: 0 2px 8px rgba(111, 66, 193, 0.3); }
+.nav-link[style*="#E83E8C"]:hover { background-color: rgba(232, 62, 140, 0.2);  box-shadow: 0 2px 8px rgba(232, 62, 140, 0.3); }
+.nav-link[style*="#20C997"]:hover { background-color: rgba(32, 201, 151, 0.2);  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3); }
+.nav-link[style*="#FD7E14"]:hover { background-color: rgba(253, 126, 20, 0.2);  box-shadow: 0 2px 8px rgba(253, 126, 20, 0.3); }
+.nav-link[style*="#343A40"]:hover { background-color: rgba(52, 58, 64, 0.2);    box-shadow: 0 2px 8px rgba(52, 58, 64, 0.3); }
+.nav-link[style*="#007BFF"]:hover { background-color: rgba(0, 123, 255, 0.2);   box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3); }
+.nav-link[style*="#6610F2"]:hover { background-color: rgba(102, 16, 242, 0.2);  box-shadow: 0 2px 8px rgba(102, 16, 242, 0.3); }
+
+/* Badge pulse animation */
+.nav-link .badge {
+  transition: all 0.3s ease;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Active menu */
+.nav-item.menu-open>.nav-link[style*="color"] {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-left-color: currentColor;
+  font-weight: 600;
+}
+
+.nav-link[style*="color"] p {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-link[style*="color"]:hover { transform: none; }
+  .nav-link[style*="color"] .nav-icon { transform: none; }
+}

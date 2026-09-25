@@ -1,0 +1,35 @@
+<div class="dev-system-selector" *ngIf="isVisible" [style.display]="isVisible ? 'block' : 'none'">
+  <div class="selector-container">
+    <div class="selector-header">
+      <i class="fas fa-code"></i>
+      <span class="selector-label">🔧 Modo Desarrollo</span>
+    </div>
+    <div class="selector-body">
+      <label class="form-label" style="font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 8px;">
+        Seleccionar Sistema:
+      </label>
+      <select 
+        class="form-control" 
+        [value]="getSelectedSystemId()"
+        (change)="onSystemChange($event)"
+        [disabled]="isLoading">
+        <option value="">-- Todos los sistemas --</option>
+        <option *ngFor="let sistema of sistemas" [value]="sistema.id">
+          {{ sistema.nombre }} ({{ sistema.codigo }})
+        </option>
+      </select>
+      <div class="selector-info" *ngIf="sistemaSeleccionado">
+        <small>
+          <i class="fas fa-check-circle"></i>
+          Sistema activo: <strong>{{ sistemaSeleccionado.nombre }}</strong>
+        </small>
+      </div>
+      <div class="selector-info" *ngIf="!sistemaSeleccionado && !isLoading">
+        <small>
+          <i class="fas fa-info-circle"></i>
+          Selecciona un sistema para filtrar menús
+        </small>
+      </div>
+    </div>
+  </div>
+</div>

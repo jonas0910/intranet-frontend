@@ -1,0 +1,144 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0">Categorías</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor</a></li>
+          <li class="breadcrumb-item active">Categorías</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-tags mr-2"></i>Listado de Categorías</h3>
+        <div class="card-tools">
+          <button class="btn btn-primary btn-sm" (click)="openCreate()">
+            <i class="fas fa-plus mr-1"></i>Nueva Categoría
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="text-center py-5" *ngIf="loading">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+        </div>
+        <div class="table-responsive" *ngIf="!loading">
+          <table class="table table-hover table-striped mb-0">
+            <thead>
+              <tr>
+                <th style="width:50px">Icono</th>
+                <th>Nombre</th>
+                <th>Color</th>
+                <th>Descripción</th>
+                <th>Activo</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="categorias.length === 0">
+                <td colspan="6" class="text-center text-muted py-4">No hay categorías registradas</td>
+              </tr>
+              <tr *ngFor="let item of categorias">
+                <td class="text-center">
+                  <i [class]="item.icono || 'fas fa-folder'" [style.color]="item.color" class="fa-lg"></i>
+                </td>
+                <td>{{ item.nombre }}</td>
+                <td>
+                  <span class="d-inline-block rounded-circle mr-2"
+                        [style.background]="item.color"
+                        style="width:20px;height:20px;vertical-align:middle"></span>
+                  <code>{{ item.color }}</code>
+                </td>
+                <td>{{ item.descripcion || '-' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="item.activo ? 'badge-success' : 'badge-danger'">
+                    {{ item.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <button class="btn btn-info btn-xs mr-1" (click)="openEdit(item)" title="Editar">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn btn-danger btn-xs" (click)="delete(item.id)" title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal -->
+<div class="modal fade show d-block" *ngIf="showModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ editing ? 'Editar' : 'Nueva' }} Categoría</h5>
+        <button type="button" class="close" (click)="showModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" class="form-control" [(ngModel)]="form.nombre" placeholder="Nombre de la categoría">
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="form.descripcion" placeholder="Descripción de la categoría"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Icono (clase FA)</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">
+                    <i [class]="form.icono || 'fas fa-folder'" [style.color]="form.color"></i>
+                  </span>
+                </div>
+                <input type="text" class="form-control" [(ngModel)]="form.icono" placeholder="fas fa-folder">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Color</label>
+              <div class="input-group">
+                <input type="color" class="form-control p-1" [(ngModel)]="form.color" style="height:38px;width:50px">
+                <input type="text" class="form-control" [(ngModel)]="form.color" placeholder="#007bff">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Vista previa</label>
+          <div class="border rounded p-3 text-center bg-light">
+            <i [class]="form.icono || 'fas fa-folder'" [style.color]="form.color" class="fa-3x"></i>
+            <p class="mt-2 mb-0">{{ form.nombre || 'Nombre de categoría' }}</p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Activo</label>
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="catActivo" [(ngModel)]="form.activo">
+            <label class="custom-control-label" for="catActivo">{{ form.activo ? 'Sí' : 'No' }}</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="showModal = false">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="save()">
+          <i class="fas fa-save mr-1"></i>{{ editing ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

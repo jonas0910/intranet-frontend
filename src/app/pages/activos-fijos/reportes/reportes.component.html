@@ -1,0 +1,208 @@
+<app-system-layout [title]="'Gestor de Reportes'"
+  [subtitle]="'Consulta de activos clasificados por usuario, unidad orgánica, ubicación y estado'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Activos Fijos', url: '/activos-fijos'}, {label: 'Reportes'}]"
+  [subsystem]="'activos-fijos'">
+
+  <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-success'"
+    [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+
+    <!-- Toolbar -->
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+      <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+        <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+          <i class="fas fa-filter mr-1"></i> Reportes de Activos
+        </h3>
+        <span class="badge"
+          [ngClass]="cv.cardOutlineColor ? 'bg-' + cv.cardOutlineColor.replace('card-', '') : 'badge-info'">{{
+          paginacion.total }}</span>
+        <button class="btn btn-sm btn-outline-info ml-1 px-2" *ngIf="cv.collapsibleFilters"
+          (click)="isFiltersCollapsed = !isFiltersCollapsed"
+          [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'" style="height: 24px; line-height: 1;">
+          <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+        </button>
+        <ng-container *ngIf="cv.showExportButtons">
+          <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'"
+            (click)="onExportExcel()">
+            <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{ cv.excelBtnLabel || 'Excel' }}
+          </button>
+          <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'"
+            (click)="onExportPdf()">
+            <i [class]="(cv.pdfBtnIcon || 'fas fa-file-pdf') + ' mr-1'"></i> {{ cv.pdfBtnLabel || 'PDF' }}
+          </button>
+        </ng-container>
+
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="border-bottom bg-light overflow-hidden transition-all"
+      [style.max-height]="isFiltersCollapsed ? '0px' : '500px'" [style.padding]="isFiltersCollapsed ? '0px' : '0.5rem'">
+
+      <div class="row g-2">
+        <div class="col-md-3">
+          <label class="mb-1 ds-crud-label">Buscar</label>
+          <input type="text" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.search"
+            (ngModelChange)="onFilterChange()" placeholder="Código, descripción o serie...">
+        </div>
+        <div class="col-md-2">
+          <label class="mb-1 ds-crud-label">Usuario (Responsable)</label>
+          <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.responsable_id"
+            (ngModelChange)="onFilterChange()">
+            <option value="">Todos</option>
+            <option *ngFor="let u of usuarios" [value]="u.id">{{ u.name }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="mb-1 ds-crud-label">Unidad orgánica</label>
+          <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.unidad_organica_id"
+            (ngModelChange)="onFilterChange()">
+            <option value="">Todas</option>
+            <option *ngFor="let uo of unidadesOrganicas" [value]="uo.id ?? ''">{{ uo.code }} - {{ uo.name }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="mb-1 ds-crud-label">Ubicación</label>
+          <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.ubicacion_id"
+            (ngModelChange)="onFilterChange()">
+            <option value="">Todas</option>
+            <option *ngFor="let ubi of ubicaciones" [value]="ubi.id">{{ ubi.nombre }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="mb-1 ds-crud-label">Estado</label>
+          <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.estado"
+            (ngModelChange)="onFilterChange()">
+            <option value="">Todos</option>
+            <option value="activo">Activo</option>
+            <option value="baja">Baja</option>
+            <option value="transferido">Transferido</option>
+            <option value="extraviado">Extraviado</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="mb-1 ds-crud-label">Categoría</label>
+          <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.categoria_id"
+            (ngModelChange)="onFilterChange()">
+            <option value="">Todas</option>
+            <option *ngFor="let cat of categorias" [value]="cat.id">{{ cat.nombre }}</option>
+          </select>
+        </div>
+        <div class="col-md-1">
+          <label class="mb-1 ds-crud-label">Por pág</label>
+          <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.per_page"
+            (ngModelChange)="onFilterChange()" [disabled]="loading">
+            <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button class="btn btn-sm btn-outline-secondary btn-block" (click)="limpiarFiltros()">
+            <i class="fas fa-redo mr-1"></i> Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center p-5">
+      <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+      <p class="mt-3">Cargando reporte...</p>
+    </div>
+
+    <!-- DataTable -->
+    <div *ngIf="!loading" class="card-body px-0 pt-0 pb-2">
+      <div class="table-responsive p-2">
+        <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table mb-0 w-100 ds-crud-table"
+          [ngClass]="cv.tableClasses">
+
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Código Patrimonial</th>
+              <th>Descripción</th>
+              <th>Categoría</th>
+              <th>Ubicación</th>
+              <th>Unidad orgánica</th>
+              <th>Responsable</th>
+              <th class="text-right">Valor Neto</th>
+              <th>Estado</th>
+              <th>Condición</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let activo of activos; let i = index">
+              <td>{{ (paginacion.currentPage - 1) * paginacion.perPage + i + 1 }}</td>
+              <td>
+                <strong class="text-primary">{{ activo.codigo_patrimonial }}</strong>
+                <br><small class="text-muted">{{ activo.codigo_sbn }}</small>
+              </td>
+              <td>
+                <div>{{ activo.descripcion }}</div>
+                <small class="text-muted" *ngIf="activo.marca">{{ activo.marca }} {{ activo.modelo }}</small>
+              </td>
+              <td><span class="badge badge-secondary">{{ activo.categoria?.nombre }}</span></td>
+              <td><small><i class="fas fa-map-marker-alt text-danger mr-1"></i>{{ activo.ubicacion?.nombre }}</small>
+              </td>
+              <td><small>{{ activo.unidad_organica?.name || '-' }}</small></td>
+              <td>
+                <small *ngIf="activo.responsable"><i class="fas fa-user mr-1"></i>{{ activo.responsable.name }}</small>
+                <small *ngIf="!activo.responsable" class="text-muted">Sin asignar</small>
+              </td>
+              <td class="text-right"><strong class="text-success">{{ formatCurrency(activo.valor_neto) }}</strong></td>
+              <td><span class="badge" [ngClass]="getEstadoBadgeClass(activo.estado)">{{ activo.estado | titlecase
+                  }}</span></td>
+              <td><span class="badge badge-pill" [ngClass]="getCondicionBadgeClass(activo.condicion)">{{
+                  activo.condicion | titlecase }}</span></td>
+            </tr>
+            <tr *ngIf="activos.length === 0">
+              <td colspan="10" class="text-center p-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3 d-block"></i>
+                <p class="text-muted">No se encontraron activos con los filtros aplicados</p>
+                <button type="button" class="btn btn-sm btn-primary" (click)="limpiarFiltros()">
+                  <i class="fas fa-redo mr-1"></i> Limpiar Filtros
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Paginación -->
+    <div *ngIf="!loading && paginacion.lastPage > 1" class="card-footer clearfix">
+      <div class="row">
+        <div class="col-sm-12 col-md-5">
+          <div class="dataTables_info" style="font-size: 0.875rem;">
+            Mostrando {{ paginacion.from || 1 }} a {{ paginacion.to || 0 }} de {{ paginacion.total }} registros
+          </div>
+        </div>
+        <div class="col-sm-12 col-md-7">
+          <ul class="pagination m-0 float-right" [ngClass]="cv.paginationSize || 'pagination-sm'">
+
+            <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+              <a class="page-link" href="javascript:void(0)"
+                (click)="paginacion.currentPage > 1 && onPageChange(1)">«</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+              <a class="page-link" href="javascript:void(0)"
+                (click)="paginacion.currentPage > 1 && onPageChange(paginacion.currentPage - 1)">‹</a>
+            </li>
+            <li class="page-item" *ngFor="let page of getPagesArray()" [class.active]="page === paginacion.currentPage"
+              [class.disabled]="page === '...'">
+              <a class="page-link" href="javascript:void(0)" (click)="page !== '...' && onPageChange(+page)">{{ page
+                }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+              <a class="page-link" href="javascript:void(0)"
+                (click)="paginacion.currentPage < paginacion.lastPage && onPageChange(paginacion.currentPage + 1)">›</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+              <a class="page-link" href="javascript:void(0)"
+                (click)="paginacion.currentPage < paginacion.lastPage && onPageChange(paginacion.lastPage)">»</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</app-system-layout>

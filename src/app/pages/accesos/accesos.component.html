@@ -1,0 +1,240 @@
+<div class="container-fluid">
+  <!-- Header con indicador de Super Admin -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="mb-0">
+            <i class="fas fa-shield-alt text-danger me-2"></i>
+            Gestor de Accesos
+          </h2>
+          <p class="text-muted mb-0">
+            <i class="fas fa-crown text-warning me-1"></i>
+            Solo Super Administradores pueden gestionar menús y permisos
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary btn-sm" (click)="openRoleAccessModal()">
+            <i class="fas fa-plus me-1"></i>
+            Nuevo Acceso
+          </button>
+          <button class="btn btn-success btn-sm" (click)="openBulkUpdateModal()">
+            <i class="fas fa-sync me-1"></i>
+            Actualización Masiva
+          </button>
+          <button class="btn btn-info btn-sm" (click)="openStatisticsModal()">
+            <i class="fas fa-chart-bar me-1"></i>
+            Estadísticas
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicador de Estado del Backend -->
+  <div class="row mb-3" *ngIf="!loading">
+    <div class="col-12">
+      <div class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="fas fa-info-circle me-2"></i>
+        <div>
+          <strong>Estado del Sistema:</strong> 
+          <span class="badge bg-success ms-2">Conectado al Backend</span>
+          <small class="d-block mt-1">Los cambios se guardan automáticamente en la base de datos</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="row" *ngIf="loading">
+    <div class="col-12 text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2 text-muted">Cargando datos del sistema...</p>
+    </div>
+  </div>
+
+  <!-- Contenido Principal -->
+  <div class="row" *ngIf="!loading">
+    <!-- Tabla de Accesos de Roles -->
+    <div class="col-12 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-list me-2"></i>
+            Accesos de Roles a Menús
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>Rol</th>
+                  <th>Sistema</th>
+                  <th>Menú</th>
+                  <th>Permisos Adicionales</th>
+                  <th>Estado</th>
+                  <th>Orden</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let access of roleAccesses">
+                  <td>
+                    <span class="badge bg-primary">{{access.role?.name || 'N/A'}}</span>
+                  </td>
+                  <td>
+                    <small class="text-muted">{{access.sistema_menu?.sistema?.nombre || 'N/A'}}</small>
+                  </td>
+                  <td>
+                    <i class="fas fa-bars text-info me-1"></i>
+                    {{access.sistema_menu?.nombre || 'N/A'}}
+                  </td>
+                  <td>
+                    <div class="d-flex flex-wrap gap-1">
+                      <span class="badge bg-secondary small" 
+                            *ngFor="let permiso of access.permisos_adicionales">
+                        {{permiso}}
+                      </span>
+                      <span class="text-muted small" *ngIf="access.permisos_adicionales.length === 0">
+                        Sin permisos adicionales
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge" 
+                          [ngClass]="access.activo ? 'bg-success' : 'bg-secondary'">
+                      {{access.activo ? 'Activo' : 'Inactivo'}}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge bg-info">{{access.orden}}</span>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button class="btn btn-outline-primary" 
+                              (click)="toggleAccessStatus(access)"
+                              [title]="access.activo ? 'Desactivar' : 'Activar'">
+                        <i class="fas" [ngClass]="access.activo ? 'fa-eye-slash' : 'fa-eye'"></i>
+                      </button>
+                      <button class="btn btn-outline-danger" 
+                              (click)="deleteAccess(access)"
+                              title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="roleAccesses.length === 0">
+                  <td colspan="7" class="text-center py-4">
+                    <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">No hay accesos configurados</p>
+                    <button class="btn btn-primary btn-sm mt-2" (click)="openRoleAccessModal()">
+                      <i class="fas fa-plus me-1"></i>
+                      Crear Primer Acceso
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Crear/Editar Acceso de Rol -->
+<div class="modal fade" [class.show]="showRoleAccessModal" [style.display]="showRoleAccessModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-shield-alt me-2"></i>
+          Crear Nuevo Acceso de Rol
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModals()"></button>
+      </div>
+      <form [formGroup]="roleAccessForm" (ngSubmit)="createRoleAccess()">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Rol *</label>
+                <select class="form-select" formControlName="role_id" required>
+                  <option value="">Seleccionar Rol</option>
+                  <option *ngFor="let role of roles" [value]="role.id">
+                    {{role.name}}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Menú del Sistema *</label>
+                <select class="form-select" formControlName="sistema_menu_id" required>
+                  <option value="">Seleccionar Menú</option>
+                  <ng-container *ngFor="let sistema of sistemas">
+                    <option [value]="sistema.id" disabled>
+                      === {{sistema.nombre}} ===
+                    </option>
+                    <option *ngFor="let menu of sistema.menus" 
+                            [value]="menu.id"
+                            class="ms-3">
+                      {{sistema.nombre}} > {{menu.nombre}}
+                    </option>
+                  </ng-container>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Permisos Adicionales</label>
+                <div class="form-check" *ngFor="let permiso of availablePermissions">
+                  <input class="form-check-input" type="checkbox" 
+                         [value]="permiso"
+                         (change)="onPermissionChange($event, permiso)">
+                  <label class="form-check-label">
+                    {{permiso}}
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Orden</label>
+                <input type="number" class="form-control" formControlName="orden" min="1">
+              </div>
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="activo">
+                  <label class="form-check-label">
+                    Acceso Activo
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModals()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!roleAccessForm.valid || saving">
+            <span class="spinner-border spinner-border-sm me-2" *ngIf="saving"></span>
+            <i class="fas fa-save me-2" *ngIf="!saving"></i>
+            {{saving ? 'Guardando...' : 'Guardar Acceso'}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay para modales -->
+<div class="modal-backdrop fade show" *ngIf="showRoleAccessModal"></div>

@@ -1,0 +1,28 @@
+/* Estilos Globales para Modal de Contratos - Sobrescribe Bootstrap */
+
+// Agrandar el modal de contratos
+app-contract-modal {
+  .modal-dialog {
+    max-width: 1400px !important;
+    width: 90% !important;
+    margin: 1.75rem auto !important;
+  }
+  
+  .contract-modal-large {
+    max-width: 1400px !important;
+    width: 90% !important;
+  }
+}
+
+// Clase específica
+.contract-modal-large {
+  max-width: 1400px !important;
+  width: 90% !important;
+  margin: 1.75rem auto !important;
+}
+
+.modal-dialog.contract-modal-large {
+  max-width: 1400px !important;
+  width: 90% !important;
+}
+

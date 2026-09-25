@@ -1,0 +1,87 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1><i class="fas fa-puzzle-piece mr-2"></i>{{ editMode ? 'Editar' : 'Nuevo' }} Componente</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Contenido</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/componentes-reutilizables">Componentes</a></li>
+          <li class="breadcrumb-item active">{{ editMode ? 'Editar' : 'Nuevo' }}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="text-center py-5" *ngIf="loading"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+
+    <form *ngIf="!loading" (ngSubmit)="guardar()">
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">Datos del componente</h3></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" [(ngModel)]="componente.nombre" name="nombre" required>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Tipo <span class="text-danger">*</span></label>
+                    <select class="form-control" [(ngModel)]="componente.tipo" name="tipo" required>
+                      <option value="">— Seleccione —</option>
+                      <option *ngFor="let t of tiposDisponibles" [value]="t.value">{{ t.label }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Icono (Font Awesome)</label>
+                    <input type="text" class="form-control" [(ngModel)]="componente.icono" name="icono" placeholder="fas fa-puzzle-piece">
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Descripción</label>
+                <textarea class="form-control" rows="2" [(ngModel)]="componente.descripcion" name="descripcion" placeholder="Breve descripción del componente"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Plantilla HTML <span class="text-danger">*</span></label>
+                <textarea class="form-control font-monospace" rows="15" [(ngModel)]="componente.html_template" name="html_template"
+                  placeholder="HTML del componente. Use clases de Bootstrap 5 y Font Awesome."
+                  style="font-size: 13px;"></textarea>
+                <small class="form-text text-muted">Para carruseles, evite IDs fijos; use clases o IDs únicos si inserta varios.</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <div class="form-group">
+                <div class="custom-control custom-switch">
+                  <input type="checkbox" class="custom-control-input" id="activo" [(ngModel)]="componente.activo" name="activo">
+                  <label class="custom-control-label" for="activo">Activo</label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Orden</label>
+                <input type="number" class="form-control" [(ngModel)]="componente.orden" name="orden" min="0">
+              </div>
+              <button type="submit" class="btn btn-primary btn-block" [disabled]="saving || !componente.nombre || !componente.tipo || !componente.html_template">
+                <i class="fas" [ngClass]="saving ? 'fa-spinner fa-spin' : 'fa-save'" class="mr-1"></i>
+                {{ saving ? 'Guardando...' : (editMode ? 'Actualizar' : 'Guardar') }}
+              </button>
+              <a routerLink="/gestor-contenidos/componentes-reutilizables" class="btn btn-secondary btn-block">
+                <i class="fas fa-times mr-1"></i>Cancelar
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>

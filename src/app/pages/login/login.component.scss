@@ -1,0 +1,310 @@
+/* AdminLTE 3.2.0 Login Page Styles */
+
+.login-page {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-box {
+  width: 360px;
+  margin: 7% auto;
+}
+
+.login-logo {
+  font-size: 35px;
+  text-align: center;
+  margin-bottom: 25px;
+  font-weight: 300;
+}
+
+.login-logo a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.login-logo a:hover {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.login-card-body {
+  padding: 35px;
+}
+
+.login-box-msg {
+  margin: 0 0 20px 0;
+  text-align: center;
+  color: #6c757d;
+  font-weight: 400;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.form-control {
+  border: 1px solid #e3e6f0;
+  border-radius: 6px;
+  padding: 12px 15px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.input-group-text {
+  background: #f8f9fc;
+  border: 1px solid #e3e6f0;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  color: #5a5c69;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.input-group-text:hover {
+  background: #eaecf4;
+  color: #3a3b45;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-outline-success {
+  border: 2px solid #28a745;
+  color: #28a745;
+  background: transparent;
+  border-radius: 6px;
+  padding: 10px 15px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-success:hover {
+  background: #28a745;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+}
+
+.btn-outline-info {
+  border: 2px solid #17a2b8;
+  color: #17a2b8;
+  background: transparent;
+  border-radius: 6px;
+  padding: 10px 15px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-info:hover {
+  background: #17a2b8;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);
+}
+
+.icheck-primary {
+  display: inline-block;
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 0;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.icheck-primary input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.icheck-primary label {
+  cursor: pointer;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.icheck-primary label::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #adb5bd;
+  border-radius: 3px;
+  background: #fff;
+  transition: all 0.3s ease;
+}
+
+.icheck-primary input[type="checkbox"]:checked + label::before {
+  background: #667eea;
+  border-color: #667eea;
+}
+
+.icheck-primary input[type="checkbox"]:checked + label::after {
+  content: "";
+  position: absolute;
+  left: -17px;
+  top: 5px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.alert {
+  border-radius: 6px;
+  border: none;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+  color: white;
+}
+
+.alert .close {
+  color: white;
+  opacity: 0.8;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+  text-shadow: none;
+}
+
+.alert .close:hover {
+  opacity: 1;
+}
+
+.social-auth-links p {
+  color: #6c757d;
+  font-size: 14px;
+  margin: 15px 0;
+  position: relative;
+}
+
+.social-auth-links p::before,
+.social-auth-links p::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background: #dee2e6;
+}
+
+.social-auth-links p::before {
+  left: 0;
+}
+
+.social-auth-links p::after {
+  right: 0;
+}
+
+.text-center a {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.text-center a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .login-box {
+    width: 90%;
+    margin: 10% auto;
+  }
+  
+  .login-card-body {
+    padding: 25px;
+  }
+  
+  .login-logo {
+    font-size: 28px;
+  }
+}
+
+/* Animation for form elements */
+.form-control,
+.btn {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Floating label effect */
+.input-group .form-control:focus + .input-group-append .input-group-text {
+  border-color: #667eea;
+  background: #f0f2ff;
+}
+
+/* Invalid feedback styling */
+.invalid-feedback {
+  display: block;
+  font-size: 12px;
+  color: #dc3545;
+  margin-top: 5px;
+}

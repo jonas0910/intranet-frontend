@@ -1,0 +1,295 @@
+<app-system-layout [title]="viewConfig.title"
+    [subtitle]="'Administración de Constancias, Duplicados y Ceses de Actividades'"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comercialización', url: '/comercializacion'}, {label: 'Licencias', url: '/comercializacion/licencias'}, {label: 'Constancias'}]"
+    [subsystem]="'comercializacion'">
+
+    <!-- Acciones Rápidas -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card card-outline card-primary shadow-sm cursor-pointer hover-card"
+                [ngClass]="{'active-tab': currentFilter === 'LICENCIA'}"
+                (click)="setFilter(currentFilter === 'LICENCIA' ? 'TODO' : 'LICENCIA')">
+                <div class="card-body text-center p-3">
+                    <i class="fas fa-certificate fa-2x mb-2 text-primary"></i>
+                    <h6 class="font-weight-bold mb-0">Licencias</h6>
+                    <small class="text-muted">Funcionamiento</small>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card card-outline card-success shadow-sm cursor-pointer hover-card"
+                [ngClass]="{'active-tab': currentFilter === 'DUPLICADO'}"
+                (click)="setFilter(currentFilter === 'DUPLICADO' ? 'TODO' : 'DUPLICADO')">
+                <div class="card-body text-center p-3">
+                    <i class="fas fa-copy fa-2x mb-2 text-success"></i>
+                    <h6 class="font-weight-bold mb-0">Duplicados</h6>
+                    <small class="text-muted">Recuperaciones</small>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card card-outline card-info shadow-sm cursor-pointer hover-card"
+                [ngClass]="{'active-tab': currentFilter === 'AMPLIACION'}"
+                (click)="setFilter(currentFilter === 'AMPLIACION' ? 'TODO' : 'AMPLIACION')">
+                <div class="card-body text-center p-3">
+                    <i class="fas fa-map-signs fa-2x mb-2 text-info"></i>
+                    <h6 class="font-weight-bold mb-0">Ampliación</h6>
+                    <small class="text-muted">Cambio de Giro</small>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card card-outline card-danger shadow-sm cursor-pointer hover-card"
+                [ngClass]="{'active-tab': currentFilter === 'CESE'}"
+                (click)="setFilter(currentFilter === 'CESE' ? 'TODO' : 'CESE')">
+                <div class="card-body text-center p-3">
+                    <i class="fas fa-store-slash fa-2x mb-2 text-danger"></i>
+                    <h6 class="font-weight-bold mb-0">Ceses</h6>
+                    <small class="text-muted">Cierres</small>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card card-outline card-warning shadow-sm cursor-pointer hover-card"
+                [ngClass]="{'active-tab': currentFilter === 'CERTIFICADO'}"
+                (click)="setFilter(currentFilter === 'CERTIFICADO' ? 'TODO' : 'CERTIFICADO')">
+                <div class="card-body text-center p-3">
+                    <i class="fas fa-shield-alt fa-2x mb-2 text-warning"></i>
+                    <h6 class="font-weight-bold mb-0">Certificados</h6>
+                    <small class="text-muted">ITSE / Otros</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0 text-dark font-weight-bold">
+            {{ currentFilter === 'TODO' ? 'Todos los Registros' : 'Filtrando por: ' + currentFilter }}
+            <span class="badge badge-secondary ml-2">{{filteredData.length}}</span>
+        </h4>
+        <div class="btn-group shadow-sm">
+            <button class="btn btn-success px-4" (click)="onAction('create')">
+                <i class="fas fa-plus mr-2"></i> Nuevo Registro
+            </button>
+            <button class="btn btn-outline-secondary" (click)="onExportExcel()" title="Exportar Excel">
+                <i class="fas fa-file-excel"></i>
+            </button>
+            <button class="btn btn-outline-secondary" (click)="loadData()" title="Recargar">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Lista de Registros -->
+    <div class="card elevation-1 border-0" style="border-radius: 12px;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="px-4">Nro. Documento</th>
+                            <th>Tipo</th>
+                            <th>Solicitante</th>
+                            <th>Expediente</th>
+                            <th>Fecha</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let item of filteredData" class="align-middle">
+                            <td class="px-4 font-weight-bold text-success">{{item.nro_constancia}}</td>
+                            <td>
+                                <span class="badge px-3 py-2" [ngClass]="{
+                                    'badge-primary-soft': item.tipo === 'LICENCIA',
+                                    'badge-warning-soft': item.tipo === 'CERTIFICADO',
+                                    'badge-success-soft': item.tipo === 'DUPLICADO',
+                                    'badge-info-soft': item.tipo === 'AMPLIACION',
+                                    'badge-danger-soft': item.tipo === 'CESE'
+                                }">{{item.tipo}}</span>
+                            </td>
+                            <td>{{item.solicitante}}</td>
+                            <td>{{item.nro_expediente || 'N/A'}}</td>
+                            <td>{{item.fecha_emision | date:'dd/MM/yyyy'}}</td>
+                            <td class="text-center">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-light text-success" (click)="openLiquidar(item)"
+                                        title="Liquidar Pago">
+                                        <i class="fas fa-file-invoice-dollar"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light text-success" (click)="printLicencia(item)"
+                                        title="Imprimir Licencia">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light text-primary" (click)="onAction('view', item)"
+                                        title="Ver">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light text-warning" (click)="onAction('edit', item)"
+                                        title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light text-danger" (click)="onAction('delete', item)"
+                                        title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr *ngIf="filteredData.length === 0">
+                            <td colspan="6" class="text-center p-5 text-muted">
+                                <i class="fas fa-folder-open fa-3x mb-3 opacity-25"></i><br>
+                                No se encontraron registros en esta categoría.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Formulario -->
+    <div class="modal fade show" *ngIf="showModal" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+                <div class="modal-header bg-success text-white"
+                    style="border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                    <h5 class="modal-title font-weight-bold">
+                        <i [class]="viewMode === 'view' ? 'fas fa-eye' : 'fas fa-edit' + ' mr-2'"></i>
+                        {{ viewMode === 'view' ? 'Detalle de Registro' : (viewMode === 'edit' ? 'Editar Registro' :
+                        'Nueva Constancia / Cese') }}
+                    </h5>
+                    <button type="button" class="close text-white" (click)="closeModal()">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <form [formGroup]="form">
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label class="font-weight-bold">Nro. de Documento / Constancia</label>
+                                <input type="text" class="form-control" formControlName="nro_constancia"
+                                    placeholder="Ej: DUP-2026-XXXX">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="font-weight-bold">Tipo de Registro</label>
+                                <select class="form-control" formControlName="tipo">
+                                    <option value="LICENCIA">LICENCIA DE FUNCIONAMIENTO</option>
+                                    <option value="CERTIFICADO">CERTIFICADO ITSE / OTROS</option>
+                                    <option value="DUPLICADO">DUPLICADO</option>
+                                    <option value="AMPLIACION">AMPLIACION DE GIRO</option>
+                                    <option value="CESE">CESE DE ACTIVIDADES</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12 form-group">
+                                <label class="font-weight-bold">Vincular con Padrón de Comerciantes (Opcional)</label>
+                                <select class="form-control btn-outline-success" formControlName="comerciante_id"
+                                    (change)="onComercianteChange($event)">
+                                    <option [value]="null">-- Digitar manualmente --</option>
+                                    <option *ngFor="let c of comerciantesPadron" [value]="c.id">{{ c.contribuyente }} -
+                                        {{ c.giro }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12 form-group">
+                                <label class="font-weight-bold">Solicitante / Razón Social</label>
+                                <input type="text" class="form-control" formControlName="solicitante"
+                                    placeholder="Nombre completo del titular">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="font-weight-bold">Dirección / Establecimiento</label>
+                                <input type="text" class="form-control" formControlName="direccion"
+                                    placeholder="Av / Jr / Calle ...">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="font-weight-bold">Giro / Actividad Económica</label>
+                                <input type="text" class="form-control" formControlName="giro"
+                                    placeholder="Ej: Bodega, Farmacia, etc.">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="font-weight-bold">Expediente Asociado</label>
+                                <input type="text" class="form-control" formControlName="nro_expediente">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="font-weight-bold">Fecha de Emisión</label>
+                                <input type="date" class="form-control" formControlName="fecha_emision">
+                            </div>
+                            <div class="col-md-12 form-group mb-0">
+                                <label class="font-weight-bold">Observaciones</label>
+                                <textarea class="form-control" formControlName="observaciones" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light"
+                    style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+                    <button class="btn btn-outline-success mr-auto" (click)="printLicencia(form.value)"
+                        *ngIf="viewMode === 'view'">
+                        <i class="fas fa-print mr-2"></i> Imprimir Licencia
+                    </button>
+                    <button class="btn btn-light" (click)="closeModal()">{{ viewMode === 'view' ? 'Cerrar' : 'Cancelar'
+                        }}</button>
+                    <button class="btn btn-success px-4" (click)="save()" [disabled]="isSaving"
+                        *ngIf="viewMode !== 'view'">
+                        <i class="fas fa-save mr-2"></i> {{ isSaving ? 'Guardando...' : 'Guardar Datos' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Liquidar Pago -->
+    <div class="modal fade" id="modalLiquidar" [ngClass]="{'show': showLiquidarModal}"
+        [style.display]="showLiquidarModal ? 'block' : 'none'" tabindex="-1" role="dialog"
+        [ngStyle]="{'background-color': showLiquidarModal ? 'rgba(0,0,0,0.5)' : 'transparent'}">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content elevation-3" style="border-radius: 15px;">
+                <div class="modal-header bg-success text-white"
+                    style="border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                    <h5 class="modal-title font-weight-bold">
+                        <i class="fas fa-file-invoice-dollar mr-2"></i> Liquidar Pago
+                    </h5>
+                    <button type="button" class="close text-white" (click)="closeLiquidar()">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="fas fa-info-circle mr-1"></i> Se generará un pre-recibo para el concepto seleccionado.
+                    </div>
+                    <form [formGroup]="liquidarForm">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Concepto de Pago</label>
+                            <select class="form-control" formControlName="concepto_id"
+                                (change)="onConceptoChange($event)">
+                                <option [value]="null">-- Seleccione --</option>
+                                <option *ngFor="let c of conceptos" [value]="c.id">{{ c.descripcion }} (S/ {{ c.monto |
+                                    number:'1.2-2' }})</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold">Monto (S/)</label>
+                            <input type="number" class="form-control form-control-lg font-weight-bold text-success"
+                                formControlName="monto" readonly>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="font-weight-bold">Observaciones</label>
+                            <textarea class="form-control" formControlName="observaciones" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light"
+                    style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+                    <button type="button" class="btn btn-light" (click)="closeLiquidar()" [disabled]="isSaving">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success shadow-sm px-4" (click)="confirmLiquidar()"
+                        [disabled]="liquidarForm.invalid || isSaving">
+                        <i class="fas fa-check-circle mr-1"></i>
+                        {{ isSaving ? 'Generando...' : 'Confirmar Pre-Recibo' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>

@@ -1,0 +1,961 @@
+<app-system-layout [title]="'Inventario Físico'" [subtitle]="'Gestión de inventarios y control patrimonial'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Activos Fijos', url: '/activos-fijos'}, {label: 'Inventario'}]"
+  [subsystem]="'activos-fijos'">
+
+  <!-- Card CRUD Inventarios con Design System -->
+  <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-success'"
+    [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+    <!-- Toolbar -->
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+      <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+        <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+          <i class="fas fa-list mr-1"></i> Inventarios Registrados
+        </h3>
+        <span class="badge"
+          [ngClass]="cv.cardOutlineColor ? 'bg-' + cv.cardOutlineColor.replace('card-', '') : 'badge-info'"
+          *ngIf="cv.showRecordCount">{{inventarios.length}}</span>
+        <ng-container *ngIf="cv.showExportButtons">
+          <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'"
+            (click)="onExportExcel()">
+            <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{ cv.excelBtnLabel || 'Excel' }}
+          </button>
+          <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'"
+            (click)="onExportPdf()">
+            <i [class]="(cv.pdfBtnIcon || 'fas fa-file-pdf') + ' mr-1'"></i> {{ cv.pdfBtnLabel || 'PDF' }}
+          </button>
+        </ng-container>
+      </div>
+      <div class="ms-auto flex-shrink-0" style="display: flex; gap: 6px;">
+        <button type="button" class="btn btn-sm btn-success" (click)="abrirModalEtiquetas()">
+          <i class="fas fa-qrcode mr-1"></i> Etiquetas QR
+        </button>
+        <button type="button" class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-primary'"
+          (click)="abrirModalNuevo()">
+          <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> Nuevo Inventario
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="card-body px-0 pt-0 pb-2">
+      <div class="table-responsive p-2">
+        <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Fecha Inicio</th>
+              <th>Fecha Fin</th>
+              <th style="width: 150px;">Avance</th>
+              <th>Estado</th>
+              <th>Responsable</th>
+              <th style="width: 200px;" class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let inv of inventarios; let i = index">
+              <td>{{i + 1}}</td>
+              <td><strong class="text-primary">{{inv.codigo}}</strong></td>
+              <td>
+                <div>{{inv.nombre}}</div>
+                <small class="text-muted" *ngIf="inv.descripcion">{{inv.descripcion}}</small>
+              </td>
+              <td>{{formatDate(inv.fecha_inicio)}}</td>
+              <td>{{formatDate(inv.fecha_fin)}}</td>
+              <td>
+                <small class="text-muted mb-1 d-block">
+                  {{inv.total_activos_escaneados || 0}} / {{inv.total_activos_sistema || 0}}
+                  ({{calcularPorcentaje(inv)}}%)
+                </small>
+                <div class="progress" style="height: 8px;">
+                  <div class="progress-bar" [style.width.%]="calcularPorcentaje(inv)"
+                    [ngClass]="getProgressBarClass(inv)">
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge badge-pill" [ngClass]="getEstadoBadge(inv.estado)">
+                  {{formatEstado(inv.estado)}}
+                </span>
+              </td>
+              <td>
+                <small class="d-block">
+                  <i class="fas fa-user-tie mr-1"></i>
+                  {{inv.responsable?.name || '-'}}
+                </small>
+                <small class="text-muted" *ngIf="inv.colaboradores?.length > 0">
+                  <i class="fas fa-users mr-1"></i>
+                  {{inv.colaboradores.length}} colaboradores
+                </small>
+              </td>
+              <td class="text-center">
+                <div class="btn-group btn-group-sm">
+                  <app-crud-actions
+                    [showView]="true"
+                    [showEdit]="inv.estado === 'en_proceso'"
+                    [showDelete]="false"
+                    [subsystem]="'activos-fijos'"
+                    [btnEditClass]="'btn-secondary'"
+                    (onView)="verDetalle(inv.id)"
+                    (onEdit)="abrirModalEditar(inv)">
+                  </app-crud-actions>
+                  <button type="button" class="btn btn-primary" *ngIf="inv.estado === 'en_proceso'"
+                    (click)="abrirModalEscanear(inv.id)" title="Escanear Activos (App o Pistola)">
+                    <i class="fas fa-camera"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-success border" *ngIf="inv.estado === 'en_proceso'"
+                    (click)="triggerExcelUpload(inv.id)" title="Cargar Masivamente por Excel">
+                    <i class="fas fa-file-excel"></i>
+                  </button>
+                  <button type="button" class="btn btn-warning" (click)="verConciliacion(inv.id)" title="Conciliación">
+                    <i class="fas fa-balance-scale"></i>
+                  </button>
+                  <button type="button" class="btn btn-success" *ngIf="inv.estado === 'en_proceso'"
+                    (click)="cerrarInventario(inv.id)" title="Cerrar Inventario">
+                    <i class="fas fa-check-circle"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="inventarios.length === 0">
+              <td colspan="9" class="text-center p-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3 d-block"></i>
+                <p class="text-muted">No hay inventarios registrados</p>
+                <button class="btn btn-primary" (click)="abrirModalNuevo()">
+                  <i class="fas fa-plus mr-1"></i>Crear Primer Inventario
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Direct Input para Carga Masiva desde Vista Grid -->
+  <input type="file" id="directExcelUpload" style="display: none;" (change)="onFileExcelSelected($event)"
+    accept=".xlsx, .xls, .csv">
+
+</app-system-layout>
+
+<!-- ==================== MODAL NUEVO INVENTARIO ==================== -->
+<div class="modal fade" id="modalNuevoInventario" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-edit mr-2" *ngIf="modoEdicion"></i>
+          <i class="fas fa-plus mr-2" *ngIf="!modoEdicion"></i>
+          {{ modoEdicion ? 'Editar Inventario Físico' : 'Nuevo Inventario Físico' }}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <div class="form-group mb-0">
+                <label>
+                  Nombre del Inventario <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" [(ngModel)]="nuevoInventario.nombre" name="nombre" required
+                  placeholder="Ej: Inventario Físico Anual 2025">
+              </div>
+            </div>
+
+            <div class="col-md-12 mb-3">
+              <div class="form-group mb-0">
+                <label>
+                  Descripción
+                </label>
+                <textarea class="form-control form-control-sm" rows="4" [style.height.px]="100"
+                  [(ngModel)]="nuevoInventario.descripcion" name="inv_descripcion_alt" id="inv_descripcion_id"
+                  placeholder="Descripción opcional del inventario"></textarea>
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <div class="form-group mb-0">
+                <label>
+                  Fecha de Inicio <span class="text-danger">*</span>
+                </label>
+                <input type="date" class="form-control" [(ngModel)]="nuevoInventario.fecha_inicio" name="fecha_inicio"
+                  required>
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <div class="form-group mb-0">
+                <label>
+                  Fecha de Fin Estimada
+                </label>
+                <input type="date" class="form-control" [(ngModel)]="nuevoInventario.fecha_fin" name="fecha_fin">
+              </div>
+            </div>
+
+            <div class="col-md-12 mb-3">
+              <div class="form-group mb-0">
+                <label>
+                  <i class="fas fa-users mr-1"></i> Colaboradores
+                </label>
+                <p class="small text-muted mb-2">Usuarios que participarán en la toma del inventario.</p>
+                <div class="d-flex align-items-center flex-wrap mb-2" style="gap: 8px;">
+                  <select class="form-control form-control-sm ds-select2" [ngClass]="mc.inputSize"
+                    [(ngModel)]="usuarioParaAgregar" name="usuarioParaAgregar"
+                    style="max-width: 280px;">
+                    <option [ngValue]="null">-- Seleccione un usuario para agregar --</option>
+                    <option *ngFor="let user of usuariosNoAgregados" [ngValue]="user.id">
+                      {{ user.name }} ({{ user.email }})
+                    </option>
+                  </select>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="agregarColaborador()"
+                    [disabled]="!usuarioParaAgregar">
+                    <i class="fas fa-plus mr-1"></i> Agregar
+                  </button>
+                </div>
+                <div class="table-responsive border rounded">
+                  <table class="table table-sm table-hover mb-0">
+                    <thead class="thead-light">
+                      <tr>
+                        <th style="width: 40px;">#</th>
+                        <th>Usuario</th>
+                        <th>Correo</th>
+                        <th style="width: 80px;" class="text-center">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let u of colaboradoresEnTabla; let i = index">
+                        <td class="align-middle">{{ i + 1 }}</td>
+                        <td class="align-middle">
+                          <i class="fas fa-user-check text-success mr-1"></i>
+                          {{ u.name }}
+                        </td>
+                        <td class="align-middle text-muted">{{ u.email }}</td>
+                        <td class="align-middle text-center">
+                          <button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarColaborador(u.id)"
+                            title="Quitar">
+                            <i class="fas fa-times"></i>
+                          </button>
+                        </td>
+                      </tr>
+                      <tr *ngIf="colaboradoresEnTabla.length === 0">
+                        <td colspan="4" class="text-center text-muted py-3">
+                          <i class="fas fa-users fa-2x mb-2 d-block"></i>
+                          No hay colaboradores agregados. Use el selector superior para agregar usuarios.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert alert-info border-0 mt-2" style="background: rgba(23, 162, 184, 0.1); color: #17a2b8;">
+            <i class="fas fa-info-circle mr-2"></i>
+            <small>El inventario se creará en estado <strong>"En Proceso"</strong> y se calculará el total de activos
+              automáticamente.</small>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="guardarInventario()">
+          <i class="fas fa-save mr-1"></i>{{ modoEdicion ? 'Actualizar' : 'Crear Inventario' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL DETALLE INVENTARIO ==================== -->
+<div class="modal fade" id="modalDetalle" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-clipboard-check mr-2"></i>Detalle del Inventario
+        </h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-0" *ngIf="detalleInventario">
+
+        <!-- Tabs DS Style -->
+        <ul class="nav nav-tabs px-3 pt-3" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active ds-tab-link" data-toggle="tab" href="#det-general" role="tab">
+              <i class="fas fa-info-circle mr-1"></i> General
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link ds-tab-link" data-toggle="tab" href="#det-resumen" role="tab">
+              <i class="fas fa-chart-pie mr-1"></i> Resumen
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link ds-tab-link" data-toggle="tab" href="#det-activos" role="tab">
+              <i class="fas fa-list-check mr-1"></i> Activos Escaneados
+              ({{getDetallesEncontrados(detalleInventario).length}})
+            </a>
+          </li>
+        </ul>
+
+        <div class="tab-content p-4">
+          <!-- Tab General -->
+          <div class="tab-pane fade show active" id="det-general">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <h6><i class="fas fa-barcode mr-2 text-muted"></i>Código</h6>
+                <p class="text-primary mb-0"><strong>{{detalleInventario.codigo}}</strong></p>
+              </div>
+              <div class="col-md-6">
+                <h6><i class="fas fa-flag mr-2 text-muted"></i>Estado</h6>
+                <span class="badge badge-pill" [ngClass]="getEstadoBadge(detalleInventario.estado)">
+                  {{formatEstado(detalleInventario.estado)}}
+                </span>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <h6><i class="fas fa-file-alt mr-2 text-muted"></i>Nombre</h6>
+                <p class="mb-0">{{detalleInventario.nombre}}</p>
+              </div>
+            </div>
+
+            <div class="row mb-3" *ngIf="detalleInventario.descripcion">
+              <div class="col-md-12">
+                <h6><i class="fas fa-align-left mr-2 text-muted"></i>Descripción</h6>
+                <p class="mb-0">{{detalleInventario.descripcion}}</p>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <h6><i class="fas fa-calendar-alt mr-2 text-muted"></i>Fecha de Inicio</h6>
+                <p class="mb-0">{{formatDate(detalleInventario.fecha_inicio)}}</p>
+              </div>
+              <div class="col-md-6">
+                <h6><i class="fas fa-calendar-check mr-2 text-muted"></i>Fecha de Fin</h6>
+                <p class="mb-0">{{formatDate(detalleInventario.fecha_fin)}}</p>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <h6><i class="fas fa-user mr-2 text-muted"></i>Responsable</h6>
+                <p class="mb-0">{{detalleInventario.responsable?.name || '-'}}</p>
+              </div>
+              <div class="col-md-6">
+                <h6><i class="fas fa-clock mr-2 text-muted"></i>Creado el</h6>
+                <p class="mb-0">{{formatDate(detalleInventario.created_at)}}</p>
+              </div>
+            </div>
+
+            <div class="row mb-3" *ngIf="detalleInventario.colaboradores?.length > 0">
+              <div class="col-md-12">
+                <h6><i class="fas fa-users mr-2 text-muted"></i>Colaboradores Autorizados</h6>
+                <div class="d-flex flex-wrap" style="gap: 5px;">
+                  <span class="badge badge-light border p-2" *ngFor="let colab of detalleInventario.colaboradores">
+                    <i class="fas fa-user-check mr-1 text-success"></i> {{colab.name}}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="row" *ngIf="detalleInventario.observaciones">
+              <div class="col-md-12">
+                <h6><i class="fas fa-comment mr-2 text-muted"></i>Observaciones</h6>
+                <p class="bg-light p-3 rounded mb-0">{{detalleInventario.observaciones}}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Resumen -->
+          <div class="tab-pane fade" id="det-resumen">
+            <h6 class="mb-3"><i class="fas fa-chart-line mr-2 text-info"></i>Estadísticas del Inventario</h6>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="info-box bg-light border elevation-0 mb-3">
+                  <span class="info-box-icon bg-primary"><i class="fas fa-database"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">En Sistema</span>
+                    <span class="info-box-number">{{detalleInventario.total_activos_sistema || 0}}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="info-box bg-light border elevation-0 mb-3">
+                  <span class="info-box-icon bg-info"><i class="fas fa-camera"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Escaneados</span>
+                    <span class="info-box-number">{{detalleInventario.total_activos_escaneados || 0}}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="info-box bg-light border elevation-0 mb-3">
+                  <span class="info-box-icon bg-warning"><i class="fas fa-exclamation-triangle"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Faltantes</span>
+                    <span class="info-box-number">{{detalleInventario.total_faltantes || 0}}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="info-box bg-light border elevation-0 mb-3">
+                  <span class="info-box-icon bg-danger"><i class="fas fa-plus-circle"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Sobrantes</span>
+                    <span class="info-box-number">{{detalleInventario.total_sobrantes || 0}}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-2">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="font-weight-bold">Avance del Inventario</span>
+                <span class="badge badge-info">{{calcularPorcentaje(detalleInventario)}}%</span>
+              </div>
+              <div class="progress" style="height: 30px; border-radius: 15px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                  [ngClass]="getProgressBarClass(detalleInventario)"
+                  [style.width.%]="calcularPorcentaje(detalleInventario)">
+                  {{calcularPorcentaje(detalleInventario)}}% Completado
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Activos Escaneados -->
+          <div class="tab-pane fade" id="det-activos">
+            <h6 class="mb-3"><i class="fas fa-list-check mr-2 text-success"></i>Relación de Activos Encontrados</h6>
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+              <table [ngClass]="cv.tableClasses" class="table table-sm table-head-fixed text-nowrap ds-crud-table">
+                <thead>
+                  <tr>
+                    <th>Código Patrimonial</th>
+                    <th>Descripción</th>
+                    <th>Fecha Escaneo</th>
+                    <th>Modo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let det of getDetallesEncontrados(detalleInventario)">
+                    <td><strong>{{det.activo?.codigo_patrimonial || det.codigo_escaneado}}</strong></td>
+                    <td>
+                      <div class="text-truncate" style="max-width: 250px;"
+                        [title]="det.activo?.descripcion || 'Código sin activo en BD'">
+                        {{det.activo?.descripcion || 'Código sin activo en BD'}}
+                      </div>
+                    </td>
+                    <td><small>{{formatDate(det.fecha_escaneo)}}</small></td>
+                    <td>
+                      <span class="badge badge-light border">
+                        <i
+                          [class]="det.origen === 'excel' ? 'fas fa-file-excel text-success' : 'fas fa-mobile-alt text-info'"></i>
+                        {{det.origen === 'excel' ? ' Excel' : ' App/Web'}}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="getDetallesEncontrados(detalleInventario).length === 0">
+                    <td colspan="4" class="text-center text-muted p-5">
+                      <i class="fas fa-search-minus fa-3x mb-3 d-block"></i>
+                      No hay activos escaneados todavía
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cerrar
+        </button>
+        <button type="button" class="btn btn-warning"
+          *ngIf="detalleInventario && detalleInventario.estado === 'cerrado'"
+          (click)="verConciliacionDesdeDetalle(detalleInventario.id)">
+          <i class="fas fa-balance-scale mr-1"></i>Ver Conciliación
+        </button>
+        <button type="button" class="btn btn-primary"
+          *ngIf="detalleInventario && detalleInventario.estado === 'en_proceso'"
+          (click)="escanearDesdeDetalle(detalleInventario.id)">
+          <i class="fas fa-camera mr-1"></i>Escanear Activos
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL ESCANEAR QR ==================== -->
+<div class="modal fade" id="modalEscanear" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-camera mr-2"></i>Escanear Activos - {{inventarioSeleccionado?.codigo}}
+        </h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Info del inventario -->
+        <div class="alert alert-info mb-3" *ngIf="inventarioSeleccionado">
+          <div class="row">
+            <div class="col-md-6">
+              <strong>Inventario:</strong> {{inventarioSeleccionado.nombre}}
+            </div>
+            <div class="col-md-6">
+              <strong>Avance:</strong>
+              {{inventarioSeleccionado.total_activos_escaneados || 0}} / {{inventarioSeleccionado.total_activos_sistema
+              || 0}}
+              ({{calcularPorcentaje(inventarioSeleccionado)}}%)
+            </div>
+          </div>
+        </div>
+
+        <!-- Input para escanear -->
+        <div class="form-group">
+          <label><i class="fas fa-qrcode mr-2"></i>Escanear Código QR o Código Patrimonial</label>
+          <div class="input-group input-group-lg">
+            <input type="text" class="form-control" [(ngModel)]="codigoQR" (keyup.enter)="escanearCodigo()"
+              placeholder="Escanee o ingrese el código..." [disabled]="escaneando" autofocus>
+            <div class="input-group-append">
+              <button class="btn btn-primary" (click)="escanearCodigo()" [disabled]="escaneando || !codigoQR">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </div>
+          <small class="text-muted">
+            <i class="fas fa-info-circle mr-1"></i>
+            Presione Enter después de escanear o ingrese el código manualmente
+          </small>
+        </div>
+
+        <div class="card bg-primary-light border-primary mt-3 mb-4">
+          <div class="card-body p-3">
+            <h6 class="text-primary font-weight-bold mb-2"><i class="fas fa-file-excel mr-2"></i>Carga Masiva (Offline)
+            </h6>
+            <p class="small text-muted mb-3">Si escaneó sus equipos usando un excel, súbalo aquí. La primera columna
+              debe contener los códigos patrimoniales de cada equipo validado.</p>
+            <div class="custom-file">
+              <input type="file" class="custom-file-input" id="excelUpload" (change)="onFileExcelSelected($event)"
+                accept=".xlsx, .xls, .csv" [disabled]="escaneando">
+              <label class="custom-file-label" for="excelUpload">Seleccionar archivo Excel...</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resultado del último escaneo -->
+        <div *ngIf="ultimoEscaneo" class="mt-4">
+          <h6 class="mb-3"><i class="fas fa-check-circle mr-2"></i>Último Escaneo</h6>
+
+          <div class="alert" [ngClass]="ultimoEscaneo.encontrado ? 'alert-success' : 'alert-warning'">
+            <div class="row">
+              <div class="col-md-12">
+                <strong>Código escaneado:</strong> {{ultimoEscaneo.codigo_escaneado}}
+              </div>
+            </div>
+
+            <div *ngIf="ultimoEscaneo.encontrado" class="mt-2">
+              <hr>
+              <div class="row">
+                <div class="col-md-6">
+                  <strong>Activo:</strong><br>
+                  {{ultimoEscaneo.activo?.codigo_patrimonial}}<br>
+                  <small>{{ultimoEscaneo.activo?.descripcion}}</small>
+                </div>
+                <div class="col-md-6">
+                  <strong>Ubicación:</strong><br>
+                  {{ultimoEscaneo.ubicacion_fisica?.nombre || '-'}}
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="!ultimoEscaneo.encontrado" class="mt-2">
+              <i class="fas fa-exclamation-triangle mr-2"></i>
+              <strong>Este código no existe en el sistema</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instrucciones -->
+        <div class="card bg-light mt-3">
+          <div class="card-body">
+            <h6><i class="fas fa-lightbulb mr-2"></i>Instrucciones</h6>
+            <ol class="mb-0">
+              <li>Ubique el activo físicamente</li>
+              <li>Escanee el código QR con un lector externo</li>
+              <li>El código aparecerá en el campo de texto</li>
+              <li>Presione Enter o click en Buscar</li>
+              <li>Repita para cada activo</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL CONCILIACIÓN ==================== -->
+<div class="modal fade" id="modalConciliacion" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-balance-scale mr-2"></i>Conciliación de Inventario
+        </h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" *ngIf="conciliacion">
+
+        <!-- Resumen -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="small-box bg-primary">
+              <div class="inner">
+                <h3>{{conciliacion.resumen?.total_sistema || 0}}</h3>
+                <p>Total en Sistema</p>
+              </div>
+              <div class="icon"><i class="fas fa-database"></i></div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="small-box bg-success">
+              <div class="inner">
+                <h3>{{conciliacion.resumen?.total_encontrados || 0}}</h3>
+                <p>Encontrados</p>
+              </div>
+              <div class="icon"><i class="fas fa-check-circle"></i></div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="small-box bg-warning">
+              <div class="inner">
+                <h3>{{conciliacion.resumen?.total_faltantes || 0}}</h3>
+                <p>Faltantes</p>
+              </div>
+              <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="small-box bg-danger">
+              <div class="inner">
+                <h3>{{conciliacion.resumen?.total_sobrantes || 0}}</h3>
+                <p>Sobrantes</p>
+              </div>
+              <div class="icon"><i class="fas fa-plus-circle"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs DS Style -->
+        <ul class="nav nav-tabs mb-3" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active ds-tab-link" data-toggle="tab" href="#encontrados" role="tab">
+              <i class="fas fa-check-circle mr-1 text-success"></i>Encontrados ({{conciliacion.encontrados?.length ||
+              0}})
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link ds-tab-link" data-toggle="tab" href="#faltantes" role="tab">
+              <i class="fas fa-exclamation-triangle mr-1 text-warning"></i>Faltantes ({{conciliacion.faltantes?.length
+              || 0}})
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link ds-tab-link" data-toggle="tab" href="#sobrantes" role="tab">
+              <i class="fas fa-plus-circle mr-1 text-danger"></i>Sobrantes ({{conciliacion.sobrantes?.length || 0}})
+            </a>
+          </li>
+        </ul>
+
+        <div class="tab-content p-3">
+
+          <!-- Tab Encontrados -->
+          <div class="tab-pane fade show active" id="encontrados">
+            <div class="table-responsive">
+              <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Código Patrimonial</th>
+                    <th>Descripción</th>
+                    <th>Categoría</th>
+                    <th>Ubicación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let activo of conciliacion.encontrados; let i = index">
+                    <td>{{i + 1}}</td>
+                    <td><strong>{{activo.codigo_patrimonial}}</strong></td>
+                    <td>{{activo.descripcion}}</td>
+                    <td>{{activo.categoria?.nombre}}</td>
+                    <td>{{activo.ubicacion?.nombre}}</td>
+                  </tr>
+                  <tr *ngIf="!conciliacion.encontrados || conciliacion.encontrados.length === 0">
+                    <td colspan="5" class="text-center p-5 text-muted">
+                      No hay activos encontrados
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab Faltantes -->
+          <div class="tab-pane fade" id="faltantes">
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle mr-2"></i>
+              <strong>Estos activos están en el sistema pero no fueron escaneados</strong>
+            </div>
+            <div class="table-responsive">
+              <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table table-warning">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Código Patrimonial</th>
+                    <th>Descripción</th>
+                    <th>Categoría</th>
+                    <th>Ubicación Registrada</th>
+                    <th>Responsable</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let activo of conciliacion.faltantes; let i = index">
+                    <td>{{i + 1}}</td>
+                    <td><strong>{{activo.codigo_patrimonial}}</strong></td>
+                    <td>{{activo.descripcion}}</td>
+                    <td>{{activo.categoria?.nombre}}</td>
+                    <td>{{activo.ubicacion?.nombre}}</td>
+                    <td>{{activo.responsable?.name}}</td>
+                  </tr>
+                  <tr *ngIf="!conciliacion.faltantes || conciliacion.faltantes.length === 0">
+                    <td colspan="6" class="text-center p-5 text-success">
+                      <i class="fas fa-check-circle fa-2x mb-2 d-block"></i>
+                      ¡Excelente! No hay activos faltantes
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab Sobrantes -->
+          <div class="tab-pane fade" id="sobrantes">
+            <div class="alert alert-danger">
+              <i class="fas fa-plus-circle mr-2"></i>
+              <strong>Estos códigos fueron escaneados pero no existen en el sistema</strong>
+            </div>
+            <div class="table-responsive">
+              <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table table-danger">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Código Escaneado</th>
+                    <th>Fecha de Escaneo</th>
+                    <th>Escaneado Por</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let sobrante of conciliacion.sobrantes; let i = index">
+                    <td>{{i + 1}}</td>
+                    <td><strong>{{sobrante.codigo_escaneado}}</strong></td>
+                    <td>{{formatDate(sobrante.fecha_escaneo)}}</td>
+                    <td>{{sobrante.escaneado_por?.name}}</td>
+                  </tr>
+                  <tr *ngIf="!conciliacion.sobrantes || conciliacion.sobrantes.length === 0">
+                    <td colspan="4" class="text-center p-5 text-success">
+                      <i class="fas fa-check-circle fa-2x mb-2 d-block"></i>
+                      ¡Excelente! No hay códigos sobrantes
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cerrar
+        </button>
+        <button type="button" class="btn btn-success">
+          <i class="fas fa-file-excel mr-1"></i>Exportar a Excel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL GENERAR ETIQUETAS ==================== -->
+<div class="modal fade" id="modalGenerarEtiquetas" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-qrcode mr-2"></i>Generar Etiquetas QR
+        </h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Filtros para Etiquetas -->
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Categoría</label>
+              <select class="form-control form-control-sm ds-select2" [(ngModel)]="filtroEtiquetas.categoria_id"
+                (change)="aplicarFiltrosEtiquetas()" name="categoria_id">
+                <option value="">Todas las categorías</option>
+                <option *ngFor="let cat of categorias" [value]="cat.id">{{cat.nombre}}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Unidad Orgánica</label>
+              <select class="form-control form-control-sm ds-select2" [(ngModel)]="filtroEtiquetas.unidad_organica_id"
+                (change)="aplicarFiltrosEtiquetas()" name="unidad_organica_id">
+                <option value="">Todas las unidades</option>
+                <option *ngFor="let uo of unidadesOrganicas" [value]="uo.id">{{uo.name}}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Buscar</label>
+              <div class="input-group input-group-sm">
+                <input type="text" class="form-control" [(ngModel)]="filtroEtiquetas.search"
+                  (keyup)="aplicarFiltrosEtiquetas()" placeholder="Buscar código...">
+                <div class="input-group-append">
+                  <span class="input-group-text"><i class="fas fa-search"></i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <div class="form-group w-100">
+              <button class="btn btn-outline-secondary btn-sm btn-block"
+                (click)="filtroEtiquetas = {categoria_id: '', unidad_organica_id: '', search: ''}; aplicarFiltrosEtiquetas()">
+                <i class="fas fa-eraser"></i> Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-12 d-flex align-items-center">
+            <button class="btn btn-sm btn-primary mr-2" (click)="seleccionarTodos()">
+              <i class="fas fa-check-double mr-1"></i>Seleccionar Visibles
+            </button>
+            <button class="btn btn-sm btn-secondary" (click)="deseleccionarTodos()">
+              <i class="fas fa-times mr-1"></i>Deseleccionar Todos
+            </button>
+            <span class="ml-3">
+              <i class="fas fa-tag mr-1 text-primary"></i>
+              Seleccionados: <strong class="text-primary">{{activosSeleccionados.length}}</strong> /
+              {{activosFiltrados.length}} visibles
+            </span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">
+                  <div class="custom-control custom-checkbox ml-1">
+                    <input type="checkbox" class="custom-control-input" id="checkTodosEtiquetas"
+                      [checked]="activosSeleccionados.length === activosFiltrados.length && activosFiltrados.length > 0"
+                      (change)="activosSeleccionados.length === activosFiltrados.length ? deseleccionarTodos() : seleccionarTodos()">
+                    <label class="custom-control-label" for="checkTodosEtiquetas"></label>
+                  </div>
+                </th>
+                <th>Código Patrimonial</th>
+                <th>Descripción</th>
+                <th>Categoría</th>
+                <th>Ubicación</th>
+                <th style="width: 100px;">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let activo of activosFiltrados; let i = index">
+                <td>
+                  <div class="custom-control custom-checkbox ml-1">
+                    <input type="checkbox" class="custom-control-input" [id]="'checkEtiqueta' + i"
+                      [checked]="activosSeleccionados.includes(activo.id)"
+                      (change)="toggleActivoSeleccionado(activo.id)">
+                    <label class="custom-control-label" [for]="'checkEtiqueta' + i"></label>
+                  </div>
+                </td>
+                <td><strong>{{activo.codigo_patrimonial}}</strong></td>
+                <td>{{activo.descripcion}}</td>
+                <td>{{activo.categoria?.nombre}}</td>
+                <td>{{activo.ubicacion?.nombre}}</td>
+                <td>
+                  <span class="badge" [ngClass]="activo.estado === 'activo' ? 'badge-success' : 'badge-secondary'">
+                    {{activo.estado | titlecase}}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="alert alert-info mt-3 d-flex justify-content-between align-items-center">
+          <div>
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>Nota:</strong> Se generará un PDF con etiquetas de 5x5cm listas para imprimir en papel adhesivo.
+          </div>
+          <div>
+            <div class="custom-control custom-radio custom-control-inline">
+              <input type="radio" id="tipoEtiquetaQR" name="tipoEtiqueta" class="custom-control-input" value="qr"
+                [(ngModel)]="tipoEtiqueta">
+              <label class="custom-control-label" for="tipoEtiquetaQR"><i class="fas fa-qrcode mr-1"></i> QR</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+              <input type="radio" id="tipoEtiquetaBarcode" name="tipoEtiqueta" class="custom-control-input"
+                value="barcode" [(ngModel)]="tipoEtiqueta">
+              <label class="custom-control-label" for="tipoEtiquetaBarcode"><i class="fas fa-barcode mr-1"></i> Código
+                de Barras</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-success" (click)="generarEtiquetas()"
+          [disabled]="activosSeleccionados.length === 0">
+          <i class="fas fa-print mr-1"></i>Generar {{activosSeleccionados.length}} Etiqueta(s)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

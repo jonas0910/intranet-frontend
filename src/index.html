@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Intranet - Colegio de Notarios de Tacna</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- AdminLTE required meta tags -->
+  <meta name="theme-color" content="#007bff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- AdminLTE CSS - Versiones locales correctas -->
+  <link rel="stylesheet" href="assets/css/vendor/adminlte.min.css" onload="console.log('✅ AdminLTE CSS LOCAL (3.2.0) cargado')" onerror="console.error('❌ Error cargando AdminLTE CSS LOCAL')">
+  <link rel="stylesheet" href="assets/css/vendor/all.min.css" onload="console.log('✅ FontAwesome CSS LOCAL (6.5.2) cargado')" onerror="console.error('❌ Error cargando FontAwesome CSS LOCAL')">
+  <link rel="stylesheet" href="assets/css/vendor/fontawesome-routes-fix.css" onload="console.log('✅ FontAwesome Routes Fix cargado')" onerror="console.error('❌ Error cargando FontAwesome Routes Fix')">
+  <link rel="stylesheet" href="assets/css/vendor/bootstrap.min.css" onload="console.log('✅ Bootstrap CSS LOCAL (4.6.1) cargado')" onerror="console.error('❌ Error cargando Bootstrap CSS LOCAL')">
+  
+  <!-- DataTables CSS - Local -->
+  <link rel="stylesheet" href="assets/css/datatables/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="assets/css/datatables/buttons.bootstrap4.min.css">
+  
+  <!-- Leaflet CSS para mapas GPS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Fuentes locales - Usar fuentes del sistema -->
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    
+    /* Asegurar que el botón de toggle del menú sea visible y funcional */
+    .main-header .navbar-nav .nav-link[data-widget="pushmenu"] {
+      display: block !important;
+      cursor: pointer;
+    }
+    
+    .main-header .navbar-nav .nav-link[data-widget="pushmenu"] i {
+      font-size: 1.25rem;
+    }
+    
+    /* Sidebar: NUNCA moverlo fuera de pantalla; colapsado = franja 48px visible, hover = 250px overlay */
+    body .main-sidebar {
+      transform: none !important;
+      left: 0 !important;
+    }
+    body.sidebar-collapse .main-sidebar,
+    body.sidebar-mini.sidebar-collapse .main-sidebar {
+      transform: none !important;
+      left: 0 !important;
+    }
+  </style>
+  
+  <!-- jQuery y Bootstrap JS para AdminLTE navbar dropdowns -->
+  <script src="assets/js/vendor/jquery.min.js" onload=" console.log('✅ jQuery LOCAL (3.6.0) cargado')" onerror="console.error('❌ Error cargando jQuery LOCAL')"></script>
+  <script src="assets/js/vendor/bootstrap.bundle.min.js" onload="console.log('✅ Bootstrap JS LOCAL (4.6.1) cargado para navbar dropdowns')" onerror="console.error('❌ Error cargando Bootstrap JS LOCAL')"></script>
+  
+  <!-- Script para inicializar AdminLTE navbar y sidenav -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Función básica para toggle del sidenav de AdminLTE
+      function togglePushMenu() {
+        const wrapper = document.querySelector('body');
+        if (wrapper) {
+          wrapper.classList.toggle('sidebar-collapse');
+        }
+      }
+      
+      // Activar toggle del sidenav cuando se hace clic en elementos con data-widget="pushmenu"
+      document.addEventListener('click', function(e) {
+        const target = e.target;
+        if (target && target.closest('[data-widget="pushmenu"]')) {
+          e.preventDefault();
+          togglePushMenu();
+          console.log('🔄 Toggle sidebar ejecutado');
+        }
+      });
+      
+      // Inicializar dropdowns del navbar con Bootstrap
+      setTimeout(() => {
+        if (typeof window.$ !== 'undefined') {
+          const $ = window.$;
+          
+          // Inicializar todos los dropdowns del navbar
+          $('.navbar-nav .dropdown-toggle').each(function() {
+            const $toggle = $(this);
+            const $parent = $toggle.closest('.dropdown');
+            const $menu = $parent.find('.dropdown-menu');
+            
+            if ($menu.length > 0) {
+              $toggle.on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+                
+                // Cerrar otros dropdowns
+                $('.navbar-nav .dropdown').removeClass('show');
+                $('.navbar-nav .dropdown-menu').removeClass('show');
+                
+                // Toggle dropdown actual
+                $parent.toggleClass('show');
+                $menu.toggleClass('show');
+                
+                console.log('📋 Dropdown navbar toggled');
+              });
+            }
+          });
+          
+          // Cerrar dropdowns cuando se hace click fuera
+          $(document).on('click', function(e) {
+            if (!$(e.target).closest('.navbar-nav .dropdown').length) {
+              $('.navbar-nav .dropdown').removeClass('show');
+              $('.navbar-nav .dropdown-menu').removeClass('show');
+            }
+          });
+        }
+      }, 100);
+      
+      console.log('✅ AdminLTE navbar y sidenav inicializados');
+    });
+  </script>
+  
+  <!-- Script para inicializar AdminLTE Sidebar Treeview -->
+  <script>
+    // Inicializar treeview del sidebar después de que Angular renderice
+    function initSidebarTreeview() {
+      if (typeof $ === 'undefined') {
+        console.warn('⚠️ jQuery no disponible para sidebar treeview');
+        return;
+      }
+      
+      console.log('🌳 Inicializando Sidebar Treeview...');
+      
+      // Buscar todos los contenedores con data-widget="treeview"
+      const trees = $('[data-widget="treeview"]');
+      console.log('📦 Árboles encontrados:', trees.length);
+      // Buscar items con submenú dentro de cualquier treeview
+      const treeviewItems = $('[data-widget="treeview"] .nav-item.has-treeview');
+      console.log('📋 Menús con submenús encontrados:', treeviewItems.length);
+      
+      treeviewItems.each(function() {
+        const $item = $(this);
+        const $link = $item.find('> .nav-link');
+        const $submenu = $item.find('> .nav-treeview');
+        
+        // Asegurar que el submenú esté oculto inicialmente
+        if (!$item.hasClass('menu-open')) {
+          $submenu.hide();
+        } else {
+          $submenu.show();
+        }
+        
+        // Remover handlers previos
+        $link.off('click.sidebar-treeview');
+        
+        // Agregar handler de click
+        $link.on('click.sidebar-treeview', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const isOpen = $item.hasClass('menu-open');
+          
+          if (isOpen) {
+            // Cerrar
+            $item.removeClass('menu-open');
+            $submenu.slideUp(300);
+          } else {
+            // Abrir
+            $item.addClass('menu-open');
+            $submenu.slideDown(300);
+          }
+          
+          return false;
+        });
+      });
+      
+      console.log('✅ Sidebar Treeview inicializado');
+    }
+    
+    // Ejecutar cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+      // Esperar a que Angular renderice
+      setTimeout(initSidebarTreeview, 1000);
+      
+      // Re-inicializar periódicamente por si Angular actualiza el DOM
+      setInterval(function() {
+        const treeviewItems = $('[data-widget="treeview"] .nav-item.has-treeview > .nav-link');
+        const hasHandlers = treeviewItems.filter(function() {
+          const events = $._data(this, 'events');
+          return events && events.click && events.click.some(e => e.namespace === 'sidebar-treeview');
+        }).length;
+        
+        if (hasHandlers < treeviewItems.length) {
+          console.log('🔄 Re-inicializando sidebar treeview...');
+          initSidebarTreeview();
+        }
+      }, 3000);
+    });
+    
+    // También exponer globalmente para que Angular pueda llamarlo
+    window.initSidebarTreeview = initSidebarTreeview;
+  </script>
+  
+  <!-- ngx-bootstrap seguirá manejando dropdowns dentro de componentes Angular -->
+  
+  <!-- DataTables JavaScript - Local -->
+  <script src="assets/js/datatables/jquery.dataTables.min.js"></script>
+  <script src="assets/js/datatables/dataTables.bootstrap4.min.js"></script>
+  <script src="assets/js/datatables/dataTables.buttons.min.js"></script>
+  <script src="assets/js/datatables/buttons.bootstrap4.min.js"></script>
+  <script src="assets/js/datatables/jszip.min.js"></script>
+  <script src="assets/js/datatables/pdfmake.min.js"></script>
+  <script src="assets/js/datatables/vfs_fonts.js"></script>
+  <script src="assets/js/datatables/buttons.html5.min.js"></script>
+  <script src="assets/js/datatables/buttons.print.min.js"></script>
+  
+  <!-- Leaflet JS para mapas GPS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+</head>
+<body class="hold-transition">
+  <app-root></app-root>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test DataTables</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
+    
+    <style>
+        .container { margin-top: 50px; }
+        .test-table { margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test DataTables</h1>
+        <p>Esta es una página de prueba para verificar que DataTables funciona correctamente.</p>
+        
+        <div class="test-table">
+            <table id="testTable" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Juan Pérez</td>
+                        <td>juan@example.com</td>
+                        <td>Admin</td>
+                        <td><span class="badge badge-success">Activo</span></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>María García</td>
+                        <td>maria@example.com</td>
+                        <td>Usuario</td>
+                        <td><span class="badge badge-success">Activo</span></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Carlos López</td>
+                        <td>carlos@example.com</td>
+                        <td>Usuario</td>
+                        <td><span class="badge badge-danger">Inactivo</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            console.log('jQuery cargado:', typeof $ !== 'undefined');
+            console.log('DataTables disponible:', typeof $.fn.DataTable !== 'undefined');
+            
+            try {
+                $('#testTable').DataTable({
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                    },
+                    responsive: true,
+                    pageLength: 5,
+                    order: [[0, 'asc']]
+                });
+                console.log('DataTables inicializado correctamente');
+            } catch (error) {
+                console.error('Error inicializando DataTables:', error);
+            }
+        });
+    </script>
+</body>
+</html>

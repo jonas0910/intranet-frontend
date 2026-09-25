@@ -1,0 +1,546 @@
+<app-system-layout [title]="isServiceMode ? 'Mis Mantenimientos (Área)' : 'Mantenimientos de Equipo Mecánico'" 
+  [subtitle]="isServiceMode ? 'Gestión de mantenimientos de mi unidad orgánica' : 'Programación y ejecución de mantenimientos'"
+  [subtitleItems]="subtitleItems"
+  [breadcrumbs]="isServiceMode ? [{label: 'Inicio', url: '/'}, {label: 'Equipo Mecánico', url: '/equipo-mecanico'}, {label: 'Servicios'}, {label: 'Mis Mantenimientos'}] : [{label: 'Inicio', url: '/'}, {label: 'Equipo Mecánico', url: '/equipo-mecanico'}, {label: 'Mantenimientos'}]"
+  [subsystem]="subsystem">
+
+  <div class="row">
+    <div class="col-12">
+
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'lista'" (click)="setActiveTab('lista')" role="tab" style="cursor: pointer;">
+        <i class="fas fa-list mr-1"></i> Lista de servicios
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'historial'" (click)="setActiveTab('historial')" role="tab" style="cursor: pointer;">
+        <i class="fas fa-archive mr-1"></i> Historial (cerrados)
+      </a>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade" [class.show]="activeTab === 'lista' || activeTab === 'historial'" [class.active]="activeTab === 'lista' || activeTab === 'historial'">
+      <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-primary'"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white rounded-top flex-wrap" style="gap: 8px;">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-wrench mr-1"></i> Servicios de Mantenimiento
+            </h3>
+            <span class="badge"
+              [ngClass]="cv.cardOutlineColor ? 'bg-' + cv.cardOutlineColor.replace('card-', '') : 'badge-primary'"
+              *ngIf="cv.showRecordCount">{{ paginacion.total }}</span>
+            <ng-container *ngIf="cv.showExportButtons">
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'">
+                <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{ cv.excelBtnLabel || 'Excel' }}
+              </button>
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'">
+                <i [class]="(cv.pdfBtnIcon || 'fas fa-file-pdf') + ' mr-1'"></i> {{ cv.pdfBtnLabel || 'PDF' }}
+              </button>
+            </ng-container>
+            <button type="button" class="btn btn-sm btn-outline-info ml-1 px-2" *ngIf="cv.collapsibleFilters"
+              (click)="isFiltersCollapsed = !isFiltersCollapsed"
+              [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'" style="height: 24px; line-height: 1;">
+              <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+            </button>
+          </div>
+          <div class="ms-auto flex-shrink-0">
+            <button type="button" class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-primary'" (click)="abrirModalNuevo()">
+              <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> {{ cv.newBtnLabel || 'Nuevo mantenimiento' }}
+            </button>
+          </div>
+        </div>
+
+        <p class="small text-muted mb-0 px-3 pt-2" *ngIf="activeTab === 'historial'">
+          <i class="fas fa-info-circle mr-1"></i> Carga inicial en estado <strong>cerrado</strong>. Ajuste «Estado» o use <strong>Lista de servicios</strong> para el tablero completo.
+        </p>
+
+        <div class="border-bottom bg-light overflow-hidden"
+          [style.max-height]="isFiltersCollapsed ? '0px' : '500px'"
+          [style.padding]="isFiltersCollapsed ? '0px' : '0.5rem'"
+          style="transition: max-height 0.3s ease, padding 0.3s ease;">
+          <div class="row g-2">
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Búsqueda</label>
+              <input type="text" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.search"
+                (ngModelChange)="onFilterChange()" placeholder="Descripción, responsable...">
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label"><i class="fas fa-sitemap text-primary mr-1"></i>Departamento</label>
+              <select class="form-control form-control-sm ds-crud-filter"
+                [(ngModel)]="filtros.department_id"
+                (change)="onDepartamentoFiltroChange()"
+                title="Filtrar por departamento del equipo (Planillas)"
+                aria-label="Filtrar por departamento">
+                <option [ngValue]="null">Todos los departamentos</option>
+                <option *ngFor="let d of departamentos" [ngValue]="d.id">{{ d.nombre }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Equipo / Vehículo</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.equipo_id" (change)="onFilterChange()">
+                <option value="">Todos los equipos</option>
+                <option *ngFor="let eq of equipos" [value]="eq.id">{{eq.codigo_interno}}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Tipo</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.tipo" (change)="onFilterChange()">
+                <option value="">Cualquier tipo</option>
+                <option value="preventivo">Preventivo</option>
+                <option value="correctivo">Correctivo</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Estado</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.estado" (change)="onFilterChange()">
+                <option value="">Cualquier estado</option>
+                <option value="programado">Programado</option>
+                <option value="en_proceso">En Proceso</option>
+                <option value="cerrado">Cerrado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+            <div class="col-md-1">
+              <label class="mb-1 ds-crud-label">Por pág.</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.per_page"
+                (ngModelChange)="onFilterChange()">
+                <option *ngFor="let size of cv.pageSizeOptions" [ngValue]="size">{{ size }}</option>
+              </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+              <button class="btn btn-sm btn-outline-secondary btn-block" (click)="limpiarFiltros()" title="Limpiar filtros">
+                <i class="fas fa-redo mr-1"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+    <div *ngIf="loading" class="text-center p-5">
+      <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+      <p class="mt-3 text-muted" [style.font-size]="cv.fontSize">Sincronizando mantenimientos...</p>
+    </div>
+
+    <div class="card-body px-0 pt-0 pb-2" *ngIf="!loading">
+      <div class="table-responsive p-2">
+        <table
+          class="table mb-0 w-100 ds-crud-table lista-mantenimientos-crud-table align-middle"
+          [ngClass]="cv.tableClasses || 'table-hover table-striped table-sm text-nowrap'">
+          <thead class="lista-mantenimientos-thead uppercase letter-spacing-1" style="font-size: 0.75rem;">
+            <tr>
+              <th class="px-4 py-3" width="70" (click)="onSort('id')" style="cursor: pointer;">
+                ID <i [class]="getSortIconClass('id')" class="ml-1" style="opacity: 0.45;"></i>
+              </th>
+              <th width="120" (click)="onSort('fecha_programada')" style="cursor: pointer;">
+                Fecha Prog. <i [class]="getSortIconClass('fecha_programada')" class="ml-1" style="opacity: 0.45;"></i>
+              </th>
+              <th (click)="onSort('equipo_id')" style="cursor: pointer;">
+                Equipo <i [class]="getSortIconClass('equipo_id')" class="ml-1" style="opacity: 0.45;"></i>
+              </th>
+              <th>Descripción y Centro de Costo</th>
+              <th width="110" class="text-center">Tipo</th>
+              <th width="120" class="text-center">Estado</th>
+              <th width="140" class="text-right">Inversión (S/)</th>
+              <th width="190" class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="text-dark">
+            <tr *ngFor="let mant of mantenimientos">
+              <td class="px-4 font-weight-bold text-dark">#{{mant.id}}</td>
+              <td>
+                <span class="font-weight-bold text-dark">{{mant.fecha_programada | date:'dd/MM/yyyy'}}</span>
+              </td>
+              <td>
+                <div class="d-flex align-items-center" *ngIf="mant.equipo">
+                  <div class="avatar-sm bg-primary-light text-primary rounded-circle mr-3 d-flex align-items-center justify-content-center shadow-xs" style="width: 35px; height: 35px;">
+                    <i [class]="getIconoEquipo(mant.equipo.tipo)" class="fa-sm"></i>
+                  </div>
+                  <div>
+                    <span class="font-weight-bold d-block text-dark">{{mant.equipo.codigo_interno}}</span>
+                    <small class="text-dark text-uppercase font-weight-bold" style="font-size: 0.65rem; opacity: 0.85;">{{mant.equipo.tipo}}</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex flex-column" style="max-width: 300px;">
+                  <span class="text-dark font-weight-bold text-truncate" [title]="mant.descripcion">{{mant.descripcion}}</span>
+                  <small class="text-dark font-weight-bold" *ngIf="mant.centro_costo" style="font-size: 0.7rem; opacity: 0.85;">
+                    <i class="fas fa-layer-group mr-1 opacity-50"></i> {{mant.centro_costo.name}}
+                  </small>
+                </div>
+              </td>
+              <td class="text-center">
+                <span class="badge shadow-xs px-2 py-1 uppercase" [ngClass]="mant.tipo === 'preventivo' ? 'bg-info-light text-info' : 'bg-warning-light text-warning'" style="font-size: 0.65rem;">
+                  <i class="fas mr-1" [ngClass]="mant.tipo === 'preventivo' ? 'fa-calendar-check' : 'fa-wrench'"></i>
+                  {{mant.tipo}}
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="badge shadow-xs px-2 py-1 uppercase" [ngClass]="{
+                  'bg-light text-dark': mant.estado === 'programado',
+                  'bg-info text-white': mant.estado === 'en_proceso',
+                  'bg-success text-white': mant.estado === 'cerrado',
+                  'bg-danger text-white': mant.estado === 'cancelado'
+                }" style="font-size: 0.65rem;">
+                  {{mant.estado}}
+                </span>
+              </td>
+              <td class="text-right">
+                <div class="d-flex flex-column align-items-end">
+                  <span class="font-weight-bold text-dark">S/ {{mant.costo_total | number:'1.2-2'}}</span>
+                  <small class="text-dark" style="font-size: 0.65rem; opacity: 0.85;">Est: S/ {{mant.costo_estimado | number:'1.2-2'}}</small>
+                </div>
+              </td>
+              <td class="text-center">
+                <div class="btn-group btn-group-sm shadow-xs" style="border-radius: 6px; overflow: hidden;">
+                  <button type="button" class="btn btn-sm" [ngClass]="cv.viewBtnClass || 'btn-info'" (click)="verMantenimiento(mant.id)" title="Ver detalle">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm" [ngClass]="cv.pdfBtnClass || 'btn-danger'" (click)="descargarFichaPdf(mant.id)" [disabled]="pdfDownloading" title="Ficha PDF">
+                    <i class="fas" [ngClass]="pdfDownloading ? 'fa-spinner fa-spin' : 'fa-file-pdf'"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm" [ngClass]="cv.editBtnClass || 'btn-warning'" *ngIf="mant.estado !== 'cerrado' && mant.estado !== 'cancelado'" (click)="editarMantenimiento(mant.id)" title="Editar">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-info" *ngIf="mant.estado === 'programado'" (click)="cambiarEstado(mant, 'en_proceso')" title="Marcar en proceso">
+                    <i class="fas fa-play"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-success" *ngIf="mant.estado === 'en_proceso'" (click)="completarMantenimiento(mant.id)" title="Marcar cerrado">
+                    <i class="fas fa-check"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-warning" *ngIf="mant.estado === 'programado' || mant.estado === 'en_proceso'" (click)="cambiarEstado(mant, 'cancelado')" title="Cancelar">
+                    <i class="fas fa-ban"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm" [ngClass]="cv.deleteBtnClass || 'btn-danger'" *ngIf="mant.estado === 'programado'" (click)="confirmarEliminar(mant.id)" title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="mantenimientos.length === 0">
+              <td colspan="8" class="text-center py-5">
+                <div class="mb-3 opacity-25">
+                  <i class="fas fa-wrench fa-4x text-muted"></i>
+                </div>
+                <h6 class="text-muted font-weight-bold">No se encontraron mantenimientos</h6>
+                <p class="text-muted small">Intente ajustar los filtros de búsqueda</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && paginacion.total > 0" class="card-footer clearfix">
+      <div class="row">
+        <div class="col-sm-12 col-md-5">
+          <div class="dataTables_info text-muted" [style.font-size]="cv.fontSize">
+            Mostrando {{ (paginacion.currentPage - 1) * paginacion.perPage + 1 }} a
+            {{ Math.min(paginacion.currentPage * paginacion.perPage, paginacion.total) }} de
+            {{ paginacion.total }} registros
+          </div>
+        </div>
+        <div class="col-sm-12 col-md-7">
+          <ul class="pagination m-0 float-right mb-0" [ngClass]="cv.paginationSize || 'pagination-sm'"
+            *ngIf="paginacion.lastPage > 1">
+            <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+              <a class="page-link" href="javascript:void(0)" (click)="paginacion.currentPage > 1 && onPageChange(1)">«</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+              <a class="page-link" href="javascript:void(0)"
+                (click)="paginacion.currentPage > 1 && onPageChange(paginacion.currentPage - 1)">‹</a>
+            </li>
+            <li class="page-item" *ngFor="let page of getPaginationPages()"
+              [class.active]="page === paginacion.currentPage" [class.disabled]="page === -1">
+              <a class="page-link" href="javascript:void(0)" (click)="page !== -1 && onPageChange(page)">
+                {{ page === -1 ? '…' : page }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+              <a class="page-link" href="javascript:void(0)"
+                (click)="paginacion.currentPage < paginacion.lastPage && onPageChange(paginacion.currentPage + 1)">›</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+              <a class="page-link" href="javascript:void(0)"
+                (click)="paginacion.currentPage < paginacion.lastPage && onPageChange(paginacion.lastPage)">»</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+      </div>
+    </div>
+  </div>
+
+    </div>
+  </div>
+
+</app-system-layout>
+
+<!-- Modal Mantenimiento -->
+<div class="modal fade" id="modalMantenimiento" tabindex="-1" role="dialog" aria-labelledby="modalMantenimientoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content border-0 shadow-lg" [style.border-radius.px]="cv.cardBorderRadius">
+      <div class="modal-header border-0 text-white bg-primary-gradient shadow-sm" 
+           [style.border-top-left-radius.px]="cv.cardBorderRadius" 
+           [style.border-top-right-radius.px]="cv.cardBorderRadius">
+        <h5 class="modal-title" id="modalMantenimientoLabel">
+          <i class="fas fa-wrench mr-2"></i>
+          {{ modalMode === 'create' ? 'Nuevo Mantenimiento' : (modalMode === 'edit' ? 'Editar Mantenimiento' : 'Detalles de Mantenimiento') }}
+        </h5>
+        <button type="button" class="close text-white" (click)="cerrarModal()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body p-4 bg-light">
+        <form [formGroup]="mantenimientoForm">
+          
+          <!-- STEP 1: Department Selection (Always visible) -->
+          <div class="card shadow-none border mb-4" *ngIf="!isServiceMode">
+            <div class="card-body p-4 bg-white rounded shadow-sm">
+                <div class="form-group mb-0">
+                    <label class="ds-crud-label text-primary font-weight-bold uppercase mb-3 d-block" style="letter-spacing: 0.5px;">
+                      <i class="fas fa-sitemap mr-2"></i> Paso 1: Seleccione la Unidad Orgánica / Departamento <span class="text-danger">*</span>
+                    </label>
+                    <select formControlName="department_id" class="form-control form-control-lg border-primary" 
+                            (change)="onDepartmentChange(mantenimientoForm.get('department_id')?.value)" 
+                            style="height: 50px; border-width: 2px; font-weight: 700; font-size: 1.1rem; border-radius: 10px;">
+                      <option [ngValue]="null">-- Haga clic aquí para elegir un departamento --</option>
+                      <option *ngFor="let d of departamentos" [ngValue]="d.id">{{ d.nombre }}</option>
+                    </select>
+                    <div class="mt-2 text-muted small" *ngIf="!mantenimientoForm.get('department_id')?.value">
+                       <i class="fas fa-info-circle mr-1"></i> Al seleccionar un departamento se cargarán automáticamente su <strong>Centro de Costos</strong> y la lista de <strong>Vehículos Reales</strong> asignados.
+                    </div>
+                </div>
+            </div>
+          </div>
+
+          <!-- STEP 2: Main Form (Hidden until Step 1 is done) -->
+          <div class="animate__animated animate__fadeIn" *ngIf="mantenimientoForm.get('department_id')?.value || isServiceMode">
+            
+            <div class="row">
+                <div class="col-md-8">
+                  <div class="card shadow-none border mb-4">
+                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                      <h6 class="mb-0 text-dark font-weight-bold uppercase small letter-spacing-1">
+                        <i class="fas fa-info-circle text-primary mr-2"></i> Información del Servicio
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-md-4">
+                          <div class="form-group">
+                            <label class="ds-crud-label font-weight-bold">Vehículo / Equipo <span class="text-danger">*</span></label>
+                            <select formControlName="equipo_id" class="form-control form-control-sm ds-crud-filter" style="height: 38px; font-weight: 600;">
+                              <option [ngValue]="null">-- Seleccione equipo --</option>
+                              <option *ngFor="let eq of equipos" [ngValue]="eq.id">
+                                {{ eq.codigo_interno }} - {{ eq.placa || 'S/P' }} ({{ eq.marca }})
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="form-group">
+                            <label class="ds-crud-label font-weight-bold">Tipo de Mantenimiento <span class="text-danger">*</span></label>
+                            <select formControlName="tipo" class="form-control form-control-sm ds-crud-filter" style="height: 38px;">
+                              <option value="preventivo">⚙️ Preventivo</option>
+                              <option value="correctivo">🛠️ Correctivo</option>
+                            </select>
+                          </div>
+                        </div>
+    
+                        <!-- Centro de Costo (Auto-assigned) -->
+                        <div class="col-md-4">
+                          <div class="form-group">
+                            <label class="ds-crud-label text-muted uppercase small font-weight-bold"><i class="fas fa-lock mr-1"></i> Centro de Costo (Auto)</label>
+                            <input type="text" 
+                                   [value]="getNombreCentroCosto(mantenimientoForm.get('centro_costo_id')?.value) || 'No asignado'" 
+                                   class="form-control form-control-sm bg-light font-weight-bold" 
+                                   readonly
+                                   style="height: 38px; border-radius: 8px; color: #2d3748;">
+                            <input type="hidden" formControlName="centro_costo_id">
+                          </div>
+                        </div>
+
+                        <div class="col-md-4">
+                          <div class="form-group">
+                            <label class="ds-crud-label">Estado actual</label>
+                            <select formControlName="estado" class="form-control form-control-sm ds-crud-filter" style="height: 38px;">
+                              <option value="programado">📅 Programado</option>
+                              <option value="en_proceso">⚡ En Proceso</option>
+                              <option value="cerrado">✅ Cerrado</option>
+                              <option value="cancelado">❌ Cancelado</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="col-md-8">
+                          <div class="form-group">
+                            <label class="ds-crud-label">Descripción General <span class="text-danger">*</span></label>
+                            <input type="text" formControlName="descripcion" class="form-control form-control-sm ds-crud-filter" placeholder="Especifique el motivo o falla principal...">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+    
+                  <!-- Fechas -->
+                  <div class="card shadow-none border mb-4">
+                    <div class="card-header bg-white py-2">
+                      <h6 class="mb-0 text-muted font-weight-bold small uppercase letter-spacing-1">Seguimiento de Fechas</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-md-4">
+                          <div class="form-group">
+                            <label class="ds-crud-label">F. Programada <span class="text-danger">*</span></label>
+                            <input type="date" formControlName="fecha_programada" class="form-control form-control-sm ds-crud-filter">
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="form-group">
+                            <label class="ds-crud-label">F. Inicio Real</label>
+                            <input type="date" formControlName="fecha_inicio" class="form-control form-control-sm ds-crud-filter">
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="form-group">
+                            <label class="ds-crud-label">F. Cierre Real</label>
+                            <input type="date" formControlName="fecha_cierre" class="form-control form-control-sm ds-crud-filter">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+    
+                <div class="col-md-4">
+                  <div class="card shadow-none border mb-4">
+                    <div class="card-header bg-white py-2">
+                      <h6 class="mb-0 text-muted font-weight-bold small uppercase letter-spacing-1">Lecturas y Metas</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="form-group">
+                        <label class="ds-crud-label">Recorrido (km)</label>
+                        <input type="number" formControlName="odometro" class="form-control form-control-sm ds-crud-filter">
+                      </div>
+                      <div class="form-group">
+                        <label class="ds-crud-label">Horas Totales</label>
+                        <input type="number" formControlName="horas_motor" class="form-control form-control-sm ds-crud-filter">
+                      </div>
+                      <hr>
+                      <div class="form-group">
+                        <label class="ds-crud-label">Presupuesto Estimado (S/)</label>
+                        <input type="number" formControlName="costo_estimado" class="form-control form-control-sm ds-crud-filter text-right font-weight-bold">
+                      </div>
+                      <div class="form-group">
+                        <label class="ds-crud-label font-weight-bold text-success">Costo Final Aplicado (S/)</label>
+                        <input type="number" formControlName="costo_total" 
+                               class="form-control form-control-sm ds-crud-filter text-right font-weight-bold" 
+                               [class.text-success]="detalles.length > 0"
+                               [class.bg-light]="detalles.length > 0"
+                               [readonly]="detalles.length > 0"
+                               [placeholder]="detalles.length > 0 ? 'Total calculado...' : '0.00'"
+                               style="height: 38px; border-color: #c6f6d5;">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            </div>
+    
+            <div class="card shadow-none border mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-2 border-bottom">
+                  <h6 class="mb-0 text-dark font-weight-bold small uppercase letter-spacing-1"><i class="fas fa-list-check mr-2 text-info"></i>Detalles Adicionales del Gasto</h6>
+                  <button type="button" class="btn btn-xs btn-primary px-3 shadow-sm rounded-pill" (click)="agregarDetalle()" *ngIf="modalMode !== 'view'">
+                    <i class="fas fa-plus mr-1"></i> Agregar Ítem
+                  </button>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                      <thead class="bg-light text-muted uppercase" style="font-size: 0.65rem;">
+                        <tr>
+                          <th class="px-3">Descripción / Repuesto</th>
+                          <th width="80" class="text-center">Hrs MO</th>
+                          <th width="110" class="text-right">Costo MO</th>
+                          <th width="110" class="text-right">Materiales</th>
+                          <th width="120" class="text-right">Subtotal</th>
+                          <th width="40" *ngIf="modalMode !== 'view'"></th>
+                        </tr>
+                      </thead>
+                      <tbody formArrayName="detalles">
+                        <tr *ngFor="let det of detalles.controls; let i=index" [formGroupName]="i">
+                          <td class="px-2">
+                            <input type="text" formControlName="descripcion" class="form-control form-control-sm border-0" placeholder="Escriba aquí...">
+                          </td>
+                          <td><input type="number" formControlName="mano_obra_horas" class="form-control form-control-sm text-center border-0"></td>
+                          <td><input type="number" formControlName="mano_obra_costo" class="form-control form-control-sm text-right border-0 font-weight-bold"></td>
+                          <td><input type="number" formControlName="repuestos_costo" class="form-control form-control-sm text-right border-0 font-weight-bold"></td>
+                          <td class="text-right pt-2 px-3">
+                            <span class="font-weight-bold text-primary">S/ {{ calcularTotalDetalle(i) | number:'1.2-2' }}</span>
+                          </td>
+                          <td *ngIf="modalMode !== 'view'" class="text-center">
+                            <button type="button" class="btn btn-link text-danger p-0" (click)="eliminarDetalle(i)"><i class="fas fa-trash-alt"></i></button>
+                          </td>
+                        </tr>
+                        <tr *ngIf="detalles.length === 0">
+                          <td colspan="6" class="text-center py-4 text-muted small"><i class="fas fa-info-circle mr-1"></i> No se han registrado desglose de costos.</td>
+                        </tr>
+                      </tbody>
+                       <tfoot class="bg-light font-weight-bold border-top">
+                        <tr>
+                          <td colspan="4" class="text-right py-2 small">RESUMEN TOTAL :</td>
+                          <td class="text-right py-2 text-primary font-weight-bold" style="font-size: 1.1rem;">S/ {{ calcularTotalGeneral() | number:'1.2-2' }}</td>
+                          <td *ngIf="modalMode !== 'view'"></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+            </div>
+    
+            <div class="form-group mb-0">
+                <label class="ds-crud-label font-weight-bold small uppercase letter-spacing-1">Observaciones Finales</label>
+                <textarea formControlName="observaciones" rows="2" class="form-control shadow-xs" placeholder="Cualquier aclaración adicional..."></textarea>
+            </div>
+
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer border-0 bg-white shadow-top p-4 d-flex flex-wrap align-items-center" style="gap: 10px;">
+        <button type="button" class="btn btn-outline-danger rounded-pill px-4"
+                *ngIf="modalMode === 'view' && mantenimientoSeleccionado?.id"
+                (click)="descargarFichaPdf(mantenimientoSeleccionado!.id)"
+                [disabled]="pdfDownloading">
+          <i class="fas mr-1" [ngClass]="pdfDownloading ? 'fa-spinner fa-spin' : 'fa-file-pdf'"></i>
+          {{ pdfDownloading ? 'Generando...' : 'Ficha PDF' }}
+        </button>
+        <div class="ml-auto d-flex flex-wrap align-items-center" style="gap: 10px;">
+          <button type="button" class="btn btn-secondary rounded-pill px-4" (click)="cerrarModal()">
+            <i class="fas fa-times mr-1"></i> Cancelar
+          </button>
+          <button type="button" class="btn btn-primary rounded-pill px-5 shadow-sm font-weight-bold"
+                 (click)="guardarMantenimiento()"
+                 *ngIf="modalMode !== 'view' && (mantenimientoForm.get('department_id')?.value || isServiceMode)"
+                 [disabled]="submitting">
+            <i class="fas mr-1" [ngClass]="submitting ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{ submitting ? 'Guardando...' : 'Confirmar y Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+    .bg-primary-gradient { background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); }
+    .bg-primary-light { background-color: #ebf4ff; }
+    .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .letter-spacing-1 { letter-spacing: 1px; }
+    .uppercase { text-transform: uppercase; }
+    .shadow-top { box-shadow: 0 -5px 20px rgba(0,0,0,0.03); }
+    .text-xxs { font-size: 0.65rem; }
+</style>

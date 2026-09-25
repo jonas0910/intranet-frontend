@@ -1,0 +1,178 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0">{{ editing ? 'Editar' : 'Nueva' }} Oferta de Empleo</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/ofertas-empleo">Ofertas</a></li>
+          <li class="breadcrumb-item active">{{ editing ? 'Editar' : 'Nueva' }}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="text-center py-5" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin fa-2x"></i>
+    </div>
+
+    <form *ngIf="!loading" (ngSubmit)="save()">
+      <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fas fa-info-circle mr-2"></i>Información Principal</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Título <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" [(ngModel)]="form.titulo" name="titulo"
+                       (blur)="generateSlug()" placeholder="Título de la oferta" required>
+              </div>
+              <div class="form-group">
+                <label>Slug</label>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="fas fa-link"></i></span>
+                  </div>
+                  <input type="text" class="form-control" [(ngModel)]="form.slug" name="slug"
+                         placeholder="titulo-de-la-oferta">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Descripción</label>
+                <textarea class="form-control" rows="5" [(ngModel)]="form.descripcion" name="descripcion"
+                          placeholder="Descripción detallada de la oferta"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Requisitos</label>
+                <textarea class="form-control" rows="4" [(ngModel)]="form.requisitos" name="requisitos"
+                          placeholder="Requisitos del puesto"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Beneficios</label>
+                <textarea class="form-control" rows="4" [(ngModel)]="form.beneficios" name="beneficios"
+                          placeholder="Beneficios ofrecidos"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fas fa-cogs mr-2"></i>Configuración</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Tipo de Contrato</label>
+                <select class="form-control" [(ngModel)]="form.tipo_contrato" name="tipo_contrato">
+                  <option *ngFor="let t of tiposContrato" [value]="t">{{ t | titlecase }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Modalidad</label>
+                <select class="form-control" [(ngModel)]="form.modalidad" name="modalidad">
+                  <option *ngFor="let m of modalidades" [value]="m">{{ m | titlecase }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Ubicación</label>
+                <input type="text" class="form-control" [(ngModel)]="form.ubicacion" name="ubicacion"
+                       placeholder="Ciudad / Dirección">
+              </div>
+              <div class="form-group">
+                <label>Vacantes</label>
+                <input type="number" class="form-control" [(ngModel)]="form.vacantes" name="vacantes" min="1">
+              </div>
+              <div class="row">
+                <div class="col-6">
+                  <div class="form-group">
+                    <label>Salario Mín.</label>
+                    <input type="number" class="form-control" [(ngModel)]="form.salario_minimo" name="salario_minimo"
+                           placeholder="0.00" step="0.01">
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="form-group">
+                    <label>Salario Máx.</label>
+                    <input type="number" class="form-control" [(ngModel)]="form.salario_maximo" name="salario_maximo"
+                           placeholder="0.00" step="0.01">
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Estado</label>
+                <select class="form-control" [(ngModel)]="form.estado" name="estado">
+                  <option *ngFor="let e of estados" [value]="e">{{ e | titlecase }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Fecha Publicación</label>
+                <input type="date" class="form-control" [(ngModel)]="form.fecha_publicacion" name="fecha_publicacion">
+              </div>
+              <div class="form-group">
+                <label>Fecha Cierre</label>
+                <input type="date" class="form-control" [(ngModel)]="form.fecha_cierre" name="fecha_cierre">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fas fa-file-pdf mr-2"></i>Documentos</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Bases PDF</label>
+                <div class="input-group">
+                  <div class="custom-file">
+                    <input type="file" class="custom-file-input" (change)="onFileSelected($event, 'pdf_bases')" accept=".pdf">
+                    <label class="custom-file-label">{{ files['pdf_bases'] ? files['pdf_bases'].name : 'Elegir PDF' }}</label>
+                  </div>
+                </div>
+                <small class="text-info" *ngIf="form.pdf_bases">Actual: {{ form.pdf_bases }}</small>
+              </div>
+              <div class="form-group">
+                <label>Evaluación PDF</label>
+                <div class="input-group">
+                  <div class="custom-file">
+                    <input type="file" class="custom-file-input" (change)="onFileSelected($event, 'pdf_evaluacion')" accept=".pdf">
+                    <label class="custom-file-label">{{ files['pdf_evaluacion'] ? files['pdf_evaluacion'].name : 'Elegir PDF' }}</label>
+                  </div>
+                </div>
+                <small class="text-info" *ngIf="form.pdf_evaluacion">Actual: {{ form.pdf_evaluacion }}</small>
+              </div>
+              <div class="form-group">
+                <label>Ganadores PDF</label>
+                <div class="input-group">
+                  <div class="custom-file">
+                    <input type="file" class="custom-file-input" (change)="onFileSelected($event, 'pdf_ganadores')" accept=".pdf">
+                    <label class="custom-file-label">{{ files['pdf_ganadores'] ? files['pdf_ganadores'].name : 'Elegir PDF' }}</label>
+                  </div>
+                </div>
+                <small class="text-info" *ngIf="form.pdf_ganadores">Actual: {{ form.pdf_ganadores }}</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-default" (click)="cancel()">
+              <i class="fas fa-arrow-left mr-1"></i>Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="saving">
+              <i class="fas fa-spinner fa-spin mr-1" *ngIf="saving"></i>
+              <i class="fas fa-save mr-1" *ngIf="!saving"></i>
+              {{ editing ? 'Actualizar' : 'Guardar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>

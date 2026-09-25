@@ -1,0 +1,39 @@
+/* Reutilizar estilos de employee-list con ajustes */
+@import '../empleados/employee-list/employee-list.component.scss';
+
+.filters-section {
+  .col-filter {
+    flex: 1 1 250px;
+    min-width: 250px !important;
+  }
+  
+  .filter-select {
+    min-width: 230px !important;
+  }
+}
+
+.table {
+  tbody tr {
+    transition: background-color 0.2s;
+    &:hover {
+      background-color: rgba(0, 123, 255, 0.03);
+    }
+  }
+  
+  .badge {
+     &.border {
+        border-color: #dee2e6 !important;
+     }
+  }
+}
+
+.btn-xs {
+  padding: 0.1rem 0.4rem;
+  font-size: 0.75rem;
+}
+
+.card-title {
+  i {
+    color: #17a2b8;
+  }
+}

@@ -1,0 +1,135 @@
+<app-system-layout
+  title="Mensajes modales"
+  subtitle="Avisos modales (Día de la Madre, Fiestas Patrias, cumpleaños institucional, etc.)"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comunicados', url: '/comunicados'}, {label: 'Mensajes modales'}]"
+  subsystem="comunicados">
+
+  <div class="mb-3">
+    <button type="button" class="btn btn-primary" (click)="openCreate()">
+      <i class="fas fa-plus mr-1"></i>Nuevo mensaje modal
+    </button>
+  </div>
+
+  <!-- Modal: formulario crear/editar mensaje modal -->
+  <ng-template #modalFormTemplate let-modal>
+    <div class="modal-header bg-primary text-white">
+      <h5 class="modal-title">
+        <i class="fas fa-bell mr-2"></i>{{ editModal?.id ? 'Editar' : 'Nuevo' }} mensaje modal
+      </h5>
+      <button type="button" class="close text-white" aria-label="Cerrar" (click)="cancelForm()">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body" *ngIf="editModal">
+      <div class="row">
+        <div class="col-md-6">
+          <label>Título <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="editModal.titulo" placeholder="Título del mensaje" />
+        </div>
+        <div class="col-md-3">
+          <label>Tipo evento</label>
+          <input type="text" class="form-control" [(ngModel)]="editModal.tipo_evento" placeholder="general, dia_madre, etc." />
+        </div>
+        <div class="col-md-3">
+          <label>Prioridad</label>
+          <select class="form-control" [(ngModel)]="editModal.prioridad">
+            <option value="baja">Baja</option>
+            <option value="normal">Normal</option>
+            <option value="alta">Alta</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <label>Contenido</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="editModal.contenido" placeholder="Contenido del mensaje"></textarea>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-md-3">
+          <label>Fecha inicio</label>
+          <input type="date" class="form-control" [(ngModel)]="editModal.fecha_inicio" />
+        </div>
+        <div class="col-md-3">
+          <label>Fecha fin</label>
+          <input type="date" class="form-control" [(ngModel)]="editModal.fecha_fin" />
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="form-group mb-0">
+            <label class="d-flex align-items-center">
+              <input type="checkbox" [(ngModel)]="editModal.mostrar_una_vez" class="mr-2" />
+              Mostrar una vez
+            </label>
+          </div>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="form-group mb-0">
+            <label class="d-flex align-items-center">
+              <input type="checkbox" [(ngModel)]="editModal.activo" class="mr-2" />
+              Activo
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="cancelForm()">
+        <i class="fas fa-times mr-1"></i>Cancelar
+      </button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="saving">
+        <span *ngIf="saving" class="spinner-border spinner-border-sm mr-1"></span>
+        <i *ngIf="!saving" class="fas fa-save mr-1"></i>Guardar
+      </button>
+    </div>
+  </ng-template>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+    <p class="mt-2 text-muted">Cargando mensajes modales...</p>
+  </div>
+
+  <div *ngIf="!loading && modales.length === 0" class="alert alert-info">
+    <i class="fas fa-info-circle mr-2"></i>No hay mensajes modales registrados. Use el botón «Nuevo mensaje modal» para agregar uno.
+  </div>
+
+  <div *ngIf="!loading && modales.length > 0" class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+    <div class="card-header d-flex justify-content-between align-items-center" [style.background]="cv.tableHeaderBg" [style.color]="cv.tableHeaderColor" [style.border-radius]="cv.cardBorderRadius + 'px ' + cv.cardBorderRadius + 'px 0 0'">
+      <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+        <i class="fas fa-bell mr-1"></i> Listado de mensajes modales
+      </h3>
+      <button type="button" class="btn btn-sm btn-primary" (click)="openCreate()">
+        <i class="fas fa-plus mr-1"></i>Nuevo mensaje modal
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize" class="table table-bordered table-hover mb-0 w-100">
+          <thead [style.background]="cv.tableHeaderBg" [style.color]="cv.tableHeaderColor">
+            <tr>
+              <th [style.font-size]="cv.headerFontSize">Título</th>
+              <th [style.font-size]="cv.headerFontSize">Tipo</th>
+              <th [style.font-size]="cv.headerFontSize">Prioridad</th>
+              <th [style.font-size]="cv.headerFontSize">Inicio</th>
+              <th [style.font-size]="cv.headerFontSize">Fin</th>
+              <th [style.font-size]="cv.headerFontSize">Activo</th>
+              <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of modales">
+              <td>{{ m.titulo }}</td>
+              <td><span class="badge badge-secondary">{{ m.tipo_evento }}</span></td>
+              <td><span class="badge" [ngClass]="getPrioridadBadgeClass(m.prioridad)">{{ m.prioridad }}</span></td>
+              <td>{{ formatDate(m.fecha_inicio) }}</td>
+              <td>{{ formatDate(m.fecha_fin) }}</td>
+              <td><span class="badge" [class.badge-success]="m.activo" [class.badge-secondary]="!m.activo">{{ m.activo ? 'Sí' : 'No' }}</span></td>
+              <td class="text-center">
+                <app-crud-actions [showView]="false" [showEdit]="true" [showDelete]="true" subsystem="comunicados" (onEdit)="openEdit(m)" (onDelete)="confirmDelete(m)"></app-crud-actions>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</app-system-layout>

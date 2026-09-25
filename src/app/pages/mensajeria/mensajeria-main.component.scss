@@ -1,0 +1,579 @@
+/* Facebook Messenger Style - Modern Messaging UI */
+
+/* Content Header */
+.content-header {
+  h1.text-gradient {
+    background: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+    font-size: 1.75rem;
+    
+    i {
+      color: #0084ff !important;
+      -webkit-text-fill-color: #0084ff;
+    }
+  }
+  
+  .breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    
+    .breadcrumb-item {
+      a {
+        color: #8a8d91;
+        text-decoration: none;
+        transition: color 0.2s ease;
+        font-weight: 500;
+        
+        &:hover {
+          color: #0084ff;
+        }
+        
+        i {
+          opacity: 0.8;
+        }
+      }
+      
+      &.active {
+        color: #1c1e21;
+        font-weight: 600;
+        
+        i {
+          color: #0084ff;
+        }
+      }
+    }
+  }
+}
+
+/* Facebook Messenger Style Sidebar */
+.messenger-sidebar {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+/* Menu Sections */
+.menu-section {
+  border-bottom: 1px solid #e4e6eb;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  background: #fff;
+  transition: all 0.2s ease;
+  user-select: none;
+  
+  &:hover {
+    background: #f2f3f5;
+  }
+  
+  .section-icon {
+    color: #0084ff;
+    font-size: 18px;
+    margin-right: 12px;
+    width: 20px;
+    text-align: center;
+  }
+  
+  .section-title {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #65676b;
+  }
+  
+  .toggle-icon {
+    color: #8a8d91;
+    font-size: 12px;
+    transition: transform 0.3s ease;
+    
+    &.rotated {
+      transform: rotate(-90deg);
+    }
+  }
+}
+
+.section-content {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+/* Menu Items */
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px 10px 48px;
+  color: #050505;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 14px;
+  font-weight: 500;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: transparent;
+    transition: background 0.2s ease;
+  }
+  
+  .menu-icon {
+    width: 20px;
+    text-align: center;
+    margin-right: 12px;
+    color: #65676b;
+    font-size: 16px;
+    transition: color 0.2s ease;
+  }
+  
+  .menu-text {
+    flex: 1;
+    color: #050505;
+  }
+  
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 12px;
+    min-width: 20px;
+    text-align: center;
+  }
+  
+  &:hover {
+    background: #f2f3f5;
+    text-decoration: none;
+    
+    .menu-icon {
+      color: #0084ff;
+    }
+  }
+  
+  &.active {
+    background: linear-gradient(90deg, rgba(0, 132, 255, 0.1) 0%, rgba(0, 132, 255, 0) 100%);
+    color: #0084ff;
+    font-weight: 600;
+    
+    &::before {
+      background: #0084ff;
+    }
+    
+    .menu-icon {
+      color: #0084ff;
+    }
+    
+    .menu-text {
+      color: #0084ff;
+    }
+  }
+}
+
+/* New Message Button */
+.btn-new-message {
+  background: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 15px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 132, 255, 0.3);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 132, 255, 0.4);
+    background: linear-gradient(135deg, #0070e0 0%, #00b0e0 100%);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  i {
+    font-size: 16px;
+  }
+}
+
+/* Compact Stats */
+.stats-compact {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  
+  .stat-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: #f2f3f5;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    
+    i {
+      font-size: 18px;
+      color: #65676b;
+    }
+    
+    span {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1c1e21;
+    }
+    
+    &.unread {
+      background: linear-gradient(135deg, rgba(255, 59, 48, 0.1) 0%, rgba(255, 149, 0, 0.1) 100%);
+      
+      i {
+        color: #ff3b30;
+      }
+      
+      span {
+        color: #ff3b30;
+      }
+    }
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+/* Badge Colors - Facebook Style */
+.badge {
+  &.badge-primary {
+    background: #0084ff;
+    color: white;
+  }
+  
+  &.badge-danger {
+    background: #ff3b30;
+    color: white;
+  }
+  
+  &.badge-info {
+    background: #5ac8fa;
+    color: white;
+  }
+  
+  &.badge-warning {
+    background: #ff9500;
+    color: white;
+  }
+  
+  &.badge-secondary {
+    background: #8e8e93;
+    color: white;
+  }
+}
+
+/* Badge Animations */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.badge {
+  animation: pulse 2s infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .content-header {
+    h1 {
+      font-size: 1.5rem;
+      
+      .badge {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+      }
+    }
+  }
+  
+  .messenger-sidebar {
+    margin-bottom: 20px;
+  }
+  
+  .section-header {
+    padding: 12px 14px;
+    
+    .section-title {
+      font-size: 12px;
+    }
+  }
+  
+  .menu-item {
+    padding: 8px 14px 8px 42px;
+    font-size: 13px;
+    
+    .menu-icon {
+      font-size: 14px;
+    }
+  }
+  
+  .stats-compact {
+    .stat-item {
+      flex-direction: column;
+      gap: 4px;
+      
+      i {
+        font-size: 20px;
+      }
+      
+      span {
+        font-size: 14px;
+      }
+    }
+  }
+  
+  .btn-new-message {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+}
+
+/* Smooth Transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover Effects */
+.messenger-sidebar:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stats-compact:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Content Area - Facebook Style */
+.content {
+  background-color: #f0f2f5;
+  min-height: calc(100vh - 120px);
+  padding: 0 !important;
+}
+
+/* Container unificado */
+.container-fluid {
+  padding-left: 15px;
+  padding-right: 15px;
+  max-width: 100%;
+}
+
+/* Row spacing unificado */
+.row {
+  margin-left: -15px;
+  margin-right: -15px;
+}
+
+.row > [class*="col-"] {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+/* Sidebar Enhancements */
+.col-md-3 {
+  .card {
+    margin-bottom: 1rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+/* Main Content Area - Unificado */
+.col-md-9 {
+  padding-left: 0; /* Eliminar padding extra */
+  
+  router-outlet {
+    display: block;
+    width: 100%;
+  }
+  
+  /* Asegurar que las cards se alineen correctamente */
+  .card {
+    margin-bottom: 1rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+}
+
+/* Alineación perfecta de contenido */
+.content-body {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 200px);
+}
+
+/* Cards unificadas */
+.card {
+  border-radius: 0.375rem;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  margin-bottom: 1rem;
+  
+  .card-header {
+    padding: 0.75rem 1.25rem;
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  }
+  
+  .card-body {
+    padding: 1.25rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .content {
+    background-color: #18191a;
+  }
+  
+  .messenger-sidebar {
+    background: #242526;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  .section-header {
+    background: #242526;
+    
+    &:hover {
+      background: #3a3b3c;
+    }
+    
+    .section-title {
+      color: #b0b3b8;
+    }
+    
+    .section-icon,
+    .toggle-icon {
+      color: #b0b3b8;
+    }
+  }
+  
+  .menu-section {
+    border-bottom-color: #3a3b3c;
+  }
+  
+  .menu-item {
+    color: #e4e6eb;
+    
+    &:hover {
+      background: #3a3b3c;
+    }
+    
+    &.active {
+      background: linear-gradient(90deg, rgba(44, 132, 235, 0.2) 0%, rgba(44, 132, 235, 0) 100%);
+      color: #2c84eb;
+      
+      &::before {
+        background: #2c84eb;
+      }
+      
+      .menu-text {
+        color: #2c84eb;
+      }
+      
+      .menu-icon {
+        color: #2c84eb;
+      }
+    }
+    
+    .menu-text {
+      color: #e4e6eb;
+    }
+    
+    .menu-icon {
+      color: #b0b3b8;
+    }
+  }
+  
+  .stats-compact {
+    background: #242526;
+    
+    .stat-item {
+      background: #3a3b3c;
+      
+      i {
+        color: #b0b3b8;
+      }
+      
+      span {
+        color: #e4e6eb;
+      }
+      
+      &.unread {
+        background: linear-gradient(135deg, rgba(255, 59, 48, 0.2) 0%, rgba(255, 149, 0, 0.2) 100%);
+      }
+    }
+  }
+  
+  .content-header {
+    h1.text-gradient {
+      background: linear-gradient(135deg, #2c84eb 0%, #00c6ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      
+      i {
+        color: #2c84eb !important;
+        -webkit-text-fill-color: #2c84eb;
+      }
+    }
+  }
+}
+
+/* Print Styles */
+@media print {
+  .card-header {
+    background: white !important;
+    color: black !important;
+    
+    .card-title {
+      color: black !important;
+    }
+  }
+  
+  .badge {
+    background-color: #6c757d !important;
+    color: white !important;
+  }
+}

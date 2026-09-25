@@ -1,0 +1,389 @@
+.conversation-list-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+// Header
+.list-header {
+  flex-shrink: 0;
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  
+  h5 {
+    color: #495057;
+    font-weight: 600;
+  }
+  
+  .badge {
+    font-size: 0.75rem;
+  }
+}
+
+// Search
+.search-container {
+  .input-group-text {
+    background-color: #fff;
+    border-right: none;
+  }
+  
+  .form-control {
+    border-left: none;
+    
+    &:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+  }
+}
+
+// Filters
+.filters-container {
+  .form-control-sm {
+    font-size: 0.875rem;
+  }
+  
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+// Conversation List
+.conversation-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.conversation-item {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  
+  &:hover {
+    background-color: #f8f9fa;
+  }
+  
+  &.selected {
+    background-color: #e3f2fd;
+    border-left: 4px solid #007bff;
+  }
+  
+  &.unread {
+    background-color: #fff8e1;
+    
+    &:hover {
+      background-color: #fff3c4;
+    }
+    
+    &.selected {
+      background-color: #e8f4fd;
+    }
+  }
+  
+  .conversation-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+
+// Avatar
+.conversation-avatar {
+  position: relative;
+  flex-shrink: 0;
+  
+  .avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+  }
+  
+  .unread-indicator {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background-color: #dc3545;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+}
+
+// Conversation Info
+.conversation-info {
+  min-width: 0; // Allow text truncation
+  
+  .conversation-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 0.25rem;
+    
+    .participants {
+      flex: 1;
+      font-size: 0.9rem;
+      color: #495057;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .conversation-date {
+      flex-shrink: 0;
+      font-size: 0.8rem;
+      margin-left: 0.5rem;
+    }
+  }
+  
+  .conversation-subject {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .last-message-preview {
+    font-size: 0.8rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    
+    .sender-name {
+      font-weight: 500;
+      color: #495057;
+    }
+  }
+  
+  .conversation-indicators {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    
+    .badge-sm {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.4rem;
+    }
+    
+    i {
+      font-size: 0.8rem;
+    }
+  }
+}
+
+// Actions
+.conversation-actions {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  
+  .conversation-item:hover & {
+    opacity: 1;
+  }
+  
+  .conversation-item.selected & {
+    opacity: 1;
+  }
+  
+  .btn-group-vertical {
+    .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      border-radius: 0.25rem;
+      margin-bottom: 0.25rem;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      &.active {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+      }
+    }
+  }
+}
+
+// Dropdown
+.dropdown-menu {
+  border: 1px solid #dee2e6;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  font-size: 0.875rem;
+  
+  .dropdown-item {
+    padding: 0.5rem 1rem;
+    
+    i {
+      width: 20px;
+      margin-right: 8px;
+    }
+    
+    &:hover {
+      background-color: #f8f9fa;
+    }
+    
+    &.text-danger:hover {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  }
+}
+
+// Load More
+.load-more-container {
+  padding: 1rem;
+  border-top: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+}
+
+// States
+.loading-state, .empty-state, .no-results-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  
+  .spinner-border {
+    width: 3rem;
+    height: 3rem;
+  }
+  
+  i.fa-3x {
+    font-size: 3rem;
+  }
+  
+  h5 {
+    color: #6c757d;
+    font-weight: 500;
+  }
+  
+  p {
+    max-width: 300px;
+    line-height: 1.5;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .list-header {
+    padding: 0.75rem;
+  }
+  
+  .conversation-item {
+    padding: 0.75rem;
+    
+    .conversation-content {
+      gap: 0.75rem;
+    }
+  }
+  
+  .conversation-avatar {
+    .avatar-circle {
+      width: 35px;
+      height: 35px;
+      font-size: 0.9rem;
+    }
+  }
+  
+  .conversation-info {
+    .conversation-header {
+      flex-direction: column;
+      align-items: flex-start;
+      
+      .conversation-date {
+        margin-left: 0;
+        margin-top: 0.25rem;
+      }
+    }
+  }
+  
+  .conversation-actions {
+    opacity: 1; // Always show on mobile
+    
+    .btn-group-vertical {
+      .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+      }
+    }
+  }
+  
+  .filters-container {
+    .row {
+      .col-md-4 {
+        margin-top: 0.5rem;
+        text-align: left !important;
+      }
+    }
+  }
+}
+
+// Scrollbar styling
+.conversation-list {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}
+
+// Animation for new conversations
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.conversation-item {
+  animation: slideInFromTop 0.3s ease-out;
+}
+
+// Hover effects
+.conversation-item {
+  &:hover {
+    transform: translateX(2px);
+  }
+}
+
+// Focus styles for accessibility
+.conversation-item:focus {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+}
+
+.btn:focus {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}

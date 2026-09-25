@@ -1,0 +1,40 @@
+/* Estilos para el layout simplificado */
+.wrapper {
+  min-height: 100vh;
+}
+
+.main-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 1030;
+}
+
+.content-wrapper {
+  margin-left: 250px;
+  min-height: 100vh;
+}
+
+.main-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+}
+
+.main-footer {
+  margin-left: 250px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .content-wrapper {
+    margin-left: 0;
+  }
+  
+  .main-footer {
+    margin-left: 0;
+  }
+}

@@ -1,0 +1,659 @@
+<!-- Module Discovery Component -->
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">🔍 Descubrimiento de Módulos</h1>
+          <p class="text-muted mb-0">Descubre y registra módulos disponibles en el sistema</p>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a routerLink="/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a routerLink="/admin-menu-management">Administrador</a></li>
+            <li class="breadcrumb-item active">Descubrimiento de Módulos</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+<section class="content">
+  <div class="container-fluid form-container">
+      
+      <!-- Main Card with Nav Tabs -->
+      <div class="card">
+        <div class="card-header p-0">
+          <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" id="overview-tab" data-toggle="tab" href="#overview" role="tab" aria-controls="overview" aria-selected="true" (click)="switchTab('overview', $event)">
+                <i class="fas fa-chart-pie mr-1"></i> Resumen
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="discovered-tab" data-toggle="tab" href="#discovered" role="tab" aria-controls="discovered" aria-selected="false" (click)="switchTab('discovered', $event)">
+                <i class="fas fa-folder mr-1"></i> Módulos Descubiertos
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="registered-tab" data-toggle="tab" href="#registered" role="tab" aria-controls="registered" aria-selected="false" (click)="switchTab('registered', $event)">
+                <i class="fas fa-server mr-1"></i> Sistemas Registrados
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="permissions-tab" data-toggle="tab" href="#permissions" role="tab" aria-controls="permissions" aria-selected="false" (click)="switchTab('permissions', $event)">
+                <i class="fas fa-key mr-1"></i> Gestión de Permisos
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="card-body">
+          <div class="tab-content" id="moduleDiscoveryTabs">
+            
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Acciones Rápidas</h5>
+                    <div class="btn-group">
+                      <button class="btn btn-primary" (click)="discoverModules()" [disabled]="discovering">
+                        <i class="fas fa-search" [class.fa-spin]="discovering"></i> 
+                        {{ discovering ? 'Descubriendo...' : 'Descubrir Módulos' }}
+                      </button>
+                      <button class="btn btn-info" (click)="loadRegisteredSystems()">
+                        <i class="fas fa-sync-alt"></i> Actualizar Sistemas
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Statistics -->
+              <div class="row mb-4">
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-primary">
+            <div class="inner">
+              <h3>{{ discoveredModules.length }}</h3>
+              <p>Módulos Descubiertos</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-folder"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>{{ getRegisteredModulesCount() }}</h3>
+              <p>Módulos Registrados</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3>{{ getModulesWithMenuConfigCount() }}</h3>
+              <p>Con Configuración de Menú</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-bars"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>{{ getModulesWithApiRoutesCount() }}</h3>
+              <p>Con Rutas API</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-code"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+            </div>
+
+            <!-- Discovered Modules Tab -->
+            <div class="tab-pane fade" id="discovered" role="tabpanel" aria-labelledby="discovered-tab">
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Módulos Descubiertos</h5>
+                    <button class="btn btn-primary" (click)="discoverModules()" [disabled]="discovering">
+                      <i class="fas fa-search" [class.fa-spin]="discovering"></i> 
+                      {{ discovering ? 'Descubriendo...' : 'Descubrir Módulos' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Discovered Modules Content -->
+              <div *ngIf="discoveredModules.length === 0 && !discovering" class="row">
+                <div class="col-12">
+                  <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle fa-2x mb-3"></i>
+                    <h5>No se encontraron módulos</h5>
+                    <p class="mb-0">Haz clic en "Descubrir Módulos" para escanear el sistema en busca de módulos disponibles.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="discovering" class="row">
+                <div class="col-12">
+                  <div class="alert alert-warning text-center">
+                    <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                    <h5>Descubriendo módulos...</h5>
+                    <p class="mb-0">Escaneando el sistema en busca de módulos disponibles.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row" *ngIf="discoveredModules.length > 0">
+                <div class="col-md-6 col-lg-4" *ngFor="let module of discoveredModules">
+                  <div class="card card-outline" 
+                       [style.border-top-color]="getModuleColor(module)">
+                    <div class="card-header">
+                      <h5 class="mb-0">
+                        <i [class]="getModuleIcon(module)"></i> {{ module.display_name || module.name }}
+                      </h5>
+                      <small class="text-muted">{{ module.name }}</small>
+                    </div>
+                    <div class="card-body">
+                      <p class="card-text">{{ module.description || 'Sin descripción' }}</p>
+                      <div class="row text-center">
+                        <div class="col-4">
+                          <small class="text-muted">Estado</small><br>
+                          <span class="badge" [class.badge-success]="module.status === 'available'" [class.badge-secondary]="module.status !== 'available'">
+                            {{ module.status === 'available' ? 'Disponible' : module.status }}
+                          </span>
+                        </div>
+                        <div class="col-4">
+                          <small class="text-muted">Menús</small><br>
+                          <span class="badge" [class.badge-success]="module.has_menu_config" [class.badge-secondary]="!module.has_menu_config">
+                            {{ module.has_menu_config ? 'Sí' : 'No' }}
+                          </span>
+                        </div>
+                        <div class="col-4">
+                          <small class="text-muted">Versión</small><br>
+                          <span class="badge badge-info">
+                            {{ module.version || '1.0.0' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-footer">
+                      <div class="btn-group btn-group-sm w-100">
+                        <button class="btn btn-primary" (click)="openRegistrationModal(module)" [disabled]="isModuleRegistered(module.name)">
+                          <i class="fas fa-plus"></i> {{ isModuleRegistered(module.name) ? 'Registrado' : 'Registrar' }}
+                        </button>
+                        <button class="btn btn-info" (click)="viewModuleDetails(module)">
+                          <i class="fas fa-eye"></i> Ver
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Registered Systems Tab -->
+            <div class="tab-pane fade" id="registered" role="tabpanel" aria-labelledby="registered-tab">
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Sistemas Registrados</h5>
+                    <button class="btn btn-info" (click)="loadRegisteredSystems()">
+                      <i class="fas fa-sync-alt"></i> Actualizar Sistemas
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sistemas Registrados -->
+      <div class="row" *ngIf="registeredSystems.length > 0">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-server mr-2"></i>Sistemas Registrados
+              </h3>
+              <div class="card-tools">
+                <span class="badge badge-primary">{{ registeredSystems.length }} sistemas</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row registered-systems">
+                <div class="col-md-6 col-lg-4 mb-3" *ngFor="let system of registeredSystems">
+                  <div class="card card-outline" [style.border-top-color]="system.color || '#007bff'">
+                    <div class="card-header">
+                      <h5 class="mb-0">
+                        <i [class]="system.icono || 'fas fa-server'"></i> {{ system.nombre }}
+                      </h5>
+                      <small class="text-muted">{{ system.codigo }}</small>
+                    </div>
+                    <div class="card-body">
+                      <p class="card-text">{{ system.descripcion || 'Sistema integrado' }}</p>
+                      <div class="row text-center">
+                        <div class="col-6">
+                          <small class="text-muted">Estado</small><br>
+                          <span class="badge" [class.badge-success]="system.activo" [class.badge-secondary]="!system.activo">
+                            {{ system.activo ? 'Activo' : 'Inactivo' }}
+                          </span>
+                        </div>
+                        <div class="col-6">
+                          <small class="text-muted">Menús</small><br>
+                          <span class="badge badge-info">{{ system.menus_count || 0 }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-footer">
+                      <div class="btn-group btn-group-sm w-100">
+                        <button class="btn btn-primary" (click)="openPermissionModal(system)">
+                          <i class="fas fa-key"></i> Permisos
+                        </button>
+                        <button class="btn btn-info" (click)="viewSystemDetails(system)">
+                          <i class="fas fa-eye"></i> Ver
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+              <!-- Empty State for Registered Systems -->
+              <div *ngIf="registeredSystems.length === 0" class="row">
+                <div class="col-12">
+                  <div class="alert alert-info text-center">
+                    <i class="fas fa-server fa-2x mb-3"></i>
+                    <h5>No hay sistemas registrados</h5>
+                    <p class="mb-0">Los sistemas aparecerán aquí una vez que registres módulos desde la pestaña "Módulos Descubiertos".</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Permissions Management Tab -->
+            <div class="tab-pane fade" id="permissions" role="tabpanel" aria-labelledby="permissions-tab">
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Gestión de Permisos</h5>
+                    <button class="btn btn-warning" (click)="openPermissionModal()">
+                      <i class="fas fa-key"></i> Gestionar Permisos
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle mr-1"></i>Información sobre Gestión de Permisos</h6>
+                    <p class="mb-0">Desde aquí puedes gestionar los permisos y accesos de los sistemas registrados. Selecciona un sistema y asigna permisos específicos a roles para cada menú del sistema.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="card card-outline card-primary">
+                    <div class="card-header">
+                      <h6 class="mb-0">
+                        <i class="fas fa-server mr-1"></i> Sistemas Disponibles
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <div *ngIf="registeredSystems.length === 0" class="text-center text-muted">
+                        <i class="fas fa-server fa-2x mb-2"></i>
+                        <p>No hay sistemas registrados</p>
+                      </div>
+                      <div *ngFor="let system of registeredSystems; let i = index" class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div>
+                            <strong>{{ system.nombre }}</strong>
+                            <br>
+                            <small class="text-muted">{{ system.codigo }}</small>
+                          </div>
+                          <button class="btn btn-sm btn-primary" (click)="openPermissionModal(system)">
+                            <i class="fas fa-key"></i> Permisos
+                          </button>
+                        </div>
+                        <hr *ngIf="!isLastSystem(i)">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card card-outline card-success">
+                    <div class="card-header">
+                      <h6 class="mb-0">
+                        <i class="fas fa-users mr-1"></i> Roles Disponibles
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <div *ngIf="availableRoles.length === 0" class="text-center text-muted">
+                        <i class="fas fa-users fa-2x mb-2"></i>
+                        <p>Cargando roles...</p>
+                      </div>
+                      <div *ngFor="let role of availableRoles; let i = index" class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div>
+                            <strong>{{ role.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ role.guard_name }}</small>
+                          </div>
+                          <span class="badge badge-info">{{ role.permissions?.length || 0 }} permisos</span>
+                        </div>
+                        <hr *ngIf="!isLastRole(i)">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<!-- Registration Modal -->
+<div class="modal fade" [class.show]="showRegistrationModal" [style]="showRegistrationModal ? 'display: block' : 'display: none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">
+          <i class="fas fa-plus-circle"></i> Registrar Módulo como Sistema
+        </h4>
+        <button type="button" class="close" (click)="closeRegistrationModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <form [formGroup]="registrationForm" (ngSubmit)="registerModule()">
+        <div class="modal-body">
+          <div class="alert alert-info">
+            <div class="row">
+              <div class="col-md-6">
+                <i class="fas fa-info-circle mr-2"></i>
+                <strong>Módulo:</strong> {{ selectedModule?.name }}<br>
+                <strong>Descripción:</strong> {{ selectedModule?.description || 'Sin descripción' }}
+              </div>
+              <div class="col-md-6">
+                <strong>Versión:</strong> {{ selectedModule?.version }}<br>
+                <strong>Estado:</strong> {{ selectedModule?.status }}
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="module_name">Nombre del Módulo *</label>
+                <input type="text" class="form-control" id="module_name" formControlName="module_name" readonly>
+                <small class="form-text text-muted">Nombre técnico del módulo (solo lectura)</small>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="display_name">Nombre de Visualización *</label>
+                <input type="text" class="form-control" id="display_name" formControlName="display_name" 
+                       placeholder="Ej: Sistema de Planillas">
+                <div *ngIf="registrationForm.get('display_name')?.invalid && registrationForm.get('display_name')?.touched" class="text-danger">
+                  El nombre de visualización es requerido
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="description">Descripción</label>
+            <textarea class="form-control" id="description" formControlName="description" 
+                      rows="3" placeholder="Descripción del sistema"></textarea>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-8">
+              <div class="form-group">
+                <label for="url_base">URL Base</label>
+                <input type="url" class="form-control" id="url_base" formControlName="url_base" 
+                       placeholder="/modules/planillas">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="color">Color</label>
+                <input type="color" class="form-control" id="color" formControlName="color">
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="icon">Icono</label>
+                <input type="text" class="form-control" id="icon" formControlName="icon" 
+                       placeholder="fas fa-server">
+                <small class="form-text text-muted">Ejemplo: fas fa-server, fas fa-chart-line, fas fa-database</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module Information -->
+          <div class="row" *ngIf="selectedModule">
+            <div class="col-12">
+              <h6><i class="fas fa-cogs mr-1"></i>Características Técnicas del Módulo:</h6>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="card card-outline card-info">
+                    <div class="card-body text-center">
+                      <i class="fas fa-route fa-2x text-info mb-2"></i>
+                      <h5>{{ getRoutesCount(selectedModule) }}</h5>
+                      <small class="text-muted">Rutas</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="card card-outline card-success">
+                    <div class="card-body text-center">
+                      <i class="fas fa-bars fa-2x text-success mb-2"></i>
+                      <h5>{{ getMenusCount(selectedModule) }}</h5>
+                      <small class="text-muted">Menús</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="card card-outline card-warning">
+                    <div class="card-body text-center">
+                      <i class="fas fa-code fa-2x text-warning mb-2"></i>
+                      <h5>{{ getControllersCount(selectedModule) }}</h5>
+                      <small class="text-muted">Controladores</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-2">
+                <div class="col-md-6">
+                  <div class="card card-outline card-secondary">
+                    <div class="card-body text-center">
+                      <i class="fas fa-database fa-2x text-secondary mb-2"></i>
+                      <h5>{{ getModelsCount(selectedModule) }}</h5>
+                      <small class="text-muted">Modelos</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card card-outline card-primary">
+                    <div class="card-body text-center">
+                      <i class="fas fa-migration fa-2x text-primary mb-2"></i>
+                      <h5>{{ getMigrationsCount(selectedModule) }}</h5>
+                      <small class="text-muted">Migraciones</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeRegistrationModal()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || registering">
+            <i class="fas fa-save" [class.fa-spin]="registering"></i> 
+            {{ registering ? 'Registrando...' : 'Registrar Sistema' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Permission Management Modal -->
+<div class="modal fade" [class.show]="showPermissionModal" [style]="showPermissionModal ? 'display: block' : 'display: none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">
+          <i class="fas fa-key"></i> Gestión de Permisos del Sistema
+        </h4>
+        <button type="button" class="close" (click)="closePermissionModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <form [formGroup]="permissionForm" (ngSubmit)="savePermissions()">
+        <div class="modal-body">
+          
+          <!-- System Selection -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="system_id">Sistema *</label>
+                <select class="form-control" id="system_id" formControlName="system_id" (change)="onSystemChange(+$any($event.target).value)">
+                  <option value="">Seleccione un sistema</option>
+                  <option *ngFor="let system of registeredSystems" [value]="system.id">
+                    {{ system.nombre }} ({{ system.codigo }})
+                  </option>
+                </select>
+                <div *ngIf="permissionForm.get('system_id')?.invalid && permissionForm.get('system_id')?.touched" class="text-danger">
+                  Seleccione un sistema
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="role_id">Rol *</label>
+                <select class="form-control" id="role_id" formControlName="role_id">
+                  <option value="">Seleccione un rol</option>
+                  <option *ngFor="let role of availableRoles" [value]="role.id">
+                    {{ role.name }}
+                  </option>
+                </select>
+                <div *ngIf="permissionForm.get('role_id')?.invalid && permissionForm.get('role_id')?.touched" class="text-danger">
+                  Seleccione un rol
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Information -->
+          <div class="alert alert-info" *ngIf="selectedSystem">
+            <div class="row">
+              <div class="col-md-6">
+                <strong>Sistema:</strong> {{ selectedSystem.nombre }}<br>
+                <strong>Código:</strong> {{ selectedSystem.codigo }}
+              </div>
+              <div class="col-md-6">
+                <strong>Menús:</strong> {{ systemMenus.length }}<br>
+                <strong>Estado:</strong> {{ selectedSystem.activo ? 'Activo' : 'Inactivo' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Menu Permissions -->
+          <div *ngIf="systemMenus.length > 0">
+            <h6><i class="fas fa-bars mr-1"></i>Permisos por Menú:</h6>
+            
+            <div class="row" formArrayName="menu_permissions">
+              <div class="col-md-6" *ngFor="let menu of systemMenus; let i = index" [formGroupName]="i">
+                <div class="card card-outline card-primary mb-3">
+                  <div class="card-header">
+                    <h6 class="mb-0">
+                      <i [class]="menu.icono || 'fas fa-circle'"></i> {{ menu.nombre }}
+                    </h6>
+                    <small class="text-muted">{{ menu.route }}</small>
+                  </div>
+                  <div class="card-body">
+                    <div class="form-group">
+                      <label>Permisos Disponibles:</label>
+                      <div class="row">
+                        <div class="col-md-6" *ngFor="let permission of availablePermissions">
+                          <div class="form-check">
+                            <input type="checkbox" class="form-check-input" 
+                                   [value]="permission.name"
+                                   (change)="toggleMenuPermission(i, permission.name, $event)">
+                            <label class="form-check-label">{{ permission.name }}</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Selected Permissions Display -->
+                    <div *ngIf="getMenuPermissions(i).length > 0" class="mt-2">
+                      <small class="text-muted">Permisos seleccionados:</small>
+                      <div class="d-flex flex-wrap">
+                        <span class="badge badge-success mr-1 mb-1" *ngFor="let perm of getMenuPermissions(i)">
+                          {{ perm }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="systemMenus.length === 0 && selectedSystem" class="text-center py-4">
+            <i class="fas fa-bars fa-3x text-muted mb-3"></i>
+            <h5>No hay menús disponibles</h5>
+            <p class="text-muted">Este sistema no tiene menús configurados.</p>
+          </div>
+
+          <!-- No System Selected -->
+          <div *ngIf="!selectedSystem" class="text-center py-4">
+            <i class="fas fa-server fa-3x text-muted mb-3"></i>
+            <h5>Seleccione un Sistema</h5>
+            <p class="text-muted">Por favor, seleccione un sistema para gestionar sus permisos.</p>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closePermissionModal()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="permissionForm.invalid || systemMenus.length === 0">
+            <i class="fas fa-save"></i> Guardar Permisos
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showRegistrationModal || showPermissionModal" 
+     [style]="(showRegistrationModal || showPermissionModal) ? 'display: block' : 'display: none'"></div>

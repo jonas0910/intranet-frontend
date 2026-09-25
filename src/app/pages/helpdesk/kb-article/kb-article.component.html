@@ -1,0 +1,21 @@
+<app-system-layout
+  [title]="articulo?.titulo || 'Artículo'"
+  [subtitle]="articulo?.categoria?.nombre ? 'Categoría: ' + articulo.categoria.nombre : ''"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Helpdesk', url: '/helpdesk'}, {label: 'Base de conocimientos', url: '/helpdesk/base-conocimientos'}, {label: articulo?.titulo || '...'}]"
+  subsystem="helpdesk">
+
+  <div *ngIf="loading" class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+
+  <div *ngIf="!loading && articulo" class="card">
+    <div class="card-body">
+      <p class="text-muted small mb-3" *ngIf="articulo.resumen">{{ articulo.resumen }}</p>
+      <div class="kb-content" [innerHTML]="articulo.contenido"></div>
+      <hr>
+      <small class="text-muted">{{ articulo.vistas || 0 }} vistas</small>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && articulo" class="mt-3">
+    <a routerLink="/helpdesk/base-conocimientos" class="btn btn-outline-secondary">Volver a la base de conocimientos</a>
+  </div>
+</app-system-layout>

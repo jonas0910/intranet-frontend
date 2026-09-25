@@ -1,0 +1,30 @@
+// Escala salarial - Patrón Design System (cv/mc planillas)
+.form-container {
+  padding: var(--container-fluid-padding, 1rem);
+}
+
+.card.elevation-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+// Durante recarga la tabla sigue en DOM para no perder el patrón ni el DataTable
+.escala-table-loading {
+  opacity: 0.65;
+  pointer-events: none;
+  min-height: 120px;
+}
+
+.table th {
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.modal.show { display: block; }
+.modal-backdrop.show { opacity: 0.5; }
+
+
+

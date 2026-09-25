@@ -1,0 +1,426 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-inbox mr-2"></i>Bandeja de Entrada</h1></div>
+      <div class="col-sm-6"><ol class="breadcrumb float-sm-right"><li class="breadcrumb-item"><a routerLink="/tramite-documentario/dashboard">Inicio</a></li><li class="breadcrumb-item active">Bandeja de Entrada</li></ol></div>
+    </div>
+  </div>
+</div>
+
+<div class="content" (click)="closeDropdowns()">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <label>Área</label>
+            <select class="form-control" [(ngModel)]="areaSeleccionada" (change)="cambiarArea()">
+              <option *ngFor="let a of areas" [ngValue]="a.id">{{ a.nombre }}</option>
+            </select>
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <div class="btn-group">
+              <button class="btn" [ngClass]="vistaActiva==='pendientes'?'btn-warning':'btn-outline-warning'" (click)="cambiarVista('pendientes')">
+                <i class="fas fa-clock mr-1"></i>Pendientes <span class="badge badge-light ml-1">{{ tramitesPendientes.length }}</span>
+              </button>
+              <button class="btn" [ngClass]="vistaActiva==='recibidos'?'btn-info':'btn-outline-info'" (click)="cambiarVista('recibidos')">
+                <i class="fas fa-check mr-1"></i>Recibidos <span class="badge badge-light ml-1">{{ tramitesRecibidos.length }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas mr-2" [ngClass]="vistaActiva==='pendientes'?'fa-clock text-warning':'fa-check text-info'"></i>
+          {{ vistaActiva === 'pendientes' ? 'Documentos Pendientes de Recepción' : 'Documentos Recibidos / En Proceso' }}
+        </h3>
+      </div>
+      <div class="card-body p-0">
+        <div *ngIf="loading" class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div>
+        <table *ngIf="!loading" class="table table-striped table-hover table-sm" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Documento / Expediente</th>
+              <th>Remitente</th>
+              <th>Asunto</th>
+              <th *ngIf="vistaActiva==='recibidos'">Respuesta</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th class="text-center" style="width:140px">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of tramitesVisibles" [class.table-warning]="t.prioridad==='urgente'" [class.table-light]="vistaActiva==='recibidos' && t.estado==='atendido'">
+              <td><span class="badge" [ngClass]="getPrioridadClass(t.prioridad)">{{ t.prioridad }}</span></td>
+              <td>
+                <a [routerLink]="['/tramite-documentario/detalle', t.id]"><strong>{{ t.numero_documento_generado || t.numero_expediente }}</strong></a>
+                <br *ngIf="t.numero_documento_generado"><small class="text-muted" *ngIf="t.numero_documento_generado">Exp. {{ t.numero_expediente }}</small>
+              </td>
+              <td>{{ t.nombres }} {{ t.apellidos }}</td>
+              <td class="text-truncate" style="max-width:200px" [title]="t.asunto">{{ t.asunto }}</td>
+              <td *ngIf="vistaActiva==='recibidos'">
+                <span *ngIf="t.numero_documento_generado" class="badge badge-success">{{ t.numero_documento_generado }}</span>
+                <span *ngIf="!t.numero_documento_generado" class="text-muted">—</span>
+              </td>
+              <td><span class="badge" [ngClass]="getEstadoClass(t.estado)">{{ getEstadoLabel(t.estado) }}</span></td>
+              <td><small>{{ t.fecha_ingreso }}</small></td>
+              <td class="text-center">
+                <!-- PENDIENTES: Recibir, Rechazar, Detalle -->
+                <ng-container *ngIf="vistaActiva==='pendientes'">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-success" (click)="openRecibir(t)" title="Recibir" [disabled]="processing">
+                      <i class="fas fa-check"></i>
+                    </button>
+                    <button class="btn btn-danger" (click)="openRechazar(t)" title="Rechazar" [disabled]="processing">
+                      <i class="fas fa-times"></i>
+                    </button>
+                    <button class="btn btn-info" (click)="openDetalle(t)" title="Detalle y Seguimiento">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </div>
+                </ng-container>
+
+                <!-- RECIBIDOS: Detalle + Dropdown con acciones -->
+                <ng-container *ngIf="vistaActiva==='recibidos'">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-info" (click)="openDetalle(t)" title="Detalle y Seguimiento">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button class="btn btn-secondary dropdown-toggle" (click)="toggleDropdown(t, $event)" title="Más acciones">
+                        <i class="fas fa-cog"></i>
+                      </button>
+                    </div>
+                  </div>
+                </ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dropdown acciones fijo (sobre todo) -->
+<div class="dropdown-menu dropdown-menu-right show dt-actions-dropdown" *ngIf="activeDropdown && activeDropdownTramite && dropdownPos"
+     [style.top.px]="dropdownPos.top" [style.left.px]="dropdownPos.left"
+     (click)="$event.stopPropagation()">
+  <a class="dropdown-item" href="javascript:void(0)" (click)="openAtender(activeDropdownTramite); closeDropdowns()">
+    <i class="fas fa-check-circle text-success mr-2"></i>Atender
+  </a>
+  <a class="dropdown-item" href="javascript:void(0)" (click)="openDerivar(activeDropdownTramite); closeDropdowns()">
+    <i class="fas fa-share text-info mr-2"></i>Derivar
+  </a>
+  <a class="dropdown-item" href="javascript:void(0)" (click)="openArchivar(activeDropdownTramite); closeDropdowns()">
+    <i class="fas fa-archive text-dark mr-2"></i>Archivar
+  </a>
+  <div class="dropdown-divider"></div>
+  <a class="dropdown-item" [routerLink]="['/tramite-documentario/detalle', activeDropdownTramite.id]" (click)="closeDropdowns()">
+    <i class="fas fa-external-link-alt text-primary mr-2"></i>Detalle Completo
+  </a>
+</div>
+
+<!-- MODAL: Recibir -->
+<div class="modal fade" [class.show]="showRecibirModal" [style.display]="showRecibirModal?'block':'none'" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header bg-success text-white">
+      <h5 class="modal-title"><i class="fas fa-check mr-2"></i>Recibir Documento</h5>
+      <button class="close text-white" (click)="showRecibirModal=false">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="selectedTramite">
+      <p><strong>Expediente:</strong> <span class="badge badge-primary">{{ selectedTramite.numero_expediente }}</span></p>
+      <p><strong>Asunto:</strong> {{ selectedTramite.asunto }}</p>
+      <p class="text-muted">¿Confirma la recepción de este documento en su área?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="showRecibirModal=false">Cancelar</button>
+      <button class="btn btn-success" (click)="confirmarRecibir()" [disabled]="processing">
+        <i class="fas fa-check mr-1"></i>Recibir
+      </button>
+    </div>
+  </div></div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showRecibirModal" (click)="showRecibirModal=false"></div>
+
+<!-- MODAL: Rechazar -->
+<div class="modal fade" [class.show]="showRechazarModal" [style.display]="showRechazarModal?'block':'none'" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header bg-danger text-white">
+      <h5 class="modal-title"><i class="fas fa-times mr-2"></i>Rechazar Documento</h5>
+      <button class="close text-white" (click)="showRechazarModal=false">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="selectedTramite">
+      <p><strong>Expediente:</strong> <span class="badge badge-primary">{{ selectedTramite.numero_expediente }}</span></p>
+      <p><strong>Asunto:</strong> {{ selectedTramite.asunto }}</p>
+      <div class="form-group">
+        <label>Motivo del rechazo * <small class="text-muted">(mín. 10 caracteres)</small></label>
+        <textarea class="form-control" rows="4" [(ngModel)]="rechazarMotivo" placeholder="Indique el motivo del rechazo..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="showRechazarModal=false">Cancelar</button>
+      <button class="btn btn-danger" (click)="confirmarRechazar()" [disabled]="rechazarMotivo.length < 10 || processing">
+        <i class="fas fa-times mr-1"></i>Rechazar
+      </button>
+    </div>
+  </div></div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showRechazarModal" (click)="showRechazarModal=false"></div>
+
+<!-- MODAL: Derivar -->
+<div class="modal fade" [class.show]="showDerivarModal" [style.display]="showDerivarModal?'block':'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header bg-info text-white">
+      <h5 class="modal-title"><i class="fas fa-share mr-2"></i>Derivar Expediente</h5>
+      <button class="close text-white" (click)="showDerivarModal=false">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="selectedTramite">
+      <p><strong>Expediente:</strong> <span class="badge badge-primary">{{ selectedTramite.numero_expediente }}</span></p>
+      <div class="form-group">
+        <label>Área Destino *</label>
+        <select class="form-control" [(ngModel)]="derivarForm.area_destino_id">
+          <option [ngValue]="0" disabled>Seleccione dependencia destino...</option>
+          <option *ngFor="let a of areas" [ngValue]="a.id">{{ a.nombre }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Observación</label>
+        <textarea class="form-control" rows="3" [(ngModel)]="derivarForm.observacion" placeholder="Motivo o instrucciones..."></textarea>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-copy mr-1"></i>Enviar copia a:</label>
+        <div class="border rounded p-2 bg-light" style="max-height:140px;overflow-y:auto">
+          <div class="custom-control custom-checkbox py-1" *ngFor="let a of areas">
+            <input type="checkbox" class="custom-control-input" [id]="'derivar_copia_'+a.id" [checked]="derivarForm.areas_copia.includes(a.id)" (change)="toggleDerivarCopia(a.id)">
+            <label class="custom-control-label" [for]="'derivar_copia_'+a.id">{{ a.nombre }}</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="showDerivarModal=false">Cancelar</button>
+      <button class="btn btn-info" (click)="confirmarDerivar()" [disabled]="!derivarForm.area_destino_id || processing">
+        <i class="fas fa-share mr-1"></i>Derivar
+      </button>
+    </div>
+  </div></div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showDerivarModal" (click)="showDerivarModal=false"></div>
+
+<!-- MODAL: Archivar -->
+<div class="modal fade" [class.show]="showArchivarModal" [style.display]="showArchivarModal?'block':'none'" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header bg-secondary text-white">
+      <h5 class="modal-title"><i class="fas fa-archive mr-2"></i>Archivar Expediente</h5>
+      <button class="close text-white" (click)="showArchivarModal=false">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="selectedTramite">
+      <p><strong>Expediente:</strong> <span class="badge badge-primary">{{ selectedTramite.numero_expediente }}</span></p>
+      <div class="form-group">
+        <label>Motivo (opcional)</label>
+        <textarea class="form-control" rows="3" [(ngModel)]="archivarMotivo" placeholder="Motivo de archivo..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="showArchivarModal=false">Cancelar</button>
+      <button class="btn btn-dark" (click)="confirmarArchivar()" [disabled]="processing">
+        <i class="fas fa-archive mr-1"></i>Archivar
+      </button>
+    </div>
+  </div></div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showArchivarModal" (click)="showArchivarModal=false"></div>
+
+<!-- MODAL: Atender (crear documento de respuesta) -->
+<div class="modal fade" [class.show]="showAtenderModal" [style.display]="showAtenderModal?'block':'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header bg-success text-white">
+      <h5 class="modal-title"><i class="fas fa-check-circle mr-2"></i>Atender - Crear Documento de Respuesta</h5>
+      <button class="close text-white" (click)="showAtenderModal=false">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="selectedTramite">
+      <p><strong>Expediente:</strong> <span class="badge badge-primary">{{ selectedTramite.numero_expediente }}</span></p>
+      <p class="text-muted"><strong>Asunto:</strong> {{ selectedTramite.asunto }}</p>
+
+      <div class="alert alert-info mb-3">
+        <div class="d-flex align-items-center flex-wrap">
+          <strong class="mr-2"><i class="fas fa-hashtag"></i> N° Documento:</strong>
+          <span class="badge badge-primary" style="font-size:1em">{{ atenderPreviewNumero || 'Seleccione tipo de documento' }}</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 form-group">
+          <label><i class="fas fa-file mr-1"></i>Tipo de Documento *</label>
+          <select class="form-control" [(ngModel)]="atenderForm.tipo_documento_respuesta" (change)="actualizarAtenderPreview()">
+            <option value="">-- Seleccione --</option>
+            <option *ngFor="let td of tiposDocGenerado" [value]="td">{{ td }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fas fa-heading mr-1"></i>Asunto de la Respuesta *</label>
+        <input type="text" class="form-control" [(ngModel)]="atenderForm.asunto_respuesta" maxlength="255">
+      </div>
+
+      <div class="form-group">
+        <label><i class="fas fa-align-left mr-1"></i>Descripción / Contenido</label>
+        <textarea class="form-control" rows="3" [(ngModel)]="atenderForm.descripcion_respuesta" placeholder="Detalle de la respuesta..."></textarea>
+      </div>
+
+      <hr>
+      <h6 class="text-info"><i class="fas fa-share mr-1"></i>Derivar con copias</h6>
+      <div class="custom-control custom-switch mb-3">
+        <input type="checkbox" class="custom-control-input" id="atender_derivar_check" [(ngModel)]="atenderForm.derivar_inmediatamente">
+        <label class="custom-control-label" for="atender_derivar_check">Derivar el documento de respuesta y/o enviar copias a otras áreas</label>
+      </div>
+
+      <div *ngIf="atenderForm.derivar_inmediatamente">
+        <div class="form-group">
+          <label><i class="fas fa-building mr-1"></i>Área destino principal *</label>
+          <select class="form-control" [(ngModel)]="atenderForm.area_destino_id">
+            <option [ngValue]="0">-- Seleccione dependencia principal --</option>
+            <ng-container *ngFor="let a of areas">
+              <option [ngValue]="a.id" *ngIf="a.id !== areaSeleccionada">{{ a.nombre }}</option>
+            </ng-container>
+          </select>
+          <small class="text-muted">Si no selecciona, la primera área marcada en copias será la destinataria principal.</small>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-copy mr-1"></i>Enviar copia a:</label>
+          <div class="border rounded p-2 bg-light" style="max-height:140px;overflow-y:auto">
+            <ng-container *ngFor="let a of areas">
+              <div class="custom-control custom-checkbox py-1" *ngIf="a.id !== areaSeleccionada">
+                <input type="checkbox" class="custom-control-input" [id]="'atender_copia_'+a.id" [checked]="atenderForm.areas_copia.includes(a.id)" (change)="toggleAtenderCopia(a.id)">
+                <label class="custom-control-label" [for]="'atender_copia_'+a.id">{{ a.nombre }}</label>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-comment mr-1"></i>Observación (derivación/copias)</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="atenderForm.observacion_derivar" placeholder="Motivo o mensaje..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="showAtenderModal=false">Cancelar</button>
+      <button class="btn btn-success" (click)="confirmarAtender()" [disabled]="processing">
+        <i class="fas fa-check mr-1"></i>Atender y Crear Documento
+      </button>
+    </div>
+  </div></div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showAtenderModal" (click)="showAtenderModal=false"></div>
+
+<!-- MODAL: Detalle y Seguimiento -->
+<div class="modal fade" [class.show]="showDetalleModal" [style.display]="showDetalleModal?'block':'none'" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title"><i class="fas fa-folder-open mr-2"></i>Detalle y Seguimiento</h5>
+      <button class="close" (click)="showDetalleModal=false">&times;</button>
+    </div>
+    <div class="modal-body" style="min-height:300px">
+      <div *ngIf="detalleLoading" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div>
+      <ng-container *ngIf="!detalleLoading && detalleData">
+        <!-- Header expediente -->
+        <div class="expediente-header mb-3">
+          <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+              <h5 class="mb-0"><i class="fas fa-folder-open mr-2"></i>{{ detalleData.numero_expediente }}</h5>
+              <small *ngIf="detalleData.numero_documento_generado" class="opacity-75">{{ detalleData.numero_documento_generado }}</small>
+            </div>
+            <span class="badge badge-light" style="font-size:0.9rem;padding:6px 12px">{{ getEstadoLabel(detalleData.estado) }}</span>
+          </div>
+          <div class="row mt-2">
+            <div class="col"><small class="d-block text-uppercase" style="font-size:0.7rem">Asunto</small>{{ detalleData.asunto }}</div>
+            <div class="col"><small class="d-block text-uppercase" style="font-size:0.7rem">Solicitante</small>{{ detalleData.nombres }} {{ detalleData.apellidos }}</div>
+            <div class="col"><small class="d-block text-uppercase" style="font-size:0.7rem">Fecha</small>{{ detalleData.fecha_ingreso }}</div>
+            <div class="col"><small class="d-block text-uppercase" style="font-size:0.7rem">Prioridad</small><span class="badge" [ngClass]="getPrioridadClass(detalleData.prioridad)">{{ detalleData.prioridad }}</span></div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs nav-fill mb-3">
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="detalleTab==='seguimiento'" (click)="detalleTab='seguimiento'" style="cursor:pointer">
+              <i class="fas fa-route mr-1"></i>Seguimiento por fechas y áreas
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="detalleTab==='detalle'" (click)="detalleTab='detalle'" style="cursor:pointer">
+              <i class="fas fa-info-circle mr-1"></i>Detalle
+            </a>
+          </li>
+        </ul>
+
+        <!-- Tab: Seguimiento tabla -->
+        <div *ngIf="detalleTab==='seguimiento'">
+          <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-calendar-alt text-info mr-1"></i>Etapas por fecha, área y estado</h6>
+          <div class="table-responsive" *ngIf="detalleData.seguimientos?.length > 0">
+            <table class="table table-sm table-bordered table-hover mb-0">
+              <thead class="thead-light">
+                <tr><th>Fecha</th><th>Área / Dependencia</th><th>Estado</th><th>Acción</th><th>Descripción</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of detalleData.seguimientos">
+                  <td><small>{{ s.created_at | date:'dd/MM/yyyy HH:mm' }}</small></td>
+                  <td>{{ s.area_destino_nombre || s.area_origen_nombre || '—' }}</td>
+                  <td><span class="badge" [ngClass]="getAccionBadgeClass(s.accion)">{{ getEstadoLabel(s.estado_nuevo || s.accion) }}</span></td>
+                  <td>{{ getAccionLabel(s.accion) }}</td>
+                  <td><small>{{ s.descripcion }}</small></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="!detalleData.seguimientos || detalleData.seguimientos.length === 0" class="text-center py-3 text-muted">
+            <i class="fas fa-inbox fa-2x mb-2"></i>
+            <p class="mb-0 small">No hay etapas registradas</p>
+          </div>
+        </div>
+
+        <!-- Tab: Detalle timeline moderno -->
+        <div *ngIf="detalleTab==='detalle'">
+          <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-route text-primary mr-1"></i>Detalle y seguimiento <span class="badge badge-info ml-1">{{ detalleData.linea_tiempo?.length || 0 }}</span></h6>
+          <div class="timeline-modern" *ngIf="detalleData.linea_tiempo?.length > 0">
+            <div class="timeline-item-modern" *ngFor="let ev of detalleData.linea_tiempo">
+              <div class="timeline-icon" [ngClass]="'bg-' + getTimelineBgClass(ev.accion)">
+                <i class="fas" [ngClass]="getTimelineIconClass(ev.accion)"></i>
+              </div>
+              <div class="timeline-content" [ngClass]="ev.accion">
+                <div class="d-flex justify-content-between align-items-start flex-wrap mb-1">
+                  <span class="badge" [ngClass]="getAccionBadgeClass(ev.accion)">{{ ev.titulo || getAccionLabel(ev.accion) }}</span>
+                  <small class="text-muted">{{ ev.fecha | date:'dd/MM/yyyy HH:mm' }}</small>
+                </div>
+                <div class="small text-dark" *ngIf="ev.detalle">{{ ev.detalle }}</div>
+                <div class="timeline-areas mt-1" *ngIf="ev.area_origen_nombre || ev.area_destino_nombre">
+                  <span class="area-badge origen" *ngIf="ev.area_origen_nombre"><i class="fas fa-building mr-1"></i>{{ ev.area_origen_nombre }}</span>
+                  <span class="text-muted" *ngIf="ev.area_origen_nombre && ev.area_destino_nombre"><i class="fas fa-arrow-right"></i></span>
+                  <span class="area-badge destino" *ngIf="ev.area_destino_nombre"><i class="fas fa-building mr-1"></i>{{ ev.area_destino_nombre }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="!detalleData.linea_tiempo || detalleData.linea_tiempo.length === 0" class="text-center py-3 text-muted">
+            <i class="fas fa-inbox fa-2x mb-2"></i>
+            <p class="mb-0 small">No hay movimientos registrados</p>
+          </div>
+        </div>
+
+        <div class="mt-3 pt-3 border-top">
+          <a [routerLink]="['/tramite-documentario/detalle', detalleData.id]" class="btn btn-sm btn-outline-primary" (click)="showDetalleModal=false">
+            <i class="fas fa-external-link-alt mr-1"></i>Ver detalle completo
+          </a>
+        </div>
+      </ng-container>
+    </div>
+  </div></div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showDetalleModal" (click)="showDetalleModal=false"></div>

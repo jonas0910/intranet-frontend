@@ -1,0 +1,30 @@
+.ds-crud-table th {
+    background-color: var(--ds-table-header-bg) !important;
+    color: var(--ds-table-header-color) !important;
+    font-size: var(--ds-label-font-size);
+}
+
+.ds-crud-table td {
+    padding: var(--ds-cell-padding-y) var(--ds-cell-padding-x);
+    font-size: var(--ds-font-size);
+}
+
+.modal-content {
+    overflow: hidden;
+}
+
+.opacity-25 {
+    opacity: 0.25;
+}
+
+.list-hover {
+    transition: background-color 0.2s;
+}
+
+.list-hover:hover {
+    background-color: #f8f9fa !important;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}

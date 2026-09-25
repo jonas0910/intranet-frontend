@@ -1,0 +1,300 @@
+<app-system-layout [title]="'Control de Mantenimiento Preventivo'" 
+  [subtitle]="'Seguimiento de alertas, vencimientos y programación técnica de vehículos'"
+  [subtitleItems]="subtitleItems"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Limpieza Pública', url: '/limpieza-publica'}, {label: 'Control Mantenimiento'}]"
+  [subsystem]="'limpieza-publica'">
+
+  <div class="row mb-3">
+    <div class="col-12 text-right">
+      <button class="btn btn-success btn-sm" (click)="actualizarEstados()" [disabled]="cargando">
+        <i class="fas fa-sync-alt" [class.fa-spin]="cargando"></i> Actualizar Estados
+      </button>
+    </div>
+  </div>
+
+  <section class="content">
+  <div class="container-fluid">
+
+    <div class="row mb-4">
+      <div class="col-lg-3 col-6 mb-3">
+        <div class="card card-kpi card-kpi-danger elevation-2 h-100" (click)="cambiarVista('alertas')" style="cursor: pointer;">
+          <div class="card-body d-flex align-items-center">
+            <div class="flex-grow-1">
+              <h3 class="mb-0 font-weight-bold">{{estadisticas.vencidos}}</h3>
+              <p class="mb-0 small opacity-75">Vencidos</p>
+              <span class="badge badge-light bg-opacity-25 text-white py-1 font-weight-normal mt-1">Requiere atención</span>
+            </div>
+            <div class="kpi-icon bg-opacity-25 rounded-circle p-3">
+              <i class="fas fa-exclamation-triangle fa-2x"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6 mb-3">
+        <div class="card card-kpi card-kpi-warning elevation-2 h-100" (click)="cambiarVista('alertas')" style="cursor: pointer;">
+          <div class="card-body d-flex align-items-center">
+            <div class="flex-grow-1">
+              <h3 class="mb-0 font-weight-bold">{{estadisticas.proximos}}</h3>
+              <p class="mb-0 small opacity-75">Próximos</p>
+              <span class="badge badge-light bg-opacity-10 py-1 font-weight-normal mt-1">En monitoreo</span>
+            </div>
+            <div class="kpi-icon bg-opacity-25 rounded-circle p-3">
+              <i class="fas fa-clock fa-2x"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6 mb-3">
+        <div class="card card-kpi card-kpi-info elevation-2 h-100" (click)="cambiarVista('controles')" style="cursor: pointer;">
+          <div class="card-body d-flex align-items-center">
+            <div class="flex-grow-1">
+              <h3 class="mb-0 font-weight-bold">{{estadisticas.pendientes}}</h3>
+              <p class="mb-0 small opacity-75">Pendientes</p>
+              <span class="badge badge-light bg-opacity-25 text-white py-1 font-weight-normal mt-1">Programados</span>
+            </div>
+            <div class="kpi-icon bg-opacity-25 rounded-circle p-3">
+              <i class="fas fa-tasks fa-2x"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6 mb-3">
+        <div class="card card-kpi card-kpi-success elevation-2 h-100" (click)="cambiarVista('controles')" style="cursor: pointer;">
+          <div class="card-body d-flex align-items-center">
+            <div class="flex-grow-1">
+              <h3 class="mb-0 font-weight-bold">{{estadisticas.realizados}}</h3>
+              <p class="mb-0 small opacity-75">Realizados</p>
+              <span class="badge badge-light bg-opacity-25 text-white py-1 font-weight-normal mt-1">Completados</span>
+            </div>
+            <div class="kpi-icon bg-opacity-25 rounded-circle p-3">
+              <i class="fas fa-check-circle fa-2x"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card elevation-2 mb-4">
+      <div class="card-header bg-white p-2 border-0">
+        <ul class="nav nav-pills">
+          <li class="nav-item">
+            <a class="nav-link text-success" [class.active-success]="vistaActual === 'alertas'" (click)="cambiarVista('alertas')" style="cursor: pointer;" [ngClass]="{'bg-success text-white': vistaActual === 'alertas'}">
+              <i class="fas fa-bell mr-1"></i> Alertas Activas
+              <span class="badge badge-danger ml-1" *ngIf="estadisticas.alertas_rojas > 0">{{estadisticas.alertas_rojas}}</span>
+              <span class="badge badge-warning ml-1" *ngIf="estadisticas.alertas_amarillas > 0">{{estadisticas.alertas_amarillas}}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-success" [class.active-success]="vistaActual === 'controles'" (click)="cambiarVista('controles')" style="cursor: pointer;" [ngClass]="{'bg-success text-white': vistaActual === 'controles'}">
+              <i class="fas fa-list mr-1"></i> Todos los Controles
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card-body">
+        <!-- VISTA ALERTAS -->
+        <div *ngIf="vistaActual === 'alertas'">
+          <div *ngIf="cargando" class="text-center py-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-success"></i><p class="mt-3 text-muted">Buscando alertas activas...</p>
+          </div>
+          <div class="row mb-3" *ngIf="!cargando && alertas.length > 0">
+            <div class="col-md-6 offset-md-6 col-lg-4 offset-lg-8">
+              <div class="input-group input-group-sm">
+                <div class="input-group-prepend"><span class="input-group-text bg-white"><i class="fas fa-search"></i></span></div>
+                <input type="text" class="form-control" [(ngModel)]="filtroAlertas" placeholder="Buscar por vehículo o mantenimiento...">
+                <div class="input-group-append" *ngIf="filtroAlertas"><button class="btn btn-outline-secondary" (click)="filtroAlertas = ''"><i class="fas fa-times"></i></button></div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="!cargando && alertas.length === 0" class="alert alert-success shadow-sm">
+            <i class="fas fa-check-circle fa-2x mr-3 float-left"></i>
+            <h6 class="font-weight-bold mb-0">Todo en orden</h6>
+            <p class="mb-0 small">No hay alertas. ¡Todos los mantenimientos de limpieza están al día!</p>
+          </div>
+
+          <div *ngIf="!cargando && alertasFiltradas.length > 0" class="row">
+            <div class="col-md-12 mb-3" *ngFor="let control of alertasFiltradas">
+              <div class="card alert-card shadow-sm mb-0"
+                   [ngClass]="{'border-danger': control.nivel_alerta === 'rojo', 'border-warning': control.nivel_alerta === 'amarillo', 'border-success': control.nivel_alerta === 'verde'}">
+                <div class="card-body p-3">
+                  <div class="row align-items-center">
+                    <div class="col-md-auto text-center px-4 border-right">
+                      <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 50px; height: 50px;"
+                           [ngClass]="{'bg-danger-light text-danger': control.nivel_alerta === 'rojo', 'bg-warning-light text-warning': control.nivel_alerta === 'amarillo', 'bg-success-light text-success': control.nivel_alerta === 'verde'}">
+                        <i [class]="getIconoAlerta(control.nivel_alerta)" class="fa-lg"></i>
+                      </div>
+                    </div>
+                    <div class="col-md">
+                      <div class="d-flex justify-content-between align-items-start mb-1">
+                        <h5 class="mb-0 font-weight-bold">
+                          {{control.equipo?.placa || control.equipo?.codigo_interno || 'N/A'}} 
+                          <span class="text-muted font-weight-normal small ml-2">{{control.equipo?.tipo}}</span>
+                        </h5>
+                        <span class="badge {{getBadgeClaseAlerta(control.nivel_alerta)}} p-2 text-uppercase">ALERTA {{control.nivel_alerta}}</span>
+                      </div>
+                      <div class="row">
+                        <div class="col-md-7">
+                          <p class="mb-0">
+                            <span class="text-success font-weight-bold">{{control.tipo_mantenimiento?.nombre}}</span><br>
+                            <span class="badge {{getBadgeCriticidad(control.tipo_mantenimiento?.criticidad || 'media')}} mr-2">Criticidad {{control.tipo_mantenimiento?.criticidad}}</span>
+                            <small class="text-muted"><i class="fas fa-tag mr-1"></i> {{control.tipo_mantenimiento?.categoria}}</small>
+                          </p>
+                        </div>
+                        <div class="col-md-5">
+                          <div *ngIf="control.fecha_proxima" class="mb-2">
+                            <i class="fas fa-calendar-alt mr-1 text-muted"></i>
+                            <span class="font-weight-bold text-dark">{{formatearFecha(control.fecha_proxima)}}</span>
+                            <small class="ml-2" [ngClass]="{'text-danger': control.dias_restantes! < 0, 'text-warning': control.dias_restantes! >= 0 && control.dias_restantes! <= 15, 'text-success': control.dias_restantes! > 15}">
+                              ({{control.dias_restantes! < 0 ? 'Vencido hace ' + Math.abs(control.dias_restantes!) : 'Faltan ' + control.dias_restantes}} días)
+                            </small>
+                          </div>
+                          <div class="d-flex flex-wrap">
+                            <div *ngFor="let medicion of [ {val: control.kilometraje_proximo, rest: control.kilometros_restantes, icon: 'fas fa-tachometer-alt', unit: 'km'}, {val: control.horometro_proximo, rest: control.horas_restantes, icon: 'fas fa-clock', unit: 'hrs'} ]" class="mr-3">
+                              <div *ngIf="medicion.val">
+                                <small [ngClass]="{'text-danger font-weight-bold': medicion.rest !== undefined && medicion.rest <= 0, 'text-muted': medicion.rest !== undefined && medicion.rest > 0}">
+                                  <i [class]="medicion.icon" class="mr-1"></i> {{formatearNumero(medicion.val)}} {{medicion.unit}}
+                                  <span class="ml-1" *ngIf="medicion.rest !== undefined">({{medicion.rest > 0 ? 'Faltan: ' : 'Excedido: '}} {{formatearNumero(Math.abs(medicion.rest))}})</span>
+                                </small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-auto pl-4 border-left">
+                      <div class="d-flex flex-column">
+                        <button class="btn btn-outline-success btn-sm mb-2 text-left" (click)="marcarRealizado(control, modalMarcarRealizado)">
+                          <i class="fas fa-check-circle mr-2"></i> Atender
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm text-left" (click)="reprogramar(control, modalReprogramar)">
+                          <i class="fas fa-calendar-alt mr-2"></i> Reprogramar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISTA TABLA NORMAL -->
+        <div *ngIf="vistaActual === 'controles'">
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="small text-muted mb-1">Filtrar por Vehículo</label>
+              <select class="form-control form-control-sm" [(ngModel)]="filtroEquipoId" (change)="cargarControles(1)">
+                <option [value]="null">-- Todos los vehículos --</option>
+                <option *ngFor="let v of vehiculos" [value]="v.id">{{v.placa || v.codigo_interno}} - {{v.tipo}}</option>
+              </select>
+            </div>
+            <div class="col-md-8 text-right pt-4" *ngIf="filtroEquipoId">
+              <button class="btn btn-sm btn-outline-primary" (click)="generarControlesEquipo(filtroEquipoId)">
+                 <i class="fas fa-magic"></i> Generar Controles Automáticos
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="cargando" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-3x text-success"></i><p>Cargando controles...</p></div>
+          <div *ngIf="!cargando && controles.length === 0" class="text-center py-5"><i class="fas fa-info-circle fa-2x text-muted"></i><p>No se encontraron controles.</p></div>
+
+          <div *ngIf="!cargando && controles.length > 0" class="table-responsive">
+            <table class="table table-sm table-striped table-hover border" id="tablaLpControles">
+              <thead class="bg-success text-white">
+                <tr>
+                  <th>Vehículo</th><th>Mantenimiento</th><th>Categoría</th><th>Criticidad</th><th>Fecha Próxima</th><th>Estado</th><th>Días Rest.</th><th>Alerta</th><th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let control of controles">
+                  <td><strong>{{control.equipo?.placa || control.equipo?.codigo_interno}}</strong><br><small class="text-muted">{{control.equipo?.tipo}}</small></td>
+                  <td>{{control.tipo_mantenimiento?.nombre}}</td>
+                  <td>{{control.tipo_mantenimiento?.categoria}}</td>
+                  <td><span class="badge {{getBadgeCriticidad(control.tipo_mantenimiento?.criticidad || 'media')}}">{{control.tipo_mantenimiento?.criticidad}}</span></td>
+                  <td>{{formatearFecha(control.fecha_proxima)}}</td>
+                  <td><span class="badge {{getBadgeClaseEstado(control.estado)}}">{{control.estado}}</span></td>
+                  <td><span [ngClass]="{'text-danger': control.dias_restantes! < 0, 'text-warning': control.dias_restantes! >= 0 && control.dias_restantes! <= 15, 'text-success': control.dias_restantes! > 15}">{{control.dias_restantes !== undefined ? control.dias_restantes : '-'}}</span></td>
+                  <td><span class="badge {{getBadgeClaseAlerta(control.nivel_alerta)}}" *ngIf="control.nivel_alerta !== 'ninguno'">{{control.nivel_alerta}}</span></td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-success btn-sm" (click)="marcarRealizado(control, modalMarcarRealizado)" *ngIf="control.estado !== 'realizado'"><i class="fas fa-check"></i></button>
+                      <button class="btn btn-warning btn-sm" (click)="reprogramar(control, modalReprogramar)" *ngIf="control.estado !== 'realizado'"><i class="fas fa-calendar-plus"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="!cargando && totalPaginas > 1">
+            <div class="text-muted small">Mostrando pág. {{paginaActual}} de {{totalPaginas}}</div>
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item" [class.disabled]="paginaActual === 1"><a class="page-link" (click)="cargarControles(paginaActual - 1)">Anterior</a></li>
+              <li class="page-item" [class.disabled]="paginaActual === totalPaginas"><a class="page-link" (click)="cargarControles(paginaActual + 1)">Siguiente</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </section>
+</app-system-layout>
+
+<!-- Modals de Marcar Realizado y Reprogramar (Los mantengo simples y funcionales) -->
+<!-- Modal: Marcar como Realizado -->
+<ng-template #modalMarcarRealizado let-modal>
+  <div class="modal-header bg-success text-white">
+    <h5 class="modal-title"><i class="fas fa-check-circle"></i> Confirmar Mantenimiento Atendido</h5>
+    <button type="button" class="close text-white" (click)="modal.dismiss()">&times;</button>
+  </div>
+  <div class="modal-body">
+    <div *ngIf="controlSeleccionado" class="alert alert-success">
+      <i class="fas fa-wrench"></i> <strong>{{ controlSeleccionado.tipo_mantenimiento?.nombre }}</strong> - Vehículo: {{ controlSeleccionado.equipo?.placa || controlSeleccionado.equipo?.codigo_interno }}
+    </div>
+    <div class="form-group">
+      <label class="text-success font-weight-bold">1. Seleccione mantenimiento registrado <span class="text-danger">*</span></label>
+      <select class="form-control border-success" [(ngModel)]="mantenimientoIdSeleccionado" (change)="onMantenimientoChange()" required>
+        <option [value]="null">-- Seleccione mantenimiento asociado --</option>
+        <option *ngFor="let m of mantenimientosDisponibles" [value]="m.id">{{m.descripcion}} ({{m.fecha_cierre || m.fecha_inicio | date:'shortDate'}})</option>
+      </select>
+    </div>
+    <div class="row mt-3">
+      <div class="col-md-6 mb-2"><label class="small">Fecha de Realización</label><input type="text" class="form-control border-success bg-light" [value]="fechaRealizacion | date:'shortDate'" readonly></div>
+      <div class="col-md-6 mb-2"><label class="small">Kilometraje marcado</label><input type="text" class="form-control border-success bg-light" [value]="kilometrajeRealizacion" readonly></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancelar</button>
+    <button type="button" class="btn btn-success" (click)="confirmarMarcarRealizado()"><i class="fas fa-check"></i> Marcar como Atención Realizada</button>
+  </div>
+</ng-template>
+
+<!-- Modal: Reprogramar -->
+<ng-template #modalReprogramar let-modal>
+  <div class="modal-header bg-warning">
+    <h5 class="modal-title"><i class="fas fa-calendar-plus"></i> Ajustar Programación</h5>
+    <button type="button" class="close" (click)="modal.dismiss()">&times;</button>
+  </div>
+  <div class="modal-body">
+    <div *ngIf="controlSeleccionado" class="alert alert-warning">
+      <i class="fas fa-wrench"></i> <strong>{{ controlSeleccionado.tipo_mantenimiento?.nombre }}</strong><br>
+      Fecha programada actual: <strong>{{ formatearFecha(controlSeleccionado.fecha_proxima) }}</strong>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <label>Nueva Fecha Proyectada</label>
+        <input type="date" class="form-control" [(ngModel)]="nuevaFecha" required>
+      </div>
+      <div class="col-md-6">
+        <label>Nuevo Kilometraje Proyectado</label>
+        <input type="number" class="form-control" [(ngModel)]="nuevoKilometraje">
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancelar</button>
+    <button type="button" class="btn btn-warning" (click)="confirmarReprogramar()"><i class="fas fa-save"></i> Reprogramar Alerta</button>
+  </div>
+</ng-template>

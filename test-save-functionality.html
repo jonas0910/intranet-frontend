@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Funcionalidad de Guardado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .status { font-weight: bold; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Prueba de Funcionalidad de Guardado - Sistemas Integrados</h1>
+        
+        <div class="test-section info">
+            <h3>📋 Instrucciones</h3>
+            <p>Esta página te permite probar la funcionalidad de guardado de sistemas integrados:</p>
+            <ol>
+                <li>Verifica que el backend esté funcionando</li>
+                <li>Prueba crear un sistema integrado</li>
+                <li>Verifica que se guarde en la base de datos</li>
+                <li>Prueba la gestión de accesos</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>🔗 Verificar Conexión Backend</h3>
+            <button onclick="testBackendConnection()">Probar Conexión</button>
+            <div id="backend-status" class="status"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>💾 Crear Sistema de Prueba</h3>
+            <button onclick="createTestSystem()">Crear Sistema de Prueba</button>
+            <div id="create-status" class="status"></div>
+            <pre id="create-result"></pre>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Listar Sistemas Creados</h3>
+            <button onclick="listSystems()">Listar Sistemas</button>
+            <div id="list-status" class="status"></div>
+            <pre id="list-result"></pre>
+        </div>
+
+        <div class="test-section">
+            <h3>👥 Crear Acceso de Usuario</h3>
+            <button onclick="createUserAccess()">Crear Acceso de Usuario</button>
+            <div id="access-status" class="status"></div>
+            <pre id="access-result"></pre>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Verificar Acceso de Usuario</h3>
+            <button onclick="verifyUserAccess()">Verificar Acceso</button>
+            <div id="verify-status" class="status"></div>
+            <pre id="verify-result"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let testSystemId = null;
+        let testAccessId = null;
+
+        async function testBackendConnection() {
+            const statusDiv = document.getElementById('backend-status');
+            statusDiv.textContent = '🔄 Probando conexión...';
+            statusDiv.className = 'status';
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/validate-token`);
+                if (response.ok) {
+                    statusDiv.textContent = '✅ Backend funcionando correctamente';
+                    statusDiv.className = 'status success';
+                } else {
+                    statusDiv.textContent = '⚠️ Backend responde pero con error';
+                    statusDiv.className = 'status error';
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                statusDiv.className = 'status error';
+            }
+        }
+
+        async function createTestSystem() {
+            const statusDiv = document.getElementById('create-status');
+            const resultDiv = document.getElementById('create-result');
+            
+            statusDiv.textContent = '🔄 Creando sistema de prueba...';
+            statusDiv.className = 'status';
+
+            const testSystemData = {
+                nombre: 'Sistema de Prueba',
+                codigo: 'TEST_' + Date.now(),
+                descripcion: 'Sistema creado para probar la funcionalidad de guardado',
+                url_base: 'https://ejemplo.com',
+                activo: true,
+                sso_habilitado: false,
+                sso_force: false,
+                patron_id: 'patron_test',
+                patron_data: {
+                    id: 'patron_test',
+                    nombre: 'Patrón de Prueba',
+                    codigo: 'TEST',
+                    descripcion: 'Patrón para pruebas',
+                    categoria: 'sistema_interno',
+                    prioridad: 'media',
+                    estado_default: true,
+                    keywords: ['prueba', 'test'],
+                    sso_config: {
+                        habilitado: false,
+                        force: false,
+                        provider: 'basic'
+                    },
+                    menus: [
+                        {
+                            id: 'menu_principal',
+                            nombre: 'Menú Principal',
+                            codigo: 'MAIN',
+                            descripcion: 'Menú principal del sistema',
+                            icono: 'fas fa-home',
+                            orden: 1,
+                            estado_default: true,
+                            keywords: ['principal', 'inicio'],
+                            permisos_requeridos: ['sistema.view'],
+                            submenus: []
+                        }
+                    ],
+                    configuracion: {
+                        url_base: 'https://ejemplo.com',
+                        timeout: 30000,
+                        retry_attempts: 3,
+                        cache_enabled: true
+                    }
+                },
+                creado_por: 1
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/sistemas-integrados`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(testSystemData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    testSystemId = result.data.id;
+                    statusDiv.textContent = '✅ Sistema creado exitosamente';
+                    statusDiv.className = 'status success';
+                    resultDiv.textContent = JSON.stringify(result.data, null, 2);
+                } else {
+                    statusDiv.textContent = `❌ Error al crear sistema: ${result.message}`;
+                    statusDiv.className = 'status error';
+                    resultDiv.textContent = JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                statusDiv.className = 'status error';
+                resultDiv.textContent = error.message;
+            }
+        }
+
+        async function listSystems() {
+            const statusDiv = document.getElementById('list-status');
+            const resultDiv = document.getElementById('list-result');
+            
+            statusDiv.textContent = '🔄 Listando sistemas...';
+            statusDiv.className = 'status';
+
+            try {
+                const response = await fetch(`${API_BASE}/sistemas-integrados`);
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    statusDiv.textContent = `✅ ${result.data.data.length} sistemas encontrados`;
+                    statusDiv.className = 'status success';
+                    resultDiv.textContent = JSON.stringify(result.data, null, 2);
+                } else {
+                    statusDiv.textContent = `❌ Error al listar sistemas: ${result.message}`;
+                    statusDiv.className = 'status error';
+                    resultDiv.textContent = JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                statusDiv.className = 'status error';
+                resultDiv.textContent = error.message;
+            }
+        }
+
+        async function createUserAccess() {
+            if (!testSystemId) {
+                alert('Primero crea un sistema de prueba');
+                return;
+            }
+
+            const statusDiv = document.getElementById('access-status');
+            const resultDiv = document.getElementById('access-result');
+            
+            statusDiv.textContent = '🔄 Creando acceso de usuario...';
+            statusDiv.className = 'status';
+
+            const accessData = {
+                usuario_id: 1,
+                sistema_id: testSystemId,
+                menu_id: 'menu_principal',
+                permisos: ['view', 'access'],
+                activo: true
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/accesos-usuarios`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(accessData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    testAccessId = result.data.id;
+                    statusDiv.textContent = '✅ Acceso de usuario creado exitosamente';
+                    statusDiv.className = 'status success';
+                    resultDiv.textContent = JSON.stringify(result.data, null, 2);
+                } else {
+                    statusDiv.textContent = `❌ Error al crear acceso: ${result.message}`;
+                    statusDiv.className = 'status error';
+                    resultDiv.textContent = JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                statusDiv.className = 'status error';
+                resultDiv.textContent = error.message;
+            }
+        }
+
+        async function verifyUserAccess() {
+            if (!testSystemId) {
+                alert('Primero crea un sistema de prueba');
+                return;
+            }
+
+            const statusDiv = document.getElementById('verify-status');
+            const resultDiv = document.getElementById('verify-result');
+            
+            statusDiv.textContent = '🔄 Verificando acceso de usuario...';
+            statusDiv.className = 'status';
+
+            try {
+                const response = await fetch(`${API_BASE}/usuarios/1/accesos/verificar?sistema_id=${testSystemId}&menu_id=menu_principal`);
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    const hasAccess = result.data.tiene_acceso;
+                    statusDiv.textContent = hasAccess ? '✅ Usuario tiene acceso' : '❌ Usuario no tiene acceso';
+                    statusDiv.className = hasAccess ? 'status success' : 'status error';
+                    resultDiv.textContent = JSON.stringify(result.data, null, 2);
+                } else {
+                    statusDiv.textContent = `❌ Error al verificar acceso: ${result.message}`;
+                    statusDiv.className = 'status error';
+                    resultDiv.textContent = JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                statusDiv.className = 'status error';
+                resultDiv.textContent = error.message;
+            }
+        }
+
+        // Auto-probar conexión al cargar la página
+        window.onload = function() {
+            testBackendConnection();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+// Cuadro de Mando Integral - Activos Fijos - Estilos modernos
+
+.dashboard-cmi {
+  .dashboard-content {
+    animation: fadeIn 0.3s ease-in;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// Tarjetas KPI modernas
+.card-kpi {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .card-body {
+    color: #fff;
+  }
+
+  h3 {
+    font-weight: 700;
+    font-size: 1.75rem;
+  }
+
+  .text-muted {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  .kpi-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+}
+
+.card-kpi-info {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.card-kpi-success {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.card-kpi-warning {
+  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+  color: #212529;
+
+  .text-muted {
+    color: rgba(0, 0, 0, 0.7) !important;
+  }
+
+  .btn-link.text-white-50 {
+    color: rgba(0, 0, 0, 0.7) !important;
+
+    &:hover {
+      color: #212529 !important;
+    }
+  }
+}
+
+.card-kpi-primary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+// Cards de gráficos
+.card.elevation-2 {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+
+  .card-header {
+    border-bottom: 1px solid #eee;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+  }
+}
+
+// Accesos rápidos
+.card-acceso {
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  border: 1px solid #eee;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border-color: #ddd;
+  }
+}
+
+.elevation-1 {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.elevation-2 {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+
+

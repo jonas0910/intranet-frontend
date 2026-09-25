@@ -1,0 +1,140 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0">Eventos</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor</a></li>
+          <li class="breadcrumb-item active">Eventos</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-calendar-alt mr-2"></i>Listado de Eventos</h3>
+        <div class="card-tools">
+          <button class="btn btn-primary btn-sm" (click)="openCreate()">
+            <i class="fas fa-plus mr-1"></i>Nuevo Evento
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="text-center py-5" *ngIf="loading">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+        </div>
+        <div class="table-responsive" *ngIf="!loading">
+          <table class="table table-hover table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
+                <th>Ubicación</th>
+                <th>Tipo</th>
+                <th>Público</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="eventos.length === 0">
+                <td colspan="7" class="text-center text-muted py-4">No hay eventos registrados</td>
+              </tr>
+              <tr *ngFor="let item of eventos">
+                <td>{{ item.titulo }}</td>
+                <td>{{ formatDate(item.fecha_inicio) }}</td>
+                <td>{{ formatDate(item.fecha_fin) }}</td>
+                <td>{{ item.ubicacion || '-' }}</td>
+                <td><span class="badge badge-primary">{{ item.tipo }}</span></td>
+                <td>
+                  <span class="badge" [ngClass]="item.publico ? 'badge-success' : 'badge-warning'">
+                    {{ item.publico ? 'Público' : 'Privado' }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <button class="btn btn-info btn-xs mr-1" (click)="openEdit(item)" title="Editar">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn btn-danger btn-xs" (click)="delete(item.id)" title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal -->
+<div class="modal fade show d-block" *ngIf="showModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ editing ? 'Editar' : 'Nuevo' }} Evento</h5>
+        <button type="button" class="close" (click)="showModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Título</label>
+          <input type="text" class="form-control" [(ngModel)]="form.titulo" placeholder="Título del evento">
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="form.descripcion" placeholder="Descripción del evento"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Fecha Inicio</label>
+              <input type="datetime-local" class="form-control" [(ngModel)]="form.fecha_inicio">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Fecha Fin</label>
+              <input type="datetime-local" class="form-control" [(ngModel)]="form.fecha_fin">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Ubicación</label>
+              <input type="text" class="form-control" [(ngModel)]="form.ubicacion" placeholder="Lugar del evento">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Tipo</label>
+              <select class="form-control" [(ngModel)]="form.tipo">
+                <option *ngFor="let t of tiposEvento" [value]="t">{{ t }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Público</label>
+              <div class="custom-control custom-switch mt-2">
+                <input type="checkbox" class="custom-control-input" id="eventoPublico" [(ngModel)]="form.publico">
+                <label class="custom-control-label" for="eventoPublico">{{ form.publico ? 'Sí' : 'No' }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="showModal = false">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="save()">
+          <i class="fas fa-save mr-1"></i>{{ editing ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

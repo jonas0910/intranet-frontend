@@ -1,0 +1,412 @@
+<app-system-layout [title]="'Padrón Nominal de Ciudadanos'"
+    [subtitle]="'Gestión y registro del empadronamiento poblacional'"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Censo Poblacional', url: '/censo-poblacional'}, {label: 'Padrón'}]"
+    [subsystem]="'censo-poblacional'">
+
+    <app-confirm-dialog *ngIf="false"></app-confirm-dialog>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card elevation-1 mb-3"
+                [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''"
+                [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+
+                <!-- Toolbar -->
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+                    <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+                        <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                            <i class="fas fa-users mr-1"></i> Ciudadanos Empadronados
+                        </h3>
+                        <span class="badge badge-info">{{ ciudadanos.length }}</span>
+                        <button class="btn btn-sm btn-outline-info ml-1 px-2" *ngIf="cv.collapsibleFilters"
+                            (click)="isFiltersCollapsed = !isFiltersCollapsed"
+                            [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'"
+                            style="height: 24px; line-height: 1;">
+                            <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+                        </button>
+                        <ng-container *ngIf="cv.showExportButtons">
+                            <button type="button" class="btn btn-sm btn-flat"
+                                [ngClass]="cv.excelBtnClass || 'btn-success'" title="Exportar Excel"
+                                (click)="onExportExcel()">
+                                <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{ cv.excelBtnLabel
+                                || 'Excel' }}
+                            </button>
+                            <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'"
+                                title="Exportar PDF" (click)="onExportPdf()">
+                                <i [class]="(cv.pdfBtnIcon || 'fas fa-file-pdf') + ' mr-1'"></i> {{ cv.pdfBtnLabel ||
+                                'PDF' }}
+                            </button>
+                        </ng-container>
+                    </div>
+                    <div class="ms-auto flex-shrink-0">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-success" (click)="openImportModal()">
+                                <i class="fas fa-file-excel mr-1"></i> Importar
+                            </button>
+                            <button type="button" class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-success'"
+                                (click)="openModal()">
+                                <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> Nuevo Registro
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="border-bottom bg-light overflow-hidden"
+                    [style.max-height]="isFiltersCollapsed ? '0px' : '200px'"
+                    [style.padding]="isFiltersCollapsed ? '0px' : '0.5rem'"
+                    style="transition: max-height 0.3s ease, padding 0.3s ease;">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="mb-1 ds-crud-label">Buscar</label>
+                            <input type="text" class="form-control form-control-sm ds-crud-filter"
+                                [(ngModel)]="filtroSearch" (ngModelChange)="onFilterChange()"
+                                placeholder="Nombre, DNI...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="mb-1 ds-crud-label">Sector / Barrio</label>
+                            <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtroSector"
+                                (ngModelChange)="onFilterChange()">
+                                <option value="">Todos</option>
+                                <option *ngFor="let s of sectores" [value]="s.id_sector">{{ s.nombre_sector }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="mb-1 ds-crud-label">Sexo</label>
+                            <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtroSexo"
+                                (ngModelChange)="onFilterChange()">
+                                <option value="">Todos</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div *ngIf="loading" class="text-center p-5">
+                    <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+                    <p class="mt-3">Cargando ciudadanos...</p>
+                </div>
+
+                <!-- DataTable -->
+                <div *ngIf="!loading" class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-2">
+                        <table *ngIf="mostrarTabla" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger"
+                            [ngClass]="cv.tableClasses || 'table table-hover table-striped table-sm'"
+                            class="table mb-0 w-100 ds-crud-table" id="padronTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;" class="border-0">#</th>
+                                    <th class="border-0">Ciudadano</th>
+                                    <th class="text-center border-0">Sexo / Edad</th>
+                                    <th class="border-0">Sector</th>
+                                    <th class="text-center border-0">Condición</th>
+                                    <th class="text-center border-0" style="width: 120px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let c of ciudadanosFiltrados; let i = index">
+                                    <td class="text-center">{{ i + 1 }}</td>
+                                    <td>
+                                        <strong>{{ c.nombres }}</strong>
+                                        <div class="small">
+                                            <span class="text-muted"><i
+                                                    class="fas fa-id-card border-0 p-0 text-muted m-0 mr-1"></i>{{ c.dni
+                                                }}</span>
+                                            <span class="text-muted ms-2 ml-2" *ngIf="c.fecha_nacimiento"><i
+                                                    class="fas fa-birthday-cake text-muted border-0 p-0 m-0 mr-1"></i>{{
+                                                c.fecha_nacimiento | date:'dd/MM/yyyy' }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border mr-1"><i class="fas"
+                                                [ngClass]="c.sexo == 'M' ? 'fa-mars text-primary' : 'fa-venus text-pink'"></i>
+                                            {{ c.sexo }}</span>
+                                        {{ c.edad }} años
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info text-white">{{ c.sector?.nombre_sector || '-'
+                                            }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span *ngIf="c.es_padre_madre" class="badge badge-success mr-1"
+                                            title="Padre/Madre de familia">FAMILIA ({{c.cantidad_hijos}})</span>
+                                        <span *ngIf="c.tiene_discapacidad" class="badge badge-danger"
+                                            [title]="c.tipo_discapacidad"><i class="fas fa-wheelchair"></i> DISC.</span>
+                                        <span *ngIf="!c.es_padre_madre && !c.tiene_discapacidad"
+                                            class="text-muted small">-</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn"
+                                                [ngClass]="cv.editBtnClass || 'btn-warning'" (click)="openModal(c)"
+                                                title="Editar"><i class="fas fa-edit"></i></button>
+                                            <button type="button" class="btn"
+                                                [ngClass]="cv.deleteBtnClass || 'btn-danger'" (click)="confirmDelete(c)"
+                                                title="Eliminar"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</app-system-layout>
+
+<!-- ==================== MODAL CREAR/EDITAR CIUDADANO ==================== -->
+<div class="modal fade" #formModal tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header"
+                style="background: var(--ds-modal-header-bg, #007bff); color: var(--ds-modal-header-text, #fff);">
+                <h5 class="modal-title">
+                    <i class="fas mr-2" [ngClass]="isEditing ? 'fa-user-edit' : 'fa-user-plus'"></i>
+                    {{ isEditing ? 'Editar Ciudadano' : 'Nuevo Empadronamiento' }}
+                </h5>
+                <button type="button" class="close" style="color: var(--ds-modal-header-text, #fff);"
+                    (click)="closeModal()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form [formGroup]="form" (ngSubmit)="save()">
+                <div class="modal-body" style="background: var(--ds-modal-body-bg, #fff);">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label class="ds-crud-label">Nombres Completos <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" formControlName="nombres" class="form-control form-control-sm"
+                                    placeholder="Ej. Juan Pérez">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="ds-crud-label">DNI / Cédula <span class="text-danger">*</span></label>
+                                <input type="text" formControlName="dni" class="form-control form-control-sm"
+                                    placeholder="8-15 dígitos">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="ds-crud-label">Dirección Exacta <span class="text-danger">*</span></label>
+                                <input type="text" formControlName="direccion" class="form-control form-control-sm"
+                                    placeholder="Av. Principal #123">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NUEVOS CAMPOS: FECHA NACIMIENTO Y EDAD -->
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="ds-crud-label">Fecha de Nacimiento</label>
+                            <input type="date" formControlName="fecha_nacimiento" class="form-control form-control-sm"
+                                (change)="recalcularEdad()">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="ds-crud-label">Edad Estimada (si no hay F.N.)</label>
+                            <input type="number" formControlName="edad" class="form-control form-control-sm"
+                                placeholder="Opcional si coloca F. Nacimiento">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="ds-crud-label">Sexo <span class="text-danger">*</span></label>
+                                <select formControlName="sexo" class="form-control form-control-sm">
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="ds-crud-label">Estado Civil</label>
+                                <select formControlName="estado_civil" class="form-control form-control-sm">
+                                    <option value="Soltero">Soltero/a</option>
+                                    <option value="Casado">Casado/a</option>
+                                    <option value="Divorciado">Divorciado/a</option>
+                                    <option value="Viudo">Viudo/a</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="ds-crud-label">Situación Laboral</label>
+                                <select formControlName="situacion_laboral" class="form-control form-control-sm">
+                                    <option value="Empleado">Empleado</option>
+                                    <option value="Desempleado">Desempleado</option>
+                                    <option value="Independiente">Independiente</option>
+                                    <option value="Estudiante">Estudiante</option>
+                                    <option value="Jubilado">Jubilado</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="ds-crud-label">Organizaciones / Asociaciones</label>
+                                <select id="id_organizaciones_select" class="form-control form-control-sm ds-select2"
+                                    multiple="multiple">
+                                    <option *ngFor="let o of organizaciones" [value]="o.id_organizacion">{{ o.nombre }}
+                                        ({{ o.tipo }})</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="ds-crud-label">Sector / Barrio <span class="text-danger">*</span></label>
+                                <select id="id_sector_select" formControlName="id_sector"
+                                    class="form-control form-control-sm ds-select2">
+                                    <option value="">Seleccione sector</option>
+                                    <option *ngFor="let s of sectores" [value]="s.id_sector">{{ s.nombre_sector }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="ds-crud-label">Es Padre/Madre?</label>
+                                <select formControlName="es_padre_madre" class="form-control form-control-sm">
+                                    <option [ngValue]="false">No</option>
+                                    <option [ngValue]="true">Sí</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="ds-crud-label">Cantidad Hijos</label>
+                                <input type="number" formControlName="cantidad_hijos"
+                                    class="form-control form-control-sm" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="ds-crud-label">Tiene Discapacidad?</label>
+                                <select formControlName="tiene_discapacidad" class="form-control form-control-sm">
+                                    <option [ngValue]="false">No</option>
+                                    <option [ngValue]="true">Sí</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="ds-crud-label">Tipo de Discapacidad</label>
+                                <input type="text" formControlName="tipo_discapacidad"
+                                    class="form-control form-control-sm" placeholder="Ej. Visual, Motora, etc.">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background: var(--ds-modal-footer-bg, #f8f9fa);">
+                    <button type="button" class="btn btn-secondary btn-sm" (click)="closeModal()">
+                        <i class="fas fa-times mr-1"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-sm btn-primary" [disabled]="form.invalid || saving">
+                        <i class="fas" [ngClass]="saving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                        {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Guardar Datos') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL IMPORTAR EXCEL ==================== -->
+<div class="modal fade" #importModal tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-excel mr-2"></i> Importación Masiva de Ciudadanos
+                </h5>
+                <button type="button" class="close text-white" (click)="closeImportModal()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="background: var(--ds-modal-body-bg, #fff);">
+                <div class="alert alert-info py-2">
+                    <i class="fas fa-info-circle mr-2"></i> <strong>Instrucciones:</strong> Para una importación
+                    exitosa, descargue la plantilla. Las columnas nuevas (fecha_nacimiento, es_padre_madre,
+                    cantidad_hijos, tiene_discapacidad, tipo_discapacidad) aceptan texto simple o booleanos como
+                    TRUE/FALSE. La edad se calculará automáticamente si proporciona la fecha de nacimiento.
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <button class="btn btn-outline-primary" (click)="descargarPlantilla()">
+                        <i class="fas fa-download mr-1"></i> Descargar Plantilla Excel
+                    </button>
+
+                    <div class="custom-file" style="max-width: 350px;">
+                        <input type="file" class="custom-file-input" id="customFile" accept=".xlsx, .xls"
+                            (change)="onFileChange($event)">
+                        <label class="custom-file-label" for="customFile" data-browse="Elegir">Seleccionar un
+                            archivo...</label>
+                    </div>
+                </div>
+
+                <div *ngIf="excelData.length > 0">
+                    <h6 class="font-weight-bold mb-2 text-success">
+                        <i class="fas fa-check-circle mr-1"></i> Archivo cargado correctamente: {{ excelData.length }}
+                        filas encontradas.
+                    </h6>
+                    <div class="table-responsive border" style="max-height: 250px;">
+                        <table class="table table-sm table-striped mb-0 text-sm">
+                            <thead class="bg-light sticky-top">
+                                <tr>
+                                    <th>DNI</th>
+                                    <th>Nombres</th>
+                                    <th>Fec. Nac</th>
+                                    <th>Sexo</th>
+                                    <th>Padre/Madre</th>
+                                    <th>Discapacidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let row of excelData | slice:0:10">
+                                    <td>{{ row.dni }}</td>
+                                    <td>{{ row.nombres }}</td>
+                                    <td>{{ row.fecha_nacimiento }}</td>
+                                    <td>{{ row.sexo }}</td>
+                                    <td>{{ row.es_padre_madre === 'TRUE' || row.es_padre_madre === true ? 'Sí' : 'No' }}
+                                    </td>
+                                    <td>{{ row.tiene_discapacidad === 'TRUE' || row.tiene_discapacidad === true ? 'Sí' :
+                                        'No' }}</td>
+                                </tr>
+                                <tr *ngIf="excelData.length > 10">
+                                    <td colspan="6" class="text-center text-muted bg-light">
+                                        <em>Mostrando solo los primeros 10 registros...</em>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="background: var(--ds-modal-footer-bg, #f8f9fa);">
+                <button type="button" class="btn btn-secondary btn-sm" (click)="closeImportModal()">
+                    <i class="fas fa-times mr-1"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success btn-sm"
+                    [disabled]="excelData.length === 0 || importProcessing" (click)="procesarImportacion()">
+                    <i class="fas" [ngClass]="importProcessing ? 'fa-spinner fa-spin' : 'fa-upload'"></i>
+                    {{ importProcessing ? 'Procesando e Importando...' : 'Iniciar Importación' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

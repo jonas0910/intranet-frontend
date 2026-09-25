@@ -1,0 +1,46 @@
+<app-system-layout
+  title="Documentos PDF"
+  subtitle="RIT, Directivas de la Notaria y otros documentos institucionales"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comunicados', url: '/comunicados'}, {label: 'Documentos'}]"
+  subsystem="comunicados">
+
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label>Filtrar por categoría</label>
+      <select class="form-control" [(ngModel)]="filtroCategoria" (ngModelChange)="onFiltroChange()">
+        <option value="">Todas</option>
+        <option *ngFor="let cat of categorias" [value]="cat.id">{{ cat.nombre }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+  </div>
+
+  <div *ngIf="!loading && documentos.length === 0" class="alert alert-info">
+    <i class="fas fa-file-pdf mr-2"></i>No hay documentos disponibles.
+  </div>
+
+  <div *ngIf="!loading && documentos.length > 0" class="row">
+    <div *ngFor="let doc of documentos" class="col-md-6 col-lg-4 mb-3">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">
+            <i class="fas fa-file-pdf text-danger mr-2"></i>{{ doc.titulo }}
+          </h5>
+          <p class="card-text small text-muted" *ngIf="doc.descripcion">{{ doc.descripcion }}</p>
+          <div class="mt-2">
+            <span class="badge badge-secondary" *ngIf="doc.categoria">{{ doc.categoria.nombre }}</span>
+            <span class="badge badge-info ml-1">{{ getTipoLabel(doc.tipo) }}</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="btn btn-sm btn-primary" (click)="descargar(doc)">
+            <i class="fas fa-download mr-1"></i>Descargar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-system-layout>

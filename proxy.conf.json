@@ -1,0 +1,23 @@
+{
+  "/api": {
+    "target": "http://127.0.0.1:8001",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/api": ""
+    }
+  },
+  "/storage": {
+    "target": "http://127.0.0.1:8001",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/media": {
+    "target": "http://127.0.0.1:8001",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}

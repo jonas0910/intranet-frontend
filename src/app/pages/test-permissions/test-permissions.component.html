@@ -1,0 +1,564 @@
+<!-- Content Header -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">
+          <i class="fas fa-vial mr-2"></i>Prueba de Permisos y Roles
+        </h1>
+        <p class="text-muted mb-0">Verifica el funcionamiento del sistema de permisos</p>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a [routerLink]="['/dashboard']">Inicio</a></li>
+          <li class="breadcrumb-item active">Prueba de Permisos</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+  <div class="container-fluid form-container">
+    
+    <!-- Información del Usuario Actual -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-user mr-1"></i>Usuario Actual
+            </h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" (click)="refreshPermissions()" title="Actualizar">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Información del Usuario:</h6>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item d-flex justify-content-between">
+                    <span><strong>Nombre:</strong></span>
+                    <span>{{ currentUser?.name || 'No disponible' }}</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between">
+                    <span><strong>Email:</strong></span>
+                    <span>{{ currentUser?.email || 'No disponible' }}</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between">
+                    <span><strong>Roles:</strong></span>
+                    <span>{{ currentUser?.roles?.join(', ') || 'No disponible' }}</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h6>Estadísticas de Permisos:</h6>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item d-flex justify-content-between">
+                    <span><strong>Total Permisos:</strong></span>
+                    <span class="badge badge-info">{{ getTotalPermissions() }}</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between">
+                    <span><strong>Permisos Concedidos:</strong></span>
+                    <span class="badge badge-success">{{ getGrantedPermissions() }}</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between">
+                    <span><strong>Porcentaje:</strong></span>
+                    <span class="badge badge-primary">{{ getPermissionPercentage() }}%</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between">
+                    <span><strong>Total Roles:</strong></span>
+                    <span class="badge badge-warning">{{ getTotalRoles() }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pruebas de Permisos Específicos -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-key mr-1"></i>Pruebas de Permisos de Menús
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Permiso</th>
+                    <th>Estado</th>
+                    <th>Resultado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Gestionar Menús</td>
+                    <td>
+                      <i [class]="getTestResultIcon('canManageMenus')" 
+                         [class.text-success]="getTestResult('canManageMenus')"
+                         [class.text-danger]="!getTestResult('canManageMenus')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('canManageMenus')">
+                        {{ getTestResult('canManageMenus') ? 'Permitido' : 'Denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Ver Menús</td>
+                    <td>
+                      <i [class]="getTestResultIcon('canViewMenus')" 
+                         [class.text-success]="getTestResult('canViewMenus')"
+                         [class.text-danger]="!getTestResult('canViewMenus')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('canViewMenus')">
+                        {{ getTestResult('canViewMenus') ? 'Permitido' : 'Denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Crear Menús</td>
+                    <td>
+                      <i [class]="getTestResultIcon('canCreateMenus')" 
+                         [class.text-success]="getTestResult('canCreateMenus')"
+                         [class.text-danger]="!getTestResult('canCreateMenus')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('canCreateMenus')">
+                        {{ getTestResult('canCreateMenus') ? 'Permitido' : 'Denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Editar Menús</td>
+                    <td>
+                      <i [class]="getTestResultIcon('canEditMenus')" 
+                         [class.text-success]="getTestResult('canEditMenus')"
+                         [class.text-danger]="!getTestResult('canEditMenus')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('canEditMenus')">
+                        {{ getTestResult('canEditMenus') ? 'Permitido' : 'Denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Eliminar Menús</td>
+                    <td>
+                      <i [class]="getTestResultIcon('canDeleteMenus')" 
+                         [class.text-success]="getTestResult('canDeleteMenus')"
+                         [class.text-danger]="!getTestResult('canDeleteMenus')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('canDeleteMenus')">
+                        {{ getTestResult('canDeleteMenus') ? 'Permitido' : 'Denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-users-cog mr-1"></i>Pruebas de Permisos de Administración
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Permiso</th>
+                    <th>Estado</th>
+                    <th>Resultado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Gestionar Roles</td>
+                    <td>
+                      <i [class]="getTestResultIcon('canManageRoles')" 
+                         [class.text-success]="getTestResult('canManageRoles')"
+                         [class.text-danger]="!getTestResult('canManageRoles')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('canManageRoles')">
+                        {{ getTestResult('canManageRoles') ? 'Permitido' : 'Denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Gestionar Usuarios</td>
+                    <td>
+                      <i [class]="getTestResultIcon('canManageUsers')" 
+                         [class.text-success]="getTestResult('canManageUsers')"
+                         [class.text-danger]="!getTestResult('canManageUsers')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('canManageUsers')">
+                        {{ getTestResult('canManageUsers') ? 'Permitido' : 'Denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Ver Dashboard</td>
+                    <td>
+                      <i [class]="getTestResultIcon('hasDashboardPermission')" 
+                         [class.text-success]="getTestResult('hasDashboardPermission')"
+                         [class.text-danger]="!getTestResult('hasDashboardPermission')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('hasDashboardPermission')">
+                        {{ getTestResult('hasDashboardPermission') ? 'Permitido' : 'Denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Ver Menús</td>
+                    <td>
+                      <i [class]="getTestResultIcon('hasMenusPermission')" 
+                         [class.text-success]="getTestResult('hasMenusPermission')"
+                         [class.text-danger]="!getTestResult('hasMenusPermission')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('hasMenusPermission')">
+                        {{ getTestResult('hasMenusPermission') ? 'Permitido' : 'Denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Admin Menús</td>
+                    <td>
+                      <i [class]="getTestResultIcon('hasAdminMenusPermission')" 
+                         [class.text-success]="getTestResult('hasAdminMenusPermission')"
+                         [class.text-danger]="!getTestResult('hasAdminMenusPermission')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('hasAdminMenusPermission')">
+                        {{ getTestResult('hasAdminMenusPermission') ? 'Permitido' : 'Denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pruebas de Roles -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-user-tag mr-1"></i>Pruebas de Roles
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Resultado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Super Admin</td>
+                    <td>
+                      <i [class]="getTestResultIcon('hasSuperAdminRole')" 
+                         [class.text-success]="getTestResult('hasSuperAdminRole')"
+                         [class.text-danger]="!getTestResult('hasSuperAdminRole')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('hasSuperAdminRole')">
+                        {{ getTestResult('hasSuperAdminRole') ? 'Asignado' : 'No asignado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Admin</td>
+                    <td>
+                      <i [class]="getTestResultIcon('hasAdminRole')" 
+                         [class.text-success]="getTestResult('hasAdminRole')"
+                         [class.text-danger]="!getTestResult('hasAdminRole')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('hasAdminRole')">
+                        {{ getTestResult('hasAdminRole') ? 'Asignado' : 'No asignado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Manager</td>
+                    <td>
+                      <i [class]="getTestResultIcon('hasManagerRole')" 
+                         [class.text-success]="getTestResult('hasManagerRole')"
+                         [class.text-danger]="!getTestResult('hasManagerRole')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('hasManagerRole')">
+                        {{ getTestResult('hasManagerRole') ? 'Asignado' : 'No asignado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Employee</td>
+                    <td>
+                      <i [class]="getTestResultIcon('hasEmployeeRole')" 
+                         [class.text-success]="getTestResult('hasEmployeeRole')"
+                         [class.text-danger]="!getTestResult('hasEmployeeRole')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('hasEmployeeRole')">
+                        {{ getTestResult('hasEmployeeRole') ? 'Asignado' : 'No asignado' }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-route mr-1"></i>Pruebas de Acceso a Rutas
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Ruta</th>
+                    <th>Estado</th>
+                    <th>Resultado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>/admin-menu-management</td>
+                    <td>
+                      <i [class]="getTestResultIcon('canAccessAdminMenuManagement')" 
+                         [class.text-success]="getTestResult('canAccessAdminMenuManagement')"
+                         [class.text-danger]="!getTestResult('canAccessAdminMenuManagement')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('canAccessAdminMenuManagement')">
+                        {{ getTestResult('canAccessAdminMenuManagement') ? 'Acceso permitido' : 'Acceso denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>/usuarios</td>
+                    <td>
+                      <i [class]="getTestResultIcon('canAccessUsuarios')" 
+                         [class.text-success]="getTestResult('canAccessUsuarios')"
+                         [class.text-danger]="!getTestResult('canAccessUsuarios')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('canAccessUsuarios')">
+                        {{ getTestResult('canAccessUsuarios') ? 'Acceso permitido' : 'Acceso denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>/roles</td>
+                    <td>
+                      <i [class]="getTestResultIcon('canAccessRoles')" 
+                         [class.text-success]="getTestResult('canAccessRoles')"
+                         [class.text-danger]="!getTestResult('canAccessRoles')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('canAccessRoles')">
+                        {{ getTestResult('canAccessRoles') ? 'Acceso permitido' : 'Acceso denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>/dashboard</td>
+                    <td>
+                      <i [class]="getTestResultIcon('canAccessDashboard')" 
+                         [class.text-success]="getTestResult('canAccessDashboard')"
+                         [class.text-danger]="!getTestResult('canAccessDashboard')"></i>
+                    </td>
+                    <td>
+                      <span [class]="getTestResultClass('canAccessDashboard')">
+                        {{ getTestResult('canAccessDashboard') ? 'Acceso permitido' : 'Acceso denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pruebas de Permisos Múltiples -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-layer-group mr-1"></i>Pruebas de Permisos Múltiples
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h6>Algún Permiso de Admin</h6>
+                    <i [class]="getTestResultIcon('hasAnyAdminPermission')" 
+                       [class.text-success]="getTestResult('hasAnyAdminPermission')"
+                       [class.text-danger]="!getTestResult('hasAnyAdminPermission')"
+                       style="font-size: 2rem;"></i>
+                    <p class="mt-2 mb-0">
+                      <span [class]="getTestResultClass('hasAnyAdminPermission')">
+                        {{ getTestResult('hasAnyAdminPermission') ? 'Cumple' : 'No cumple' }}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h6>Todos los Permisos de Menú</h6>
+                    <i [class]="getTestResultIcon('hasAllMenuPermissions')" 
+                       [class.text-success]="getTestResult('hasAllMenuPermissions')"
+                       [class.text-danger]="!getTestResult('hasAllMenuPermissions')"
+                       style="font-size: 2rem;"></i>
+                    <p class="mt-2 mb-0">
+                      <span [class]="getTestResultClass('hasAllMenuPermissions')">
+                        {{ getTestResult('hasAllMenuPermissions') ? 'Cumple' : 'No cumple' }}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h6>Algún Rol de Admin</h6>
+                    <i [class]="getTestResultIcon('hasAnyAdminRole')" 
+                       [class.text-success]="getTestResult('hasAnyAdminRole')"
+                       [class.text-danger]="!getTestResult('hasAnyAdminRole')"
+                       style="font-size: 2rem;"></i>
+                    <p class="mt-2 mb-0">
+                      <span [class]="getTestResultClass('hasAnyAdminRole')">
+                        {{ getTestResult('hasAnyAdminRole') ? 'Cumple' : 'No cumple' }}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Permisos del Usuario -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-list mr-1"></i>Permisos del Usuario
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Permiso</th>
+                    <th>Módulo</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let permission of userPermissions">
+                    <td>{{ permission.name }}</td>
+                    <td>
+                      <span class="badge badge-sm" [class]="'badge-' + getModuleClass(permission.module)">
+                        {{ permission.module }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge" [class.badge-success]="permission.granted" [class.badge-secondary]="!permission.granted">
+                        {{ permission.granted ? 'Concedido' : 'Denegado' }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-users mr-1"></i>Roles del Usuario
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Rol</th>
+                    <th>Descripción</th>
+                    <th>Usuarios</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let role of userRoles">
+                    <td>{{ role.name }}</td>
+                    <td>{{ role.description }}</td>
+                    <td>
+                      <span class="badge badge-info">{{ role.users_count }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>

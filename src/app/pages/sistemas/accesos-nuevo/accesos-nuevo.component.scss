@@ -1,0 +1,529 @@
+// Variables de colores
+$primary: #4f46e5;
+$secondary: #6b7280;
+$success: #10b981;
+$danger: #ef4444;
+$warning: #f59e0b;
+$light: #f8fafc;
+$dark: #1f2937;
+$white: #ffffff;
+$border: #e5e7eb;
+$shadow: rgba(0, 0, 0, 0.1);
+
+// Mixins
+@mixin card {
+  background: $white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px $shadow, 0 2px 4px -1px $shadow;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 10px 15px -3px $shadow, 0 4px 6px -2px $shadow;
+    transform: translateY(-2px);
+  }
+}
+
+@mixin button-base {
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  
+  &:hover {
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@mixin input-base {
+  border: 2px solid $border;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  }
+  
+  &::placeholder {
+    color: $secondary;
+  }
+}
+
+// Contenedor principal
+.accesos-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+// Header
+.header-section {
+  text-align: center;
+  margin-bottom: 40px;
+  
+  .page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: $dark;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    
+    i {
+      color: $primary;
+    }
+  }
+  
+  .page-subtitle {
+    font-size: 1.1rem;
+    color: $secondary;
+    margin: 0;
+  }
+}
+
+// Barra de búsqueda
+.search-bar {
+  margin-bottom: 32px;
+  
+  .search-input-group {
+    position: relative;
+    max-width: 500px;
+    margin: 0 auto;
+    
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: $secondary;
+      font-size: 16px;
+    }
+    
+    .search-input {
+      width: 100%;
+      @include input-base;
+      padding-left: 48px;
+      font-size: 16px;
+    }
+  }
+}
+
+// Grid de usuarios
+.usuarios-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+// Tarjeta de usuario
+.usuario-card {
+  @include card;
+  padding: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  
+  &:hover {
+    border-color: $primary;
+  }
+  
+  .usuario-avatar {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, $primary, #6366f1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $white;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  
+  .usuario-info {
+    flex: 1;
+    
+    .usuario-nombre {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: $dark;
+      margin: 0 0 4px 0;
+    }
+    
+    .usuario-email {
+      color: $secondary;
+      margin: 0 0 8px 0;
+      font-size: 0.9rem;
+    }
+    
+    .usuario-rol {
+      background: rgba(79, 70, 229, 0.1);
+      color: $primary;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+  }
+  
+  .usuario-actions {
+    .btn-seleccionar {
+      @include button-base;
+      background: $primary;
+      color: $white;
+      
+      &:hover {
+        background: #4338ca;
+      }
+    }
+  }
+}
+
+// Sección de accesos
+.accesos-section {
+  animation: fadeIn 0.3s ease;
+}
+
+.accesos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: $white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px -1px $shadow;
+  
+  .btn-volver {
+    @include button-base;
+    background: $secondary;
+    color: $white;
+    
+    &:hover {
+      background: #4b5563;
+    }
+  }
+  
+  .usuario-info-header {
+    text-align: center;
+    
+    h2 {
+      margin: 0 0 4px 0;
+      color: $dark;
+      font-size: 1.5rem;
+    }
+    
+    p {
+      margin: 0;
+      color: $secondary;
+    }
+  }
+  
+  .btn-agregar {
+    @include button-base;
+    background: $success;
+    color: $white;
+    
+    &:hover {
+      background: #059669;
+    }
+  }
+}
+
+// Filtros
+.filtros-section {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: $white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px -1px $shadow;
+  
+  .filtro-group {
+    flex: 1;
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: $dark;
+    }
+    
+    .filtro-select {
+      @include input-base;
+      width: 100%;
+      background: $white;
+    }
+    
+    .search-input-group {
+      position: relative;
+      
+      .search-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $secondary;
+        font-size: 16px;
+      }
+      
+      .search-input {
+        width: 100%;
+        @include input-base;
+        padding-left: 48px;
+      }
+    }
+  }
+}
+
+// Lista de accesos
+.accesos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// Tarjeta de acceso
+.acceso-card {
+  @include card;
+  padding: 24px;
+  
+  .acceso-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid $border;
+    
+    .sistema-info {
+      .sistema-badge {
+        background: linear-gradient(135deg, $primary, #6366f1);
+        color: $white;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+    }
+    
+    .acceso-actions {
+      display: flex;
+      gap: 8px;
+      
+      .btn-editar, .btn-eliminar {
+        @include button-base;
+        padding: 8px 12px;
+        font-size: 14px;
+        
+        i {
+          margin: 0;
+        }
+      }
+      
+      .btn-editar {
+        background: $warning;
+        color: $white;
+        
+        &:hover {
+          background: #d97706;
+        }
+      }
+      
+      .btn-eliminar {
+        background: $danger;
+        color: $white;
+        
+        &:hover {
+          background: #dc2626;
+        }
+      }
+    }
+  }
+  
+  .acceso-body {
+    .menu-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      
+      .menu-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(79, 70, 229, 0.1);
+        color: $primary;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+      
+      .menu-details {
+        flex: 1;
+        
+        .menu-nombre {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: $dark;
+          margin: 0 0 4px 0;
+        }
+        
+        .menu-id {
+          color: $secondary;
+          font-size: 0.9rem;
+          margin: 0;
+          font-family: 'Monaco', 'Menlo', monospace;
+        }
+      }
+    }
+    
+    .permisos-section {
+      .permisos-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: $dark;
+        margin: 0 0 12px 0;
+      }
+      
+      .permisos-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        
+        .permiso-badge {
+          background: rgba(16, 185, 129, 0.1);
+          color: $success;
+          padding: 6px 12px;
+          border-radius: 16px;
+          font-size: 0.85rem;
+          font-weight: 500;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          
+          i {
+            font-size: 12px;
+          }
+        }
+        
+        .permiso-vacio {
+          color: $secondary;
+          font-style: italic;
+        }
+      }
+    }
+  }
+}
+
+// Estados vacíos
+.no-data {
+  text-align: center;
+  padding: 60px 20px;
+  color: $secondary;
+  
+  i {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+  
+  p {
+    font-size: 1.1rem;
+    margin: 0 0 24px 0;
+  }
+  
+  .btn-agregar-primero {
+    @include button-base;
+    background: $primary;
+    color: $white;
+    
+    &:hover {
+      background: #4338ca;
+    }
+  }
+}
+
+// Loading
+.loading-section {
+  text-align: center;
+  padding: 60px 20px;
+  
+  .loading-spinner {
+    font-size: 3rem;
+    color: $primary;
+    margin-bottom: 16px;
+  }
+  
+  p {
+    font-size: 1.1rem;
+    color: $secondary;
+    margin: 0;
+  }
+}
+
+// Animaciones
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .accesos-container {
+    padding: 16px;
+  }
+  
+  .usuarios-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .accesos-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .filtros-section {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .acceso-card .acceso-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .acceso-card .acceso-body .menu-info {
+    flex-direction: column;
+    text-align: center;
+  }
+}

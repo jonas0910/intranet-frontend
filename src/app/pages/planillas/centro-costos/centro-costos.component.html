@@ -1,0 +1,180 @@
+<!-- Page Header (patrón de diseño) -->
+<app-page-header
+  title="Centro de Costos"
+  subtitle="Gestión de centros de costos"
+  [breadcrumbs]="breadcrumbs">
+</app-page-header>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+          <!-- Toolbar -->
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+              <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                <i class="fas fa-coins mr-1"></i> Listado de Centros de Costos
+              </h3>
+              <span class="badge bg-primary align-self-center">{{ centros.length }} registros</span>
+              <ng-container *ngIf="cv.showExportButtons">
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"><i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"><i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass"><i [class]="cv.printBtnIcon + ' mr-1'"></i> {{ cv.printBtnLabel }}</button>
+              </ng-container>
+              <button *ngIf="!cv.showExportButtons" class="btn btn-sm btn-flat" [ngClass]="cv.exportBtnClass"><i [class]="cv.exportBtnIcon + ' mr-1'"></i> {{ cv.exportBtnLabel }}</button>
+            </div>
+            <div class="ms-auto flex-shrink-0">
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{ cv.newBtnLabel }} Centro
+              </button>
+            </div>
+          </div>
+
+          <!-- Contenido: spinner + tabla (patrón de diseño) -->
+          <div class="card-body p-0">
+            <app-loading-spinner [loading]="loading" message="Cargando centros de costo..."></app-loading-spinner>
+
+            <div *ngIf="!loading" class="table-responsive">
+              <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize" class="table mb-0 w-100">
+                <thead class="bg-light">
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize">Código</th>
+                    <th [style.font-size]="cv.headerFontSize">Nombre</th>
+                    <th [style.font-size]="cv.headerFontSize">Presupuesto</th>
+                    <th [style.font-size]="cv.headerFontSize">Responsable</th>
+                    <th [style.font-size]="cv.headerFontSize">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let centro of centros">
+                    <td><span class="badge bg-dark">{{ centro.code }}</span></td>
+                    <td><strong>{{ centro.name }}</strong></td>
+                    <td>S/ {{ centro.budget | number:'1.2-2' }}</td>
+                    <td>{{ centro.responsible_person || 'Sin asignar' }}</td>
+                    <td class="text-center">
+                      <app-status-badge [status]="centro.is_active"></app-status-badge>
+                    </td>
+                    <td class="text-center">
+                      <app-crud-actions [showView]="true" [showEdit]="true" [showDelete]="true" (onView)="openViewModal(centro)" (onEdit)="openEditModal(centro)" (onDelete)="confirmDelete(centro)"></app-crud-actions>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div *ngIf="centros.length === 0" class="text-center py-5">
+                <i class="fas fa-coins fa-2x text-muted mb-3"></i>
+                <h6 class="text-muted">No se encontraron centros de costo</h6>
+                <p class="text-muted small">Crea un nuevo centro de costo para comenzar.</p>
+                <button class="btn btn-sm" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                  <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{ cv.newBtnLabel }} Centro
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Crear/Editar -->
+<div class="modal fade" id="centroModal" tabindex="-1" aria-hidden="true" #centroModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title">
+          <i class="fas" [ngClass]="isEditMode ? 'fa-edit' : 'fa-plus'"></i>
+          {{ isEditMode ? 'Editar' : 'Nuevo' }} Centro de Costo
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg">
+        <form [formGroup]="centroForm">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Código <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="code" placeholder="CC-001">
+              <div class="text-danger small" *ngIf="centroForm.get('code')?.invalid && centroForm.get('code')?.touched">
+                Código es requerido
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Presupuesto</label>
+              <input type="number" class="form-control" [ngClass]="mc.inputSize" formControlName="budget" placeholder="0.00">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Nombre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="name" placeholder="Nombre del centro">
+            <div class="text-danger small" *ngIf="centroForm.get('name')?.invalid && centroForm.get('name')?.touched">
+              Nombre es requerido
+            </div>
+          </div>
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Descripción</label>
+            <textarea class="form-control" [ngClass]="mc.inputSize" formControlName="description" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Persona Responsable</label>
+            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="responsible_person" placeholder="Nombre del responsable">
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" formControlName="is_active" id="isActive">
+            <label class="form-check-label" for="isActive">Activo</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeModal()"><i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}</button>
+        <button type="button" class="btn btn-sm" [ngClass]="mc.saveBtnClass" (click)="saveCentro()" [disabled]="centroForm.invalid || saving"><i [class]="mc.saveBtnIcon + ' mr-1'"></i> {{ isEditMode ? 'Actualizar' : mc.saveBtnLabel }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ver -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true" #viewModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detalles del Centro de Costo</h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeViewModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg" *ngIf="selectedCentro">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Código:</strong>
+            <p>{{ selectedCentro.code }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Presupuesto:</strong>
+            <p>S/ {{ selectedCentro.budget | number:'1.2-2' }}</p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Nombre:</strong>
+            <p>{{ selectedCentro.name }}</p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Descripción:</strong>
+            <p>{{ selectedCentro.description || 'Sin descripción' }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Responsable:</strong>
+            <p>{{ selectedCentro.responsible_person || 'Sin asignar' }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Estado:</strong>
+            <p>
+              <app-status-badge [status]="selectedCentro.is_active"></app-status-badge>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeViewModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

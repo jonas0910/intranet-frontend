@@ -1,0 +1,345 @@
+// Animación de entrada
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.container-fluid {
+  animation: fadeIn 0.4s ease-out;
+}
+
+// Tarjetas KPI modernas (Estilo Premium Dashboard)
+.card-kpi {
+  border: none;
+  border-radius: 12px !important;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15) !important;
+    
+    .kpi-icon i {
+      transform: scale(1.1);
+    }
+  }
+
+  .card-body {
+    color: #fff;
+    padding: 1.5rem 1.25rem;
+  }
+
+  h3 {
+    font-weight: 800;
+    font-size: 1.85rem;
+    margin-bottom: 2px;
+    letter-spacing: -0.5px;
+  }
+
+  .small {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .kpi-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    color: #fff !important;
+    
+    i {
+      transition: transform 0.3s ease;
+    }
+  }
+}
+
+.card-kpi-info {
+  background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%) !important;
+}
+
+.card-kpi-success {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+}
+
+.card-kpi-warning {
+  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+  color: #212529 !important;
+
+  .small, .kpi-icon, h3, p, a, i, span {
+    color: #212529 !important;
+  }
+  
+  .kpi-icon {
+    background-color: rgba(0, 0, 0, 0.08) !important;
+  }
+}
+
+.card-kpi-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%) !important;
+}
+
+// Clases de Opacidad y Elevación
+.bg-opacity-25 { background-color: rgba(255, 255, 255, 0.25) !important; }
+.bg-opacity-10 { background-color: rgba(0, 0, 0, 0.1) !important; }
+
+.elevation-2 {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+
+// Estilos de Tarjetas de Alerta
+.alert-card {
+  border: none !important;
+  border-radius: 12px !important;
+  border-left: 6px solid transparent !important;
+  transition: all 0.25s ease;
+  background-color: #fff;
+  
+  &:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+    transform: translateX(4px);
+  }
+  
+  &.border-danger { border-left-color: #dc3545 !important; }
+  &.border-warning { border-left-color: #ffc107 !important; }
+  &.border-success { border-left-color: #28a745 !important; }
+}
+
+.bg-danger-light { background-color: rgba(220, 53, 69, 0.08); }
+.bg-warning-light { background-color: rgba(255, 193, 7, 0.08); }
+.bg-success-light { background-color: rgba(40, 167, 69, 0.08); }
+
+.uppercase { text-transform: uppercase; letter-spacing: 0.8px; font-size: 0.75rem; font-weight: 700; }
+
+// Checkbox visible en tabla del plan (evita custom-control + sr-only que deja el check invisible)
+.plan-mantenimiento-sel-cell {
+  min-width: 44px;
+}
+
+.plan-mantenimiento-check {
+  width: 1.125rem;
+  height: 1.125rem;
+  min-width: 1.125rem;
+  min-height: 1.125rem;
+  margin: 0;
+  cursor: pointer;
+  vertical-align: middle;
+  accent-color: #007bff;
+}
+
+// DataTables: plan de mantenimiento
+.plan-mantenimiento-dt {
+  margin-top: 0.5rem;
+
+  .dataTables_wrapper .dataTables_filter input {
+    border-radius: 6px;
+  }
+}
+
+// Pestañas del plan de mantenimiento (Vencidos / Próximos / Pendientes / Realizados)
+.plan-mantenimiento-toolbar {
+  padding: 0.75rem 0 0.25rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+// Barra única: consolidado + filtros por estado (sin duplicar KPI)
+.plan-flow-nav {
+  .btn.active {
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+  }
+}
+
+.plan-mantenimiento-dt-input {
+  max-width: 220px;
+}
+
+.plan-tab-btn {
+  min-width: 120px;
+  border: 1px solid #dee2e6 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: #495057 !important;
+  padding: 0.65rem 0.75rem !important;
+  line-height: 1.2;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+
+  &:hover {
+    border-color: #adb5bd !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  &.active {
+    border-color: #007bff !important;
+    background: linear-gradient(180deg, #f8fbff 0%, #fff 100%) !important;
+    color: #212529 !important;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.12);
+  }
+}
+
+// Navegación Pills
+.nav-pills {
+  .nav-link {
+    border-radius: 8px;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+    color: #6c757d;
+    transition: all 0.2s;
+    
+    &.active {
+      background-color: #f8f9fa;
+      color: #007bff;
+      box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+    }
+  }
+}
+
+// Tablas
+.table {
+  font-size: 0.9rem;
+  thead th {
+    background-color: #f8f9fa;
+    border-top: none;
+    color: #495057;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    padding: 1rem 0.75rem;
+  }
+  
+  tbody td {
+    vertical-align: middle;
+    padding: 0.85rem 0.75rem;
+  }
+}
+
+// Modales
+.modal-content {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  border-bottom: none;
+  padding: 1.5rem;
+  
+  .close {
+    padding: 1.5rem;
+    margin: -1.5rem -1.5rem -1.5rem auto;
+  }
+}
+
+.form-control {
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e0e0e0;
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+  }
+}
+
+// Buscador de Alertas
+.input-group {
+  .input-group-text {
+    border-radius: 8px 0 0 8px;
+    color: #adb5bd;
+  }
+  
+  .form-control {
+    border-radius: 0 8px 8px 0;
+    
+    &:focus + .input-group-append .btn,
+    &:focus {
+      border-color: #007bff;
+    }
+  }
+
+  &.shadow-sm {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+}
+
+// Combo departamento: ancho usable y texto legible; el nombre completo va en .filtros-dept-etiqueta
+.filtros-dept-select {
+  min-width: min(100%, 300px);
+  max-width: 100%;
+  flex: 1 1 260px;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  padding: 0.5rem 0.75rem;
+}
+
+.filtros-dept-etiqueta {
+  line-height: 1.4;
+}
+
+// Plan de mantenimiento registrado: fila muy visible
+.fila-en-plan-mantenimiento,
+.fila-en-plan-oficial {
+  background: linear-gradient(90deg, rgba(13, 110, 253, 0.14) 0%, rgba(255, 193, 7, 0.42) 45%, rgba(255, 220, 120, 0.55) 100%) !important;
+  box-shadow: inset 5px 0 0 0 #0d6efd, inset 0 0 0 1px rgba(224, 168, 0, 0.55);
+}
+
+.fila-en-plan-mantenimiento:hover,
+.fila-en-plan-oficial:hover {
+  background: linear-gradient(90deg, rgba(13, 110, 253, 0.2) 0%, rgba(255, 180, 0, 0.48) 45%, rgba(255, 210, 90, 0.65) 100%) !important;
+}
+
+.fila-programacion-aprobada {
+  outline: 2px solid rgba(25, 135, 84, 0.55);
+  outline-offset: -2px;
+}
+
+.fila-programacion-aprobada:hover {
+  outline-color: rgba(25, 135, 84, 0.7);
+}
+
+.resaltado-plan-etiqueta {
+  color: #0d4ea6;
+  font-weight: 700;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: rgba(255, 193, 7, 0.35);
+}
+
+.badge-plan-oficial {
+  background: linear-gradient(135deg, #0d6efd 0%, #c27803 100%);
+  color: #fff;
+  font-size: 0.8rem;
+  padding: 0.35em 0.55em;
+  letter-spacing: 0.02em;
+}
+
+.badge-aprobacion-fecha {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(25, 135, 84, 0.12);
+  color: #0f5132;
+  border: 1px solid rgba(25, 135, 84, 0.28);
+  font-size: 0.76rem;
+  padding: 0.35em 0.55em;
+}
+
+.aprobacion-celda {
+  min-width: 200px;
+}
+
+.aprobacion-guardada {
+  font-size: 0.8rem;
+  color: #0f5132;
+  background: rgba(25, 135, 84, 0.12);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  border-left: 3px solid #198754;
+}

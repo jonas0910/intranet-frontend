@@ -1,0 +1,488 @@
+<app-system-layout [title]="'Control de Entregas y Asignaciones'" [subtitle]="'Gestión de beneficios por eventos'"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Censo Poblacional', url: '/censo-poblacional'}, {label: 'Entregas'}]"
+    [subsystem]="'censo-poblacional'">
+
+    <!-- Selector Global de Evento -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card elevation-1 border-0 shadow-sm"
+                [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''">
+                <div class="card-body py-3 d-flex align-items-center justify-content-between flex-wrap"
+                    style="gap: 20px;">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary-soft p-2 rounded me-3">
+                            <i class="fas fa-calendar-alt text-primary fa-lg"></i>
+                        </div>
+                        <div>
+                            <label class="mb-0 ds-crud-label d-block text-muted small fw-bold">EVENTO
+                                SELECCIONADO</label>
+                            <div style="min-width: 350px;">
+                                <select id="evento_select" class="form-control form-control-sm ds-select2"
+                                    [(ngModel)]="selectedEventoId" (change)="onEventoChange()">
+                                    <option *ngIf="eventos.length === 0" value="" disabled>No hay eventos registrados
+                                    </option>
+                                    <option *ngFor="let ev of eventos" [value]="ev.id_evento">
+                                        {{ ev.nombre_evento }} ({{ ev.fecha | date:'dd/MM/yyyy' }})
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        <span class="badge py-2 px-3 shadow-sm"
+                            [ngClass]="isEventoActivo ? 'bg-success' : 'bg-secondary'" style="font-size: 0.9rem;">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {{ isEventoActivo ? 'Evento Activo y en Ejecución' : 'Evento Finalizado/Cancelado - Solo
+                            Lectura' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''"
+                [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+
+                <!-- Tabs Nav -->
+                <div class="card-header p-0 border-bottom-0">
+                    <ul class="nav nav-tabs ds-modal-tabs" style="border-bottom: 2px solid #dee2e6;">
+                        <li class="nav-item">
+                            <a class="nav-link py-3 px-4" [class.active]="activeTab === 'individual'"
+                                (click)="changeTab('individual')">
+                                <i class="fas fa-user-check me-2"></i> Registro Individual
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link py-3 px-4" [class.active]="activeTab === 'masiva'"
+                                (click)="changeTab('masiva')">
+                                <i class="fas fa-users-cog me-2"></i> Asignación Masiva
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link py-3 px-4" [class.active]="activeTab === 'lista'"
+                                (click)="changeTab('lista')">
+                                <i class="fas fa-list-alt me-2"></i> Lista de Asignados
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body p-4">
+
+                    <!-- ==================== TAB 1: INDIVIDUAL ==================== -->
+                    <div *ngIf="activeTab === 'individual'" class="fade-in">
+                        <div class="row justify-content-center">
+                            <div class="col-md-8 col-lg-6">
+                                <!-- Buscador por DNI -->
+                                <div class="form-group mb-4">
+                                    <label class="ds-crud-label fw-bold">
+                                        <i class="fas fa-id-card me-1 text-primary"></i> Identificación del Beneficiario
+                                        (DNI):
+                                    </label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-white"><i
+                                                class="fas fa-id-card text-muted"></i></span>
+                                        <input type="text" class="form-control border-start-0"
+                                            placeholder="Ingrese DNI..." [(ngModel)]="dniBusqueda"
+                                            (keyup.enter)="buscar()" maxlength="15">
+                                        <button class="btn btn-primary px-4 fw-bold" type="button" (click)="buscar()"
+                                            [disabled]="loadingSearch">
+                                            <i class="fas"
+                                                [ngClass]="loadingSearch ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div *ngIf="!successIndividual" class="fade-in">
+                                    <div *ngIf="citizen" class="border rounded p-3 bg-light mb-3"
+                                        style="border-style: dashed !important; border-width: 2px !important;">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                                                style="width: 48px; height: 48px; font-size: 1.3rem; font-weight: bold; flex-shrink: 0;">
+                                                {{ citizen.nombres.charAt(0) }}
+                                            </div>
+                                            <div>
+                                                <h5 class="mb-1 fw-bold text-dark">{{ citizen.nombres }}</h5>
+                                                <span class="badge bg-light border text-muted me-1">DNI: {{ citizen.dni
+                                                    }}</span>
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>{{
+                                                    citizen.sector?.nombre_sector }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="row small bg-white rounded p-2 mb-3 border">
+                                            <div class="col-6 mb-1"><strong>Edad:</strong> {{ citizen.edad }} años</div>
+                                            <div class="col-6 mb-1"><strong>Sexo:</strong> {{ citizen.sexo }}</div>
+                                            <div class="col-12"><strong>Dirección:</strong> {{ citizen.direccion }}
+                                            </div>
+                                        </div>
+
+                                        <div *ngIf="!isEventoActivo" class="alert alert-danger py-2 mb-3">
+                                            <i class="fas fa-ban me-2"></i> No se puede registrar la entrega porque el
+                                            evento no está "Activo".
+                                        </div>
+
+                                        <button class="btn btn-success w-100 fw-bold py-2 mb-2" (click)="confirmar()"
+                                            [disabled]="loadingConfirm || !isEventoActivo">
+                                            <i class="fas me-2"
+                                                [ngClass]="loadingConfirm ? 'fa-spinner fa-spin' : 'fa-check-circle'"></i>
+                                            Confirmar Entrega Física
+                                        </button>
+                                        <button class="btn btn-link w-100 btn-sm text-muted"
+                                            (click)="cancelarIndividual()">Cancelar / Limpiar Búsqueda</button>
+                                    </div>
+
+                                    <div *ngIf="!citizen && !loadingSearch && dniBusqueda && searched"
+                                        class="text-center py-4 text-muted">
+                                        <i class="fas fa-user-slash fa-3x mb-3 d-block"></i>
+                                        <p class="mb-0">No se encontró ningún ciudadano con ese DNI.</p>
+                                    </div>
+                                </div>
+
+                                <!-- SUCCESS MESSAGE (INDIVIDUAL) -->
+                                <div *ngIf="successIndividual" class="text-center py-5 fade-in border rounded bg-light"
+                                    style="border-width: 2px !important; border-color: #28a745 !important;">
+                                    <div class="mb-3">
+                                        <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+                                    </div>
+                                    <h4 class="fw-bold text-success mb-2">¡Asignación Exitosa!</h4>
+                                    <p class="text-muted mb-4">El beneficio se ha asignado correctamente al
+                                        ciudadano:<br><strong>{{ successMessageContext }}</strong></p>
+                                    <button class="btn btn-primary px-4 fw-bold" (click)="resetIndividual()">
+                                        <i class="fas fa-redo-alt me-2"></i> Realizar Nueva Asignación
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- ==================== TAB 2: MASIVA ==================== -->
+                    <div *ngIf="activeTab === 'masiva'" class="fade-in">
+                        <div class="alert alert-info py-3 px-4 mb-4 d-flex">
+                            <div class="flex-shrink-0 me-3">
+                                <i class="fas fa-info-circle fa-2x opacity-50"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Asignación por Filtros</h6>
+                                <p class="mb-0 small">Utilice los filtros para segmentar el padrón y asignar los
+                                    beneficios a múltiples ciudadanos simultáneamente. Solo válido para eventos activos.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="row bg-light p-3 rounded mb-4 border mx-0 mt-2 shadow-sm">
+                            <div class="col-md-3">
+                                <label class="ds-crud-label"><i class="fas fa-map-marked-alt text-muted me-1"></i>
+                                    Sector / Barrio</label>
+                                <select id="sector_masivo_select" class="form-select form-select-sm ds-select2"
+                                    [(ngModel)]="filtroSectorMasivo" (ngModelChange)="aplicarFiltrosMasivos()">
+                                    <option value="">TODOS LOS SECTORES</option>
+                                    <option *ngFor="let s of sectores" [value]="s.id_sector">{{ s.nombre_sector }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="ds-crud-label"><i class="fas fa-sitemap text-muted me-1"></i> Organización
+                                    / Asociación</label>
+                                <select id="organizacion_masivo_select" class="form-select form-select-sm ds-select2"
+                                    [(ngModel)]="filtroOrganizacionMasivo" (ngModelChange)="aplicarFiltrosMasivos()">
+                                    <option value="">TODAS LAS ORGANIZACIONES</option>
+                                    <option *ngFor="let o of organizaciones" [value]="o.id_organizacion">{{ o.nombre }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="ds-crud-label"><i class="fas fa-venus-mars text-muted me-1"></i> Sexo /
+                                    Género</label>
+                                <select class="form-select form-select-sm ds-crud-filter" [(ngModel)]="filtroSexoMasivo"
+                                    (ngModelChange)="aplicarFiltrosMasivos()">
+                                    <option value="">TODOS</option>
+                                    <option value="M">MASCULINO</option>
+                                    <option value="F">FEMENINO</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="ds-crud-label"><i class="fas fa-users-viewfinder text-muted me-1"></i>
+                                    Grupo / Población</label>
+                                <select class="form-select form-select-sm ds-crud-filter"
+                                    [(ngModel)]="filtroTipoPoblacion" (ngModelChange)="aplicarFiltrosMasivos()">
+                                    <option value="">SIN CATEGORÍA (TODOS)</option>
+                                    <option value="niños">NIÑOS (MENORES DE 18)</option>
+                                    <option value="jovenes">JÓVENES (18 A 29)</option>
+                                    <option value="adultos">ADULTOS (30 A 59)</option>
+                                    <option value="mayores">ADULTO MAYOR (60+)</option>
+                                    <option value="padres">PADRES / MADRES DE FAMILIA</option>
+                                    <option value="discapacitados">PERSONAS CON DISCAPACIDAD</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="ds-crud-label"><i class="fas fa-filter text-muted me-1"></i> Edad
+                                    (+)</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control ds-crud-filter"
+                                        [(ngModel)]="filtroEdadMasivo" (ngModelChange)="aplicarFiltrosMasivos()"
+                                        placeholder="Ej: 60">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div *ngIf="!successMasiva" class="fade-in">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0">Ciudadanos Encontrados: <span class="badge bg-primary">{{
+                                        ciudadanosParaAsignar.length }}</span></h6>
+                                <button class="btn btn-primary"
+                                    [disabled]="!isEventoActivo || ciudadanosParaAsignar.length === 0 || loadingMasiva"
+                                    (click)="asignarMasivamente()">
+                                    <i class="fas me-2"
+                                        [ngClass]="loadingMasiva ? 'fa-spinner fa-spin' : 'fa-users-cog'"></i>
+                                    Asignar Beneficio a Seleccionados
+                                </button>
+                            </div>
+
+                            <div class="table-responsive border rounded" style="max-height: 400px; overflow-y: auto;">
+                                <table [ngClass]="cv.tableClasses || 'table table-hover table-sm'"
+                                    class="table mb-0 ds-crud-table">
+                                    <thead class="bg-light sticky-top" style="z-index: 1;">
+                                        <tr>
+                                            <th class="checkbox-col">
+                                                <div class="form-check m-0">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        [(ngModel)]="selectAllMasiva" (change)="toggleSelectAll()"
+                                                        [id]="'selectAll'">
+                                                </div>
+                                            </th>
+                                            <th>Nombres y DNI</th>
+                                            <th class="text-center">Sector</th>
+                                            <th class="text-center">Edad / Sexo</th>
+                                            <th class="text-center">Condición</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let c of ciudadanosParaAsignar">
+                                            <td class="checkbox-col align-middle">
+                                                <div class="form-check m-0 d-flex justify-content-center">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        [(ngModel)]="c._selected" (change)="checkIfAllSelected()">
+                                                </div>
+                                            </td>
+                                            <td class="align-middle">
+                                                <strong>{{ c.nombres }}</strong><br>
+                                                <small class="text-muted">DNI: {{ c.dni }}</small>
+                                            </td>
+                                            <td class="align-middle text-center"><span
+                                                    class="badge bg-light text-dark border">{{
+                                                    c.sector?.nombre_sector
+                                                    }}</span></td>
+                                            <td class="align-middle text-center">
+                                                <span class="badge border bg-white text-dark me-1">
+                                                    <i class="fas"
+                                                        [ngClass]="c.sexo == 'M' ? 'fa-mars text-primary' : 'fa-venus text-pink'"></i>
+                                                    {{ c.sexo }}
+                                                </span>
+                                                {{ c.edad }} AÑOS
+                                            </td>
+                                            <td class="align-middle text-center">
+                                                <span *ngIf="c.es_padre_madre" class="badge badge-success me-1"
+                                                    title="Padre/Madre"><i class="fas fa-home"></i></span>
+                                                <span *ngIf="c.tiene_discapacidad" class="badge badge-danger"
+                                                    title="Discapacidad"><i class="fas fa-wheelchair"></i></span>
+                                                <span *ngIf="!c.es_padre_madre && !c.tiene_discapacidad"
+                                                    class="text-muted small">-</span>
+                                            </td>
+                                        </tr>
+                                        <tr *ngIf="ciudadanosParaAsignar.length === 0">
+                                            <td colspan="5" class="text-center py-4 text-muted">
+                                                No hay ciudadanos que coincidan con los filtros aplicados.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div *ngIf="!isEventoActivo" class="alert alert-danger mt-3 py-2">
+                                <i class="fas fa-ban me-2"></i> Asignación deshabilitada debido a que el evento no está
+                                en
+                                ejecución.
+                            </div>
+                        </div>
+
+                        <!-- SUCCESS MESSAGE (MASIVA) -->
+                        <div *ngIf="successMasiva" class="text-center py-5 fade-in border rounded bg-light mt-4"
+                            style="border-width: 2px !important; border-color: #28a745 !important;">
+                            <div class="mb-3">
+                                <i class="fas fa-check-double text-success" style="font-size: 5rem;"></i>
+                            </div>
+                            <h4 class="fw-bold text-success mb-2">¡Asignación Masiva Exitosa!</h4>
+                            <p class="text-muted mb-4">El beneficio se ha asignado correctamente a <strong>{{
+                                    successMasivaCount }}</strong> ciudadanos.</p>
+                            <button class="btn btn-primary px-4 fw-bold" (click)="resetMasiva()">
+                                <i class="fas fa-arrow-left me-2"></i> Volver a Filtros
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <!-- ==================== TAB 3: LISTA ASIGNADOS ==================== -->
+                    <div *ngIf="activeTab === 'lista'" class="fade-in">
+                        <div *ngIf="loadingLista" class="text-center py-5">
+                            <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+                            <p class="mt-3">Cargando lista de asignados...</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <!-- NUEVO PANEL DE FILTROS DE LISTA Y EXPORTACIÓN -->
+                            <div class="card border-0 shadow-none bg-light mb-4 rounded-lg overflow-hidden border">
+                                <div class="card-header bg-white py-2 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0 fw-bold text-dark"><i
+                                                class="fas fa-filter me-2 text-primary"></i> Opciones de Vista y
+                                            Exportación</h6>
+                                        <button class="btn btn-outline-danger btn-sm fw-bold px-3"
+                                            (click)="exportarPdf()" [disabled]="asignadosFiltrados.length === 0">
+                                            <i class="fas fa-file-pdf me-1"></i> Exportar a PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body py-3">
+                                    <div class="row g-3">
+                                        <!-- Filtro Rango -->
+                                        <div class="col-md-4">
+                                            <label class="ds-crud-label mb-1">Segmento de Registros (Rango)</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-white">Desde #</span>
+                                                <input type="number" class="form-control"
+                                                    [(ngModel)]="filtroInicioRango" (change)="aplicarFiltrosLista()"
+                                                    min="1" placeholder="Ej: 1">
+                                                <span class="input-group-text bg-white">Hasta #</span>
+                                                <input type="number" class="form-control" [(ngModel)]="filtroFinRango"
+                                                    (change)="aplicarFiltrosLista()" [min]="filtroInicioRango"
+                                                    placeholder="Ej: 100">
+                                            </div>
+                                        </div>
+
+                                        <!-- Filtro Sector -->
+                                        <div class="col-md-2">
+                                            <label class="ds-crud-label mb-1">Sector</label>
+                                            <select id="sector_lista_filter"
+                                                class="form-select form-select-sm ds-select2"
+                                                [(ngModel)]="filtroSectorLista" (change)="aplicarFiltrosLista()">
+                                                <option value="">TODOS</option>
+                                                <option *ngFor="let s of sectores" [value]="s.id_sector">{{
+                                                    s.nombre_sector }}</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Filtro Operador -->
+                                        <div class="col-md-3">
+                                            <label class="ds-crud-label mb-1">Registrado Por (Operador)</label>
+                                            <select class="form-select form-select-sm ds-crud-filter"
+                                                [(ngModel)]="filtroOperadorLista" (change)="aplicarFiltrosLista()">
+                                                <option value="">TODOS LOS OPERADORES</option>
+                                                <option *ngFor="let op of uniqueOperadores" [value]="op.id">{{ op.name
+                                                    }}</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Responsable que aparecerá en el PDF -->
+                                        <div class="col-md-3">
+                                            <label class="ds-crud-label mb-1">Firma Responsable (PDF)</label>
+                                            <select id="responsable_pdf_select"
+                                                class="form-select form-select-sm ds-select2"
+                                                [(ngModel)]="filtroResponsablePdf">
+                                                <option value="">-- Sin responsable --</option>
+                                                <ng-container *ngFor="let ev of eventos">
+                                                    <ng-container *ngIf="ev.id_evento == selectedEventoId">
+                                                        <option *ngFor="let r of ev.responsables" [value]="r.id">
+                                                            {{ r.first_name }} {{ r.last_name }}
+                                                        </option>
+                                                    </ng-container>
+                                                </ng-container>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 small text-muted">
+                                        <i class="fas fa-info-circle me-1 text-primary"></i>
+                                        Mostrando registros del <strong>{{ filtroInicioRango }}</strong> al <strong>{{
+                                            Math.min(filtroFinRango, ciudadanosAsignados.length) }}</strong>
+                                        de un total de {{ ciudadanosAsignados.length }} asignaciones en este evento.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0 text-dark">Lista de Beneficiarios Filtrada:</h6>
+                                <span class="badge bg-success py-1 px-3">Total en vista: {{ asignadosFiltrados.length
+                                    }}</span>
+                            </div>
+                        </div>
+
+                        <div *ngIf="!loadingLista" class="table-responsive">
+                            <table *ngIf="mostrarTabla" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger"
+                                [ngClass]="cv.tableClasses || 'table table-hover table-striped table-sm'"
+                                class="table mb-0 w-100 ds-crud-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;">#</th>
+                                        <th>Beneficiario</th>
+                                        <th>Sector</th>
+                                        <th>Fecha de Registro</th>
+                                        <th>Registrado Por</th>
+                                        <th class="text-center" style="width: 100px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let ca of asignadosFiltrados; let i = index">
+                                        <td class="align-middle fw-bold text-muted">{{ filtroInicioRango + i }}</td>
+                                        <td class="align-middle">
+                                            <strong>{{ ca.ciudadano?.nombres }}</strong><br>
+                                            <small class="text-muted"><i class="fas fa-id-card me-1"></i>DNI: {{
+                                                ca.ciudadano?.dni }}</small>
+                                        </td>
+                                        <td class="align-middle">
+                                            <span class="badge bg-light text-dark border px-2 py-1">
+                                                <i class="fas fa-map-marker-alt me-1 text-primary"></i>
+                                                {{ ca.ciudadano?.sector?.nombre_sector }}
+                                            </span>
+                                        </td>
+                                        <td class="align-middle small">
+                                            <i class="far fa-clock me-1 text-muted"></i>
+                                            {{ ca.fecha_entrega | date:'dd/MM/yyyy HH:mm' }}
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-light rounded-circle p-1 me-2 d-flex align-items-center justify-content-center"
+                                                    style="width: 24px; height: 24px;">
+                                                    <i class="fas fa-user text-muted" style="font-size: 10px;"></i>
+                                                </div>
+                                                <span class="small">{{ ca.operador?.name }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <button class="btn btn-xs btn-outline-danger" title="Revocar Asignación"
+                                                [disabled]="!isEventoActivo" (click)="revocarEntrega(ca.id_entrega)">
+                                                <i class="fas fa-undo-alt"></i> Revocar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div *ngIf="!isEventoActivo" class="alert alert-warning mt-3 py-2 small">
+                            <i class="fas fa-exclamation-triangle me-2"></i> Solo se pueden revocar entregas de eventos
+                            que se encuentren en estado Activo.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>

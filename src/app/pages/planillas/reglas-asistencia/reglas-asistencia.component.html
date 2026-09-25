@@ -1,0 +1,339 @@
+<!-- Page Header (patrón de diseño) -->
+<app-page-header
+  title="Reglas de Asistencia"
+  subtitle="Configuración de políticas de asistencia"
+  [breadcrumbs]="breadcrumbs">
+</app-page-header>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+          <!-- Toolbar -->
+          <div class="d-flex justify-content-between align-items-center flex-wrap px-3 py-2 border-bottom bg-white"
+               [class.flex-row-reverse]="layoutConfig.actionsPosition === 'start'">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+              <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                <i class="fas fa-user-clock mr-1"></i> Listado de Reglas
+              </h3>
+              <span class="badge bg-primary align-self-center">{{ reglas.length }} registros</span>
+              <button type="button" class="btn btn-sm btn-outline-secondary btn-flat" (click)="openLayoutConfig()" title="Configurar colores y vista">
+                <i class="fas fa-palette"></i>
+              </button>
+              <ng-container *ngIf="cv.showExportButtons">
+                <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass">
+                  <i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}
+                </button>
+                <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass">
+                  <i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}
+                </button>
+                <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass">
+                  <i [class]="cv.printBtnIcon + ' mr-1'"></i> {{ cv.printBtnLabel }}
+                </button>
+              </ng-container>
+              <button *ngIf="!cv.showExportButtons" type="button" class="btn btn-sm btn-flat" [ngClass]="cv.exportBtnClass">
+                <i [class]="cv.exportBtnIcon + ' mr-1'"></i> {{ cv.exportBtnLabel }}
+              </button>
+            </div>
+            <div class="ms-auto flex-shrink-0">
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.newBtnClass" (click)="openCreate()">
+                <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{ cv.newBtnLabel }} Regla
+              </button>
+            </div>
+          </div>
+
+          <!-- Contenido: spinner + tabla (patrón de diseño) -->
+          <div class="card-body p-0">
+            <app-loading-spinner [loading]="loading" message="Cargando reglas de asistencia..."></app-loading-spinner>
+
+            <div *ngIf="!loading" class="table-responsive">
+              <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger"
+                     class="table mb-0 w-100" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize">
+                <thead class="bg-light">
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize">Nombre</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Tolerancia</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Antes falta</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Divisor</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Default</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let r of reglas">
+                    <td>{{ r.name }}</td>
+                    <td class="text-center">{{ r.late_tolerance_minutes }} min</td>
+                    <td class="text-center">{{ r.lates_before_absence }}</td>
+                    <td class="text-center">{{ r.absence_day_value_divisor }}</td>
+                    <td class="text-center">
+                      <app-status-badge [status]="r.is_active || false"></app-status-badge>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge" [ngClass]="r.is_default ? 'badge-primary' : 'badge-light'">
+                        {{ r.is_default ? 'Sí' : 'No' }}
+                      </span>
+                    </td>
+                    <td class="text-right">
+                      <div class="d-flex justify-content-end align-items-center">
+                        <button class="btn btn-sm btn-secondary mr-1" [disabled]="r.is_default" (click)="setDefault(r)" title="Hacer Default">
+                          <i class="fas fa-star"></i>
+                        </button>
+                        <app-crud-actions
+                          [showView]="layoutConfig.showViewButton"
+                          [showEdit]="layoutConfig.showEditButton"
+                          [showDelete]="layoutConfig.showDeleteButton"
+                          (onView)="openView(r)"
+                          (onEdit)="openEdit(r)"
+                          (onDelete)="delete(r)">
+                        </app-crud-actions>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div *ngIf="reglas.length === 0" class="text-center py-5">
+                <i class="fas fa-user-clock fa-2x text-muted mb-3"></i>
+                <h6 class="text-muted">No se encontraron reglas de asistencia</h6>
+                <p class="text-muted small">Crea una nueva regla para comenzar.</p>
+                <button class="btn btn-sm" [ngClass]="cv.newBtnClass" (click)="openCreate()">
+                  <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{ cv.newBtnLabel }} Regla
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Edit/Create Modal -->
+<div class="modal fade" #editModal tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" [ngClass]="layoutConfig.modalSize">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+           [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title">
+          <i class="fas mr-1" [ngClass]="isEdit ? 'fa-edit' : 'fa-plus-circle'"></i>
+          {{ isEdit ? mc.titleEdit : mc.titleAdd }} - Regla de Asistencia
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeEdit()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="modal-body" [style.background]="mc.bodyBg">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="form-group">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="name" placeholder="Ej. Regla General 2026">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Tolerancia Tardanza (min) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" [ngClass]="mc.inputSize" formControlName="late_tolerance_minutes">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Máx. Tardanza (min)</label>
+                <input type="number" class="form-control" [ngClass]="mc.inputSize" formControlName="late_max_minutes">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Tardanzas antes de falta</label>
+                <input type="number" class="form-control" [ngClass]="mc.inputSize" formControlName="lates_before_absence">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Divisor día</label>
+                <input type="number" class="form-control" [ngClass]="mc.inputSize" formControlName="absence_day_value_divisor">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Tol. Salida Temprana (min)</label>
+                <input type="number" class="form-control" [ngClass]="mc.inputSize" formControlName="early_departure_tolerance_minutes">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Descuento/min tardanza</label>
+                <input type="number" step="0.0001" class="form-control" [ngClass]="mc.inputSize" formControlName="discount_per_late_minute">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Descuento/min salida</label>
+                <input type="number" step="0.0001" class="form-control" [ngClass]="mc.inputSize" formControlName="discount_per_early_minute">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <div class="custom-control custom-switch mb-3">
+                <input type="checkbox" class="custom-control-input" id="accum" formControlName="accumulate_lates">
+                <label class="custom-control-label" [style.font-weight]="mc.labelWeight" for="accum">Acumular minutos de tardanza para descuento</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="row border-top pt-3 mt-2">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Descuento por falta (días)</label>
+                <input type="number" step="0.01" class="form-control" [ngClass]="mc.inputSize" formControlName="discount_per_absence_day">
+              </div>
+            </div>
+            <div class="col-md-6 d-flex align-items-center">
+              <div class="custom-control custom-switch mt-3">
+                <input type="checkbox" class="custom-control-input" id="absFromSal" formControlName="discount_absence_from_salary">
+                <label class="custom-control-label" [style.font-weight]="mc.labelWeight" for="absFromSal">Descontar falta del salario</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-md-12">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="raActive" formControlName="is_active">
+                <label class="custom-control-label" [style.font-weight]="mc.labelWeight" for="raActive">Regla Activa</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+          <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeEdit()">
+            <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}
+          </button>
+          <button type="submit" class="btn btn-sm" [ngClass]="mc.saveBtnClass" [disabled]="form.invalid || saving">
+            <i [class]="mc.saveBtnIcon + ' mr-1'"></i> {{ isEdit ? 'Actualizar' : mc.saveBtnLabel }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal fade" #viewModal tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+           [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title"><i [class]="mc.headerIcon + ' mr-1'"></i> Detalle de la Regla</h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeView()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg" *ngIf="selected">
+        <table class="table table-sm table-borderless" [style.font-size]="cv.fontSize">
+          <tbody>
+            <tr><th style="width: 40%" [style.color]="mc.labelColor">Nombre:</th><td>{{ selected.name }}</td></tr>
+            <tr><th [style.color]="mc.labelColor">Tolerancia Tardanza:</th><td>{{ selected.late_tolerance_minutes }} min</td></tr>
+            <tr><th [style.color]="mc.labelColor">Máx. Tardanza:</th><td>{{ selected.late_max_minutes }} min</td></tr>
+            <tr><th [style.color]="mc.labelColor">Antes de falta:</th><td>{{ selected.lates_before_absence }} tardanzas</td></tr>
+            <tr><th [style.color]="mc.labelColor">Divisor día:</th><td>{{ selected.absence_day_value_divisor }}</td></tr>
+            <tr><th [style.color]="mc.labelColor">Activa:</th><td><app-status-badge [status]="selected.is_active || false"></app-status-badge></td></tr>
+            <tr>
+              <th [style.color]="mc.labelColor">Es Default:</th>
+              <td>
+                <span class="badge" [ngClass]="selected.is_default ? 'badge-primary' : 'badge-light'">
+                  {{ selected.is_default ? 'Sí' : 'No' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeView()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Configurar vista CRUD -->
+<div class="modal fade" #configModal tabindex="-1" role="dialog" aria-labelledby="configModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-secondary text-white">
+        <h5 class="modal-title" id="configModalLabel"><i class="fas fa-palette mr-1"></i> Configurar vista del CRUD</h5>
+        <button type="button" class="close text-white" (click)="closeLayoutConfig()" aria-label="Cerrar">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small">Los cambios se guardan para esta pantalla y se aplican al instante.</p>
+
+        <h6 class="mt-3 mb-2">Tema / Colores</h6>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button *ngFor="let preset of presetThemes" type="button" class="btn btn-sm" [ngClass]="preset.theme.btnCreateClass || 'btn-outline-primary'"
+                  (click)="applyPresetTheme(preset)">
+            {{ preset.name }}
+          </button>
+        </div>
+
+        <h6 class="mt-3 mb-2">Ubicación del botón "Nueva Regla"</h6>
+        <div class="btn-group btn-group-sm mb-3">
+          <button type="button" class="btn" [class.btn-primary]="layoutConfig.actionsPosition === 'end'" [class.btn-outline-secondary]="layoutConfig.actionsPosition !== 'end'"
+                  (click)="setActionsPosition('end')">Derecha</button>
+          <button type="button" class="btn" [class.btn-primary]="layoutConfig.actionsPosition === 'start'" [class.btn-outline-secondary]="layoutConfig.actionsPosition !== 'start'"
+                  (click)="setActionsPosition('start')">Izquierda</button>
+        </div>
+
+        <h6 class="mt-3 mb-2">Tamaño del modal Crear/Editar</h6>
+        <div class="btn-group btn-group-sm mb-3">
+          <button type="button" class="btn" [class.btn-primary]="layoutConfig.modalSize === 'modal-sm'" [class.btn-outline-secondary]="layoutConfig.modalSize !== 'modal-sm'"
+                  (click)="setModalSize('modal-sm')">Pequeño</button>
+          <button type="button" class="btn" [class.btn-primary]="layoutConfig.modalSize === 'modal-lg'" [class.btn-outline-secondary]="layoutConfig.modalSize !== 'modal-lg'"
+                  (click)="setModalSize('modal-lg')">Grande</button>
+          <button type="button" class="btn" [class.btn-primary]="layoutConfig.modalSize === 'modal-xl'" [class.btn-outline-secondary]="layoutConfig.modalSize !== 'modal-xl'"
+                  (click)="setModalSize('modal-xl')">Extra grande</button>
+        </div>
+
+        <h6 class="mt-3 mb-2">Mostrar botones en la tabla</h6>
+        <div class="custom-control custom-switch mb-1">
+          <input type="checkbox" class="custom-control-input" id="cfgView" [checked]="layoutConfig.showViewButton" (change)="setShowView(!layoutConfig.showViewButton)">
+          <label class="custom-control-label" for="cfgView">Ver</label>
+        </div>
+        <div class="custom-control custom-switch mb-1">
+          <input type="checkbox" class="custom-control-input" id="cfgEdit" [checked]="layoutConfig.showEditButton" (change)="setShowEdit(!layoutConfig.showEditButton)">
+          <label class="custom-control-label" for="cfgEdit">Editar</label>
+        </div>
+        <div class="custom-control custom-switch mb-1">
+          <input type="checkbox" class="custom-control-input" id="cfgDelete" [checked]="layoutConfig.showDeleteButton" (change)="setShowDelete(!layoutConfig.showDeleteButton)">
+          <label class="custom-control-label" for="cfgDelete">Eliminar</label>
+        </div>
+        <div class="custom-control custom-switch mb-2">
+          <input type="checkbox" class="custom-control-input" id="cfgExport" [checked]="layoutConfig.showExportButtons" (change)="setShowExport(!layoutConfig.showExportButtons)">
+          <label class="custom-control-label" for="cfgExport">Botones exportar (Excel, PDF, Imprimir)</label>
+        </div>
+
+        <hr>
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="resetLayoutConfig()">
+          <i class="fas fa-undo mr-1"></i> Restaurar valores por defecto
+        </button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="closeLayoutConfig()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

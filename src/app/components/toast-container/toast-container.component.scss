@@ -1,0 +1,211 @@
+/* Contenedor: posición fija según config (top-right, etc.) */
+.toast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.toast-list--top-right {
+  top: 0.75rem;
+  right: 0.75rem;
+  left: auto;
+  bottom: auto;
+  align-items: flex-end;
+}
+
+.toast-list--top-left {
+  top: 0.75rem;
+  left: 0.75rem;
+  right: auto;
+  bottom: auto;
+  align-items: flex-start;
+}
+
+.toast-list--bottom-right {
+  bottom: 0.75rem;
+  right: 0.75rem;
+  left: auto;
+  top: auto;
+  align-items: flex-end;
+}
+
+.toast-list--bottom-left {
+  bottom: 0.75rem;
+  left: 0.75rem;
+  right: auto;
+  top: auto;
+  align-items: flex-start;
+}
+
+.toast-list--top-center {
+  top: 0.75rem;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translateX(-50%);
+  align-items: center;
+}
+
+.toast-list--bottom-center {
+  bottom: 0.75rem;
+  left: 50%;
+  right: auto;
+  top: auto;
+  transform: translateX(-50%);
+  align-items: center;
+}
+
+.toast-list--top-full-width {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: auto;
+  align-items: stretch;
+  padding: 0.5rem 1rem;
+}
+
+.toast-list--bottom-full-width {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: auto;
+  align-items: stretch;
+  padding: 0.5rem 1rem;
+}
+
+/* Centro de pantalla para toast de comunicado */
+.toast-list--center {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.toast-item--broadcast {
+  width: 90vw;
+  max-width: 720px;
+  min-width: 320px;
+}
+
+.toast-item__body--marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  padding-right: 2rem;
+}
+
+.toast-item__marquee-text {
+  display: inline-block;
+  padding-left: 100%;
+  animation: toast-marquee 25s linear infinite;
+}
+
+@keyframes toast-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* Toast compacto - ancho aplicado por binding desde config */
+.toast-item {
+  pointer-events: auto;
+  min-width: 0;
+  border-left: 4px solid;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+/* Full width: toast ocupa el ancho del contenedor */
+.toast-list--top-full-width .toast-item,
+.toast-list--bottom-full-width .toast-item {
+  width: 100%;
+  max-width: 100%;
+}
+
+.toast-item__header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.toast-item__icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.toast-item__title {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toast-item__close {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 0.2rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  opacity: 0.85;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.toast-item__close:hover {
+  opacity: 1;
+}
+
+.toast-item__body {
+  padding: 0.4rem 0.6rem 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  word-break: break-word;
+  /* Mismo color que la cabecera para toast de un solo color */
+  background: var(--toast-color);
+  color: var(--toast-text);
+}
+
+/* Barra de progreso: mismo color que la cabecera del toast */
+.toast-item__progress {
+  display: block;
+  height: 4px;
+  min-height: 4px;
+  background: transparent;
+  border-radius: 0 0 2px 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.toast-item__progress::before {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--toast-color);
+  border-radius: 0 0 0 2px;
+  animation: toast-progress-shrink var(--toast-duration, 3s) linear forwards;
+  transform-origin: left;
+}
+
+@keyframes toast-progress-shrink {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}

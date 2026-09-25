@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Administrador de Menús</title>
+    <style>
+        body { font-family: Arial; margin: 0; padding: 20px; background: #f0f0f0; }
+        .sidebar { width: 250px; background: #333; color: white; padding: 20px; float: left; height: 100vh; }
+        .content { margin-left: 270px; padding: 20px; background: white; min-height: 100vh; }
+        .menu-item { margin: 10px 0; }
+        .menu-item a { color: white; text-decoration: none; display: block; padding: 10px; background: #555; border-radius: 5px; }
+        .menu-item a:hover { background: #007bff; }
+        h1 { color: #333; }
+        h2 { color: #007bff; }
+        .card { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>🔧 ADMINISTRACIÓN</h2>
+        
+        <div class="menu-item">
+            <a href="http://localhost:8000/dashboard" target="_blank">🏠 Dashboard Backend</a>
+        </div>
+        
+        <div class="menu-item">
+            <a href="http://localhost:8000/admin/menus" target="_blank">📝 Lista de Menús</a>
+        </div>
+        
+        <div class="menu-item">
+            <a href="http://localhost:8000/admin/menus/create" target="_blank">➕ Crear Menú</a>
+        </div>
+        
+        <div class="menu-item">
+            <a href="http://localhost:8000/admin/menus/hierarchy" target="_blank">🌳 Jerarquía</a>
+        </div>
+        
+        <div class="menu-item">
+            <a href="http://localhost:8000/admin/role-menus" target="_blank">🛡️ Permisos y Roles</a>
+        </div>
+        
+        <div class="menu-item">
+            <a href="http://localhost:8000/admin/menu-system-tools" target="_blank">🔧 Herramientas</a>
+        </div>
+        
+        <div class="menu-item">
+            <a href="http://localhost:8000/admin/menu-management" target="_blank">🎛️ Panel de Gestión</a>
+        </div>
+        
+        <h2>🚀 SISTEMA</h2>
+        
+        <div class="menu-item">
+            <a href="http://localhost:8000/test-menu" target="_blank">🐛 Página de Prueba</a>
+        </div>
+        
+        <div class="menu-item">
+            <a href="http://localhost:8000/download/start-project.bat" target="_blank">📥 Script .bat</a>
+        </div>
+        
+        <div class="menu-item">
+            <a href="http://localhost:8000/download/start-project.ps1" target="_blank">📥 Script .ps1</a>
+        </div>
+    </div>
+    
+    <div class="content">
+        <h1>🎉 Administrador de Menús Dinámicos</h1>
+        
+        <div class="card">
+            <h2>✅ Sistema Activo</h2>
+            <p>El administrador de menús está funcionando correctamente.</p>
+        </div>
+        
+        <div class="card">
+            <h2>📝 Gestión de Menús</h2>
+            <p>Administra todos los menús del sistema desde el sidebar izquierdo.</p>
+            <a href="http://localhost:8000/admin/menus" target="_blank" style="color: #007bff;">Ir a Gestión de Menús</a>
+        </div>
+        
+        <div class="card">
+            <h2>🛡️ Permisos y Roles</h2>
+            <p>Configura los permisos de acceso según los roles de usuario.</p>
+            <a href="http://localhost:8000/admin/role-menus" target="_blank" style="color: #007bff;">Configurar Permisos</a>
+        </div>
+        
+        <div class="card">
+            <h2>🔧 Herramientas del Sistema</h2>
+            <p>Utiliza las herramientas avanzadas para mantener el sistema.</p>
+            <a href="http://localhost:8000/admin/menu-system-tools" target="_blank" style="color: #007bff;">Abrir Herramientas</a>
+        </div>
+        
+        <div class="card">
+            <h2>💡 Instrucciones</h2>
+            <p><strong>Sidebar Izquierdo:</strong> Contiene todos los enlaces del administrador</p>
+            <p><strong>Enlaces Directos:</strong> Abren el backend Laravel en nueva pestaña</p>
+            <p><strong>Sin Dependencias:</strong> HTML puro - No se paraliza</p>
+        </div>
+    </div>
+</body>
+</html>

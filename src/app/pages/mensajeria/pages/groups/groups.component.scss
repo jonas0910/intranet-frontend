@@ -1,0 +1,165 @@
+.groups-container {
+  padding: 1rem;
+
+  .card-widget {
+    transition: all 0.3s ease;
+    border: none;
+    margin-bottom: 1rem;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .card-header {
+      border-radius: 8px 8px 0 0;
+      padding: 1rem;
+    }
+
+    .widget-user-header {
+      .widget-user-username {
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      .widget-user-desc {
+        font-size: 0.85rem;
+      }
+    }
+
+    .latest-message {
+      background: #f8f9fa;
+      padding: 0.5rem;
+      border-radius: 4px;
+      margin-top: 0.5rem;
+
+      small {
+        display: block;
+        line-height: 1.4;
+      }
+    }
+
+    .card-footer {
+      background: #fff;
+      border-top: 1px solid #e9ecef;
+
+      .btn-group {
+        .btn {
+          flex: 1;
+        }
+      }
+    }
+  }
+}
+
+// Modal styles
+.modal {
+  &.show {
+    opacity: 1;
+  }
+
+  .modal-dialog {
+    margin-top: 3rem;
+  }
+
+  .modal-content {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal-header {
+    border-radius: 8px 8px 0 0;
+    border-bottom: none;
+  }
+
+  .members-list {
+    .custom-control {
+      padding: 0.75rem;
+      border-bottom: 1px solid #e9ecef;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: #f8f9fa;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .custom-control-label {
+        cursor: pointer;
+        width: 100%;
+        display: flex;
+        align-items: center;
+
+        small {
+          margin-left: auto;
+        }
+      }
+    }
+  }
+}
+
+.modal-backdrop {
+  &.show {
+    opacity: 0.5;
+  }
+}
+
+// Stats cards
+.info-box {
+  min-height: 90px;
+  cursor: default;
+
+  .info-box-icon {
+    border-radius: 8px;
+    width: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+      font-size: 2rem;
+    }
+  }
+
+  .info-box-content {
+    padding-left: 80px;
+
+    .info-box-text {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .info-box-number {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .groups-container {
+    padding: 0.5rem;
+
+    .card-widget {
+      margin-bottom: 0.75rem;
+    }
+  }
+
+  .modal-dialog {
+    margin: 1rem;
+  }
+}
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,176 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1>{{ editMode ? 'Editar' : 'Crear' }} Proyecto</h1></div>
+      <div class="col-sm-6 text-right">
+        <a routerLink="/gestor-contenidos/proyectos" class="btn btn-default"><i class="fas fa-arrow-left mr-1"></i>Volver</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="text-center py-5" *ngIf="loading"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+    <div class="row" *ngIf="!loading">
+      <div class="col-md-8">
+        <div class="card card-primary card-outline">
+          <div class="card-header"><h3 class="card-title">Información del Proyecto</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Título *</label>
+              <input type="text" class="form-control" [(ngModel)]="proyecto.titulo" (input)="generarSlug()">
+            </div>
+            <div class="form-group">
+              <label>Slug</label>
+              <input type="text" class="form-control" [(ngModel)]="proyecto.slug" (input)="slugManual=true">
+            </div>
+            <div class="form-group">
+              <label>Descripción Corta</label>
+              <textarea class="form-control" rows="3" [(ngModel)]="proyecto.descripcion_corta"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Descripción Completa</label>
+              <textarea id="editor_descripcion" class="form-control" rows="10" [(ngModel)]="proyecto.descripcion_completa"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-secondary card-outline">
+          <div class="card-header"><h3 class="card-title">Detalles del Proyecto</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Objetivos (JSON)</label>
+              <textarea class="form-control" rows="4" [(ngModel)]="proyecto.objetivos" placeholder='["Objetivo 1", "Objetivo 2"]'></textarea>
+            </div>
+            <div class="form-group">
+              <label>Hitos (JSON)</label>
+              <textarea class="form-control" rows="4" [(ngModel)]="proyecto.hitos" placeholder='[{"nombre": "Hito 1", "fecha": "2026-06-01"}]'></textarea>
+            </div>
+            <div class="form-group">
+              <label>Equipo (JSON)</label>
+              <textarea class="form-control" rows="4" [(ngModel)]="proyecto.equipo" placeholder='[{"nombre": "Juan", "rol": "Coordinador"}]'></textarea>
+            </div>
+            <div class="form-group">
+              <label>Observaciones</label>
+              <textarea class="form-control" rows="3" [(ngModel)]="proyecto.observaciones"></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Responsable</label>
+                  <input type="text" class="form-control" [(ngModel)]="proyecto.responsable">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Ubicación</label>
+                  <input type="text" class="form-control" [(ngModel)]="proyecto.ubicacion">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Presupuesto</label>
+                  <input type="number" class="form-control" [(ngModel)]="proyecto.presupuesto" step="0.01">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-info card-outline">
+          <div class="card-header"><h3 class="card-title">SEO</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Meta Título</label>
+              <input type="text" class="form-control" [(ngModel)]="proyecto.meta_titulo" maxlength="70">
+            </div>
+            <div class="form-group mb-0">
+              <label>Meta Descripción</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="proyecto.meta_descripcion" maxlength="160"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card card-success card-outline">
+          <div class="card-header"><h3 class="card-title">Estado y Progreso</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Estado</label>
+              <select class="form-control" [(ngModel)]="proyecto.estado">
+                <option value="planificacion">Planificación</option>
+                <option value="en_curso">En Curso</option>
+                <option value="completado">Completado</option>
+                <option value="pausado">Pausado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Progreso: {{ proyecto.progreso }}%</label>
+              <input type="range" class="custom-range" min="0" max="100" [(ngModel)]="proyecto.progreso">
+              <div class="progress mt-1" style="height:10px">
+                <div class="progress-bar bg-primary" [style.width.%]="proyecto.progreso"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Prioridad</label>
+              <select class="form-control" [(ngModel)]="proyecto.prioridad">
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+                <option value="urgente">Urgente</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-warning card-outline">
+          <div class="card-header"><h3 class="card-title">Fechas</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Fecha Inicio</label>
+              <input type="date" class="form-control" [(ngModel)]="proyecto.fecha_inicio">
+            </div>
+            <div class="form-group">
+              <label>Fecha Fin Estimada</label>
+              <input type="date" class="form-control" [(ngModel)]="proyecto.fecha_fin_estimada">
+            </div>
+            <div class="form-group mb-0" *ngIf="proyecto.fecha_fin_real">
+              <label>Fecha Fin Real</label>
+              <input type="date" class="form-control" [value]="proyecto.fecha_fin_real" readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="custom-control custom-switch mb-2">
+              <input type="checkbox" class="custom-control-input" id="publicado" [(ngModel)]="proyecto.publicado">
+              <label class="custom-control-label" for="publicado">Publicado</label>
+            </div>
+            <div class="custom-control custom-switch mb-3">
+              <input type="checkbox" class="custom-control-input" id="destacado" [(ngModel)]="proyecto.destacado">
+              <label class="custom-control-label" for="destacado">Destacado</label>
+            </div>
+            <div class="form-group">
+              <label>Orden</label>
+              <input type="number" class="form-control" [(ngModel)]="proyecto.orden">
+            </div>
+            <div class="form-group">
+              <label>Imagen Principal (URL)</label>
+              <input type="text" class="form-control" [(ngModel)]="proyecto.imagen_principal">
+              <img *ngIf="proyecto.imagen_principal" [src]="proyecto.imagen_principal" class="img-fluid mt-2 rounded">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block" (click)="guardar()" [disabled]="saving">
+          <i class="fas fa-save mr-1"></i>{{ saving ? 'Guardando...' : 'Guardar Proyecto' }}
+        </button>
+        <a routerLink="/gestor-contenidos/proyectos" class="btn btn-default btn-block">Cancelar</a>
+      </div>
+    </div>
+  </div>
+</section>

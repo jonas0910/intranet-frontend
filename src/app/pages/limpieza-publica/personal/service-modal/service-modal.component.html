@@ -1,0 +1,112 @@
+<div class="modal fade" [class.show]="isVisible" [style.display]="isVisible ? 'block' : 'none'" [style.z-index]="isVisible ? 1100 : -1" tabindex="-1" (click)="onBackdropClick($event)">
+  <div #modalDialog 
+       class="modal-dialog modal-dialog-centered modal-dialog-scrollable" 
+       [style.max-width.px]="900"
+       [style.width.%]="90"
+       [style.margin]="'1.75rem auto'">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-broom me-2"></i>
+          {{ isEditMode ? 'Editar Servicio LP' : 'Nuevo Registro Servicio LP' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="onCancel()" aria-label="Close"></button>
+      </div>
+      
+      <!-- Modal Body -->
+      <div class="modal-body bg-light">
+        <form [formGroup]="serviceForm" (ngSubmit)="onSubmit()">
+          
+          <div class="form-section mb-3">
+            <h6 class="section-title border-bottom pb-2 mb-3">
+              <i class="fas fa-file-contract text-success me-2"></i>
+              Detalles del Personal Limpieza Pública
+            </h6>
+            
+            <div class="row g-3">
+              <!-- Nro de Orden -->
+              <div class="col-md-6">
+                <label class="form-label required">Nro. de Registro / Contrato</label>
+                <input 
+                  #firstInput
+                  type="text" 
+                  class="form-control" 
+                  formControlName="contract_number"
+                  [class.is-invalid]="hasError('contract_number')"
+                  placeholder="Eje: LP-2026-001">
+                <div class="invalid-feedback" *ngIf="hasError('contract_number')">Este campo es requerido</div>
+              </div>
+
+              <!-- Tipo de Servicio -->
+              <div class="col-md-6">
+                <label class="form-label required">Tipo de Contrato</label>
+                <select class="form-select" formControlName="contract_type" [class.is-invalid]="hasError('contract_type')">
+                  <option *ngFor="let opt of typeOptions" [value]="opt.value">{{ opt.label }}</option>
+                </select>
+              </div>
+
+              <!-- Fechas -->
+              <div class="col-md-6">
+                <label class="form-label required">Fecha Inicio</label>
+                <input type="date" class="form-control" formControlName="start_date" [class.is-invalid]="hasError('start_date')">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control" formControlName="end_date">
+              </div>
+
+              <!-- Cargo -->
+              <div class="col-md-6">
+                <label class="form-label required">Cargo / Función</label>
+                <select class="form-select" formControlName="position" [class.is-invalid]="hasError('position')">
+                  <option value="">Seleccione...</option>
+                  <option *ngFor="let pos of positions" [value]="pos.id">{{ pos.name }}</option>
+                </select>
+                <div class="invalid-feedback" *ngIf="hasError('position')">Seleccione un cargo</div>
+              </div>
+
+              <!-- Salario -->
+              <div class="col-md-6">
+                <label class="form-label required">Monto / Pago Semanal/Mensual</label>
+                <div class="input-group">
+                  <span class="input-group-text">S/</span>
+                  <input type="number" class="form-control" formControlName="salary" [class.is-invalid]="hasError('salary')" step="0.01">
+                </div>
+              </div>
+
+              <!-- Estado -->
+              <div class="col-md-6">
+                <label class="form-label required">Estado</label>
+                <select class="form-select" formControlName="status">
+                  <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+                </select>
+              </div>
+
+              <!-- Observaciones -->
+              <div class="col-md-12">
+                <label class="form-label">Notas Adicionales</label>
+                <textarea class="form-control" formControlName="notes" rows="2" placeholder="Observaciones sobre el servicio de limpieza..."></textarea>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="saving">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="saving || serviceForm.invalid">
+          <i class="fas fa-spinner fa-spin me-1" *ngIf="saving"></i>
+          <i class="fas fa-save me-1" *ngIf="!saving"></i>
+          {{ saving ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Guardar') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop fade" [class.show]="isVisible" *ngIf="isVisible" [style.z-index]="1090"></div>

@@ -1,0 +1,150 @@
+/* ── Colores del submódulo Limpieza Pública (verde oscuro) ── */
+.text-lp {
+  color: #2e7d32 !important;
+}
+
+.btn-lp {
+  background-color: #2e7d32 !important;
+  color: white !important;
+  border-color: #2e7d32 !important;
+}
+
+.btn-lp:hover {
+  background-color: #1b5e20 !important;
+}
+
+.badge-lp {
+  background-color: #2e7d32;
+  color: white;
+}
+
+.card-lp {
+  border-top: 3px solid #2e7d32 !important;
+}
+
+.btn-outline-lp {
+  color: #2e7d32;
+  border-color: #2e7d32;
+}
+
+.btn-outline-lp:hover {
+  background-color: #2e7d32;
+  color: white;
+}
+
+/* ── Badges suaves de estado ── */
+.badge-soft-success {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+  border: 1px solid rgba(46, 125, 50, .2);
+}
+
+.badge-soft-info {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border: 1px solid rgba(13, 71, 161, .2);
+}
+
+.badge-soft-secondary {
+  background-color: #f5f5f5;
+  color: #616161;
+  border: 1px solid rgba(97, 97, 97, .2);
+}
+
+.badge-soft-warning {
+  background-color: #fff8e1;
+  color: #e65100;
+  border: 1px solid rgba(230, 81, 0, .2);
+}
+
+/* ── Tabla ── */
+.ds-crud-table thead th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.74rem;
+  letter-spacing: .5px;
+  vertical-align: middle;
+  border-bottom: 0;
+}
+
+.ds-crud-table tbody tr {
+  transition: background .15s;
+}
+
+.ds-crud-table tbody tr:hover {
+  background-color: rgba(46, 125, 50, .03);
+}
+
+/* ── Tabs del modal ── */
+.ds-modal-tabs .nav-link {
+  color: #6c757d;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  font-weight: 500;
+  font-size: .9rem;
+  padding: 10px 20px;
+}
+
+.ds-modal-tabs .nav-link.active {
+  color: #2e7d32;
+  border-bottom-color: #2e7d32;
+  background: transparent;
+}
+
+/* ── Autocomplete ── */
+.autocomplete-dropdown {
+  position: absolute;
+  z-index: 2000;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 0 0 6px 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.autocomplete-item {
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.autocomplete-item:hover {
+  background: #f1f8e9;
+}
+
+/* ── Tabla participantes sticky header ── */
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.ds-crud-table-mini thead th {
+  font-size: 0.68rem;
+  background: #f8f9fa;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6 !important;
+  padding: 8px 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scale-75 {
+  display: inline-block;
+  transform: scale(0.75);
+}
+
+.italic {
+  font-style: italic;
+}
+
+.animate__animated {
+  --animate-duration: 0.4s;
+}

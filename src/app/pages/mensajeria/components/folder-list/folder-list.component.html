@@ -1,0 +1,264 @@
+<!-- Folder List -->
+<div class="folder-list-container">
+  <!-- Header -->
+  <div class="folder-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">
+        <i class="fas fa-folder text-primary mr-2"></i>
+        Carpetas
+        <span class="badge badge-primary ml-2" *ngIf="totalUnreadCount > 0">
+          {{ formatUnreadCount(totalUnreadCount) }}
+        </span>
+      </h6>
+      <div class="folder-actions">
+        <button type="button" 
+                class="btn btn-outline-secondary btn-sm"
+                (click)="onRefresh()"
+                [disabled]="loading"
+                title="Actualizar">
+          <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+        </button>
+        <button type="button" 
+                class="btn btn-primary btn-sm ml-1"
+                (click)="onCreateFolder()"
+                *ngIf="showCreateButton"
+                title="Nueva carpeta">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Folders -->
+  <div class="folder-section" *ngIf="hasSystemFolders">
+    <div class="section-header">
+      <small class="text-muted font-weight-bold">CARPETAS DEL SISTEMA</small>
+    </div>
+    <div class="folder-list">
+      <div class="folder-item system-folder"
+           *ngFor="let folder of systemFolders"
+           [class.selected]="isFolderSelected(folder)"
+           (click)="onFolderClick(folder)">
+        <div class="folder-content">
+          <div class="folder-icon">
+            <i [class]="getFolderIcon(folder)" 
+               [style.color]="getFolderColor(folder)"></i>
+          </div>
+          <div class="folder-info flex-grow-1">
+            <div class="folder-name">{{ folder.name }}</div>
+            <div class="folder-count text-muted" *ngIf="folder.message_count > 0">
+              <small>{{ folder.message_count }} mensajes</small>
+            </div>
+          </div>
+          <div class="folder-badge" *ngIf="folder.unread_count > 0">
+            <span class="badge badge-sm" 
+                  [class]="getUnreadBadgeClass(folder)">
+              {{ formatUnreadCount(folder.unread_count) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Folders -->
+  <div class="folder-section" *ngIf="hasCustomFolders || creatingFolder">
+    <div class="section-header">
+      <small class="text-muted font-weight-bold">CARPETAS PERSONALIZADAS</small>
+    </div>
+    
+    <!-- New Folder Form -->
+    <div class="new-folder-form" *ngIf="creatingFolder">
+      <div class="card border-primary">
+        <div class="card-body p-2">
+          <div class="form-group mb-2">
+            <input type="text" 
+                   class="form-control form-control-sm" 
+                   [(ngModel)]="newFolderName"
+                   placeholder="Nombre de la carpeta"
+                   maxlength="50"
+                   (keyup.enter)="onSaveNewFolder()"
+                   (keyup.escape)="onCancelNewFolder()">
+          </div>
+          
+          <!-- Icon and Color Selection -->
+          <div class="row mb-2">
+            <div class="col-6">
+              <label class="form-label-sm">Icono:</label>
+              <select class="form-control form-control-sm" 
+                      [(ngModel)]="newFolderIcon">
+                <option *ngFor="let icon of getIconOptions()" 
+                        [value]="icon">
+                  {{ icon.replace('fas fa-', '') }}
+                </option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label-sm">Color:</label>
+              <select class="form-control form-control-sm" 
+                      [(ngModel)]="newFolderColor">
+                <option *ngFor="let color of getColorOptions()" 
+                        [value]="color"
+                        [style.background-color]="color">
+                  {{ color }}
+                </option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Preview -->
+          <div class="folder-preview mb-2">
+            <div class="folder-item preview">
+              <div class="folder-content">
+                <div class="folder-icon">
+                  <i [class]="newFolderIcon" 
+                     [style.color]="newFolderColor"></i>
+                </div>
+                <div class="folder-info flex-grow-1">
+                  <div class="folder-name">
+                    {{ newFolderName || 'Nueva carpeta' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Actions -->
+          <div class="d-flex justify-content-end">
+            <button type="button" 
+                    class="btn btn-secondary btn-sm mr-2"
+                    (click)="onCancelNewFolder()">
+              Cancelar
+            </button>
+            <button type="button" 
+                    class="btn btn-primary btn-sm"
+                    (click)="onSaveNewFolder()"
+                    [disabled]="!newFolderName.trim()">
+              Crear
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Folder Tree -->
+    <div class="folder-list" 
+         cdkDropList
+         [cdkDropListData]="customFolders"
+         (cdkDropListDropped)="onFolderDrop($event)"
+         *ngIf="hasCustomFolders">
+      <ng-container *ngFor="let folder of customFolders">
+        <ng-container *ngTemplateOutlet="folderTemplate; context: { folder: folder, level: 0 }">
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state text-center py-3" 
+       *ngIf="!loading && !hasSystemFolders && !hasCustomFolders && !creatingFolder">
+    <i class="fas fa-folder-open fa-2x text-muted mb-2"></i>
+    <p class="text-muted mb-2">No hay carpetas disponibles</p>
+    <button type="button" 
+            class="btn btn-primary btn-sm"
+            (click)="onCreateFolder()"
+            *ngIf="showCreateButton">
+      <i class="fas fa-plus mr-1"></i>
+      Crear primera carpeta
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state text-center py-3" *ngIf="loading">
+    <div class="spinner-border spinner-border-sm text-primary" role="status">
+      <span class="sr-only">Cargando carpetas...</span>
+    </div>
+  </div>
+</div>
+
+<!-- Recursive Folder Template -->
+<ng-template #folderTemplate let-folder="folder" let-level="level">
+  <div class="folder-item custom-folder"
+       [class.selected]="isFolderSelected(folder)"
+       [class.has-children]="hasChildren(folder)"
+       [style.padding-left.px]="level * 20 + 12"
+       cdkDrag
+       [cdkDragDisabled]="!canMoveFolder(folder)"
+       (click)="onFolderClick(folder)">
+    
+    <div class="folder-content">
+      <!-- Expand/Collapse Button -->
+      <button type="button" 
+              class="btn btn-link btn-sm expand-btn"
+              *ngIf="hasChildren(folder) && collapsible"
+              (click)="onToggleExpand(folder, $event)">
+        <i class="fas" 
+           [class.fa-chevron-right]="!isFolderExpanded(folder)"
+           [class.fa-chevron-down]="isFolderExpanded(folder)"></i>
+      </button>
+      
+      <!-- Folder Icon -->
+      <div class="folder-icon">
+        <i [class]="getFolderIcon(folder)" 
+           [style.color]="getFolderColor(folder)"></i>
+      </div>
+      
+      <!-- Folder Info -->
+      <div class="folder-info flex-grow-1">
+        <!-- Editable Name -->
+        <div class="folder-name" *ngIf="!isFolderEditing(folder)">
+          {{ folder.name }}
+        </div>
+        <input type="text" 
+               class="form-control form-control-sm folder-name-input"
+               *ngIf="isFolderEditing(folder)"
+               [value]="folder.name"
+               (keyup.enter)="onSaveEditFolder(folder, $event.target.value)"
+               (keyup.escape)="onCancelEditFolder()"
+               (blur)="onSaveEditFolder(folder, $event.target.value)"
+               #editInput>
+        
+        <!-- Folder Stats -->
+        <div class="folder-count text-muted" *ngIf="folder.message_count > 0">
+          <small>{{ folder.message_count }} mensajes</small>
+        </div>
+      </div>
+      
+      <!-- Unread Badge -->
+      <div class="folder-badge" *ngIf="folder.unread_count > 0">
+        <span class="badge badge-sm" 
+              [class]="getUnreadBadgeClass(folder)">
+          {{ formatUnreadCount(folder.unread_count) }}
+        </span>
+      </div>
+      
+      <!-- Actions -->
+      <div class="folder-actions">
+        <div class="btn-group btn-group-sm">
+          <button type="button" 
+                  class="btn btn-outline-secondary btn-sm"
+                  (click)="onEditFolder(folder, $event)"
+                  *ngIf="canEditFolder(folder)"
+                  title="Editar">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button type="button" 
+                  class="btn btn-outline-danger btn-sm"
+                  (click)="onDeleteFolder(folder, $event)"
+                  *ngIf="canDeleteFolder(folder)"
+                  title="Eliminar">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Children Folders -->
+  <ng-container *ngIf="hasChildren(folder) && (!collapsible || isFolderExpanded(folder))">
+    <ng-container *ngFor="let childFolder of folder.children">
+      <ng-container *ngTemplateOutlet="folderTemplate; context: { folder: childFolder, level: level + 1 }">
+      </ng-container>
+    </ng-container>
+  </ng-container>
+</ng-template>

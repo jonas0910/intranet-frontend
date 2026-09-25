@@ -1,0 +1,247 @@
+<!-- Conversation List -->
+<div class="conversation-list-container">
+  <!-- Header with Search and Filters -->
+  <div class="list-header">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">
+        <i class="fas fa-comments text-primary mr-2"></i>
+        Conversaciones
+        <span class="badge badge-primary ml-2" *ngIf="totalUnreadCount > 0">
+          {{ totalUnreadCount }}
+        </span>
+      </h5>
+      <button type="button" 
+              class="btn btn-primary btn-sm"
+              (click)="onNewConversation()"
+              title="Nueva conversación">
+        <i class="fas fa-plus"></i>
+      </button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container mb-3">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text">
+            <i class="fas fa-search text-muted"></i>
+          </span>
+        </div>
+        <input type="text" 
+               class="form-control" 
+               placeholder="Buscar conversaciones..."
+               [formControl]="searchControl"
+               #searchInput>
+        <div class="input-group-append" *ngIf="isSearching">
+          <button class="btn btn-outline-secondary" 
+                  type="button"
+                  (click)="clearSearch()"
+                  title="Limpiar búsqueda">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-container mb-3">
+      <div class="row">
+        <div class="col-md-8">
+          <select class="form-control form-control-sm" 
+                  [formControl]="filterControl">
+            <option *ngFor="let option of filterOptions" 
+                    [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-4 text-right">
+          <button type="button" 
+                  class="btn btn-outline-secondary btn-sm"
+                  (click)="onRefresh()"
+                  [disabled]="loading"
+                  title="Actualizar">
+            <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+          </button>
+          <button type="button" 
+                  class="btn btn-outline-secondary btn-sm ml-1"
+                  (click)="clearFilters()"
+                  *ngIf="isSearching || isFiltering"
+                  title="Limpiar filtros">
+            <i class="fas fa-filter"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conversation List -->
+  <div class="conversation-list" *ngIf="!loading || conversations.length > 0">
+    <!-- Conversation Items -->
+    <div class="conversation-item"
+         *ngFor="let conversation of filteredConversations; trackBy: trackByConversationId"
+         [class.selected]="isConversationSelected(conversation)"
+         [class.unread]="hasUnreadMessages(conversation)"
+         (click)="onConversationClick(conversation)">
+      
+      <div class="conversation-content">
+        <!-- Avatar and Indicator -->
+        <div class="conversation-avatar">
+          <div class="avatar-circle">
+            <i [class]="getConversationIcon(conversation)"></i>
+          </div>
+          <div class="unread-indicator" *ngIf="hasUnreadMessages(conversation)"></div>
+        </div>
+
+        <!-- Conversation Info -->
+        <div class="conversation-info flex-grow-1">
+          <!-- Header with participants and date -->
+          <div class="conversation-header">
+            <div class="participants" 
+                 [class.font-weight-bold]="hasUnreadMessages(conversation)">
+              {{ getParticipantNames(conversation) }}
+            </div>
+            <div class="conversation-date text-muted">
+              {{ formatLastMessageDate(conversation.last_message_at) }}
+            </div>
+          </div>
+
+          <!-- Subject -->
+          <div class="conversation-subject" 
+               *ngIf="conversation.subject"
+               [class.font-weight-bold]="hasUnreadMessages(conversation)">
+            {{ conversation.subject }}
+          </div>
+
+          <!-- Last Message Preview -->
+          <div class="last-message-preview text-muted">
+            <span class="sender-name" *ngIf="conversation.last_message?.sender">
+              {{ conversation.last_message.sender.name }}:
+            </span>
+            {{ getLastMessagePreview(conversation) }}
+          </div>
+
+          <!-- Indicators -->
+          <div class="conversation-indicators mt-1">
+            <span class="badge badge-primary badge-sm mr-1" 
+                  *ngIf="hasUnreadMessages(conversation)">
+              {{ getUnreadCount(conversation) }}
+            </span>
+            <i class="fas fa-star text-warning mr-1" 
+               *ngIf="conversation.is_important"
+               title="Importante"></i>
+            <i class="fas fa-paperclip text-muted mr-1" 
+               *ngIf="conversation.has_attachments"
+               title="Tiene adjuntos"></i>
+            <i class="fas fa-users text-info" 
+               *ngIf="conversation.participants.length > 2"
+               title="Conversación grupal"></i>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="conversation-actions">
+          <div class="btn-group-vertical btn-group-sm">
+            <button type="button" 
+                    class="btn btn-outline-secondary btn-sm"
+                    (click)="onMarkAsRead(conversation, $event)"
+                    *ngIf="hasUnreadMessages(conversation)"
+                    title="Marcar como leído">
+              <i class="fas fa-envelope-open"></i>
+            </button>
+            <button type="button" 
+                    class="btn btn-outline-secondary btn-sm"
+                    (click)="onToggleImportant(conversation, $event)"
+                    [class.active]="conversation.is_important"
+                    title="{{ conversation.is_important ? 'Quitar importancia' : 'Marcar como importante' }}">
+              <i class="fas fa-star" 
+                 [class.text-warning]="conversation.is_important"></i>
+            </button>
+            <div class="btn-group" ngbDropdown>
+              <button type="button" 
+                      class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split"
+                      ngbDropdownToggle
+                      (click)="$event.stopPropagation()"
+                      title="Más opciones">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-right" ngbDropdownMenu>
+                <button class="dropdown-item" 
+                        (click)="onMarkAsRead(conversation, $event)"
+                        *ngIf="hasUnreadMessages(conversation)">
+                  <i class="fas fa-envelope-open text-primary"></i>
+                  Marcar como leído
+                </button>
+                <button class="dropdown-item" 
+                        (click)="onToggleImportant(conversation, $event)">
+                  <i class="fas fa-star" 
+                     [class.text-warning]="conversation.is_important"
+                     [class.text-muted]="!conversation.is_important"></i>
+                  {{ conversation.is_important ? 'Quitar importancia' : 'Marcar como importante' }}
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item text-danger" 
+                        (click)="onDeleteConversation(conversation, $event)">
+                  <i class="fas fa-trash"></i>
+                  Eliminar conversación
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load More Button -->
+    <div class="load-more-container text-center mt-3" 
+         *ngIf="hasMoreConversations && !loading">
+      <button type="button" 
+              class="btn btn-outline-primary"
+              (click)="onLoadMore()"
+              [disabled]="loadingMore">
+        <i class="fas fa-spinner fa-spin mr-2" *ngIf="loadingMore"></i>
+        <i class="fas fa-chevron-down mr-2" *ngIf="!loadingMore"></i>
+        {{ loadingMore ? 'Cargando...' : 'Cargar más conversaciones' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state text-center py-5" *ngIf="loading && conversations.length === 0">
+    <div class="spinner-border text-primary mb-3" role="status">
+      <span class="sr-only">Cargando conversaciones...</span>
+    </div>
+    <p class="text-muted">Cargando conversaciones...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state text-center py-5" 
+       *ngIf="!loading && !hasConversations && !isSearching && !isFiltering">
+    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">No hay conversaciones</h5>
+    <p class="text-muted mb-3">
+      Aún no tienes conversaciones. Inicia una nueva conversación para comenzar.
+    </p>
+    <button type="button" 
+            class="btn btn-primary"
+            (click)="onNewConversation()">
+      <i class="fas fa-plus mr-2"></i>
+      Nueva conversación
+    </button>
+  </div>
+
+  <!-- No Results State -->
+  <div class="no-results-state text-center py-5" 
+       *ngIf="!loading && !hasConversations && (isSearching || isFiltering)">
+    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">No se encontraron conversaciones</h5>
+    <p class="text-muted mb-3">
+      No hay conversaciones que coincidan con tu búsqueda o filtros.
+    </p>
+    <button type="button" 
+            class="btn btn-outline-secondary"
+            (click)="clearFilters()">
+      <i class="fas fa-times mr-2"></i>
+      Limpiar filtros
+    </button>
+  </div>
+</div>

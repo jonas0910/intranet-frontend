@@ -1,0 +1,545 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-12">
+        <h1><i class="fas fa-link text-primary"></i> Gestión de Enlaces</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="text-center py-5" *ngIf="loading"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+
+    <div *ngIf="!loading">
+      <!-- Info Boxes -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="info-box bg-gradient-dark">
+            <span class="info-box-icon"><i class="fas fa-bars"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Barra de Título</span>
+              <span class="info-box-number">{{ countBarra() }}</span>
+              <small>Lema y enlaces superiores</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-box bg-gradient-primary">
+            <span class="info-box-icon"><i class="fas fa-th-large"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Header</span>
+              <span class="info-box-number">{{ countHeader() }}</span>
+              <small>Iconos junto al logo</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-box bg-gradient-secondary">
+            <span class="info-box-icon"><i class="fas fa-ellipsis-h"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Footer</span>
+              <span class="info-box-number">{{ countFooter() }}</span>
+              <small>Enlaces de pie de página</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-box bg-gradient-info">
+            <span class="info-box-icon"><i class="fas fa-share-alt"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Redes Sociales</span>
+              <span class="info-box-number">{{ countSocial() }}</span>
+              <small>Facebook, X, IG, etc.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 1: BARRA DE TÍTULO -->
+      <div class="card card-dark card-outline">
+        <div class="card-header d-flex align-items-center">
+          <h3 class="card-title"><i class="fas fa-bars mr-2"></i> Barra de Título (Top Bar)</h3>
+          <div class="ml-auto d-flex align-items-center">
+            <div class="custom-control custom-switch mr-3">
+              <input type="checkbox" class="custom-control-input" id="barraActiva" [checked]="barraSuperiorActiva" (change)="toggleGlobalConfig('barra_superior_activa', barraSuperiorActiva)">
+              <label class="custom-control-label" for="barraActiva">
+                <span class="badge" [ngClass]="barraSuperiorActiva ? 'badge-success' : 'badge-secondary'">
+                  {{ barraSuperiorActiva ? 'Activa' : 'Inactiva' }}
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Vista previa -->
+          <div class="mb-3">
+            <small class="text-muted"><i class="fas fa-eye"></i> Vista previa:</small>
+            <div class="p-2 rounded mt-1" style="background-color:#2c3e50;color:#fff;font-size:0.85rem;">
+              <div class="d-flex justify-content-between align-items-center">
+                <span style="font-style:italic">
+                  <span style="display:inline-block;width:3px;height:14px;background:#f39c12;margin-right:6px;border-radius:2px"></span>
+                  {{ getBarraLema()?.titulo || 'Sin lema configurado' }}
+                </span>
+                <span class="small">
+                  <span *ngFor="let item of getBarraEnlaces().slice(0,3)" class="badge ml-1"
+                        style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:inherit">
+                    <i *ngIf="item.icono" [class]="item.icono + ' mr-1'"></i>{{ item.titulo?.substring(0,15) }}
+                  </span>
+                  <span *ngIf="getBarraEnlaces().length === 0" class="badge ml-1"
+                        style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:inherit">Sin enlaces</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="mb-3"><i class="fas fa-list text-muted"></i> Elementos de la Barra de Título</h6>
+          <table class="table table-sm table-hover mb-0">
+            <thead class="bg-dark text-white">
+              <tr>
+                <th style="width:40px"></th>
+                <th style="width:50px">Orden</th>
+                <th style="width:80px">Tipo</th>
+                <th>Contenido</th>
+                <th class="text-center" style="width:80px">Activo</th>
+                <th class="text-center" style="width:100px">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="getBarraItems().length === 0">
+                <td colspan="6" class="text-center py-3 text-muted">
+                  <i class="fas fa-inbox mb-1 d-block"></i>
+                  No hay elementos en la barra de título
+                  <br><small>Agregue un "Lema" y/o "Enlaces"</small>
+                </td>
+              </tr>
+              <tr *ngFor="let item of getBarraItems(); let i = index"
+                  [class.table-warning]="item.tipo === 'lema'"
+                  draggable="true"
+                  (dragstart)="onDragStart($event, item, i)"
+                  (dragover)="onDragOver($event, i)"
+                  (dragleave)="onDragLeave()"
+                  (drop)="onDrop($event, getBarraItems(), i)"
+                  (dragend)="onDragEnd($event)"
+                  [class.sortable-chosen]="dragOverIndex === i">
+                <td class="drag-handle text-center" style="cursor:move"><i class="fas fa-grip-vertical text-muted"></i></td>
+                <td><span class="badge badge-dark">{{ item.orden }}</span></td>
+                <td>
+                  <span *ngIf="item.tipo === 'lema'" class="badge badge-warning"><i class="fas fa-quote-left"></i> Lema</span>
+                  <span *ngIf="item.tipo !== 'lema'" class="badge badge-info"><i class="fas fa-link"></i> Enlace</span>
+                </td>
+                <td>
+                  <em *ngIf="item.tipo === 'lema'">"{{ item.titulo }}"</em>
+                  <span *ngIf="item.tipo !== 'lema'">
+                    <i [class]="item.icono" [style.color]="item.color" style="margin-right:8px"></i>
+                    <strong>{{ item.titulo }}</strong>
+                    <br><small class="text-muted">{{ item.url }}</small>
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="badge" [ngClass]="item.activo ? 'badge-success' : 'badge-danger'">
+                    <i class="fas" [ngClass]="item.activo ? 'fa-check' : 'fa-times'"></i>
+                  </span>
+                </td>
+                <td class="text-center">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-xs btn-primary" (click)="openEdit(item)"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-xs btn-danger" (click)="deleteItem(item.id)"><i class="fas fa-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="mt-2 d-flex">
+            <button class="btn btn-sm btn-outline-primary mr-2" (click)="openCreate('barra', 'enlace')">
+              <i class="fas fa-plus"></i> Agregar Enlace
+            </button>
+            <button *ngIf="!getBarraLema()" class="btn btn-sm btn-outline-warning" (click)="openCreate('barra', 'lema')">
+              <i class="fas fa-quote-left"></i> Agregar Lema
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 2: ACCESOS DIRECTOS (HEADER) -->
+      <div class="card card-primary card-outline">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-th-large mr-2"></i> Accesos Directos (Header)</h3>
+          <div class="card-tools d-flex align-items-center">
+            <div class="custom-control custom-switch mr-3">
+              <input type="checkbox" class="custom-control-input" id="navbarActiva" [checked]="mostrarNavbar" (change)="toggleGlobalConfig('mostrar_navbar', mostrarNavbar)">
+              <label class="custom-control-label" for="navbarActiva">
+                <span class="badge" [ngClass]="mostrarNavbar ? 'badge-primary' : 'badge-secondary'">
+                   {{ mostrarNavbar ? 'Menú Visible' : 'Menú Oculto' }}
+                </span>
+              </label>
+            </div>
+            <div class="custom-control custom-switch mr-3">
+              <input type="checkbox" class="custom-control-input" id="headerActiva" [checked]="mostrarLogoHeader" (change)="toggleGlobalConfig('mostrar_logo_header', mostrarLogoHeader)">
+              <label class="custom-control-label" for="headerActiva">
+                <span class="badge" [ngClass]="mostrarLogoHeader ? 'badge-primary' : 'badge-secondary'">
+                  {{ mostrarLogoHeader ? 'Logo Header Visible' : 'Logo Header Oculto' }}
+                </span>
+              </label>
+            </div>
+            <button class="btn btn-sm btn-primary mr-2" (click)="openCreate('header')">
+              <i class="fas fa-plus"></i> Nuevo Enlace
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead class="bg-primary text-white">
+              <tr>
+                <th style="width:40px"></th>
+                <th style="width:50px">Orden</th>
+                <th>Acceso</th>
+                <th>URL</th>
+                <th class="text-center" style="width:100px">Activo</th>
+                <th class="text-center" style="width:120px">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="getHeaderItems().length === 0">
+                <td colspan="6" class="text-center py-4 text-muted">
+                  <i class="fas fa-th-large fa-2x mb-2 d-block"></i>
+                  No hay accesos directos en el header
+                  <br><button class="btn btn-sm btn-outline-primary mt-2" (click)="openCreate('header')"><i class="fas fa-plus"></i> Agregar acceso</button>
+                </td>
+              </tr>
+              <tr *ngFor="let item of getHeaderItems(); let i = index"
+                  draggable="true"
+                  (dragstart)="onDragStart($event, item, i)"
+                  (dragover)="onDragOver($event, i)"
+                  (dragleave)="onDragLeave()"
+                  (drop)="onDrop($event, getHeaderItems(), i)"
+                  (dragend)="onDragEnd($event)"
+                  [class.sortable-chosen]="dragOverIndex === i">
+                <td class="drag-handle text-center" style="cursor:move"><i class="fas fa-grip-vertical text-muted"></i></td>
+                <td><span class="badge badge-primary">{{ item.orden }}</span></td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="mr-3 text-center" style="width:40px;height:40px;line-height:40px;border-radius:8px"
+                         [style.background]="(item.color || '#007bff') + '20'">
+                      <i [class]="item.icono" [style.color]="item.color" style="font-size:1.2rem"></i>
+                    </div>
+                    <div>
+                      <strong>{{ item.titulo }}</strong>
+                      <br *ngIf="item.descripcion"><small *ngIf="item.descripcion" class="text-muted">{{ item.descripcion }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <a [href]="item.url" target="_blank" class="text-muted">
+                    {{ item.url?.substring(0,40) }}
+                    <i class="fas fa-external-link-alt fa-xs ml-1"></i>
+                  </a>
+                </td>
+                <td class="text-center">
+                  <span class="badge" [ngClass]="item.activo ? 'badge-success' : 'badge-danger'">
+                    <i class="fas" [ngClass]="item.activo ? 'fa-check' : 'fa-times'"></i> {{ item.activo ? 'Sí' : 'No' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-primary" (click)="openEdit(item)"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-danger" (click)="deleteItem(item.id)"><i class="fas fa-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 3: REDES SOCIALES -->
+      <div class="card card-info card-outline">
+        <div class="card-header d-flex align-items-center">
+          <h3 class="card-title"><i class="fas fa-share-alt mr-2"></i> Redes Sociales</h3>
+          <div class="ml-auto">
+            <button class="btn btn-sm btn-info" (click)="openCreate('social', 'red_social')">
+              <i class="fas fa-plus"></i> Nueva Red Social
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead class="bg-info text-white">
+              <tr>
+                <th style="width:40px"></th>
+                <th style="width:50px">Orden</th>
+                <th>Red Social</th>
+                <th class="text-center" style="width:120px">Ubicación</th>
+                <th class="text-center" style="width:100px">Activo</th>
+                <th class="text-center" style="width:120px">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="getSocialItems().length === 0">
+                <td colspan="6" class="text-center py-4 text-muted">
+                  No hay redes sociales configuradas
+                </td>
+              </tr>
+              <tr *ngFor="let item of getSocialItems(); let i = index"
+                  draggable="true"
+                  (dragstart)="onDragStart($event, item, i)"
+                  (dragover)="onDragOver($event, i)"
+                  (dragleave)="onDragLeave()"
+                  (drop)="onDrop($event, getSocialItems(), i)"
+                  (dragend)="onDragEnd($event)"
+                  [class.sortable-chosen]="dragOverIndex === i">
+                <td class="drag-handle text-center" style="cursor:move"><i class="fas fa-grip-vertical text-muted"></i></td>
+                <td><span class="badge badge-info">{{ item.orden }}</span></td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="mr-3 text-center" style="width:35px;height:35px;line-height:35px;border-radius:50%;background:#f4f6f9">
+                      <i [class]="item.icono" [style.color]="item.color || '#17a2b8'" style="font-size:1.1rem"></i>
+                    </div>
+                    <strong>{{ item.titulo }}</strong>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <span class="badge badge-light border mr-1" *ngIf="item.mostrar_en_barra_superior" title="Barra Superior">T</span>
+                  <span class="badge badge-light border mr-1" *ngIf="item.mostrar_en_footer" title="Footer">F</span>
+                </td>
+                <td class="text-center">
+                   <span class="badge" [ngClass]="item.activo ? 'badge-success' : 'badge-danger'">{{ item.activo ? 'Activo' : 'No' }}</span>
+                </td>
+                <td class="text-center">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-info" (click)="openEdit(item)"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-danger" (click)="deleteItem(item.id)"><i class="fas fa-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 4: FOOTER -->
+      <div class="card card-secondary card-outline">
+        <div class="card-header d-flex align-items-center">
+          <h3 class="card-title"><i class="fas fa-ellipsis-h mr-2"></i> Enlaces en Footer (Footer Bar)</h3>
+          <div class="ml-auto d-flex align-items-center">
+            <div class="custom-control custom-switch mr-3">
+              <input type="checkbox" class="custom-control-input" id="footerBarActiva" [checked]="mostrarFooterBar" (change)="toggleGlobalConfig('mostrar_footer_bar', mostrarFooterBar)">
+              <label class="custom-control-label" for="footerBarActiva">
+                <span class="badge" [ngClass]="mostrarFooterBar ? 'badge-secondary' : 'badge-light'">
+                  {{ mostrarFooterBar ? 'Footer Bar Activa' : 'Footer Bar Inactiva' }}
+                </span>
+              </label>
+            </div>
+            <button type="button" class="btn btn-tool" (click)="footerCollapsed = !footerCollapsed">
+              <i class="fas" [ngClass]="footerCollapsed ? 'fa-plus' : 'fa-minus'"></i>
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-0" *ngIf="!footerCollapsed">
+          <table class="table table-hover table-sm mb-0">
+            <thead class="bg-secondary text-white">
+              <tr>
+                <th>Enlace</th>
+                <th>URL</th>
+                <th class="text-center">Activo</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="getFooterItems().length === 0">
+                <td colspan="4" class="text-center py-3 text-muted">No hay enlaces en el footer</td>
+              </tr>
+              <tr *ngFor="let item of getFooterItems()">
+                <td>
+                  <i [class]="item.icono" [style.color]="item.color"></i>
+                  {{ item.titulo }}
+                </td>
+                <td><small class="text-muted">{{ item.url?.substring(0,40) }}</small></td>
+                <td class="text-center">
+                  <span class="badge" [ngClass]="item.activo ? 'badge-success' : 'badge-danger'">
+                    <i class="fas" [ngClass]="item.activo ? 'fa-check' : 'fa-times'"></i>
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-xs btn-primary" (click)="openEdit(item)"><i class="fas fa-edit"></i></button>
+                  <button class="btn btn-xs btn-danger ml-1" (click)="deleteItem(item.id)"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- AYUDA -->
+      <div class="card card-outline card-info">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-question-circle"></i> ¿Dónde aparece cada tipo?</h3>
+          <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="text-center p-3 border rounded mb-3" style="background:#2c3e50;color:white">
+                <small class="d-block mb-2">BARRA DE TÍTULO</small>
+                <code style="color:#f39c12">LOGOTIPOS</code> | <code style="color:#f39c12">CORREO</code>
+              </div>
+              <p class="small text-muted text-center"><i class="fas fa-arrow-up"></i> Parte superior de la página</p>
+            </div>
+            <div class="col-md-4">
+              <div class="text-center p-3 border rounded mb-3" style="background:#e8f5e9">
+                <small class="d-block mb-2 text-dark">HEADER</small>
+                <div class="d-flex justify-content-center">
+                  <span class="badge badge-primary p-2 mx-1"><i class="fas fa-search"></i></span>
+                  <span class="badge badge-success p-2 mx-1"><i class="fas fa-inbox"></i></span>
+                  <span class="badge badge-warning p-2 mx-1"><i class="fas fa-briefcase"></i></span>
+                </div>
+              </div>
+              <p class="small text-muted text-center"><i class="fas fa-arrow-up"></i> Junto al logo</p>
+            </div>
+            <div class="col-md-4">
+              <div class="text-center p-3 border rounded mb-3" style="background:#343a40;color:white">
+                <small class="d-block mb-2">FOOTER</small>
+                <small>Enlaces - Contacto - Redes</small>
+              </div>
+              <p class="small text-muted text-center"><i class="fas fa-arrow-down"></i> Pie de página</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Iconos Sugeridos -->
+      <div class="card card-secondary collapsed-card">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-icons"></i> Iconos Sugeridos</h3>
+          <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-plus"></i></button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-2" *ngFor="let ic of iconosSugeridos">
+              <code>{{ ic.clase }}</code> <i [class]="ic.clase"></i> {{ ic.nombre }}
+            </div>
+          </div>
+          <p class="mt-2 mb-0">
+            <small class="text-muted">
+              Más iconos: <a href="https://fontawesome.com/icons" target="_blank">fontawesome.com/icons</a>
+            </small>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal -->
+<div class="modal fade show d-block" *ngIf="showModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary">
+        <h5 class="modal-title text-white">{{ editing ? 'Editar' : 'Nuevo' }} Acceso Directo</h5>
+        <button type="button" class="close text-white" (click)="showModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Tipo</label>
+              <select class="form-control" [(ngModel)]="form.tipo">
+                <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Título <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="form.titulo" placeholder="Título del acceso">
+            </div>
+          </div>
+        </div>
+        <div class="form-group" *ngIf="form.tipo !== 'lema'">
+          <label>URL</label>
+          <input type="text" class="form-control" [(ngModel)]="form.url" placeholder="https://...">
+        </div>
+        <div class="form-group" *ngIf="form.tipo !== 'lema'">
+          <label>Descripción</label>
+          <textarea class="form-control" [(ngModel)]="form.descripcion" rows="2" placeholder="Descripción breve"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Icono (clase FA)</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i [class]="form.icono || 'fas fa-link'"></i></span>
+                </div>
+                <input type="text" class="form-control" [(ngModel)]="form.icono" placeholder="fas fa-link">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Color</label>
+              <input type="color" class="form-control" [(ngModel)]="form.color" style="height:38px">
+            </div>
+          </div>
+          <div class="col-md-4" *ngIf="form.tipo !== 'lema'">
+            <div class="form-group">
+              <label>Target</label>
+              <select class="form-control" [(ngModel)]="form.target">
+                <option value="_self">Misma ventana</option>
+                <option value="_blank">Nueva ventana</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <hr>
+        <label class="d-block mb-2"><strong>Ubicación visible</strong></label>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="custom-control custom-switch mb-2">
+              <input type="checkbox" class="custom-control-input" id="visBarra" [(ngModel)]="form.mostrar_en_barra_superior">
+              <label class="custom-control-label" for="visBarra">Barra Superior</label>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="custom-control custom-switch mb-2">
+              <input type="checkbox" class="custom-control-input" id="visHeader" [(ngModel)]="form.mostrar_en_header">
+              <label class="custom-control-label" for="visHeader">Header</label>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="custom-control custom-switch mb-2">
+              <input type="checkbox" class="custom-control-input" id="visFooter" [(ngModel)]="form.mostrar_en_footer">
+              <label class="custom-control-label" for="visFooter">Footer</label>
+            </div>
+          </div>
+        </div>
+
+        <hr>
+        <div class="custom-control custom-switch">
+          <input type="checkbox" class="custom-control-input" id="accActivo" [(ngModel)]="form.activo">
+          <label class="custom-control-label" for="accActivo">Activo</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="showModal = false">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="save()">
+          <i class="fas fa-save mr-1"></i>{{ editing ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .drag-handle { cursor: grab; }
+  .drag-handle:active { cursor: grabbing; }
+  .sortable-ghost { opacity: 0.4; background-color: #e3f2fd !important; }
+  .sortable-chosen { background-color: #fff3cd !important; }
+  .info-box-content small { font-size: 0.75rem; opacity: 0.8; }
+</style>

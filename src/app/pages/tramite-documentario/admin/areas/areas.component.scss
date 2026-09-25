@@ -1,0 +1,12 @@
+:host { display: block; }
+
+tr.fila-hija td { background-color: rgba(0, 0, 0, 0.02); }
+tr.fila-area[data-nivel="0"] td { font-weight: 500; }
+#tablaAreas .btn-toggle { border-radius: 4px; }
+#tablaAreas tr.fila-area { cursor: move; }
+#tablaAreas tr.fila-area.dragging { opacity: 0.5; }
+#tablaAreas tr.fila-area.drag-over { background-color: rgba(0, 123, 255, 0.15) !important; }
+#tablaAreas tr.fila-area.drag-over-subarea { background-color: rgba(40, 167, 69, 0.2) !important; }
+#tablaAreas tr.fila-area.drag-over-subarea td:first-child { border-left: 4px solid #28a745; }
+#tablaAreas .drag-handle { cursor: grab; }
+#tablaAreas .drag-handle:active { cursor: grabbing; }

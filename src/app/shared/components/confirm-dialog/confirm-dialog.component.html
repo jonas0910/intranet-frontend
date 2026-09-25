@@ -1,0 +1,25 @@
+<div class="cd-header" [style.background-color]="headerBg" [style.color]="headerTextColor" [style.border-radius]="cfg.borderRadius + 'px ' + cfg.borderRadius + 'px 0 0'">
+  <h5 class="cd-title">
+    <i [class]="iconClass + ' mr-2'"></i> {{ title }}
+  </h5>
+  <button type="button" class="cd-close" [style.color]="headerTextColor" aria-label="Close" (click)="cancel()">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<div class="cd-body" [style.background]="cfg.bodyBg">
+  <div class="cd-icon-large" [style.color]="headerBg" [style.font-size]="cfg.iconSize">
+    <i [class]="iconClass"></i>
+  </div>
+  <p class="cd-message" [style.color]="cfg.messageColor">{{ message }}</p>
+  <p class="cd-detail" *ngIf="detail" [style.color]="cfg.detailColor">{{ detail }}</p>
+</div>
+
+<div class="cd-footer" [style.background]="cfg.footerBg" [style.border-top-color]="cfg.footerBorder" [style.border-radius]="'0 0 ' + cfg.borderRadius + 'px ' + cfg.borderRadius + 'px'">
+  <button type="button" class="btn btn-sm" [ngClass]="cfg.cancelBtnClass" (click)="cancel()">
+    <i class="fas fa-times mr-1"></i> {{ cancelText }}
+  </button>
+  <button type="button" class="btn btn-sm ml-2" [ngClass]="confirmClass" (click)="confirm()">
+    <i [class]="confirmIcon + ' mr-1'"></i> {{ confirmText }}
+  </button>
+</div>

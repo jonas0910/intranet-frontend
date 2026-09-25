@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test DataTables (CSS Solo) - AdminLTE + Bootstrap 4.6</title>
+    
+    <!-- Solo CSS de AdminLTE y Bootstrap - Sin jQuery/JS -->
+    <link rel="stylesheet" href="src/assets/css/vendor/adminlte.min.css">
+    <link rel="stylesheet" href="src/assets/css/vendor/all.min.css">
+    <link rel="stylesheet" href="src/assets/css/vendor/bootstrap.min.css">
+    <link rel="stylesheet" href="src/assets/css/datatables/dataTables.bootstrap4.min.css">
+    
+    <style>
+        /* CSS personalizado para demostrar compatibilidad */
+        .card {
+            margin-top: 30px;
+        }
+        
+        .table-responsive {
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .btn-group .btn {
+            margin-right: 5px;
+        }
+        
+        /* Estilos específicos para AdminLTE */
+        .main-sidebar {
+            background-color: #343a40;
+            min-height: 100vh;
+        }
+        
+        .brand-link {
+            text-decoration: none;
+            color: #fff;
+        }
+        
+        /* Demostración de clases de Bootstrap 4 */
+        .badge-success { background-color: #28a745; }
+        .badge-danger { background-color: #dc3545; }
+        .badge-warning { background-color: #ffc107; color: #212529; }
+        
+        /* Estilos para demo sin JavaScript */
+        .no-js-notice {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        
+        .feature-list li:before {
+            content: "✅ ";
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body class="hold-transition sidebar-mini">
+    <div class="wrapper">
+        
+        <!-- Sidebar para AdminLTE -->
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <a href="index.html" class="brand-link">
+                <img src="https://via.placeholder.com/33x33" alt="AdminLTE Logo" class="brand-image">
+                <span class="brand-text font-weight-light">NGX Bootstrap Test</span>
+            </a>
+            
+            <div class="sidebar">
+                <nav class="pt-3">
+                    <ul class="nav nav-pills nav-sidebar flex-column">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link active">
+                                <i class="nav-icon fas fa-table"></i>
+                                <p>DataTables CSS</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon fas fa-chart-bar"></i>
+                                <p>Charts</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon fas fa-file"></i>
+                                <p>Export Data</p>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            
+            <!-- Content Header -->
+            <div class="content-header">
+                <div class="container-fluid">
+                    <div class="row mb-2">
+                        <div class="col-sm-6">
+                            <h1 class="m-0">DataTables sin jQuery</h1>
+                        </div>
+                        <div class="col-sm-6">
+                            <ol class="breadcrumb float-sm-right">
+                                <li class="breadcrumb-item"><a href="#">Home</a></li>
+                                <li class="breadcrumb-item active">DataTables</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <div class="content">
+                <div class="container-fluid">
+                    
+                    <!-- Notice -->
+                    <div class="no-js-notice">
+                        <h4><i class="fas fa-info-circle mr-2"></i>Prueba de CSS puro</h4>
+                        <p class="mb-0">Esta página demuestra cómo AdminLTE 3.2 + Bootstrap 4.6 funciona perfectamente sin jQuery</p>
+                    </div>
+                    
+                    <!-- Demo Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-table mr-2"></i>
+                                Tabla de Empleados (Solo CSS)
+                            </h3>
+                            <div class="card-tools">
+                                <span class="badge badge-success">Bootstrap 4.6</span>
+                                <span class="badge badge-info mr-2">AdminLTE 3.2</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            
+                            <!-- Demo Features -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-check-circle text-success mr-2"></i>Compatibilidad verificada</h5>
+                                    <ul class="feature-list">
+                                        <li>AdminLTE 3.2 CSS funciona perfectamente</li>
+                                        <li>Bootstrap 4.6 componentes sin JavaScript</li>
+                                        <li>Badges y alertas funcionan correctamente</li>
+                                        <li>Sidebar responsive de AdminLTE</li>
+                                        <li>Iconos FontAwesome integrados</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-lightbulb text-warning mr-2"></i>Para desarrollo Angular</h5>
+                                    <ul class="feature-list">
+                                        <li>Usar ngx-bootstrap para dropdowns/modals</li>
+                                        <li>Mantener estos estilos CSS como referencia</li>
+                                        <li>Angular manejará la funcionalidad JavaScript</li>
+                                        <li>AdminLTE sidebars requieren jQuery mínimo</li>
+                                        <li>DataTables se integra con Angular DataTables</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Table Demo -->
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Avatar</th>
+                                            <th>Nombre Completo</th>
+                                            <th>Email</th>
+                                            <th>Cargo</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>1</td>
+                                            <td><img src="https://via.placeholder.com/40x40" class="rounded-circle" alt="Avatar"></td>
+                                            <td><strong>Juan Pérez</strong></td>
+                                            <td>juan.perez@Notaria.cl</td>
+                                            <td>Analista RRHH</td>
+                                            <td><span class="badge badge-success">Activo</span></td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-warning">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2</td>
+                                            <td><img src="https://via.placeholder.com/40x40" class="rounded-circle" alt="Avatar"></td>
+                                            <td><strong>María García</strong></td>
+                                            <td>maria.garcia@Notaria.cl</td>
+                                            <td>Contador</td>
+                                            <td><span class="badge badge-success">Activo</span></td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-warning">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>3</td>
+                                            <td><img src="https://via.placeholder.com/40x40" class="rounded-circle" alt="Avatar"></td>
+                                            <td><strong>Carlos López</strong></td>
+                                            <td>carlos.lopez@Notaria.cl</td>
+                                            <td>Secretario</td>
+                                            <td><span class="badge badge-warning">Licencia</span></td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-warning">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>4</td>
+                                            <td><img src="https://via.placeholder.com/40x40" class="rounded-circle" alt="Avatar"></td>
+                                            <td><strong>Ana Rodríguez</strong></td>
+                                            <td>ana.rodriguez@Notaria.cl</td>
+                                            <td>Administrador</td>
+                                            <td><span class="badge badge-danger">Inactivo</span></td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-warning">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Info Boxes AdminLTE -->
+                            <div class="row mt-4">
+                                <div class="col-lg-3 col-6">
+                                    <div class="small-box bg-info">
+                                        <div class="inner">
+                                            <h3>4</h3>
+                                            <p>Empleados Totales</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="ion ion-person-add"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6">
+                                    <div class="small-box bg-success">
+                                        <div class="inner">
+                                            <h3>3</h3>
+                                            <p>Empleados Activos</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="ion ion-stats-bars"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6">
+                                    <div class="small-box bg-warning">
+                                        <div class="inner">
+                                            <h3>1</h3>
+                                            <p>En Licencia</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="ion ion-warning"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6">
+                                    <div class="small-box bg-danger">
+                                        <div class="inner">
+                                            <h3>1</h3>
+                                            <p>Inactivos</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="ion ion-android-alert"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                        
+                        <div class="card-footer">
+                            <div class="alert alert-success">
+                                <i class="fas fa-lightbulb mr-2"></i>
+                                <strong>Nota:</strong> Esta página demuestra que AdminLTE + Bootstrap 4.6 CSS funciona perfectamente sin jQuery. 
+                                Para la funcionalidad interactiva (tablas, modales, dropdowns), usar ngx-bootstrap en Angular.
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        
+        <!-- Control Sidebar (AdminLTE) -->
+        <aside class="control-sidebar control-sidebar-dark"></aside>
+        
+    </div>
+    
+    <style>
+        /* CSS adicional para mejorar la presentación */
+        .brand-image {
+            margin: 0 15px 0 0;
+            border-radius: 50%;
+        }
+        
+        .nav-sidebar .nav-link p {
+            margin: 0;
+        }
+        
+        .content-header {
+            padding-top: 20px;
+        }
+        
+        .small-box .icon {
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            z-index: 0;
+            font-size: 90px;
+            color: rgba(0,0,0,0.15);
+        }
+        
+        .small-box .inner {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+    
+</body>
+</html>
+

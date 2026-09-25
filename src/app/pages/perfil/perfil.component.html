@@ -1,0 +1,404 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">Mi Perfil</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="#">Inicio</a></li>
+          <li class="breadcrumb-item active">Mi Perfil</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid form-container">
+    <!-- Mensajes de estado -->
+    <div *ngIf="message" class="alert alert-{{ messageType === 'success' ? 'success' : messageType === 'error' ? 'danger' : 'warning' }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="close" (click)="message = ''">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+
+    <div class="row">
+      <!-- Columna de Información del Usuario -->
+      <div class="col-md-4">
+        <!-- Profile Image -->
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-secondary'">
+          <div class="card-body box-profile">
+            <div class="text-center">
+              <img class="profile-user-img img-fluid img-circle"
+                   [src]="currentUser?.empleado?.foto || currentUser?.employee?.photo || 'assets/img/user1-128x128.jpg'"
+                   alt="User profile picture">
+            </div>
+
+            <h3 class="profile-username text-center">{{ profileDisplayName }}</h3>
+
+            <p class="text-muted text-center">{{ currentUser?.empleado?.cargo || currentUser?.employee?.position?.name || '—' }}</p>
+
+            <ul class="list-group list-group-unbordered mb-3">
+              <li class="list-group-item" *ngIf="!showDepartmentsCombo">
+                <b>Departamento</b> <span class="float-right text-right">{{ departmentLabel }}</span>
+              </li>
+              <li class="list-group-item" *ngIf="showDepartmentsCombo">
+                <b>Departamento activo</b>
+                <span class="float-right text-right text-truncate d-inline-block" style="max-width: 58%;" [title]="activeDepartmentLabel">{{ activeDepartmentLabel }}</span>
+              </li>
+              <li class="list-group-item">
+                <b>Email</b> <span class="float-right text-right text-break">{{ currentUser?.email }}</span>
+              </li>
+              <li class="list-group-item">
+                <b>Roles</b> <span class="float-right text-right">{{ userRolesLabel }}</span>
+              </li>
+              <li class="list-group-item">
+                <b>Tipo (guard)</b> <span class="float-right text-right"><code class="small">{{ userRolesGuardLabel }}</code></span>
+              </li>
+            </ul>
+
+            <button class="btn btn-primary btn-block" (click)="toggleEdit()">
+              <i class="fas fa-edit mr-2"></i>{{ isEditing ? 'Cancelar' : 'Editar Perfil' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- About Me Box -->
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-secondary'">
+          <div class="card-header">
+            <h3 class="card-title">Acerca de Mí</h3>
+          </div>
+          <div class="card-body">
+            <strong><i class="fas fa-map-marker-alt mr-1"></i> Ubicación</strong>
+            <p class="text-muted">{{ aboutMeAddressLabel || 'No especificada' }}</p>
+
+            <hr>
+
+            <strong><i class="fas fa-phone mr-1"></i> Teléfono</strong>
+            <p class="text-muted">{{ aboutMePhoneLabel || 'No especificado' }}</p>
+
+            <hr>
+
+            <strong><i class="fas fa-calendar mr-1"></i> Fecha de Ingreso</strong>
+            <p class="text-muted">{{ aboutMeHireDateLabel || 'No especificada' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna de Formulario -->
+      <div class="col-md-8">
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-secondary'">
+          <div class="card-header">
+            <h3 class="card-title">Información del Perfil</h3>
+          </div>
+          <div class="card-body">
+            <form [formGroup]="perfilForm" (ngSubmit)="saveProfile()">
+              <div class="row">
+                <!-- Nombres -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="nombres">Nombres *</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="nombres" 
+                           formControlName="nombres"
+                           [readonly]="!isEditing"
+                           [class.is-invalid]="perfilForm.get('nombres')?.invalid && perfilForm.get('nombres')?.touched">
+                    <div class="invalid-feedback" *ngIf="perfilForm.get('nombres')?.invalid && perfilForm.get('nombres')?.touched">
+                      {{ getErrorMessage('nombres') }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Apellidos -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="apellidos">Apellidos *</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="apellidos" 
+                           formControlName="apellidos"
+                           [readonly]="!isEditing"
+                           [class.is-invalid]="perfilForm.get('apellidos')?.invalid && perfilForm.get('apellidos')?.touched">
+                    <div class="invalid-feedback" *ngIf="perfilForm.get('apellidos')?.invalid && perfilForm.get('apellidos')?.touched">
+                      {{ getErrorMessage('apellidos') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <!-- Email -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" 
+                           class="form-control" 
+                           id="email" 
+                           formControlName="email"
+                           [readonly]="!isEditing"
+                           [class.is-invalid]="perfilForm.get('email')?.invalid && perfilForm.get('email')?.touched">
+                    <div class="invalid-feedback" *ngIf="perfilForm.get('email')?.invalid && perfilForm.get('email')?.touched">
+                      {{ getErrorMessage('email') }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Teléfono -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="telefono">Teléfono</label>
+                    <input type="tel" 
+                           class="form-control" 
+                           id="telefono" 
+                           formControlName="telefono"
+                           [readonly]="!isEditing"
+                           [class.is-invalid]="perfilForm.get('telefono')?.invalid && perfilForm.get('telefono')?.touched">
+                    <div class="invalid-feedback" *ngIf="perfilForm.get('telefono')?.invalid && perfilForm.get('telefono')?.touched">
+                      {{ getErrorMessage('telefono') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <!-- Cargo -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="cargo">Cargo</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="cargo" 
+                           formControlName="cargo"
+                           [readonly]="!isEditing"
+                           [class.is-invalid]="perfilForm.get('cargo')?.invalid && perfilForm.get('cargo')?.touched">
+                    <div class="invalid-feedback" *ngIf="perfilForm.get('cargo')?.invalid && perfilForm.get('cargo')?.touched">
+                      {{ getErrorMessage('cargo') }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Departamento -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="departamento">Departamento asignado</label>
+                    <ng-container *ngIf="showDepartmentsCombo; else departamentoInputUnico">
+                      <select class="form-control"
+                              id="departamento"
+                              name="departamentoActivo"
+                              [(ngModel)]="selectedDepartmentId"
+                              [ngModelOptions]="{standalone: true}"
+                              [disabled]="isSettingDepartment"
+                              title="Elija el departamento operativo y pulse Establecer departamento">
+                        <option *ngFor="let d of assignedDepartments" [ngValue]="d.id">{{ d.label }}</option>
+                      </select>
+                      <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                        <button type="button"
+                                class="btn btn-outline-primary btn-sm"
+                                *ngIf="showEstablishDepartmentButton"
+                                (click)="establishActiveDepartment()"
+                                [disabled]="isSettingDepartment">
+                          <i class="fas fa-check mr-1" *ngIf="!isSettingDepartment"></i>
+                          <i class="fas fa-spinner fa-spin mr-1" *ngIf="isSettingDepartment"></i>
+                          Establecer departamento
+                        </button>
+                        <small class="form-text text-muted mb-0">Solo entre dependencias o áreas que tiene asignadas.</small>
+                      </div>
+                    </ng-container>
+                    <ng-template #departamentoInputUnico>
+                      <input type="text"
+                             class="form-control"
+                             id="departamento"
+                             formControlName="departamento"
+                             [readonly]="!isEditing"
+                             [class.is-invalid]="perfilForm.get('departamento')?.invalid && perfilForm.get('departamento')?.touched">
+                      <div class="invalid-feedback" *ngIf="perfilForm.get('departamento')?.invalid && perfilForm.get('departamento')?.touched">
+                        {{ getErrorMessage('departamento') }}
+                      </div>
+                    </ng-template>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <!-- Dirección -->
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="direccion">Dirección</label>
+                    <textarea class="form-control" 
+                              id="direccion" 
+                              rows="2" 
+                              formControlName="direccion"
+                              [readonly]="!isEditing"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <!-- Fecha de Nacimiento -->
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+                    <input type="date" 
+                           class="form-control" 
+                           id="fecha_nacimiento" 
+                           formControlName="fecha_nacimiento"
+                           [readonly]="!isEditing">
+                  </div>
+                </div>
+
+                <!-- Género -->
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="genero">Género</label>
+                    <select class="form-control" 
+                            id="genero" 
+                            formControlName="genero">
+                      <option value="">Seleccionar...</option>
+                      <option value="M">Masculino</option>
+                      <option value="F">Femenino</option>
+                      <option value="O">Otro</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Estado Civil -->
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="estado_civil">Estado Civil</label>
+                    <select class="form-control" 
+                            id="estado_civil" 
+                            formControlName="estado_civil">
+                      <option value="">Seleccionar...</option>
+                      <option value="soltero">Soltero/a</option>
+                      <option value="casado">Casado/a</option>
+                      <option value="divorciado">Divorciado/a</option>
+                      <option value="viudo">Viudo/a</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Foto de Perfil -->
+              <div class="row" *ngIf="isEditing">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="foto">Foto de Perfil</label>
+                    <div class="input-group">
+                      <div class="custom-file">
+                        <input type="file" 
+                               class="custom-file-input" 
+                               id="foto" 
+                               accept="image/*"
+                               (change)="onFileSelected($event)">
+                        <label class="custom-file-label" for="foto">Elegir archivo</label>
+                      </div>
+                    </div>
+                    <small class="form-text text-muted">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 2MB</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Botones de Acción -->
+              <div class="row" *ngIf="isEditing">
+                <div class="col-md-12">
+                  <button type="submit" 
+                          class="btn btn-primary" 
+                          [disabled]="perfilForm.invalid || isLoading">
+                    <i class="fas fa-save mr-2" *ngIf="!isLoading"></i>
+                    <i class="fas fa-spinner fa-spin mr-2" *ngIf="isLoading"></i>
+                    {{ isLoading ? 'Guardando...' : 'Guardar Cambios' }}
+                  </button>
+                  <button type="button" 
+                          class="btn btn-secondary ml-2" 
+                          (click)="toggleEdit()">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Cambio de Contraseña -->
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-secondary'">
+          <div class="card-header">
+            <h3 class="card-title">Cambiar Contraseña</h3>
+          </div>
+          <div class="card-body">
+            <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+              <div class="row">
+                <!-- Contraseña Actual -->
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="currentPassword">Contraseña Actual *</label>
+                    <input type="password" 
+                           class="form-control" 
+                           id="currentPassword" 
+                           formControlName="currentPassword"
+                           [class.is-invalid]="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched">
+                    <div class="invalid-feedback" *ngIf="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched">
+                      {{ getPasswordErrorMessage('currentPassword') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <!-- Nueva Contraseña -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="newPassword">Nueva Contraseña *</label>
+                    <input type="password" 
+                           class="form-control" 
+                           id="newPassword" 
+                           formControlName="newPassword"
+                           [class.is-invalid]="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched">
+                    <div class="invalid-feedback" *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched">
+                      {{ getPasswordErrorMessage('newPassword') }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Confirmar Contraseña -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="confirmPassword">Confirmar Contraseña *</label>
+                    <input type="password" 
+                           class="form-control" 
+                           id="confirmPassword" 
+                           formControlName="confirmPassword"
+                           [class.is-invalid]="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched">
+                    <div class="invalid-feedback" *ngIf="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched">
+                      {{ getPasswordErrorMessage('confirmPassword') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Error de contraseñas no coincidentes -->
+              <div class="alert alert-danger" *ngIf="getPasswordMismatchError()">
+                {{ getPasswordMismatchError() }}
+              </div>
+
+              <!-- Botón de Cambio de Contraseña -->
+              <div class="row">
+                <div class="col-md-12">
+                  <button type="submit" 
+                          class="btn btn-warning" 
+                          [disabled]="passwordForm.invalid || isPasswordChanging">
+                    <i class="fas fa-key mr-2" *ngIf="!isPasswordChanging"></i>
+                    <i class="fas fa-spinner fa-spin mr-2" *ngIf="isPasswordChanging"></i>
+                    {{ isPasswordChanging ? 'Cambiando...' : 'Cambiar Contraseña' }}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

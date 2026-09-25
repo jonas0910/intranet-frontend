@@ -1,0 +1,318 @@
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="mb-1 fw-light">
+            <i class="fas fa-plus-circle text-primary me-2"></i>
+            {{ isEditing ? 'Editar Sistema Integrado' : 'Agregar Sistema Integrado' }}
+          </h2>
+          <p class="text-muted mb-0 small">Configuración de sistema con patrón de diseño</p>
+        </div>
+        <button type="button" class="btn btn-outline-secondary" (click)="resetForm()">
+          <i class="fas fa-arrow-left me-1"></i>
+          Volver a Sistemas
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Content -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+        <form [formGroup]="sistemaForm" (ngSubmit)="saveSistema()">
+          
+          <!-- Información del Sistema -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="text-primary mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                Información del Sistema
+              </h6>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Nombre del Sistema *</label>
+                <div class="input-group">
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    formControlName="nombre"
+                    placeholder="Ej: Sistema de Recursos Humanos"
+                    [class.is-invalid]="isFieldInvalid('nombre')"
+                  >
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-secondary" 
+                    (click)="generateCode()"
+                    title="Generar código automático"
+                  >
+                    <i class="fas fa-magic"></i>
+                  </button>
+                </div>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('nombre')">
+                  {{ getFieldError('nombre') }}
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Código del Sistema *</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  formControlName="codigo"
+                  placeholder="Ej: RRHH"
+                  [class.is-invalid]="isFieldInvalid('codigo')"
+                >
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('codigo')">
+                  {{ getFieldError('codigo') }}
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="mb-3">
+                <label class="form-label">Descripción *</label>
+                <textarea 
+                  class="form-control" 
+                  rows="3"
+                  formControlName="descripcion"
+                  placeholder="Describe el propósito y funcionalidad del sistema"
+                  [class.is-invalid]="isFieldInvalid('descripcion')"
+                ></textarea>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('descripcion')">
+                  {{ getFieldError('descripcion') }}
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">URL Base *</label>
+                <input 
+                  type="url" 
+                  class="form-control" 
+                  formControlName="url_base"
+                  placeholder="https://sistema.ejemplo.com"
+                  [class.is-invalid]="isFieldInvalid('url_base')"
+                >
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('url_base')">
+                  {{ getFieldError('url_base') }}
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Categoría</label>
+                <select class="form-select" formControlName="categoria">
+                  <option value="sistema_interno">Sistema Interno</option>
+                  <option value="sistema_externo">Sistema Externo</option>
+                  <option value="sistema_legacy">Sistema Legacy</option>
+                  <option value="sistema_cloud">Sistema Cloud</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Configuración SSO -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="text-primary mb-3">
+                <i class="fas fa-shield-alt me-2"></i>
+                Configuración SSO
+              </h6>
+            </div>
+            
+            <div class="col-md-4">
+              <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" formControlName="sso_habilitado">
+                <label class="form-check-label">SSO Habilitado</label>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" formControlName="sso_force">
+                <label class="form-check-label">Forzar SSO</label>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label">Provider SSO</label>
+                <select class="form-select" formControlName="sso_provider">
+                  <option value="basic">Basic</option>
+                  <option value="saml2">SAML2</option>
+                  <option value="oauth2">OAuth2</option>
+                  <option value="ldap">LDAP</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Patrón de Diseño -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="text-primary mb-3">
+                <i class="fas fa-palette me-2"></i>
+                Patrón de Diseño
+              </h6>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" formControlName="usar_patron_existente">
+                <label class="form-check-label">Usar Patrón Existente</label>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" formControlName="activo">
+                <label class="form-check-label">Sistema Activo</label>
+              </div>
+            </div>
+
+            <!-- Patrón Existente -->
+            <div class="col-md-6" *ngIf="sistemaForm.get('usar_patron_existente')?.value">
+              <div class="mb-3">
+                <label class="form-label">Seleccionar Patrón</label>
+                <select class="form-select" formControlName="patron_id">
+                  <option value="">Selecciona un patrón...</option>
+                  <option *ngFor="let patron of patronesDisponibles" [value]="patron.id">
+                    {{ patron.nombre }} ({{ patron.codigo }})
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Archivo de Patrón -->
+            <div class="col-md-6" *ngIf="!sistemaForm.get('usar_patron_existente')?.value">
+              <div class="mb-3">
+                <label class="form-label">Archivo JSON del Patrón</label>
+                <input 
+                  type="file" 
+                  class="form-control" 
+                  accept=".json"
+                  (change)="onPatternFileSelected($event)"
+                  [disabled]="sistemaForm.get('patron_file')?.disabled"
+                >
+                <small class="form-text text-muted">
+                  Sube un archivo JSON con la estructura del patrón de diseño
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vista Previa del Patrón -->
+          <div class="row mb-4" *ngIf="patronSeleccionado && mostrarVistaPrevia">
+            <div class="col-12">
+              <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-eye me-2"></i>
+                    Vista Previa del Patrón
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <h6>Información del Patrón</h6>
+                      <p><strong>ID:</strong> {{ patronSeleccionado.id || 'N/A' }}</p>
+                      <p><strong>Nombre:</strong> {{ patronSeleccionado.nombre || 'N/A' }}</p>
+                      <p><strong>Código:</strong> {{ patronSeleccionado.codigo || 'N/A' }}</p>
+                      <p><strong>Categoría:</strong> {{ patronSeleccionado.categoria || 'N/A' }}</p>
+                      <p><strong>Prioridad:</strong> {{ patronSeleccionado.prioridad || 'N/A' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                      <h6>Estadísticas</h6>
+                      <p><strong>Total de Menús:</strong> {{ getTotalMenus() }}</p>
+                      <p><strong>Menús Activos:</strong> {{ getActiveMenus() }}</p>
+                      <p><strong>SSO Habilitado:</strong> {{ getSSOStatus() }}</p>
+                      <p><strong>Provider SSO:</strong> {{ getSSOProvider() }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Lista de Menús -->
+                  <div class="mt-3" *ngIf="getMenusFromPattern().length > 0">
+                    <h6>Menús del Sistema</h6>
+                    <div class="table-responsive">
+                      <table class="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Orden</th>
+                            <th>Nombre</th>
+                            <th>Código</th>
+                            <th>Icono</th>
+                            <th>Estado</th>
+                            <th>Permisos</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let menu of getMenusFromPattern()">
+                            <td>{{ menu.orden }}</td>
+                            <td>{{ menu.nombre }}</td>
+                            <td><span class="badge bg-light text-dark">{{ menu.codigo }}</span></td>
+                            <td><i [class]="menu.icono"></i></td>
+                            <td>
+                              <span class="badge" [class]="menu.estado_default ? 'bg-success' : 'bg-secondary'">
+                                {{ menu.estado_default ? 'Activo' : 'Inactivo' }}
+                              </span>
+                            </td>
+                            <td>
+                              <small class="text-muted">{{ menu.permisos_requeridos.length }} permisos</small>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </form>
+        </div>
+        
+        <!-- Footer -->
+        <div class="card-footer bg-transparent border-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <div *ngIf="saving" class="text-muted small">
+              <i class="fas fa-info-circle me-1"></i>
+              Procesando... Esto puede tomar unos segundos
+            </div>
+            <div class="d-flex gap-2">
+              <button 
+                type="button" 
+                class="btn btn-outline-secondary" 
+                (click)="resetForm()"
+                [disabled]="saving"
+              >
+                <i class="fas fa-times me-1"></i>
+                {{ saving ? 'Cancelar' : 'Cancelar' }}
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-primary" 
+                (click)="saveSistema()"
+                [disabled]="saving || sistemaForm.invalid"
+              >
+                <span *ngIf="saving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                <i *ngIf="!saving" class="fas fa-save me-1"></i>
+                {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear Sistema') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

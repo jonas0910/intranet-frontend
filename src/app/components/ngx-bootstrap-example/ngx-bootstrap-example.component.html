@@ -1,0 +1,198 @@
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">
+      <i class="fas fa-star text-warning mr-2"></i>
+      Ejemplo ngx-bootstrap: Sin jQuery
+    </h3>
+    <div class="card-tools">
+      <span class="badge badge-info">Angular + ngx-bootstrap</span>
+    </div>
+  </div>
+  
+  <div class="card-body">
+    <div class="row">
+      
+      <!-- Dropdowns Section -->
+      <div class="col-md-4">
+        <div class="info-box">
+          <div class="info-box-icon bg-primary">
+            <i class="fas fa-mouse-pointer"></i>
+          </div>
+          <div class="info-box-content">
+            <span class="info-box-text">Dropdowns</span>
+            <div class="dropdown">
+              <button 
+                class="btn btn-primary dropdown-toggle" 
+                type="button" 
+                id="dropdownExample"
+                dropdownToggle
+                [attr.aria-expanded]="isDropdownOpen.toString()">
+                Seleccionar opción
+              </button>
+              
+              <div 
+                class="dropdown-menu" 
+                aria-labelledby="dropdownExample">
+                <button
+                  *ngFor="let item of dropdownItems" 
+                  class="dropdown-item" 
+                  type="button"
+                  (click)="selectDropdownItem(item)">
+                  <i [class]="item.icon" class="mr-2"></i>
+                  {{ item.text }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modals Section -->
+      <div class="col-md-4">
+        <div class="info-box">
+          <div class="info-box-icon bg-success">
+            <i class="fas fa-window-restore"></i>
+          </div>
+          <div class="info-box-content">
+            <span class="info-box-text">Modals</span>
+            <div class="btn-group-vertical d-block">
+              <button 
+                type="button" 
+                class="btn btn-success mb-2" 
+                (click)="openModal()">
+                <i class="fas fa-plus mr-1"></i>
+                Modal desde Servicio
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-info" 
+                (click)="openTemplateModal()">
+                <i class="fas fa-eye mr-1"></i>
+                Modal desde Template
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tooltips Section -->
+      <div class="col-md-4">
+        <div class="info-box">
+          <div class="info-box-icon bg-warning">
+            <i class="fas fa-info-circle"></i>
+          </div>
+          <div class="info-box-content">
+            <span class="info-box-text">Tooltips</span>
+            <div class="btn-toolbar">
+              <button 
+                type="button" 
+                class="btn btn-warning mr-2 mb-2" 
+                placement="top"
+                tooltip="Tooltip arriba con ngx-bootstrap">
+                <i class="fas fa-caret-up mr-1"></i>
+                Top
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-warning mr-2 mb-2" 
+                placement="right"
+                tooltip="Tooltip derecha con ngx-bootstrap">
+                <i class="fas fa-caret-right mr-1"></i>
+                Right
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-warning mr-2 mb-2" 
+                placement="bottom"
+                tooltip="Tooltip abaje con ngx-bootstrap">
+                <i class="fas fa-caret-down mr-1"></i>
+                Bottom
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-warning mr-2 mb-2" 
+                placement="left"
+                tooltip="Tooltip izquierda con ngx-bootstrap">
+                <i class="fas fa-caret-left mr-1"></i>
+                Left
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    
+    <!-- Code Example -->
+    <hr>
+    <div class="row mt-4">
+      <div class="col-12">
+        <h5><i class="fas fa-code mr-2"></i>Ejemplo de Código</h5>
+        <div class="info-box">
+          <div class="card-body">
+            <pre class="code-block">
+<code class="typescript">// Dropdown con ngx-bootstrap
+import {{ 'BsDropdownModule }' }} from 'ngx-bootstrap/dropdown';
+
+// En el template:
+&lt;div class="dropdown" #dropdownExample="ngbDropdown"&gt;
+  &lt;button class="btn btn-primary dropdown-toggle" 
+          type="button" 
+          [ngbDropdownToggle]="dropdownRef"&gt;
+    Dropdown
+  &lt;/button&gt;
+  &lt;div class="dropdown-menu" 
+       #dropdownRef="ngbDropdownMenu"&gt;
+    &lt;button class="dropdown-item" type="button"&gt;Opción 1&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+// Modal con ngx-bootstrap  
+import {{ 'BsModalService, BsModalRef }' }} from 'ngx-bootstrap/modal';
+
+this.modalRef = this.modalService.show(MyModalComponent);
+
+// Tooltip con ngx-bootstrap
+import {{ 'TooltipModule }' }} from 'ngx-bootstrap/tooltip';
+
+&lt;button [ngbTooltip]="'Texto del tooltip'"&gt;
+  Botón con tooltip
+&lt;/button&gt;</code>
+            </pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Template Example -->
+<div class="modal fade" bsModal #modalTemplate tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel">
+          {{ modalData.title }}
+        </h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modalTemplate.hide()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>{{ modalData.content }}</p>
+        <div class="alert alert-success">
+          <i class="fas fa-check-circle"></i>
+          Este modal está completamente integrado con Angular sin jQuery.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="modalTemplate.hide()">
+          Cerrar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="modalTemplate.hide()">
+          Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,108 @@
+/* ========== COMPONENTS: Action menus, tables, text utilities ========== */
+
+/* Action menu container (systems) */
+.action-menu-container {
+  position: relative !important;
+  display: inline-block !important;
+}
+
+.action-menu-panel {
+  position: absolute !important;
+  top: 100% !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  min-width: 180px !important;
+  background: white !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  padding: 0.75rem !important;
+  margin-top: 0.5rem !important;
+  list-style: none !important;
+}
+
+.action-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  padding: 0.75rem !important;
+  color: #495057 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.action-menu-item:last-child { margin-bottom: 0 !important; }
+.action-menu-item:hover { background-color: #f8f9fa !important; transform: translateX(4px) !important; }
+.action-menu-item.disabled { color: #6c757d !important; cursor: not-allowed !important; opacity: 0.6 !important; }
+.action-menu-item.disabled:hover { background-color: transparent !important; transform: none !important; }
+.action-menu-item i { width: 20px !important; margin-right: 0.75rem !important; font-size: 1rem !important; }
+.action-menu-item span { flex: 1 !important; }
+
+/* Sistema cards */
+.sistema-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+}
+
+.sistema-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Tables */
+.table th {
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.table td {
+  vertical-align: middle;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.02);
+}
+
+/* Input group */
+.input-group-text {
+  background-color: #fff !important;
+  border-right: none !important;
+  color: #adb5bd !important;
+}
+
+.input-group>select.form-control {
+  border-left: none !important;
+}
+
+/* Menu list */
+.menu-list .menu-item {
+  transition: background-color 0.2s ease;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.menu-list .menu-item:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+.menu-list .menu-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Text utilities */
+.fw-light  { font-weight: 300 !important; }
+.fw-medium { font-weight: 500 !important; }
+.text-muted { color: #6c757d !important; }
+.bg-light   { background-color: #f8f9fa !important; }
+.shadow-sm  { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important; }
+
+/* Icons */
+.fas {
+  width: 16px;
+  text-align: center;
+}

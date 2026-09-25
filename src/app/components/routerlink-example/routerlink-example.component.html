@@ -1,0 +1,172 @@
+<div class="container-fluid mt-4">
+  <div class="row">
+    
+    <!-- Navegación Principal con routerLink -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5><i class="fas fa-mouse-pointer mr-2"></i>Navegación con routerLink</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-3">
+            ✅ Para navegación interna SIEMPRE usa routerLink
+          </p>
+          
+          <!-- ✅ CORRECTO - Links de navegación -->
+          <div class="list-group">
+            <a 
+              *ngFor="let item of navigationMenu" 
+              routerLink="{{ item.path }}"
+              routerLinkActive="active" 
+              class="list-group-item list-group-item-action">
+              <i [class]="item.icon" class="mr-2"></i>
+              {{ item.label }}
+            </a>
+          </div>
+          
+          <hr>
+          <small class="text-success">
+            <i class="fas fa-check-circle mr-1"></i>
+            Estos links preservan el estado de la aplicación y proporcionan mejor UX
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones Rápidas con buttons -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-success text-white">
+          <h5><i class="fas fa-mouse-pointer mr-2"></i>Acciones con buttons</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-3">
+            ✅ Para acciones (no navegación) usa buttons
+          </p>
+          
+          <!-- ✅ CORRECTO - Botones de acción -->
+          <div class="btn-group-vertical w-100">
+            <button 
+              *ngFor="let action of quickActions" 
+              class="btn btn-outline-secondary mb-2"
+              (click)="onQuickAction(action.action)">
+              <i [class]="action.icon" class="mr-2"></i>
+              {{ action.label }}
+            </button>
+          </div>
+          
+          <hr>
+          <small class="text-success">
+            <i class="fas fa-check-circle mr-1"></i>
+            Estos botones ejecutan acciones sin navegar a otras páginas
+          </small>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Comparación: Antes vs Después -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-warning text-dark">
+          <h5><i class="fas fa-code mr-2"></i>Comparación: Antes vs Después</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            
+            <!-- ❌ ANTES (PROBLEMÁTICO) -->
+            <div class="col-md-6">
+              <h6 class="text-danger mb-3">
+                <i class="fas fa-times-circle mr-1"></i>
+                ❌ ANTES (Problemático):
+              </h6>
+              <div class="bg-light p-3 rounded">
+                <pre class="mb-0 text-danger"><code>&lt;a href="#" 
+   class="dropdown-item" 
+   (click)="navigate('/dashboard')"&gt;
+  Dashboard
+&lt;/a&gt;
+
+&lt;a href="#" 
+   class="dropdown-item" 
+   (click)="exportData(); $event.preventDefault()"&gt;
+  Exportar
+&lt;/a&gt;</code></pre>
+              </div>
+              <small class="text-danger mt-2 d-block">
+                ❌ Problemas: href="#", preventDefault(), mezcla de responsabilidades
+              </small>
+            </div>
+
+            <!-- ✅ DESPUÉS (CORRECTO) -->
+            <div class="col-md-6">
+              <h6 class="text-success mb-3">
+                <i class="fas fa-check-circle mr-1"></i>
+                ✅ DESPUÉS (Correcto):
+              </h6>
+              <div class="bg-light p-3 rounded">
+                <pre class="mb-0 text-success"><code>&lt;a routerLink="/dashboard" 
+   class="dropdown-item"&gt;
+  Dashboard
+&lt;/a&gt;
+
+&lt;button class="dropdown-item" 
+        (click)="exportData()"&gt;
+  Exportar
+&lt;/button&gt;</code></pre>
+              </div>
+              <small class="text-success mt-2 d-block">
+                ✅ Beneficios: routerLink nativo, semántica correcta, mejor UX
+              </small>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reglas rápidas -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card border-info">
+        <div class="card-header bg-info text-white">
+          <h5><i class="fas fa-lightbulb mr-2"></i>Reglas Rápidas</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6>✅ USA routerLink cuando:</h6>
+              <ul>
+                <li>Es navegación interna</li>
+                <li>Cambia de vista/página</li>
+                <li>Es breadcrumb funcional</li>
+                <li>Es menú principal</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+
+              <h6>✅ USA button cuando:</h6>
+              <ul>
+                <li>No navega (ejecuta acción)</li>
+                <li>Es dropdown action</li>
+                <li>Es paginación funcional</li>
+                <li>Es toggle/un toggle</li>
+              </ul>
+            </div>
+          </div>
+          
+          <hr>
+          <div class="alert alert-warning mb-0">
+            <strong>📖 Recuerda:</strong> 
+            La regla de oro es: Si el elemento <strong>navega</strong> → routerLink, 
+            si el elemento <strong>acciona</strong> → button.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

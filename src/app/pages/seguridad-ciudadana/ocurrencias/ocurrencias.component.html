@@ -1,0 +1,620 @@
+<app-system-layout
+  [title]="isServiceMode ? 'Ocurrencias e Incidentes de Mi Área' : 'Ocurrencias e Incidentes Centralizado'"
+  [subtitle]="isServiceMode ? 'Gestión de intervenciones y seguridad de mi unidad orgánica' : 'Gestión global de intervenciones y seguridad'"
+  [breadcrumbs]="isServiceMode 
+    ? [{label: 'Inicio', url: '/'}, {label: 'Seguridad Ciudadana', url: '/seguridad-ciudadana'}, {label: 'Servicios', url: '/seguridad-ciudadana/servicios/ocurrencias'}, {label: 'Ocurrencias del Área'}] 
+    : [{label: 'Inicio', url: '/'}, {label: 'Seguridad Ciudadana', url: '/seguridad-ciudadana'}, {label: 'Ocurrencias Globales'}]"
+  [subsystem]="'seguridad-ciudadana'">
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card elevation-1 mb-3" [class.card-outline]="true" [ngClass]="cv.cardOutlineColor"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-exclamation-triangle mr-1"></i> Listado de Ocurrencias
+            </h3>
+            <span class="badge badge-primary">{{ paginacion.total }}</span>
+            <button class="btn btn-sm btn-outline-info ml-1 px-2" (click)="isFiltersCollapsed = !isFiltersCollapsed"
+              [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'" style="height: 24px; line-height: 1;">
+              <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+            </button>
+            <ng-container *ngIf="cv.showExportButtons">
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'"
+                (click)="onExportExcel()">
+                <i class="fas fa-file-excel mr-1"></i> Excel
+              </button>
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'"
+                (click)="onPrintGeneral()">
+                <i class="fas fa-file-pdf mr-1"></i> Reporte PDF
+              </button>
+            </ng-container>
+          </div>
+          <div class="ms-auto flex-shrink-0">
+            <button type="button" class="btn btn-sm btn-primary" (click)="openCreate()">
+              <i class="fas fa-plus mr-1"></i> Nueva Ocurrencia
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="border-bottom bg-light overflow-hidden" [style.max-height]="isFiltersCollapsed ? '0px' : '500px'"
+          [style.padding]="isFiltersCollapsed ? '0px' : '0.5rem'"
+          style="transition: max-height 0.3s ease, padding 0.3s ease;">
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="mb-1 ds-crud-label">Buscar</label>
+              <input type="text" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.search"
+                (ngModelChange)="onFilterChange()" placeholder="Código, descripción o reportante...">
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Tipo</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.tipo"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todos</option>
+                <option *ngFor="let opt of tiposIncidente" [value]="opt.value">{{ opt.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Prioridad</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.prioridad"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todas</option>
+                <option *ngFor="let opt of prioridades" [value]="opt.value">{{ opt.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Estado</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.estado"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todos</option>
+                <option *ngFor="let opt of estados" [value]="opt.value">{{ opt.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-1">
+              <label class="mb-1 ds-crud-label">Por página</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.per_page"
+                (ngModelChange)="onFilterChange()">
+                <option *ngFor="let size of [10, 20, 50]" [ngValue]="size">{{size}}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <div *ngIf="loading" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+            <p class="text-muted">Cargando ocurrencias...</p>
+          </div>
+
+          <div class="table-responsive p-3" *ngIf="!loading">
+            <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" id="tablaOcurrencias"
+              class="table table-hover table-striped align-middle mb-0 w-100 ds-crud-table">
+              <thead [style.background-color]="cv.tableHeaderBg" [style.color]="cv.tableHeaderColor">
+                <tr>
+                  <th class="border-0">#</th>
+                  <th class="border-0">Ocurrencia</th>
+                  <th class="border-0">Ubicación / Sector</th>
+                  <th class="text-center border-0">Fecha / Prioridad</th>
+                  <th class="text-center border-0">Atención</th>
+                  <th class="text-center border-0">Estado</th>
+                  <th class="text-center border-0" style="width: 180px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let o of ocurrencias; let i = index" class="fade-in">
+                  <td>{{ (paginacion.currentPage - 1) * paginacion.perPage + i + 1 }}</td>
+                  <td>
+                    <strong class="text-primary d-block">{{ o.codigo_ocurrencia }}</strong>
+                    <small class="text-muted d-block"
+                      style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      <i class="fas" [ngClass]="getTipoIcon(o.tipo)"></i> {{ o.descripcion }}
+                    </small>
+                  </td>
+                  <td>
+                    <span>{{ o.direccion }}</span>
+                    <br><small class="badge badge-light text-muted">{{ (o.sector?.nombre_sector || o.sector_id)
+                      }}</small>
+                  </td>
+                  <td class="text-center">
+                    <small class="d-block">{{ o.fecha_hora_ocurrencia | date:'dd/MM/yyyy HH:mm' }}</small>
+                    <span class="badge" [ngClass]="getPrioridadBadgeClass(o.prioridad)">{{
+                      getPrioridadLabel(o.prioridad) }}</span>
+                  </td>
+                  <td class="text-center small">
+                    <div *ngIf="o.personal_atendio; else sinAsignar">
+                      <i class="fas fa-user-shield text-info mr-1"></i> {{ o.personal_atendio.nombres }} {{
+                      o.personal_atendio.apellidos }}
+                      <br><i class="fas fa-car-side text-info mr-1"></i> {{ o.vehiculo?.placa || 'A pie' }}
+                    </div>
+                    <ng-template #sinAsignar><span class="text-muted italic">Pendiente de
+                        asignación</span></ng-template>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge" [ngClass]="getEstadoBadgeClass(o.estado)">{{ getEstadoLabel(o.estado) }}</span>
+                  </td>
+                  <td class="text-center" style="min-width: 130px; position: relative; overflow: visible;">
+                    <style>
+                      .ds-action-group { display: flex; align-items: center; justify-content: center; gap: 4px; }
+                      .ds-more-dropdown { position: relative; display: inline-block; }
+                      .ds-more-menu { 
+                         position: absolute; right: 0; top: 100%; min-width: 190px;
+                        background: #fff; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                        z-index: 1060; border: 1px solid #ddd; padding: 5px 0; margin-top: 2px;
+                      }
+                      .ds-menu-item { 
+                        display: flex; align-items: center; padding: 8px 15px; color: #333; 
+                        font-size: 0.85rem; text-decoration: none; transition: background 0.2s;
+                        cursor: pointer; text-align: left; border: none; width: 100%; background: none;
+                      }
+                      .ds-menu-item:hover { background: #f8f9fa; color: #007bff; text-decoration: none; outline: none; }
+                      .ds-divider { height: 1px; background: #eee; margin: 5px 0; }
+                    </style>
+
+                    <div class="ds-action-group">
+                      <!-- Editar (Siempre visible) -->
+                      <button class="btn btn-sm btn-warning shadow-sm" (click)="openEdit(o)" [disabled]="o.estado === 'cerrada'" title="Editar">
+                        <i class="fas fa-edit"></i>
+                      </button>
+
+                      <!-- Operación Principal (Dinámica) -->
+                      <button *ngIf="o.estado === 'reportada'" class="btn btn-sm btn-primary shadow-sm" (click)="openAsignar(o)" title="Asignar">
+                        <i class="fas fa-user-plus"></i>
+                      </button>
+                      <button *ngIf="['en_atencion', 'atendida'].includes(o.estado)" class="btn btn-sm btn-success shadow-sm" (click)="openCerrar(o)" title="Cerrar">
+                        <i class="fas fa-lock"></i>
+                      </button>
+
+                      <!-- Menú de Acciones Secundarias (Tuerca Gris con Click Angular) -->
+                      <div class="ds-more-dropdown">
+                        <button class="btn btn-sm btn-secondary shadow-sm px-2" type="button" (click)="$event.stopPropagation(); o.showMenu = !o.showMenu">
+                          <i class="fas fa-cog"></i>
+                        </button>
+                        <div class="ds-more-menu shadow-lg fadeIn animated faster" *ngIf="o.showMenu" (click)="$event.stopPropagation()">
+                          <button class="ds-menu-item" (click)="o.showMenu = false; openView(o)">
+                            <i class="fas fa-eye mr-2 text-info" style="width: 20px;"></i> Ver Detalle Completo
+                          </button>
+                          <button class="ds-menu-item" (click)="o.showMenu = false; onPrintIndividual(o)">
+                            <i class="fas fa-file-pdf mr-2 text-danger" style="width: 20px;"></i> Reporte Individual PDF
+                          </button>
+                          <div class="ds-divider"></div>
+                          <button class="ds-menu-item text-danger font-weight-bold" (click)="o.showMenu = false; delete(o)">
+                            <i class="fas fa-trash-alt mr-2" style="width: 20px;"></i> Eliminar Registro
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Paginación Footer -->
+        <div *ngIf="!loading && paginacion.total > 0" class="card-footer clearfix bg-white border-top">
+          <div class="row align-items-center">
+            <div class="col-sm-12 col-md-5">
+              <div class="text-muted small">
+                Mostrando {{ (paginacion.currentPage - 1) * paginacion.perPage + 1 }} a {{
+                Math.min(paginacion.currentPage * paginacion.perPage, paginacion.total) }} de {{ paginacion.total }}
+              </div>
+            </div>
+            <div class="col-sm-12 col-md-7 text-right">
+              <ul class="pagination pagination-sm m-0 float-right" *ngIf="paginacion.lastPage > 1">
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1"><a class="page-link"
+                    (click)="onPageChange(1)">«</a></li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1"><a class="page-link"
+                    (click)="onPageChange(paginacion.currentPage - 1)">‹</a></li>
+                <li class="page-item" *ngFor="let page of getPaginationPages()"
+                  [class.active]="page === paginacion.currentPage" [class.disabled]="page === -1">
+                  <a class="page-link" (click)="page !== -1 && onPageChange(page)">{{ page === -1 ? '...' : page }}</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage"><a
+                    class="page-link" (click)="onPageChange(paginacion.currentPage + 1)">›</a></li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage"><a
+                    class="page-link" (click)="onPageChange(paginacion.lastPage)">»</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-system-layout>
+
+<!-- MODAL: REGISTRO / EDICION -->
+<div class="modal fade shadow-lg" id="modalOcurrencia" tabindex="-1" role="dialog" aria-hidden="true"
+  data-backdrop="static">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content border-0 overflow-hidden"
+      style="border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+      <!-- Header Refinado -->
+      <div class="modal-header border-0 pb-0" [style.background-color]="mc.headerBg">
+        <h5 class="modal-title font-weight-bold text-white d-flex align-items-center">
+          <i class="fas mr-2 opacity-75" [ngClass]="isEdit ? 'fa-edit' : 'fa-plus-circle'"></i>
+          <span style="letter-spacing: -0.5px;">{{ isEdit ? 'Editar Ocurrencia: ' +
+            ocurrenciaSeleccionada?.codigo_ocurrencia : 'Registrar Nueva Ocurrencia' }}</span>
+        </h5>
+        <button type="button" class="close text-white opacity-75" (click)="closeEdit()" aria-label="Close"
+          style="font-weight: 300;">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <form (ngSubmit)="save()" #ocurrenciaForm="ngForm">
+        <div class="modal-body bg-white px-4 py-4">
+          <div class="row">
+            <!-- Columna Izquierda: Formulario Principal -->
+            <div class="col-lg-7 pr-lg-4">
+              <div class="section-title mb-3">
+                <h6 class="text-primary small font-weight-bold text-uppercase m-0" style="letter-spacing: 1px;">
+                  detalles del incidente
+                </h6>
+                <hr class="mt-1 mb-0 border-primary opacity-25" style="width: 40px;">
+              </div>
+
+              <!-- Oficina / Área (Solo modo servicio) -->
+              <div class="form-group mb-3" *ngIf="isServiceMode">
+                <label class="small text-muted font-weight-bold mb-1">Oficina / Área Responsable</label>
+                <div class="p-2 border rounded bg-light text-secondary d-flex align-items-center"
+                  style="font-size: 0.9rem;">
+                  <i class="fas fa-building mr-2 opacity-50"></i> {{ userDepartment?.name || 'Cargando...' }}
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 form-group mb-3">
+                  <label class="small text-muted font-weight-bold mb-1">Tipo de Incidente <span
+                      class="text-danger">*</span></label>
+                  <div class="input-group input-group-sm">
+                    <div class="input-group-prepend"><span class="input-group-text bg-white border-right-0"><i
+                          class="fas fa-list-ul text-muted"></i></span></div>
+                    <select class="form-control border-left-0" [(ngModel)]="formulario.tipo" name="tipo"
+                      style="height: 38px;" required>
+                      <option *ngFor="let opt of tiposIncidente" [value]="opt.value">{{ opt.label }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6 form-group mb-3">
+                  <label class="small text-muted font-weight-bold mb-1">Fecha y Hora <span
+                      class="text-danger">*</span></label>
+                  <div class="input-group input-group-sm">
+                    <div class="input-group-prepend"><span class="input-group-text bg-white border-right-0"><i
+                          class="far fa-calendar-alt text-muted"></i></span></div>
+                    <input type="datetime-local" class="form-control border-left-0"
+                      [(ngModel)]="formulario.fecha_hora_ocurrencia" name="fecha_hora" style="height: 38px;" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group mb-3">
+                <label class="small text-muted font-weight-bold mb-1">Descripción de los Hechos <span
+                    class="text-danger">*</span></label>
+                <textarea class="form-control" rows="3" [(ngModel)]="formulario.descripcion" name="descripcion"
+                  style="border-radius: 8px; resize: none; font-size: 0.95rem;"
+                  placeholder="Relate lo sucedido con el mayor detalle posible..." required minlength="10"></textarea>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 form-group mb-3">
+                  <label class="small text-muted font-weight-bold mb-1">Prioridad <span
+                      class="text-danger">*</span></label>
+                  <select class="form-control" [(ngModel)]="formulario.prioridad" name="prioridad"
+                    style="height: 38px; border-radius: 6px;" required>
+                    <option *ngFor="let opt of prioridades" [value]="opt.value">{{ opt.label }}</option>
+                  </select>
+                </div>
+                <div class="col-md-6 form-group mb-3">
+                  <label class="small text-muted font-weight-bold mb-1">Estado Operativo <span
+                      class="text-danger">*</span></label>
+                  <select class="form-control" [(ngModel)]="formulario.estado" name="estado"
+                    style="height: 38px; border-radius: 6px;" required>
+                    <option *ngFor="let opt of estados" [value]="opt.value">{{ opt.label }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="section-title mt-4 mb-3">
+                <h6 class="text-primary small font-weight-bold text-uppercase m-0" style="letter-spacing: 1px;">
+                  ubicación y contacto
+                </h6>
+                <hr class="mt-1 mb-0 border-primary opacity-25" style="width: 40px;">
+              </div>
+
+              <div class="row">
+                <div class="col-md-8 form-group mb-3">
+                  <label class="small text-muted font-weight-bold mb-1">Dirección Exacta <span
+                      class="text-danger">*</span></label>
+                  <input type="text" class="form-control" [(ngModel)]="formulario.direccion" name="direccion"
+                    style="height: 38px; border-radius: 6px;" required placeholder="Ej: Av. Central 123">
+                </div>
+                <div class="col-md-4 form-group mb-3">
+                  <label class="small text-muted font-weight-bold mb-1">Sector / Zona <span
+                      class="text-danger">*</span></label>
+                  <select class="form-control" [(ngModel)]="formulario.sector_id" name="sector_id"
+                    style="height: 38px; border-radius: 6px;" required>
+                    <option value="">-- Seleccionar --</option>
+                    <option *ngFor="let s of sectores" [value]="s.id">{{ s.nombre }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 form-group mb-3">
+                  <label class="small text-muted font-weight-bold mb-1">Nombre del Reportante <span
+                      class="text-danger">*</span></label>
+                  <input type="text" class="form-control" [(ngModel)]="formulario.reportado_por" name="reportante"
+                    style="height: 38px; border-radius: 6px;" required placeholder="Nombre completo">
+                </div>
+                <div class="col-md-6 form-group mb-3">
+                  <label class="small text-muted font-weight-bold mb-1">DNI del Reportante</label>
+                  <input type="text" class="form-control" [(ngModel)]="formulario.reportante_dni" name="dni"
+                    style="height: 38px; border-radius: 6px;" placeholder="Documento nacional">
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna Derecha: Mapa y Multimedia -->
+            <div class="col-lg-5 pl-lg-4 border-left">
+              <div class="section-title mb-3">
+                <h6 class="text-primary small font-weight-bold text-uppercase m-0" style="letter-spacing: 1px;">
+                  geolocalización
+                </h6>
+                <hr class="mt-1 mb-0 border-primary opacity-25" style="width: 40px;">
+              </div>
+
+              <div class="map-container position-relative mb-3">
+                <div id="map-selector-ocurrencia" class="rounded border shadow-sm"
+                  style="height: 250px; background: #f8f9fa;"></div>
+                <div class="position-absolute p-2 bg-white rounded border shadow-sm"
+                  style="bottom: 10px; right: 10px; z-index: 5; font-size: 0.75rem;">
+                  <span class="text-muted mr-2">
+                    <i class="fas fa-crosshairs mr-1"></i> {{ formulario.latitud | number:'1.5-5' }}
+                  </span>
+                  <span class="text-muted">
+                    <i class="fas fa-arrows-alt-h mr-1"></i> {{ formulario.longitud | number:'1.5-5' }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="section-title mt-4 mb-3">
+                <h6 class="text-primary small font-weight-bold text-uppercase m-0" style="letter-spacing: 1px;">
+                  evidencias visuales
+                </h6>
+                <hr class="mt-1 mb-0 border-primary opacity-25" style="width: 40px;">
+              </div>
+
+              <div class="uploader-box bg-light border-dashed rounded p-3 text-center mb-3 clickable"
+                (click)="fileInput.click()" style="border: 2px dashed #dee2e6; transition: all 0.2s; cursor: pointer;">
+                <i class="fas fa-camera fa-2x text-muted mb-2 opacity-50"></i>
+                <p class="small mb-0 font-weight-bold text-secondary">Añadir Fotografías</p>
+                <p class="text-muted mb-0" style="font-size: 0.7rem;">Haz clic para seleccionar o arrastrar archivos</p>
+                <input type="file" #fileInput (change)="onFileSelected($event)" multiple hidden accept="image/*">
+              </div>
+
+              <!-- Galería de Miniaturas -->
+              <div class="d-flex flex-wrap align-content-start" style="gap: 8px; min-height: 80px;">
+                <div *ngFor="let img of previsualizaciones; let i = index" class="position-relative">
+                  <img [src]="img" class="rounded border"
+                    style="width: 72px; height: 72px; object-fit: cover; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                  <button type="button"
+                    class="btn btn-danger btn-xs position-absolute d-flex align-items-center justify-content-center shadow-sm"
+                    style="top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid white;"
+                    (click)="removerFoto(i)" *ngIf="!img.includes('http')">
+                    <i class="fas fa-times" style="font-size: 9px;"></i>
+                  </button>
+                </div>
+                <div *ngIf="previsualizaciones.length === 0"
+                  class="w-100 d-flex align-items-center justify-content-center border rounded py-4 text-muted small italic"
+                  style="border-style: dashed !important;">
+                  Sin fotos adjuntas
+                </div>
+              </div>
+
+              <div class="form-group mt-4">
+                <label class="small text-muted font-weight-bold mb-1">Notas del Operador (Interno)</label>
+                <textarea class="form-control" rows="2" [(ngModel)]="formulario.observaciones" name="obs_int"
+                  style="font-size: 0.85rem; border-radius: 6px;"
+                  placeholder="Detalles de interés administrativo..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light border-0 px-4 py-3 justify-content-between">
+          <button type="button" class="btn btn-link text-muted font-weight-bold px-0 text-decoration-none"
+            (click)="closeEdit()">
+            <i class="fas fa-times mr-1 small"></i> Descartar
+          </button>
+          <div class="btn-group-elegant">
+            <button type="submit" class="btn btn-primary px-5 shadow-sm font-weight-bold"
+              [disabled]="ocurrenciaForm.invalid || saving" style="border-radius: 30px;">
+              <i class="fas mr-2" [ngClass]="saving ? 'fa-spinner fa-spin' : (isEdit ? 'fa-sync-alt' : 'fa-check')"></i>
+              {{ saving ? 'Procesando...' : (isEdit ? 'Actualizar Registro' : 'Completar Registro') }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DETALLE -->
+<div class="modal fade" id="modalViewOcurrencia" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content overflow-hidden" [style.border-radius.px]="10">
+      <div class="modal-header text-white" [style.background-color]="mc.headerBg">
+        <h5 class="modal-title font-weight-bold"><i class="fas fa-info-circle mr-2"></i>Detalle de Ocurrencia</h5>
+        <button type="button" class="close text-white" (click)="closeView()" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body p-0" *ngIf="ocurrenciaSeleccionada">
+        <div class="row no-gutters">
+          <div class="col-md-12 bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="mb-0 font-weight-bold text-primary">{{ ocurrenciaSeleccionada.codigo_ocurrencia }}</h4>
+              <span class="badge" [ngClass]="getEstadoBadgeClass(ocurrenciaSeleccionada.estado)">{{
+                getEstadoLabel(ocurrenciaSeleccionada.estado) }}</span>
+            </div>
+            <div class="text-right">
+              <small class="d-block text-muted">Fecha del Evento:</small>
+              <span class="font-weight-bold">{{ ocurrenciaSeleccionada.fecha_hora_ocurrencia | date:'MMM dd, yyyy -
+                HH:mm' }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="row mb-4">
+            <div class="col-md-7">
+              <p class="mb-1 text-muted small text-uppercase font-weight-bold">Descripción del incidente</p>
+              <p class="lead" style="font-size: 1rem;">{{ ocurrenciaSeleccionada.descripcion }}</p>
+
+              <div class="row mt-4">
+                <div class="col-6">
+                  <label class="small text-muted mb-0">Ubicación / Dirección:</label>
+                  <p class="mb-2 font-weight-bold"><i class="fas fa-map-marker-alt text-danger mr-1"></i> {{
+                    ocurrenciaSeleccionada.direccion }}</p>
+                </div>
+                <div class="col-6">
+                  <label class="small text-muted mb-0">Sector de Vigilancia:</label>
+                  <p class="mb-2 font-weight-bold"><i class="fas fa-shield-alt text-info mr-1"></i> {{
+                    ocurrenciaSeleccionada.sector?.nombre_sector || 'General' }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-5 border-left pl-4">
+              <p class="mb-1 text-muted small text-uppercase font-weight-bold">Datos del Reportante</p>
+              <div class="bg-white p-2 rounded border-light shadow-sm">
+                <p class="mb-1"><i class="fas fa-user-circle mr-2 text-muted"></i> {{
+                  ocurrenciaSeleccionada.reportado_por }}</p>
+                <p class="mb-1"><i class="fas fa-phone mr-2 text-muted"></i> {{
+                  ocurrenciaSeleccionada.telefono_reportante }}</p>
+              </div>
+
+              <p class="mb-1 mt-3 text-muted small text-uppercase font-weight-bold">Asignación actual</p>
+              <div *ngIf="ocurrenciaSeleccionada.personal_atendio; else sinAsignacionView"
+                class="alert alert-info py-2">
+                <small class="d-block">Agente Responsable:</small>
+                <strong>{{ ocurrenciaSeleccionada.personal_atendio.nombres }} {{
+                  ocurrenciaSeleccionada.personal_atendio.apellidos }}</strong>
+                <br><small class="d-block mt-1">Vehículo:</small>
+                <strong>{{ ocurrenciaSeleccionada.vehiculo?.placa || 'Patrulla a pie' }}</strong>
+              </div>
+              <ng-template #sinAsignacionView>
+                <div class="alert alert-warning py-2 small">Pendiente de asignar recursos.</div>
+              </ng-template>
+            </div>
+          </div>
+
+          <div *ngIf="ocurrenciaSeleccionada.evidencias?.length > 0">
+            <p class="mb-2 text-muted small text-uppercase font-weight-bold">Galería de Evidencias</p>
+            <div class="d-flex flex-wrap" style="gap:10px;">
+              <img *ngFor="let ev of ocurrenciaSeleccionada.evidencias" [src]="ev.archivo || ev"
+                class="rounded border shadow-sm clickable" style="width: 100px; height: 100px; object-fit: cover;">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light border-top">
+        <button type="button" class="btn btn-secondary px-4 shadow-sm" (click)="closeView()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ASIGNAR PERSONAL -->
+<div class="modal fade" id="modalAsignarPersonal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content overflow-hidden" [style.border-radius.px]="10">
+      <form (ngSubmit)="asignarPersonal()" #asignarForm="ngForm">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title font-weight-bold"><i class="fas fa-user-plus mr-2"></i>Asignar Recursos</h5>
+          <button type="button" class="close text-white" (click)="closeAsignar()" aria-label="Close"><span
+              aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="form-group">
+            <label class="font-weight-bold">Seleccionar Agente <span class="text-danger">*</span></label>
+            <select class="form-control" [(ngModel)]="formularioAsignar.personal_id" name="pers" required>
+              <option value="">-- Buscar personal disponible --</option>
+              <option *ngFor="let p of personal" [value]="p.id">{{ p.nombres }} {{ p.apellidos }} ({{ p.codigo }})
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="font-weight-bold">Seleccionar Vehículo (Opcional)</label>
+            <select class="form-control" [(ngModel)]="formularioAsignar.vehiculo_id" name="veh">
+              <option value="">Patrullaje a pie</option>
+              <option *ngFor="let v of vehiculos" [value]="v.id">{{ v.placa }} - {{ v.tipo }} ({{ v.marca }})</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="font-weight-bold">Tiempo Estimado de Respuesta (minutos)</label>
+            <input type="number" class="form-control" [(ngModel)]="formularioAsignar.tiempo_estimado" name="tiempo"
+              min="1">
+          </div>
+          <div class="form-group mb-0">
+            <label>Instrucciones Especiales</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="formularioAsignar.instrucciones"
+              name="inst"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer bg-light border-top shadow-sm">
+          <button type="button" class="btn btn-secondary px-4 shadow-sm" (click)="closeAsignar()">Ignorar</button>
+          <button type="submit" class="btn btn-primary px-4 shadow-sm" [disabled]="asignarForm.invalid || loading">
+            <i class="fas" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-check-circle'"></i> {{ loading ?
+            'Asignando...' : 'Confirmar Asignación' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CERRAR CASO -->
+<div class="modal fade" id="modalCerrarOcurrencia" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content overflow-hidden" [style.border-radius.px]="10">
+      <form (ngSubmit)="cerrarCaso()" #cerrarForm="ngForm">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title font-weight-bold"><i class="fas fa-lock-open mr-2"></i>Finalización de Intervención
+          </h5>
+          <button type="button" class="close text-white" (click)="closeCerrar()" aria-label="Close"><span
+              aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="form-group">
+            <label class="font-weight-bold">Resultado de la Intervención <span class="text-danger">*</span></label>
+            <textarea class="form-control" rows="3" [(ngModel)]="formularioCerrar.resultado" name="res"
+              placeholder="Describa el desenlace del incidente..." required minlength="20"></textarea>
+          </div>
+          <div class="form-group font-weight-bold">
+            <label>Acciones finales tomadas <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="formularioCerrar.acciones_tomadas" name="acc"
+              placeholder="Ej: Traslado a comisaría, Retiro pacífico..." required>
+          </div>
+          <div class="custom-control custom-checkbox mb-3 p-1 pl-4">
+            <input type="checkbox" class="custom-control-input" id="checkSeg"
+              [(ngModel)]="formularioCerrar.requiere_seguimiento" name="seg">
+            <label class="custom-control-label" for="checkSeg">¿Requiere seguimiento posterior?</label>
+          </div>
+          <div class="form-group mb-0">
+            <label>Observaciones Finales (Administrativo)</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="formularioCerrar.observaciones_cierre"
+              name="obs"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer bg-light border-top shadow-sm">
+          <button type="button" class="btn btn-secondary px-4 shadow-sm" (click)="closeCerrar()">Cancelar</button>
+          <button type="submit" class="btn btn-success px-4 shadow-sm" [disabled]="cerrarForm.invalid || loading">
+            <i class="fas" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-lock'"></i> Finalizar y Cerrar Caso
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

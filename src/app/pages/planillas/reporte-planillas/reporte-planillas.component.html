@@ -1,0 +1,160 @@
+<div class="container-fluid">
+  
+  <!-- Header -->
+  <div class="row mb-3">
+    <div class="col-md-12">
+      <h2><i class="fas fa-file-alt mr-2"></i>Reporte de Planillas</h2>
+      <p class="text-muted">Consulta y exporta información general de planillas procesadas</p>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card card-primary card-outline mb-3">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fas fa-filter mr-2"></i>Filtros de Búsqueda</h3>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Año</label>
+            <input type="number" class="form-control form-control-sm" 
+                   [(ngModel)]="filtros.anio" 
+                   (ngModelChange)="onFilterChange()"
+                   min="2020" 
+                   [max]="filtros.anio + 1">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Mes</label>
+            <select class="form-control form-control-sm" 
+                    [(ngModel)]="filtros.mes" 
+                    (ngModelChange)="onFilterChange()">
+              <option value="">Todos</option>
+              <option *ngFor="let mes of meses" [value]="mes.value">
+                {{mes.label}}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Tipo de Planilla</label>
+            <select class="form-control form-control-sm" 
+                    [(ngModel)]="filtros.tipo_planilla" 
+                    (ngModelChange)="onFilterChange()">
+              <option value="">Todos</option>
+              <option *ngFor="let tipo of tiposPlanilla" [value]="tipo.value">
+                {{tipo.label}}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Estado</label>
+            <select class="form-control form-control-sm" 
+                    [(ngModel)]="filtros.estado" 
+                    (ngModelChange)="onFilterChange()">
+              <option value="">Todos</option>
+              <option *ngFor="let estado of estados" [value]="estado.value">
+                {{estado.label}}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <div class="btn-group d-flex" role="group">
+              <button type="button" class="btn btn-success btn-sm" 
+                      (click)="exportarExcel()" 
+                      title="Exportar a Excel">
+                <i class="fas fa-file-excel"></i>
+              </button>
+              <button type="button" class="btn btn-danger btn-sm" 
+                      (click)="exportarPDF()" 
+                      title="Exportar a PDF">
+                <i class="fas fa-file-pdf"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center p-5">
+    <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+    <p class="mt-3">Cargando datos...</p>
+  </div>
+
+  <!-- Tabla de Resultados -->
+  <div *ngIf="!loading" class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fas fa-table mr-2"></i>Planillas Encontradas
+        <span class="badge badge-info ml-2" *ngIf="planillas.length > 0">
+          {{planillas.length}}
+        </span>
+      </h3>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Código</th>
+              <th>Periodo</th>
+              <th>Tipo</th>
+              <th class="text-right">Empleados</th>
+              <th class="text-right">Total Ingresos</th>
+              <th class="text-right">Total Descuentos</th>
+              <th class="text-right">Total Neto</th>
+              <th>Estado</th>
+              <th>Fecha Creación</th>
+              <th style="width: 100px;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let planilla of planillas; let i = index">
+              <td>{{i + 1}}</td>
+              <td><strong>{{planilla.codigo}}</strong></td>
+              <td>{{planilla.periodo}}</td>
+              <td>{{planilla.tipo_planilla}}</td>
+              <td class="text-right">{{planilla.cant_empleados}}</td>
+              <td class="text-right">{{formatCurrency(planilla.total_ingresos)}}</td>
+              <td class="text-right">{{formatCurrency(planilla.total_descuentos)}}</td>
+              <td class="text-right"><strong>{{formatCurrency(planilla.total_neto)}}</strong></td>
+              <td>
+                <span class="badge" [ngClass]="getEstadoBadgeClass(planilla.estado)">
+                  {{ getEstadoLabel(planilla.estado) }}
+                </span>
+              </td>
+              <td><small>{{formatDate(planilla.fecha_creacion)}}</small></td>
+              <td>
+                <button type="button" 
+                        class="btn btn-xs btn-primary" 
+                        (click)="verDetalle(planilla)" 
+                        title="Ver Detalle">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="planillas.length === 0">
+              <td colspan="11" class="text-center p-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p>No se encontraron planillas con los filtros seleccionados</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+

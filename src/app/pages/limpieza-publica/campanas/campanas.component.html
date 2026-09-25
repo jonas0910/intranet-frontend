@@ -1,0 +1,729 @@
+<app-system-layout [title]="'Campañas de Limpieza Pública'"
+    [subtitle]="'Gestión de campañas comunitarias y registro de participantes ciudadanos'" [subtitleItems]="[
+        { label: 'Campaña de limpieza', icon: 'fas fa-broom' },
+        { label: 'Generación de cartillas de control para los ciudadanos', icon: 'fas fa-file-invoice' },
+        { label: 'Registro y control de ciudadanos participantes', icon: 'fas fa-users' },
+        { label: 'Generación de credenciales para recicladores autorizados', icon: 'fas fa-id-card' },
+        { label: 'Registro, control y programación de mantenimiento de plazas, parques y jardines', icon: 'fas fa-tree' }
+    ]" [breadcrumbs]="[{label:'Inicio',url:'/'},{label:'Limpieza Pública',url:'/limpieza-publica'},{label:'Campañas'}]"
+    [subsystem]="'limpieza-publica'">
+
+    <!-- Tabs de Gestión Principal -->
+    <div class="card card-lp card-outline card-tabs shadow-sm mb-4">
+        <div class="card-header p-0 pt-1 border-bottom-0">
+            <ul class="nav nav-tabs" id="lp-campanas-main-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link" [class.active]="tabPrincipal === 'campanas'"
+                        (click)="setTabPrincipal('campanas')" href="javascript:void(0)" role="tab">
+                        <i class="fas fa-bullhorn mr-2"></i> Gestión de Campañas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" [class.active]="tabPrincipal === 'ciudadanos'"
+                        (click)="setTabPrincipal('ciudadanos')" href="javascript:void(0)" role="tab">
+                        <i class="fas fa-users mr-2"></i> Gestión de Ciudadanos
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="tab-content">
+
+                <!-- TAB 1: CAMPANAS -->
+                <div class="tab-pane fade" [class.show]="tabPrincipal === 'campanas'"
+                    [class.active]="tabPrincipal === 'campanas'">
+                    <!-- ── Toolbar ── -->
+                    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+                        <div class="d-flex align-items-center flex-wrap" style="gap:6px;">
+                            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                                <i class="fas fa-bullhorn mr-1 text-primary"></i> Campañas Registradas
+                            </h3>
+                            <span class="badge badge-primary ml-1">{{ paginacion.total }}</span>
+
+                            <button class="btn btn-sm btn-outline-primary ml-1 px-2"
+                                (click)="filtrosColapsados = !filtrosColapsados"
+                                [title]="filtrosColapsados ? 'Ver filtros' : 'Ocultar filtros'"
+                                style="height:24px;line-height:1;">
+                                <i class="fas"
+                                    [ngClass]="filtrosColapsados ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+                            </button>
+                            <ng-container *ngIf="cv.showExportButtons">
+                                <button type="button" class="btn btn-sm btn-flat"
+                                    [ngClass]="cv.excelBtnClass || 'btn-success'" title="Exportar Excel"
+                                    (click)="onExportExcel()">
+                                    <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{
+                                    cv.excelBtnLabel || 'Excel' }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-flat"
+                                    [ngClass]="cv.pdfBtnClass || 'btn-danger'" title="Exportar PDF"
+                                    (click)="onExportPdf()">
+                                    <i [class]="(cv.pdfBtnIcon || 'fas fa-file-pdf') + ' mr-1'"></i> {{ cv.pdfBtnLabel
+                                    ||
+                                    'PDF' }}
+                                </button>
+                            </ng-container>
+
+                            <button class="btn btn-sm btn-flat text-muted" (click)="cargar()" title="Actualizar">
+                                <i class="fas fa-sync" [class.fa-spin]="loading"></i>
+                            </button>
+                        </div>
+                        <div class="ms-auto flex-shrink-0">
+                            <button type="button" class="btn btn-sm shadow-sm"
+                                [ngClass]="cv.newBtnClass || 'btn-primary'" (click)="abrirCrear()">
+                                <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> Nueva Campaña
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ── Filtros Campaña ── -->
+                    <div class="border-bottom bg-light overflow-hidden"
+                        [style.max-height]="filtrosColapsados ? '0px' : '500px'"
+                        [style.padding]="filtrosColapsados ? '0px' : '0.8rem'"
+                        style="transition: max-height 0.3s ease, padding 0.3s ease;">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="mb-1 ds-crud-label">Buscar</label>
+                                <input type="text" class="form-control form-control-sm ds-crud-filter"
+                                    [(ngModel)]="filtros.buscar" (keyup.enter)="onFilterChange()"
+                                    placeholder="Nombre o descripción...">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="mb-1 ds-crud-label">Estado</label>
+                                <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.activo"
+                                    (change)="onFilterChange()">
+                                    <option value="">Todos</option>
+                                    <option value="1">Activas</option>
+                                    <option value="0">Inactivas</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="mb-1 ds-crud-label">Desde</label>
+                                <input type="date" class="form-control form-control-sm ds-crud-filter"
+                                    [(ngModel)]="filtros.fecha_desde" (change)="onFilterChange()">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="mb-1 ds-crud-label">Hasta</label>
+                                <input type="date" class="form-control form-control-sm ds-crud-filter"
+                                    [(ngModel)]="filtros.fecha_hasta" (change)="onFilterChange()">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="mb-1 ds-crud-label">Por pág.</label>
+                                <select class="form-control form-control-sm ds-crud-filter"
+                                    [(ngModel)]="filtros.per_page" (change)="onFilterChange()">
+                                    <option [ngValue]="10">10</option>
+                                    <option [ngValue]="15">15</option>
+                                    <option [ngValue]="25">25</option>
+                                    <option [ngValue]="50">50</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end gap-2">
+                                <button class="btn btn-primary btn-sm" (click)="cargar(1)">
+                                    <i class="fas fa-search mr-1"></i> Buscar
+                                </button>
+                                <button class="btn btn-light btn-sm border" (click)="limpiarFiltros()"
+                                    title="Limpiar filtros">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Loading ── -->
+                    <div *ngIf="loading" class="text-center p-5">
+                        <i class="fas fa-spinner fa-spin fa-3x text-primary d-block mb-3"></i>
+                        <span class="text-muted">Cargando campañas...</span>
+                    </div>
+
+                    <!-- ── Tabla Campaña ── -->
+                    <div *ngIf="!loading" class="px-0 pt-0 pb-2">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 ds-crud-table">
+                                <thead>
+                                    <tr>
+                                        <th class="px-3" style="width:50px;">#</th>
+                                        <th>Campaña</th>
+                                        <th>Vigencia</th>
+                                        <th>Duración</th>
+                                        <th class="text-center">Participantes</th>
+                                        <th class="text-center">Estado</th>
+                                        <th class="text-center px-3" style="width:180px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let c of campanas; let i = index"
+                                        class="animate__animated animate__fadeIn">
+                                        <td class="px-3 align-middle text-muted small text-center">
+                                            {{ (paginacion.currentPage - 1) * paginacion.perPage + i + 1 }}
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="font-weight-bold text-primary">{{ c.nombre }}</div>
+                                            <div class="small text-muted text-truncate" style="max-width:280px;">
+                                                {{ c.descripcion || 'Sin descripción' }}
+                                            </div>
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="small">
+                                                <i class="far fa-calendar-alt text-primary mr-1"></i>
+                                                <strong>{{ formatFecha(c.fecha_inicio) }}</strong>
+                                            </div>
+                                            <div class="small text-muted">
+                                                <i class="far fa-calendar-check mr-1"></i> {{ formatFecha(c.fecha_fin)
+                                                }}
+                                            </div>
+                                        </td>
+                                        <td class="align-middle">
+                                            <ng-container [ngSwitch]="true">
+                                                <span
+                                                    *ngSwitchCase="diasRestantes(c.fecha_fin) > 0 && estadoCampana(c).label === 'EN CURSO'"
+                                                    class="badge badge-success">
+                                                    <i class="fas fa-clock mr-1"></i>{{ diasRestantes(c.fecha_fin) }}
+                                                    días restantes
+                                                </span>
+                                                <span *ngSwitchCase="estadoCampana(c).label === 'PRÓXIMA'"
+                                                    class="badge badge-soft-info">
+                                                    Inicia en {{ diasRestantes(c.fecha_inicio) }} días
+                                                </span>
+                                                <span *ngSwitchDefault class="badge badge-soft-secondary">
+                                                    {{ estadoCampana(c).label === 'FINALIZADA' ? 'Finalizada' : '—' }}
+                                                </span>
+                                            </ng-container>
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <span class="badge badge-pill badge-primary px-3">
+                                                <i class="fas fa-users mr-1"></i>{{ c.participantes_count || 0 }}
+                                            </span>
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <span class="badge badge-pill px-3" [ngClass]="estadoCampana(c).cls">
+                                                {{ estadoCampana(c).label }}
+                                            </span>
+                                        </td>
+                                        <td class="align-middle text-center px-3">
+                                            <div class="btn-group btn-group-sm shadow-sm" role="group">
+                                                <button type="button" class="btn"
+                                                    [ngClass]="cv.editBtnClass || 'btn-warning'"
+                                                    (click)="abrirEditar(c)" title="Editar campaña">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-success"
+                                                    (click)="abrirParticipantes(c)" title="Gestionar participantes">
+                                                    <i class="fas fa-users"></i>
+                                                </button>
+                                                <button type="button" class="btn"
+                                                    [ngClass]="cv.deleteBtnClass || 'btn-danger'"
+                                                    (click)="confirmarEliminar(c)" title="Eliminar">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="campanas.length === 0">
+                                        <td colspan="7" class="text-center py-5 text-muted">
+                                            <i class="fas fa-bullhorn fa-3x mb-3 opacity-25 d-block"></i>
+                                            <p>No se encontraron campañas registrados.</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Paginación Campaña -->
+                        <div class="px-3 py-2 border-top bg-white">
+                            <div class="row align-items-center">
+                                <div class="col-md-6 small text-muted">
+                                    Total: {{ paginacion.total }} registros
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="pagination pagination-sm m-0 float-right"
+                                        *ngIf="paginacion.lastPage > 1">
+                                        <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                                            <a class="page-link"
+                                                (click)="cambiarPagina(paginacion.currentPage - 1)">‹</a>
+                                        </li>
+                                        <li class="page-item" *ngFor="let p of getPaginas()"
+                                            [class.active]="p === paginacion.currentPage" [class.disabled]="p === -1">
+                                            <a class="page-link" (click)="p !== -1 && cambiarPagina(p)">{{ p === -1 ?
+                                                '...' : p }}</a>
+                                        </li>
+                                        <li class="page-item"
+                                            [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                                            <a class="page-link"
+                                                (click)="cambiarPagina(paginacion.currentPage + 1)">›</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: CIUDADANOS -->
+                <div class="tab-pane fade" [class.show]="tabPrincipal === 'ciudadanos'"
+                    [class.active]="tabPrincipal === 'ciudadanos'">
+
+                    <!-- Toolbar Ciudadanos -->
+                    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+                        <div class="d-flex align-items-center flex-wrap" style="gap:6px;">
+                            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                                <i class="fas fa-users mr-1 text-success"></i> Ciudadanos de la Jurisdicción
+                            </h3>
+                            <span class="badge badge-success ml-1">{{ paginacionCiudadanos.total }}</span>
+
+                            <div class="ml-3 btn-group btn-group-sm animate__animated animate__fadeIn"
+                                *ngIf="ciudadanosSeleccionados.size > 0">
+                                <button type="button" class="btn btn-outline-danger"
+                                    (click)="confirmarGenerarPdf('cartilla')" [disabled]="generandoPdf">
+                                    <i class="fas fa-file-invoice mr-1"></i> Cartilla ({{ ciudadanosSeleccionados.size
+                                    }})
+                                </button>
+                                <button type="button" class="btn btn-outline-success"
+                                    (click)="confirmarGenerarPdf('credencial')" [disabled]="generandoPdf">
+                                    <i class="fas fa-id-card mr-1"></i> Credencial ({{ ciudadanosSeleccionados.size }})
+                                </button>
+                                <button type="button" class="btn btn-light border px-2"
+                                    (click)="ciudadanosSeleccionados.clear()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="ms-auto">
+                            <button class="btn btn-sm btn-flat text-muted" (click)="cargarCiudadanos()"
+                                title="Actualizar">
+                                <i class="fas fa-sync" [class.fa-spin]="loadingCiudadanos"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros Ciudadanos -->
+                    <div class="bg-light p-3 border-bottom shadow-none">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="ds-crud-label mb-1">Nombre o DNI</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control ds-crud-filter"
+                                        [(ngModel)]="filtrosCiudadanos.buscar"
+                                        (keyup.enter)="onFilterCiudadanosChange()" placeholder="Buscar ciudadano...">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" (click)="onFilterCiudadanosChange()">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="ds-crud-label mb-1">Sector / Urbanización</label>
+                                <select class="form-control form-control-sm ds-crud-filter"
+                                    [(ngModel)]="filtrosCiudadanos.sector_id" (change)="onFilterCiudadanosChange()">
+                                    <option value="">Cualquier sector</option>
+                                    <option *ngFor="let s of sectores" [value]="s.id_sector">{{ s.nombre_sector }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="ds-crud-label mb-1">Por pág.</label>
+                                <select class="form-control form-control-sm ds-crud-filter"
+                                    [(ngModel)]="filtrosCiudadanos.per_page" (change)="onFilterCiudadanosChange()">
+                                    <option [ngValue]="25">25</option>
+                                    <option [ngValue]="50">50</option>
+                                    <option [ngValue]="100">100</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button class="btn btn-light btn-sm border w-100" (click)="limpiarFiltrosCiudadanos()">
+                                    <i class="fas fa-undo mr-1"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading Ciudadanos -->
+                    <div *ngIf="loadingCiudadanos" class="text-center p-5">
+                        <i class="fas fa-circle-notch fa-spin fa-3x text-success d-block mb-3"></i>
+                        <span class="text-muted">Cargando censo poblacional...</span>
+                    </div>
+
+                    <!-- Tabla Ciudadanos -->
+                    <div *ngIf="!loadingCiudadanos" class="px-0 pt-0 pb-2">
+                        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                            <table class="table table-hover mb-0 ds-crud-table">
+                                <thead class="bg-light sticky-top">
+                                    <tr>
+                                        <th class="text-center" style="width: 40px;">
+                                            <input type="checkbox" (change)="seleccionarTodosCiudadanos($event)">
+                                        </th>
+                                        <th>Ciudadano</th>
+                                        <th>DNI</th>
+                                        <th>Sector / Dirección</th>
+                                        <th class="text-center">Género</th>
+                                        <th class="text-center" style="width: 200px;">Acciones de Documentos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let c of ciudadanosFiltrados" class="animate__animated animate__fadeIn">
+                                        <td class="text-center align-middle">
+                                            <input type="checkbox"
+                                                [checked]="ciudadanosSeleccionados.has(c.id_ciudadano)"
+                                                (change)="toggleSeleccionCiudadano(c.id_ciudadano)">
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="font-weight-bold text-dark">{{ c.nombres }}</div>
+                                            <span class="badge badge-soft-info" style="font-size: 0.65rem;">ID: {{
+                                                c.id_ciudadano }}</span>
+                                        </td>
+                                        <td class="align-middle font-weight-bold">{{ c.dni }}</td>
+                                        <td class="align-middle">
+                                            <div class="small"><strong>{{ c.sector?.nombre_sector || 'General'
+                                                    }}</strong></div>
+                                            <div class="text-muted small">{{ c.direccion }}</div>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <i class="fas"
+                                                [ngClass]="c.sexo === 'M' ? 'fa-mars text-primary' : 'fa-venus text-danger'"></i>
+                                            <span class="ml-1 small">{{ c.sexo }}</span>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-danger"
+                                                    (click)="confirmarGenerarPdf('cartilla', c)"
+                                                    title="Cartilla de Control" [disabled]="generandoPdf">
+                                                    <i class="fas fa-file-invoice"></i> Cartilla
+                                                </button>
+                                                <button class="btn btn-outline-success"
+                                                    (click)="confirmarGenerarPdf('credencial', c)"
+                                                    title="Credencial de Reciclador" [disabled]="generandoPdf">
+                                                    <i class="fas fa-id-card"></i> Credencial
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="ciudadanosFiltrados.length === 0">
+                                        <td colspan="6" class="text-center py-5 text-muted">
+                                            <i class="fas fa-users-slash fa-3x mb-3 opacity-25 d-block"></i>
+                                            <p>No se encontraron ciudadanos con los filtros aplicados.</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Paginación Ciudadanos -->
+                        <div class="px-3 py-2 border-top bg-white animate__animated animate__fadeIn"
+                            *ngIf="!loadingCiudadanos">
+                            <div class="row align-items-center">
+                                <div class="col-md-6 small text-muted">
+                                    Total: {{ paginacionCiudadanos.total }} ciudadanos
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="pagination pagination-sm m-0 float-right"
+                                        *ngIf="paginacionCiudadanos.lastPage > 1">
+                                        <li class="page-item" [class.disabled]="paginacionCiudadanos.currentPage === 1">
+                                            <a class="page-link"
+                                                (click)="cambiarPaginaCiudadanos(paginacionCiudadanos.currentPage - 1)">‹</a>
+                                        </li>
+                                        <li class="page-item" *ngFor="let p of getPaginasCiudadanos()"
+                                            [class.active]="p === paginacionCiudadanos.currentPage">
+                                            <a class="page-link" (click)="cambiarPaginaCiudadanos(p)">{{ p }}</a>
+                                        </li>
+                                        <li class="page-item"
+                                            [class.disabled]="paginacionCiudadanos.currentPage === paginacionCiudadanos.lastPage">
+                                            <a class="page-link"
+                                                (click)="cambiarPaginaCiudadanos(paginacionCiudadanos.currentPage + 1)">›</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>
+
+<!-- ==================== MODAL CREAR / EDITAR ==================== -->
+<div class="modal fade" id="modalCampana" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg" [style.border-radius.px]="mc.borderRadius || 8">
+
+            <div class="modal-header text-white" [style.background-color]="mc.headerBg || '#2e7d32'">
+                <h5 class="modal-title font-weight-bold">
+                    <i [class]="(modoEdicion ? 'fas fa-edit' : 'fas fa-plus-circle') + ' mr-2'"></i>
+                    {{ modoEdicion ? 'Editar Campaña' : 'Nueva Campaña de Limpieza' }}
+                </h5>
+                <button type="button" class="close text-white" (click)="cerrarModal()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs ds-modal-tabs px-3 pt-2 bg-white border-bottom" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link" [class.active]="tabActiva === 'general'" (click)="setTab('general')"
+                        href="javascript:void(0)">
+                        <i class="fas fa-info-circle mr-1"></i> Información General
+                    </a>
+                </li>
+                <li class="nav-item" *ngIf="modoEdicion">
+                    <a class="nav-link" [class.active]="tabActiva === 'participantes'" (click)="setTab('participantes')"
+                        href="javascript:void(0)">
+                        <i class="fas fa-users mr-1"></i> Participantes
+                        <span class="badge badge-primary ml-1">{{ participantes.length }}</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="modal-body p-0 bg-light">
+                <!-- TAB: GENERAL -->
+                <div class="p-4" [hidden]="tabActiva !== 'general'">
+                    <div class="row">
+                        <!-- Nombre -->
+                        <div class="col-md-12 form-group">
+                            <label class="ds-crud-label ds-crud-label">NOMBRE DE LA CAMPAÑA <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control ds-crud-filter" [(ngModel)]="formulario.nombre"
+                                placeholder="Ej: Campaña Comunitaria Zona Norte 2026" required>
+                        </div>
+
+                        <!-- Fechas -->
+                        <div class="col-md-6 form-group">
+                            <label class="ds-crud-label ds-crud-label">FECHA DE INICIO <span
+                                    class="text-danger">*</span></label>
+                            <input type="date" class="form-control ds-crud-filter" [(ngModel)]="formulario.fecha_inicio"
+                                required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="ds-crud-label ds-crud-label">FECHA DE FIN <span
+                                    class="text-danger">*</span></label>
+                            <input type="date" class="form-control ds-crud-filter" [(ngModel)]="formulario.fecha_fin"
+                                required>
+                        </div>
+
+                        <!-- Descripción -->
+                        <div class="col-md-12 form-group">
+                            <label class="ds-crud-label ds-crud-label">DESCRIPCIÓN / OBJETIVOS</label>
+                            <textarea class="form-control" [(ngModel)]="formulario.descripcion" rows="4"
+                                placeholder="Descripción de la campaña, objetivos y alcance..."></textarea>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="col-md-12 form-group mb-0">
+                            <label class="ds-crud-label ds-crud-label">ESTADO</label>
+                            <div
+                                class="custom-control custom-switch custom-switch-off-danger custom-switch-on-success mt-1">
+                                <input type="checkbox" class="custom-control-input ds-crud-filter" id="swCampanaActiva"
+                                    [(ngModel)]="formulario.activo">
+                                <label class="custom-control-label ds-crud-label" for="swCampanaActiva">
+                                    {{ formulario.activo ? 'Campaña Activa' : 'Campaña Inactiva' }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: PARTICIPANTES -->
+                <div *ngIf="modoEdicion" [hidden]="tabActiva !== 'participantes'">
+
+                    <div class="p-2 bg-light border-bottom">
+                        <!-- Buscador y Acciones -->
+                        <div class="row align-items-end no-gutters">
+                            <div class="col-md-8 position-relative px-2">
+                                <label class="ds-crud-label mb-1 ds-crud-label" style="font-size: 0.65rem;">BUSCAR EN EL
+                                    CENSO (NOMBRE
+                                    O DNI)</label>
+                                <div class="input-group input-group-sm">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-white border-right-0"><i
+                                                class="fas fa-search text-primary"></i></span>
+                                    </div>
+                                    <input type="text" class="form-control border-left-0 ds-crud-filter"
+                                        placeholder="Escriba para buscar..." [(ngModel)]="busquedaCiudadano"
+                                        (ngModelChange)="onBuscarCiudadano($event)" autocomplete="off"
+                                        [disabled]="mostrarFormManual">
+                                    <div class="input-group-append" *ngIf="buscandoCiudadano">
+                                        <span class="input-group-text bg-white"><i
+                                                class="fas fa-spinner fa-spin"></i></span>
+                                    </div>
+                                    <div class="input-group-append" *ngIf="busquedaCiudadano || ciudadanoSeleccionado">
+                                        <button class="btn btn-outline-secondary border-left-0"
+                                            (click)="limpiarBusqueda()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Dropdown de resultados -->
+                                <div class="autocomplete-dropdown shadow border rounded-bottom"
+                                    *ngIf="resultadosBusqueda.length > 0">
+                                    <div class="autocomplete-item border-bottom py-2"
+                                        *ngFor="let r of resultadosBusqueda" (click)="seleccionarCiudadano(r)">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="font-weight-bold small text-primary">{{ r.nombres }}</span>
+                                            <span class="badge badge-light border text-muted"
+                                                style="font-size:0.65rem;">DNI: {{ r.dni }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div *ngIf="!buscandoCiudadano && busquedaCiudadano.length >= 2 && resultadosBusqueda.length === 0 && !ciudadanoSeleccionado && !mostrarFormManual"
+                                    class="small text-danger mt-1 animate__animated animate__fadeIn">
+                                    No se encontró. <a href="javascript:void(0)" (click)="toggleModoManual()"
+                                        class="text-primary font-weight-bold">¿Registrar manual?</a>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 d-flex gap-1 px-2">
+                                <button type="button" class="btn btn-primary btn-sm flex-grow-1"
+                                    (click)="agregarParticipante()"
+                                    [disabled]="!ciudadanoSeleccionado && !mostrarFormManual"
+                                    style="font-size: 0.75rem;">
+                                    <i class="fas fa-user-plus mr-1"></i> {{ ciudadanoSeleccionado ? 'Agregar OK' :
+                                    'Registrar' }}
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm px-2"
+                                    (click)="toggleModoManual()"
+                                    [title]="mostrarFormManual ? 'Volver a búsqueda' : 'Registro manual'">
+                                    <i class="fas" [ngClass]="mostrarFormManual ? 'fa-search' : 'fa-keyboard'"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Formulario Manual In-modal -->
+                        <div class="mt-2 p-2 bg-white border rounded animate__animated animate__fadeIn"
+                            *ngIf="mostrarFormManual">
+                            <div class="row g-2">
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control form-control-sm ds-crud-filter"
+                                        placeholder="Nombre completo *" [(ngModel)]="formManual.nombre">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control form-control-sm ds-crud-filter"
+                                        placeholder="DNI *" [(ngModel)]="formManual.dni">
+                                </div>
+                                <div class="col-md-4 d-flex gap-1">
+                                    <input type="text" class="form-control form-control-sm ds-crud-filter"
+                                        placeholder="Teléfono" [(ngModel)]="formManual.telefono">
+                                    <button class="btn btn-sm btn-light border" (click)="toggleModoManual()"
+                                        title="Cancelar">&times;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de participantes -->
+                    <div class="p-0 bg-white">
+                        <div *ngIf="cargandoParticipantes" class="text-center py-5">
+                            <i class="fas fa-circle-notch fa-spin fa-2x text-primary mb-2"></i>
+                            <div class="text-muted small">Cargando...</div>
+                        </div>
+
+                        <div class="table-responsive" *ngIf="!cargandoParticipantes"
+                            style="max-height: 280px; overflow-y:auto;">
+                            <table class="table table-hover table-sm mb-0 ds-crud-table-mini">
+                                <thead class="bg-light sticky-top shadow-sm">
+                                    <tr>
+                                        <th class="px-3" style="width:40px;">#</th>
+                                        <th>Participante</th>
+                                        <th>DNI</th>
+                                        <th class="text-center">Tipo</th>
+                                        <th class="text-center" style="width:50px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let p of participantes; let i = index">
+                                        <td class="px-3 text-muted small align-middle">{{ i + 1 }}</td>
+                                        <td class="align-middle">
+                                            <div class="font-weight-bold small" [class.text-primary]="p.id_ciudadano">
+                                                {{ p.id_ciudadano ? p.ciudadano?.nombres : p.nombre_participante }}
+                                            </div>
+                                            <div class="small text-muted" *ngIf="p.telefono"
+                                                style="font-size: 0.65rem;">
+                                                <i class="fas fa-phone-alt mr-1"></i>{{ p.telefono }}
+                                            </div>
+                                        </td>
+                                        <td class="align-middle">
+                                            <span class="small badge-light border px-1">{{ p.id_ciudadano ?
+                                                p.ciudadano?.dni : p.dni_participante }}</span>
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <span class="badge"
+                                                [ngClass]="p.id_ciudadano ? 'badge-success' : 'badge-warning'"
+                                                style="font-size: 0.6rem;">
+                                                {{ p.id_ciudadano ? 'CENSADO' : 'MANUAL' }}
+                                            </span>
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <button class="btn btn-link btn-sm text-danger p-0"
+                                                (click)="quitarParticipante(p)">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="participantes.length === 0">
+                                        <td colspan="5" class="text-center py-5 text-muted small">
+                                            No hay participantes.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-white border-top-0">
+                    <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
+                        <i class="fas fa-times mr-1"></i> Cancelar
+                    </button>
+                    <button *ngIf="tabActiva === 'general'" type="button" class="btn px-5 rounded-pill shadow"
+                        [ngClass]="modoEdicion ? 'btn-warning' : 'btn-primary'" (click)="guardar()"
+                        [disabled]="!formulario.nombre || !formulario.fecha_inicio || !formulario.fecha_fin || guardando">
+                        <i
+                            [class]="guardando ? 'fas fa-spinner fa-spin mr-1' : (modoEdicion ? 'fas fa-save mr-1' : 'fas fa-check-circle mr-1')"></i>
+                        {{ guardando ? 'Guardando...' : (modoEdicion ? 'Actualizar Cambios' : 'Registrar Campaña') }}
+                    </button>
+                    <button *ngIf="tabActiva === 'participantes'" type="button"
+                        class="btn btn-primary px-5 rounded-pill shadow" (click)="cerrarModal()">
+                        <i class="fas fa-check mr-1"></i> Listo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL CONFIRMAR ELIMINACIÓN ==================== -->
+    <div class="modal fade" id="modalEliminarCampana" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle mr-2 text-danger"></i> Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" *ngIf="campanaAEliminar">
+                    <p>¿Está seguro que desea eliminar la siguiente campaña?</p>
+                    <div class="alert alert-warning">
+                        <strong>Campaña:</strong> {{ campanaAEliminar?.nombre }}<br>
+                        <strong>Vigencia:</strong> {{ formatFecha(campanaAEliminar?.fecha_inicio) }} — {{
+                        formatFecha(campanaAEliminar?.fecha_fin) }}<br>
+                        <strong>Participantes:</strong> {{ campanaAEliminar?.participantes_count || 0 }}
+                    </div>
+                    <p class="text-danger mb-0">
+                        <i class="fas fa-exclamation-circle mr-1"></i> Esta acción no se puede deshacer.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" (click)="eliminarCampana()" [disabled]="eliminando">
+                        <i class="fas" [ngClass]="eliminando ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+                        {{ eliminando ? 'Eliminando...' : 'Eliminar' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>

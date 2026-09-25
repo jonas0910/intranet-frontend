@@ -1,0 +1,612 @@
+<!-- AdminLTE 3.2.0 System Management -->
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">🔧 Gestión de Sistemas</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin-menu-management">Administrador</a></li>
+            <li class="breadcrumb-item active">Gestión de Sistemas</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+<section class="content">
+  <div class="container-fluid form-container">
+      
+      <!-- Navigation Tabs -->
+      <div class="row mb-3">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header p-0">
+              <ul class="nav nav-tabs">
+                <li class="nav-item">
+                  <a class="nav-link" [class.active]="currentTab === 'systems'" (click)="setActiveTab('systems')">
+                    <i class="fas fa-server"></i> Sistemas
+                  </a>
+                </li>
+                <li class="nav-item" *ngIf="selectedSystem">
+                  <a class="nav-link" [class.active]="currentTab === 'menus'" (click)="setActiveTab('menus')">
+                    <i class="fas fa-bars"></i> Menús de {{ selectedSystem.nombre }}
+                  </a>
+                </li>
+                <li class="nav-item" *ngIf="selectedSystem">
+                  <a class="nav-link" [class.active]="currentTab === 'permissions'" (click)="setActiveTab('permissions')">
+                    <i class="fas fa-key"></i> Permisos
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Systems Tab -->
+      <div *ngIf="currentTab === 'systems'">
+        <!-- Actions Bar -->
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <button class="btn btn-primary" (click)="openSystemModal()">
+                      <i class="fas fa-plus"></i> Nuevo Sistema
+                    </button>
+                    <button class="btn btn-info" (click)="loadSystems()">
+                      <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                  </div>
+                  <div class="col-md-6 text-right">
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-default">
+                        <i class="fas fa-filter"></i> Filtrar
+                      </button>
+                      <button type="button" class="btn btn-default">
+                        <i class="fas fa-search"></i> Buscar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Systems List -->
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-server"></i> Sistemas Disponibles
+                </h3>
+              </div>
+              <div class="card-body">
+                <div *ngIf="loading" class="text-center">
+                  <i class="fas fa-spinner fa-spin fa-2x"></i>
+                  <p>Cargando sistemas...</p>
+                </div>
+                
+                <div *ngIf="!loading && systems.length === 0" class="text-center text-muted">
+                  <i class="fas fa-server fa-3x mb-3"></i>
+                  <p>No hay sistemas disponibles</p>
+                  <button class="btn btn-primary" (click)="openSystemModal()">
+                    <i class="fas fa-plus"></i> Crear Primer Sistema
+                  </button>
+                </div>
+
+                <div class="row" *ngIf="!loading && systems.length > 0">
+                  <div class="col-md-6 col-lg-4" *ngFor="let system of systems">
+                    <div class="card card-outline card-primary">
+                      <div class="card-header">
+                        <h3 class="card-title">
+                          <i class="fas fa-server"></i> {{ system.nombre }}
+                        </h3>
+                        <div class="card-tools">
+                          <span [ngClass]="'badge ' + getSystemStatusClass(system.activo)">
+                            {{ getSystemStatusText(system.activo) }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="card-body">
+                        <p class="text-muted">{{ system.descripcion || 'Sin descripción' }}</p>
+                        
+                        <div class="row">
+                          <div class="col-6">
+                            <small class="text-muted">Código:</small>
+                            <p><strong>{{ system.codigo }}</strong></p>
+                          </div>
+                          <div class="col-6">
+                            <small class="text-muted">Menús:</small>
+                            <p><strong>{{ system.active_menus_count || 0 }}/{{ system.menus_count || 0 }}</strong></p>
+                          </div>
+                        </div>
+
+                        <div class="mt-3">
+                          <button class="btn btn-primary btn-sm btn-block" (click)="selectSystem(system)">
+                            <i class="fas fa-bars"></i> Gestionar Menús
+                          </button>
+                        </div>
+                      </div>
+                      <div class="card-footer">
+                        <div class="btn-group btn-group-sm">
+                          <button type="button" class="btn btn-outline-primary" (click)="openSystemModal(system)" title="Editar">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button type="button" class="btn btn-outline-danger" (click)="deleteSystem(system)" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Menus Tab -->
+      <div *ngIf="currentTab === 'menus' && selectedSystem">
+        <!-- Actions Bar -->
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <button class="btn btn-primary" (click)="openMenuModal()">
+                      <i class="fas fa-plus"></i> Nuevo Menú
+                    </button>
+                    <button class="btn btn-secondary" (click)="setActiveTab('systems')">
+                      <i class="fas fa-arrow-left"></i> Volver a Sistemas
+                    </button>
+                  </div>
+                  <div class="col-md-6 text-right">
+                    <h5 class="mb-0">{{ selectedSystem.nombre }}</h5>
+                    <small class="text-muted">{{ selectedSystem.descripcion }}</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Menus List -->
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-bars"></i> Menús del Sistema
+                </h3>
+              </div>
+              <div class="card-body table-responsive p-0">
+                <table class="table table-hover text-nowrap">
+                  <thead>
+                    <tr>
+                      <th>Orden</th>
+                      <th>Nombre</th>
+                      <th>Ruta</th>
+                      <th>Tipo</th>
+                      <th>Target</th>
+                      <th>Nueva Pestaña</th>
+                      <th>Icono</th>
+                      <th>Estado</th>
+                      <th title="Visible en la sección 'Para todo el personal' del sidebar">Consumible por intranet</th>
+                      <th>Permisos</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let menu of systemMenus">
+                      <td>{{ menu.orden }}</td>
+                      <td>
+                        <strong>{{ menu.nombre }}</strong>
+                      </td>
+                      <td>
+                        <code>{{ menu.ruta }}</code>
+                      </td>
+                      <td>
+                        <span [ngClass]="'badge ' + getTipoRutaClass(menu.tipo_ruta)">
+                          {{ getTipoRutaText(menu.tipo_ruta) }}
+                        </span>
+                      </td>
+                      <td>
+                        <code>{{ menu.target || '_self' }}</code>
+                      </td>
+                      <td>
+                        <span *ngIf="menu.abrir_nueva_pestana" class="badge badge-success">
+                          <i class="fas fa-external-link-alt"></i> Sí
+                        </span>
+                        <span *ngIf="!menu.abrir_nueva_pestana" class="badge badge-secondary">
+                          <i class="fas fa-window-maximize"></i> No
+                        </span>
+                      </td>
+                      <td>
+                        <i [class]="menu.icono || 'fas fa-circle'" *ngIf="menu.icono"></i>
+                        <span *ngIf="!menu.icono" class="text-muted">Sin icono</span>
+                      </td>
+                      <td>
+                        <span [ngClass]="'badge ' + getMenuStatusClass(menu.activo)">
+                          {{ getMenuStatusText(menu.activo) }}
+                        </span>
+                      </td>
+                      <td>
+                        <label class="mb-0" title="Marcar para mostrar en 'Para todo el personal'">
+                          <input type="checkbox" [checked]="!!menu.visible_en_intranet"
+                                 (change)="toggleVisibleEnIntranet(menu, $event)">
+                          <span class="ml-1 small">Sí</span>
+                        </label>
+                      </td>
+                      <td>
+                        <span class="badge badge-info mr-1" *ngFor="let permiso of (menu.permisos_requeridos || [])">
+                          {{ permiso }}
+                        </span>
+                        <span *ngIf="!(menu.permisos_requeridos?.length)" class="text-muted">Sin permisos</span>
+                      </td>
+                      <td>
+                        <div class="btn-group">
+                          <button class="btn btn-sm btn-info" (click)="openMenuModal(menu)" title="Editar menú">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button class="btn btn-sm btn-warning" (click)="openPermissionModal(menu)" title="Gestionar permisos">
+                            <i class="fas fa-key"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Permissions Tab -->
+      <div *ngIf="currentTab === 'permissions' && selectedSystem">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-key"></i> Gestión de Permisos
+                </h3>
+              </div>
+              <div class="card-body">
+                <p class="text-muted">
+                  Seleccione un menú desde la pestaña "Menús" para gestionar sus permisos por rol.
+                </p>
+                <button class="btn btn-secondary" (click)="setActiveTab('menus')">
+                  <i class="fas fa-arrow-left"></i> Volver a Menús
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<!-- System Modal -->
+<div class="modal fade" [class.show]="showSystemModal" [style.display]="showSystemModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">
+          <i class="fas fa-server"></i> {{ editingSystem ? 'Editar Sistema' : 'Nuevo Sistema' }}
+        </h4>
+        <button type="button" class="close" (click)="closeSystemModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <form [formGroup]="systemForm" (ngSubmit)="saveSystem()">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="nombre">Nombre del Sistema *</label>
+                <input type="text" class="form-control" id="nombre" formControlName="nombre" 
+                       placeholder="Ej: Sistema de Planillas">
+                <div *ngIf="systemForm.get('nombre')?.invalid && systemForm.get('nombre')?.touched" class="text-danger">
+                  El nombre es requerido
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="codigo">Código *</label>
+                <input type="text" class="form-control" id="codigo" formControlName="codigo" 
+                       placeholder="Ej: PLANILLAS">
+                <div *ngIf="systemForm.get('codigo')?.invalid && systemForm.get('codigo')?.touched" class="text-danger">
+                  El código es requerido
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="descripcion">Descripción</label>
+            <textarea class="form-control" id="descripcion" formControlName="descripcion" 
+                      rows="3" placeholder="Descripción del sistema"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="url_base">URL Base *</label>
+            <input type="url" class="form-control" id="url_base" formControlName="url_base" 
+                   placeholder="https://ejemplo.com">
+            <div *ngIf="systemForm.get('url_base')?.invalid && systemForm.get('url_base')?.touched" class="text-danger">
+              La URL base es requerida
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="activo" formControlName="activo">
+                  <label class="form-check-label" for="activo">Sistema Activo</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="sso_habilitado" formControlName="sso_habilitado">
+                  <label class="form-check-label" for="sso_habilitado">SSO Habilitado</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="sso_force" formControlName="sso_force">
+                  <label class="form-check-label" for="sso_force">Forzar SSO</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="patron_id">Patrón ID</label>
+            <input type="text" class="form-control" id="patron_id" formControlName="patron_id" 
+                   placeholder="ID del patrón del sistema">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeSystemModal()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="systemForm.invalid">
+            <i class="fas fa-save"></i> {{ editingSystem ? 'Actualizar' : 'Crear' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Menu Modal -->
+<div class="modal fade" [class.show]="showMenuModal" [style.display]="showMenuModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">
+          <i class="fas fa-bars"></i> Nuevo Menú
+        </h4>
+        <button type="button" class="close" (click)="closeMenuModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <form [formGroup]="menuForm" (ngSubmit)="saveMenu()">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="menu_nombre">Nombre del Menú *</label>
+                <input type="text" class="form-control" id="menu_nombre" formControlName="nombre" 
+                       placeholder="Ej: Dashboard">
+                <div *ngIf="menuForm.get('nombre')?.invalid && menuForm.get('nombre')?.touched" class="text-danger">
+                  El nombre es requerido
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="ruta">Ruta *</label>
+                <input type="text" class="form-control" id="ruta" formControlName="ruta" 
+                       [placeholder]="getRutaPlaceholder()">
+                <div *ngIf="menuForm.get('ruta')?.invalid && menuForm.get('ruta')?.touched" class="text-danger">
+                  La ruta es requerida
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nuevos campos para configuración de ruta -->
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="tipo_ruta">Tipo de Ruta *</label>
+                <select class="form-control" id="tipo_ruta" formControlName="tipo_ruta" 
+                        (change)="onTipoRutaChange()">
+                  <option value="interna">Interna</option>
+                  <option value="externa">Externa</option>
+                  <option value="iframe">Iframe</option>
+                </select>
+                <small class="form-text text-muted">
+                  <span *ngIf="menuForm.get('tipo_ruta')?.value === 'interna'">Ruta dentro del sistema</span>
+                  <span *ngIf="menuForm.get('tipo_ruta')?.value === 'externa'">URL externa completa</span>
+                  <span *ngIf="menuForm.get('tipo_ruta')?.value === 'iframe'">Contenido en iframe</span>
+                </small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="target">Target *</label>
+                <select class="form-control" id="target" formControlName="target">
+                  <option *ngFor="let option of getTargetOptions()" [value]="option">
+                    {{ option }}
+                  </option>
+                </select>
+                <small class="form-text text-muted">
+                  <span *ngIf="menuForm.get('target')?.value === '_self'">Misma ventana</span>
+                  <span *ngIf="menuForm.get('target')?.value === '_blank'">Nueva pestaña</span>
+                  <span *ngIf="menuForm.get('target')?.value === '_parent'">Ventana padre</span>
+                  <span *ngIf="menuForm.get('target')?.value === '_top'">Ventana superior</span>
+                </small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <div class="form-check mt-4">
+                  <input type="checkbox" class="form-check-input" id="abrir_nueva_pestana" 
+                         formControlName="abrir_nueva_pestana" (change)="onAbrirNuevaPestanaChange()">
+                  <label class="form-check-label" for="abrir_nueva_pestana">
+                    <i class="fas fa-external-link-alt"></i> Abrir en Nueva Pestaña
+                  </label>
+                </div>
+                <small class="form-text text-muted">
+                  Si está marcado, el enlace se abrirá en una nueva pestaña
+                </small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="icono">Icono</label>
+                <input type="text" class="form-control" id="icono" formControlName="icono" 
+                       placeholder="fas fa-dashboard">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="orden">Orden *</label>
+                <input type="number" class="form-control" id="orden" formControlName="orden" 
+                       min="1" placeholder="1">
+                <div *ngIf="menuForm.get('orden')?.invalid && menuForm.get('orden')?.touched" class="text-danger">
+                  El orden es requerido
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="menu_activo" formControlName="activo">
+              <label class="form-check-label" for="menu_activo">Menú Activo</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="visible_en_intranet" formControlName="visible_en_intranet">
+              <label class="form-check-label" for="visible_en_intranet">
+                <i class="fas fa-users text-info"></i> Consumible por la intranet
+              </label>
+              <small class="form-text text-muted">
+                Si está marcado, este ítem aparecerá en la sección "Para todo el personal" del menú lateral.
+              </small>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Permisos Requeridos</label>
+            <div class="row">
+              <div class="col-md-6" *ngFor="let permission of permissions">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" 
+                         [value]="permission.name"
+                         (change)="togglePermission(permission.name, $event)">
+                  <label class="form-check-label">{{ permission.name }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeMenuModal()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="menuForm.invalid">
+            <i class="fas fa-save"></i> Crear Menú
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Permission Modal -->
+<div class="modal fade" [class.show]="showPermissionModal" [style.display]="showPermissionModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">
+          <i class="fas fa-key"></i> Asignar Permisos de Menú
+        </h4>
+        <button type="button" class="close" (click)="closePermissionModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <form [formGroup]="permissionForm" (ngSubmit)="savePermissions()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="role_id">Rol *</label>
+            <select class="form-control" id="role_id" formControlName="role_id">
+              <option value="">Seleccione un rol</option>
+              <option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</option>
+            </select>
+            <div *ngIf="permissionForm.get('role_id')?.invalid && permissionForm.get('role_id')?.touched" class="text-danger">
+              Seleccione un rol
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Permisos a Asignar *</label>
+            <div class="row">
+              <div class="col-md-6" *ngFor="let permission of permissions">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" 
+                         [value]="permission.name"
+                         (change)="togglePermissionAssignment(permission.name, $event)">
+                  <label class="form-check-label">{{ permission.name }}</label>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="permissionForm.get('permissions')?.invalid && permissionForm.get('permissions')?.touched" class="text-danger">
+              Seleccione al menos un permiso
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closePermissionModal()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="permissionForm.invalid">
+            <i class="fas fa-save"></i> Asignar Permisos
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showSystemModal || showMenuModal || showPermissionModal" 
+     [style.display]="(showSystemModal || showMenuModal || showPermissionModal) ? 'block' : 'none'"></div>

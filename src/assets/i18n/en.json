@@ -1,0 +1,10 @@
+{
+  "APP": {
+    "TITLE": "Notaria Intranet"
+  },
+  "MENU": {
+    "HOME": "Home",
+    "PROFILE": "Profile",
+    "LOGOUT": "Logout"
+  }
+}

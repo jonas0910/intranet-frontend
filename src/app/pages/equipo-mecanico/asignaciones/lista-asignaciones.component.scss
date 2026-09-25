@@ -1,0 +1,44 @@
+// Tabla (font-size/padding controlado por Design System)
+.table {
+  thead th {
+    font-weight: 600;
+    white-space: nowrap;
+    background-color: var(--ds-table-header-bg, #f4f6f9);
+    color: var(--ds-table-header-color, #333);
+    font-size: 0.85rem;
+  }
+
+  tbody td {
+    vertical-align: middle;
+    font-size: 0.875rem;
+  }
+}
+
+.card-title {
+  font-weight: 600;
+}
+
+.badge {
+  font-size: 0.75rem;
+}
+
+.btn-group-sm>.btn {
+  padding: 0.2rem 0.4rem;
+}
+
+.ds-crud-filter {
+  font-size: 0.875rem;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.text-xs {
+  font-size: 0.75rem !important;
+}
+
+.border-bottom-radius {
+  border-bottom-left-radius: var(--ds-modal-border-radius);
+  border-bottom-right-radius: var(--ds-modal-border-radius);
+}

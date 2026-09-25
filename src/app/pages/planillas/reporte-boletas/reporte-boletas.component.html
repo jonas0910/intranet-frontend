@@ -1,0 +1,176 @@
+<div class="container-fluid">
+  
+  <!-- Header -->
+  <div class="row mb-3">
+    <div class="col-md-12">
+      <h2><i class="fas fa-receipt mr-2"></i>Reporte de Boletas de Pago</h2>
+      <p class="text-muted">Consulta, imprime y envía boletas de pago desde planillas procesadas</p>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card card-success card-outline mb-3">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fas fa-filter mr-2"></i>Filtros de Búsqueda</h3>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Año</label>
+            <input type="number" class="form-control form-control-sm" 
+                   [(ngModel)]="filtros.anio" 
+                   (ngModelChange)="onFilterChange()">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Mes</label>
+            <select class="form-control form-control-sm" 
+                    [(ngModel)]="filtros.mes" 
+                    (ngModelChange)="onFilterChange()">
+              <option value="">Todos</option>
+              <option *ngFor="let mes of meses" [value]="mes.value">
+                {{mes.label}}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Planilla</label>
+            <select class="form-control form-control-sm" 
+                    [(ngModel)]="selectedPlanilla" 
+                    (ngModelChange)="onPlanillaChange()">
+              <option [ngValue]="null">Seleccione planilla</option>
+              <option *ngFor="let p of planillas" [ngValue]="p">
+                {{ p.periodo }} - {{ p.tipo_planilla }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Empleado (DNI o Nombre)</label>
+            <input type="text" class="form-control form-control-sm" 
+                   [(ngModel)]="filtros.empleado" 
+                   (ngModelChange)="applyFilter()"
+                   placeholder="Filtrar por DNI o nombre...">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Tipo de Planilla</label>
+            <select class="form-control form-control-sm" 
+                    [(ngModel)]="filtros.tipo_planilla" 
+                    (ngModelChange)="onFilterChange()">
+              <option value="">Todos</option>
+              <option *ngFor="let tipo of tiposPlanilla" [value]="tipo.value">
+                {{tipo.label}}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-1">
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="button" class="btn btn-success btn-sm btn-block" 
+                    (click)="exportarExcel()">
+              <i class="fas fa-file-excel"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cargando planillas -->
+  <div *ngIf="loadingPlanillas" class="text-center p-4">
+    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+    <p class="mt-2">Cargando planillas...</p>
+  </div>
+
+  <!-- Sin planillas -->
+  <div *ngIf="!loadingPlanillas && planillas.length === 0" class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    No hay planillas procesadas para el año/mes seleccionado. Procese una planilla en <strong>Procesar Planillas</strong>.
+  </div>
+
+  <!-- Cargando boletas -->
+  <div *ngIf="loading && planillas.length > 0" class="text-center p-4">
+    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+    <p class="mt-2">Cargando boletas...</p>
+  </div>
+
+  <!-- Tabla de Boletas -->
+  <div *ngIf="!loading && planillas.length > 0" class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fas fa-table mr-2"></i>Boletas de Pago
+        <span class="badge badge-success ml-2" *ngIf="boletas.length > 0">{{ boletas.length }}</span>
+      </h3>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Empleado</th>
+              <th>DNI</th>
+              <th>Periodo</th>
+              <th>Tipo</th>
+              <th class="text-right">Ingresos</th>
+              <th class="text-right">Descuentos</th>
+              <th class="text-right">Neto</th>
+              <th style="width: 120px;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let boleta of boletas; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td><strong>{{ boleta.codigo }}</strong></td>
+              <td>{{ boleta.empleado.nombre }}</td>
+              <td>{{ boleta.empleado.documento || '—' }}</td>
+              <td>{{ boleta.periodo }}</td>
+              <td>{{ boleta.tipo_planilla }}</td>
+              <td class="text-right">{{ formatCurrency(boleta.total_ingresos) }}</td>
+              <td class="text-right">{{ formatCurrency(boleta.total_descuentos) }}</td>
+              <td class="text-right"><strong>{{ formatCurrency(boleta.total_neto) }}</strong></td>
+              <td>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" 
+                          class="btn btn-primary" 
+                          (click)="imprimirBoleta(boleta)" 
+                          title="Imprimir">
+                    <i class="fas fa-print"></i>
+                  </button>
+                  <button type="button" 
+                          class="btn btn-info" 
+                          (click)="enviarEmail(boleta)" 
+                          title="Enviar Email">
+                    <i class="fas fa-envelope"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="selectedPlanilla && boletas.length === 0 && !loading">
+              <td colspan="10" class="text-center p-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p>No hay boletas en esta planilla o no coinciden con el filtro de empleado.</p>
+              </td>
+            </tr>
+            <tr *ngIf="!selectedPlanilla && planillas.length > 0 && !loading">
+              <td colspan="10" class="text-center p-4 text-muted">
+                Seleccione una planilla para ver las boletas.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+

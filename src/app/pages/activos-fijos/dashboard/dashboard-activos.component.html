@@ -1,0 +1,188 @@
+<app-system-layout [title]="'Cuadro de Mando Integral - Activos Fijos'"
+  [subtitle]="'Indicadores y estadísticas patrimoniales en tiempo real'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Activos Fijos', url: '/activos-fijos'}, {label: 'Dashboard'}]"
+  [subsystem]="'activos-fijos'">
+
+  <div class="dashboard-cmi">
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center p-5">
+      <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+      <p class="mt-3">Cargando cuadro de mando...</p>
+    </div>
+
+    <div *ngIf="!loading && kpis" class="dashboard-content">
+      <!-- KPIs - Tarjetas modernas tipo CMI -->
+      <div class="row mb-4">
+        <div class="col-lg-3 col-6 mb-3">
+          <div class="card card-kpi card-kpi-info elevation-2 h-100">
+            <div class="card-body d-flex align-items-center">
+              <div class="flex-grow-1">
+                <h3 class="mb-0">{{formatNumber(kpis.total_activos)}}</h3>
+                <p class="text-muted mb-0 small">Total Activos</p>
+                <a [routerLink]="['/activos-fijos/activos']" class="btn btn-sm btn-link p-0 mt-1 text-white-50">
+                  Ver catálogo <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+              </div>
+              <div class="kpi-icon bg-white bg-opacity-25 rounded-circle p-3">
+                <i class="fas fa-boxes fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6 mb-3">
+          <div class="card card-kpi card-kpi-success elevation-2 h-100">
+            <div class="card-body d-flex align-items-center">
+              <div class="flex-grow-1">
+                <h3 class="mb-0">{{formatNumber(kpis.activos_activos)}}</h3>
+                <p class="text-muted mb-0 small">En Operación</p>
+                <a [routerLink]="['/activos-fijos/activos']" class="btn btn-sm btn-link p-0 mt-1 text-white-50">
+                  Ver lista <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+              </div>
+              <div class="kpi-icon bg-white bg-opacity-25 rounded-circle p-3">
+                <i class="fas fa-check-circle fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6 mb-3">
+          <div class="card card-kpi card-kpi-warning elevation-2 h-100">
+            <div class="card-body d-flex align-items-center">
+              <div class="flex-grow-1">
+                <h3 class="mb-0" style="font-size: 1.35rem;">{{formatCurrency(kpis.valor_total)}}</h3>
+                <p class="text-muted mb-0 small">Valor Total</p>
+                <a [routerLink]="['/activos-fijos/reportes']" class="btn btn-sm btn-link p-0 mt-1 text-white-50">
+                  Ver reporte <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+              </div>
+              <div class="kpi-icon bg-white bg-opacity-25 rounded-circle p-3">
+                <i class="fas fa-dollar-sign fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6 mb-3">
+          <div class="card card-kpi card-kpi-primary elevation-2 h-100">
+            <div class="card-body d-flex align-items-center">
+              <div class="flex-grow-1">
+                <h3 class="mb-0" style="font-size: 1.35rem;">{{formatCurrency(kpis.valor_neto_total)}}</h3>
+                <p class="text-muted mb-0 small">Valor Neto</p>
+                <a [routerLink]="['/activos-fijos/depreciacion']" class="btn btn-sm btn-link p-0 mt-1 text-white-50">
+                  Depreciación <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+              </div>
+              <div class="kpi-icon bg-white bg-opacity-25 rounded-circle p-3">
+                <i class="fas fa-chart-line fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="row">
+        <!-- Gráfico de barras: Activos por categoría -->
+        <div class="col-lg-8 mb-4">
+          <div class="card elevation-2 h-100">
+            <div class="card-header bg-white">
+              <h5 class="mb-0"><i class="fas fa-chart-bar text-primary mr-2"></i>Activos por Categoría</h5>
+            </div>
+            <div class="card-body" style="position: relative; height: 300px;">
+              <canvas id="chartCategoriasBarras"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gráfico de dona: Distribución por categoría -->
+        <div class="col-lg-4 mb-4">
+          <div class="card elevation-2 h-100">
+            <div class="card-header bg-white">
+              <h5 class="mb-0"><i class="fas fa-chart-pie text-success mr-2"></i>Por Categoría</h5>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center" style="position: relative; height: 300px;">
+              <canvas id="chartCategoriasDona"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Gráfico de dona: Distribución por estado -->
+        <div class="col-lg-4 mb-4">
+          <div class="card elevation-2 h-100">
+            <div class="card-header bg-white">
+              <h5 class="mb-0"><i class="fas fa-flag text-info mr-2"></i>Por Estado</h5>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center" style="position: relative; height: 280px;">
+              <canvas id="chartEstadoDona"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gráfico de barras: Activos por estado -->
+        <div class="col-lg-4 mb-4">
+          <div class="card elevation-2 h-100">
+            <div class="card-header bg-white">
+              <h5 class="mb-0"><i class="fas fa-tasks text-warning mr-2"></i>Por Estado (barras)</h5>
+            </div>
+            <div class="card-body" style="position: relative; height: 280px;">
+              <canvas id="chartEstadoBarras"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gráfico de dona: Por condición -->
+        <div class="col-lg-4 mb-4">
+          <div class="card elevation-2 h-100">
+            <div class="card-header bg-white">
+              <h5 class="mb-0"><i class="fas fa-tags text-danger mr-2"></i>Por Condición</h5>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center" style="position: relative; height: 280px;">
+              <canvas id="chartCondicionDona"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accesos rápidos -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <h5 class="mb-3"><i class="fas fa-rocket mr-2"></i>Accesos rápidos</h5>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+          <a [routerLink]="['/activos-fijos/activos/crear']" class="card card-acceso text-decoration-none text-dark elevation-1 h-100">
+            <div class="card-body text-center py-3">
+              <i class="fas fa-plus-circle fa-2x text-primary mb-2"></i>
+              <h6 class="mb-0">Nuevo Activo</h6>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+          <a [routerLink]="['/activos-fijos/inventario']" class="card card-acceso text-decoration-none text-dark elevation-1 h-100">
+            <div class="card-body text-center py-3">
+              <i class="fas fa-clipboard-check fa-2x text-success mb-2"></i>
+              <h6 class="mb-0">Inventario Físico</h6>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+          <a [routerLink]="['/activos-fijos/depreciacion']" class="card card-acceso text-decoration-none text-dark elevation-1 h-100">
+            <div class="card-body text-center py-3">
+              <i class="fas fa-calculator fa-2x text-warning mb-2"></i>
+              <h6 class="mb-0">Depreciación</h6>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+          <a [routerLink]="['/activos-fijos/reportes']" class="card card-acceso text-decoration-none text-dark elevation-1 h-100">
+            <div class="card-body text-center py-3">
+              <i class="fas fa-chart-bar fa-2x text-info mb-2"></i>
+              <h6 class="mb-0">Reportes</h6>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</app-system-layout>

@@ -1,0 +1,1148 @@
+/* AdminLTE 3.2.0 Layout Component Styles */
+
+/* Custom enhancements for AdminLTE 3.2.0 */
+.preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background-color: #fff;
+}
+
+.animation__shake {
+  animation: shake 1s infinite;
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-10px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(10px);
+  }
+}
+
+/* Enhanced navbar */
+.navbar-nav .nav-link {
+  transition: background-color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 0.25rem;
+}
+
+/* Enhanced sidebar */
+.nav-sidebar .nav-link {
+  transition: all 0.3s ease;
+}
+
+.nav-sidebar .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-sidebar .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Enhanced dropdown menus */
+.dropdown-menu {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  transition: background-color 0.15s ease;
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f7fa;
+}
+
+/* ── Nav icon links (messages, bell) ── */
+
+.nav-link-icon {
+  position: relative;
+  padding: 0.5rem 0.6rem !important;
+
+  i {
+    font-size: 1.1rem;
+    color: #6c757d;
+    transition: color 0.15s;
+  }
+
+  &:hover i {
+    color: #343a40;
+  }
+}
+
+.nav-badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  background: #e74c3c;
+  color: #fff;
+  border-radius: 10px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(231, 76, 60, 0.4);
+}
+
+/* ── Notification Dropdown ── */
+
+.notification-dropdown {
+  width: 320px;
+  max-height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #495057;
+
+  .see-all-link {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #007bff;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.notification-dropdown-body {
+  overflow-y: auto;
+  max-height: 340px;
+  flex: 1;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 0.6rem 1rem;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.12s;
+
+  &:hover {
+    background: #f5f7fa;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.notification-item-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #eaf4fe;
+  color: #3498db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  margin-right: 0.65rem;
+  margin-top: 1px;
+}
+
+.notification-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-item-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #2c3e50;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.notification-item-meta {
+  font-size: 0.7rem;
+  color: #95a5a6;
+  margin-top: 2px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.notification-item-time {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.notification-empty {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: #bdc3c7;
+  font-size: 0.8rem;
+
+  i {
+    display: block;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+  }
+}
+
+/* ── User Dropdown (estilo cabecera azul + ítems con iconos) ── */
+
+.user-menu-toggle {
+  padding: 0.4rem 0.6rem !important;
+
+  .img-circle {
+    width: 28px;
+    height: 28px;
+    object-fit: cover;
+  }
+}
+
+/* Contenedor del menú usuario: asegurar que el dropdown se muestre encima de todo */
+.main-header .navbar {
+  overflow: visible !important;
+}
+
+.user-menu-dropdown {
+  position: relative;
+
+  &.show .dropdown-menu.user-dropdown {
+    display: block !important;
+    visibility: visible !important;
+  }
+}
+
+.user-dropdown {
+  min-width: 280px;
+  padding: 0;
+  border-radius: 0.5rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 1060 !important;
+  /* por encima del navbar y del contenido */
+
+  .dropdown-divider {
+    margin: 0.25rem 0;
+  }
+}
+
+/* Cabecera azul con datos del usuario */
+.user-dropdown-header {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  padding: 1rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-dropdown-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.user-dropdown-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-dropdown-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-dropdown-role {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  margin-bottom: 0.35rem;
+}
+
+.user-dropdown-badge-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #fff;
+
+  i {
+    font-size: 0.7rem;
+    opacity: 0.95;
+  }
+}
+
+/* Ítems del menú con iconos coloreados */
+.user-dropdown-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  padding: 0.6rem 1rem;
+  text-decoration: none;
+  color: #2c3e50;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  span {
+    flex: 1;
+  }
+
+  .user-dropdown-icon {
+    width: 22px;
+    text-align: center;
+    margin-right: 0.65rem;
+    font-size: 0.9rem;
+  }
+
+  .user-dropdown-icon-profile {
+    color: #3b82f6;
+  }
+
+  .user-dropdown-icon-settings {
+    color: #14b8a6;
+  }
+
+  .user-dropdown-icon-messages {
+    color: #22c55e;
+  }
+
+  .user-dropdown-icon-notifications {
+    color: #eab308;
+  }
+
+  .user-dropdown-icon-online {
+    color: #22c55e;
+    font-size: 0.5rem;
+  }
+
+  .user-dropdown-icon-logout {
+    color: #dc2626;
+  }
+
+  .user-dropdown-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+  }
+
+  .badge-messages {
+    background: #14b8a6;
+  }
+
+  .badge-notifications {
+    background: #eab308;
+    color: #1f2937;
+  }
+
+  .user-dropdown-time {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-left: auto;
+  }
+
+  &:hover {
+    background-color: #f5f7fa;
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+.user-dropdown-item-online {
+  cursor: default;
+  pointer-events: none;
+}
+
+.user-dropdown-item-logout {
+  color: #dc2626 !important;
+  font-weight: 500;
+
+  &:hover {
+    background-color: #fef2f2;
+    color: #b91c1c !important;
+  }
+}
+
+/* ── Control Sidebar Notifications ── */
+
+.sidebar-notification-item {
+  text-decoration: none;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    text-decoration: none;
+  }
+
+  .min-width-0 {
+    min-width: 0;
+  }
+}
+
+/* Brand logo enhancement */
+.brand-link {
+  transition: opacity 0.3s ease;
+}
+
+.brand-link:hover {
+  opacity: 0.8;
+  text-decoration: none;
+}
+
+/* User panel enhancement */
+.user-panel .info a {
+  color: #c2c7d0 !important;
+  text-decoration: none;
+}
+
+.user-panel .info a:hover {
+  color: #fff !important;
+}
+
+/* Search form enhancements */
+.form-control-sidebar {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #c2c7d0;
+}
+
+.form-control-sidebar:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #007bff;
+  color: #fff;
+}
+
+.form-control-sidebar::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Navbar search block */
+.navbar-search-block {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Badge enhancements (legacy - kept for AdminLTE compat) */
+.navbar-badge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 2px 4px;
+}
+
+/* Control sidebar */
+.control-sidebar {
+  background: #343a40;
+}
+
+/* Footer enhancement */
+.main-footer {
+  background: #fff;
+  border-top: 1px solid #dee2e6;
+  color: #869099;
+}
+
+/* Responsive improvements */
+@media (max-width: 767.98px) {
+  .navbar-nav .nav-link {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .dropdown-menu-lg {
+    width: 280px;
+  }
+}
+
+/* Loading states */
+.nav-link.loading {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Icon enhancements */
+.nav-icon {
+  margin-right: 0.5rem;
+  width: 1.2rem;
+  text-align: center;
+}
+
+/* Tree view enhancements */
+.nav-treeview>.nav-item>.nav-link {
+  padding-left: 2rem;
+}
+
+.nav-treeview .nav-treeview>.nav-item>.nav-link {
+  padding-left: 2.8rem;
+}
+
+/* Fix para menús dropdown del sidebar */
+.nav-item.has-treeview {
+  position: relative;
+}
+
+.nav-item.has-treeview>.nav-link {
+  cursor: pointer;
+  user-select: none;
+}
+
+.nav-item.has-treeview>.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.has-treeview.menu-open>.nav-link {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Animación del chevron/ícono de dropdown */
+.nav-item.has-treeview>.nav-link .fas.fa-angle-left,
+.nav-item.has-treeview>.nav-link .right {
+  transition: transform 0.3s ease;
+}
+
+.nav-item.has-treeview.menu-open>.nav-link .fas.fa-angle-left,
+.nav-item.has-treeview.menu-open>.nav-link .right {
+  transform: rotate(-90deg);
+}
+
+/* Submenús - ocultos por defecto (ACCORDION) */
+.nav-treeview {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding-left: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Ocultar submenús con [hidden] */
+.nav-treeview[hidden] {
+  display: none;
+}
+
+/* Mostrar submenús cuando el padre tiene la clase menu-open */
+.nav-item.menu-open>.nav-treeview {
+  display: block !important;
+}
+
+/* Estilos de los enlaces dentro de submenús */
+.nav-treeview .nav-link {
+  padding-left: 2rem;
+  color: #c2c7d0;
+}
+
+.nav-treeview .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nav-treeview .nav-link.active {
+  background-color: #007bff !important;
+  color: #fff !important;
+}
+
+/* ============================================
+   REDUCCIÓN DE TAMAÑO DE FUENTE PARA MENÚS
+   ============================================ */
+
+/* Menús principales del sidebar */
+.nav-sidebar>.nav-item>.nav-link {
+  font-size: 0.875rem;
+  /* 14px - Reducido de 16px */
+  font-weight: normal !important;
+  /* Quitar negrita */
+}
+
+.nav-sidebar>.nav-item>.nav-link>p {
+  font-size: 0.875rem;
+  /* 14px */
+  font-weight: normal !important;
+  /* Quitar negrita */
+  margin: 0;
+}
+
+/* Submenús (treeview) */
+.nav-treeview .nav-link {
+  font-size: 0.8125rem;
+  /* 13px - Más pequeño que el principal */
+  font-weight: normal !important;
+  /* Quitar negrita */
+}
+
+.nav-treeview .nav-link>p {
+  font-size: 0.8125rem;
+  /* 13px */
+  font-weight: normal !important;
+  /* Quitar negrita */
+  margin: 0;
+}
+
+/* Iconos - mantener proporción */
+.nav-sidebar .nav-icon {
+  font-size: 0.875rem;
+  /* 14px - Proporcional al texto */
+  width: 1.5rem;
+  text-align: center;
+  margin-right: 0.5rem;
+  font-weight: normal !important;
+  /* Quitar negrita de iconos */
+}
+
+/* Iconos de submenús - más pequeños */
+.nav-treeview .nav-icon {
+  font-size: 0.75rem;
+  /* 12px */
+  width: 1.25rem;
+  font-weight: normal !important;
+  /* Quitar negrita de iconos */
+}
+
+/* Flecha de dropdown */
+.nav-sidebar .right {
+  font-size: 0.75rem;
+  /* 12px */
+  font-weight: normal !important;
+  /* Quitar negrita */
+}
+
+/* Aplicar a TODOS los menús dinámicos (presente y futuros) */
+.sidebar .nav-pills .nav-link {
+  font-size: 0.875rem !important;
+  /* Importante para sobrescribir AdminLTE */
+  font-weight: normal !important;
+  /* Quitar negrita */
+}
+
+.sidebar .nav-treeview .nav-link {
+  font-size: 0.8125rem !important;
+  font-weight: normal !important;
+  /* Quitar negrita */
+}
+
+/* Asegurar que el texto dentro también sea normal */
+.sidebar .nav-link p {
+  font-weight: normal !important;
+}
+
+/* Mantener negrita solo para el item activo */
+.nav-sidebar .nav-link.active {
+  font-weight: 500 !important;
+  /* Semi-bold solo para el activo */
+}
+
+/* ============================================
+   TRANSFORMACIÓN DE TEXTO: MAYÚSCULAS Y MINÚSCULAS
+   ============================================ */
+
+/* MENÚS PRINCIPALES EN MAYÚSCULAS */
+.nav-sidebar>.nav-item>.nav-link>p {
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px;
+  /* Espaciado para mejor legibilidad */
+  font-size: 0.8125rem !important;
+  /* 13px - Más compacto */
+  font-weight: 500 !important;
+  /* Semi-bold para destacar */
+}
+
+/* SUBMENÚS EN MINÚSCULAS (con primera letra en mayúscula) */
+.nav-treeview .nav-link>p {
+  text-transform: capitalize !important;
+  font-size: 0.8125rem !important;
+  /* 13px - Mismo tamaño que principal */
+  font-weight: normal !important;
+}
+
+/* Ajustes adicionales de espaciado para compactar */
+.nav-sidebar>.nav-item>.nav-link {
+  padding: 0.5rem 0.75rem !important;
+  /* Reducir padding vertical */
+  font-size: 0.8125rem !important;
+}
+
+.nav-treeview .nav-link {
+  padding: 0.4rem 0.75rem !important;
+  padding-left: 2.5rem !important;
+  /* Mantener indentación */
+  font-size: 0.8125rem !important;
+}
+
+/* Reducir altura de iconos */
+.nav-sidebar .nav-icon {
+  font-size: 0.875rem !important;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-treeview .nav-icon {
+  font-size: 0.75rem !important;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Reducir espacio del search en sidebar */
+.sidebar .form-inline {
+  margin-bottom: 0.5rem !important;
+}
+
+/* Reducir padding del user panel */
+.user-panel {
+  padding: 0.5rem 0 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Reducir espacio del logo */
+.brand-link {
+  padding: 0.8rem 0.5rem !important;
+  font-size: 1rem !important;
+}
+
+.brand-link .brand-image {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  max-height: 2.5rem !important;
+}
+
+.brand-link .brand-text {
+  font-size: 1rem !important;
+}
+
+/* ============================================
+   NUEVAS MEJORAS - MENÚ LATERAL ESCALABLE
+   ============================================ */
+
+// Contenedor con scroll del sidebar
+.sidebar-menu-container {
+  max-height: calc(100vh - 280px);
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+// Animaciones suaves para el accordion
+.nav-treeview {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.show {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Mejorar transición del icono de flecha
+.nav-item.menu-open {
+  >.nav-link {
+    background-color: rgba(255, 255, 255, 0.05);
+
+    .right.fa-angle-left {
+      transform: rotate(-90deg);
+      transition: transform 0.3s ease;
+    }
+  }
+}
+
+.nav-item:not(.menu-open) {
+  >.nav-link {
+    .right.fa-angle-left {
+      transition: transform 0.3s ease;
+    }
+  }
+}
+
+// Estilos para las estrellas de favoritos
+.nav-link {
+  .fa-star {
+    opacity: 0;
+    transition: opacity 0.2s ease, color 0.2s ease;
+    font-size: 0.85rem;
+
+    &.fas.text-warning {
+      opacity: 1;
+    }
+  }
+
+  &:hover .fa-star {
+    opacity: 0.7;
+  }
+
+  .fa-star:hover {
+    opacity: 1 !important;
+    color: #ffc107 !important;
+  }
+}
+
+// Estilos para los badges de contador
+.badge.right {
+  margin-left: auto;
+  margin-right: 0.5rem;
+}
+
+// Headers de categorías mejorados
+.nav-header {
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 0.75rem 1rem 0.5rem 1rem;
+  color: #c2c7d0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 0.5rem;
+
+  i {
+    opacity: 0.7;
+  }
+}
+
+// Mejorar el input de búsqueda del sidebar
+.form-control-sidebar {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  &:focus {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+  }
+}
+
+.btn-sidebar {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+// Responsive: Sidebar colapsado en móvil
+@media (max-width: 768px) {
+  .sidebar-menu-container {
+    max-height: calc(100vh - 220px);
+  }
+
+  // Ocultar badges en móvil para ahorrar espacio
+  .sidebar-collapse {
+    .badge.right {
+      display: none;
+    }
+  }
+}
+
+// Modo compacto para muchos menús
+.sidebar-mini.sidebar-collapse {
+  .nav-sidebar {
+    .nav-link {
+      p {
+        width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      .right {
+        display: none;
+      }
+
+      .fa-star {
+        display: none;
+      }
+    }
+  }
+}
+
+// Animación para menú con favoritos
+.nav-item.favorite {
+  position: relative;
+
+  &::before {
+    content: '⭐';
+    position: absolute;
+    left: 0;
+    opacity: 0.3;
+    font-size: 0.6rem;
+  }
+}
+
+// Hover mejorado para enlaces con estrellas
+.nav-link {
+  position: relative;
+
+  .right {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}
+
+// Mensaje de "no resultados" mejorado
+.text-center.text-muted {
+  padding: 2rem 1rem;
+
+  i.fa-search {
+    opacity: 0.5;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+  }
+
+  .btn {
+    margin-top: 0.5rem;
+  }
+}
+
+// Estilos para la sección de favoritos
+.nav-header {
+  &:has(.fa-star) {
+    color: #ffc107;
+    border-bottom-color: rgba(255, 193, 7, 0.2);
+  }
+}
+
+// Transiciones suaves para todos los elementos interactivos
+.nav-item,
+.nav-link,
+.badge,
+.fa-star {
+  transition: all 0.2s ease-in-out;
+}
+
+// Fix para badges que no deben tener transición de tamaño
+.badge {
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+// Mejorar accesibilidad con focus
+.nav-link:focus,
+.btn-sidebar:focus,
+.form-control-sidebar:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 2px;
+}
+
+// Estado de carga para búsqueda
+.form-control-sidebar.loading {
+  background-image: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.1) 25%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// Optimización para rendimiento
+.sidebar {
+  will-change: transform;
+}
+
+.nav-treeview {
+  will-change: max-height, opacity;
+}
+
+// Print styles
+@media print {
+
+  .sidebar,
+  .main-header,
+  .main-footer,
+  .control-sidebar {
+    display: none !important;
+  }
+
+  .content-wrapper {
+    margin-left: 0 !important;
+  }
+}
+
+/* ============================================
+   LOGO DEL MUNICIPIO EN SIDEBAR
+   ============================================ */
+
+.municipio-logo-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-radius: 10px;
+  padding: 1rem 0.5rem;
+  margin: 1rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  .municipio-logo {
+    max-width: 180px;
+    max-height: 120px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    margin: 0 auto;
+    display: block;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+
+  .municipio-name {
+    color: #c2c7d0;
+    font-size: 0.75rem;
+    text-align: center;
+    margin-top: 0.75rem;
+    margin-bottom: 0;
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    strong {
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: block;
+      margin-top: 0.25rem;
+    }
+  }
+}
+
+// Responsive para el logo
+@media (max-width: 768px) {
+  .municipio-logo-panel {
+    .municipio-logo {
+      max-width: 140px;
+      max-height: 100px;
+    }
+
+    .municipio-name {
+      font-size: 0.65rem;
+
+      strong {
+        font-size: 0.75rem;
+      }
+    }
+  }
+}
+
+// Cuando el sidebar está colapsado
+.sidebar-mini.sidebar-collapse {
+  .municipio-logo-panel {
+    padding: 0.5rem 0.25rem;
+
+    .municipio-logo {
+      max-width: 40px;
+      max-height: 40px;
+    }
+
+    .municipio-name {
+      display: none;
+    }
+  }
+}

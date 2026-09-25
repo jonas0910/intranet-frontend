@@ -1,0 +1,74 @@
+// Selectores ultra-prioriarios para asegurar visibilidad de pestañas
+// Están cargados DESPUÉS de los estilos globales y de Bootstrap
+
+div.card-tabs ul.nav-tabs {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  border-bottom: 1px solid #dee2e6 !important;
+  background: #fff !important;
+  padding: 0.5rem 0 !important;
+  margin: 0 !important;
+  list-style: none !important;
+  min-height: 50px !important;
+}
+
+div.card-tabs ul.nav-tabs li.nav-item {
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+}
+
+div.card-tabs ul.nav-tabs li.nav-item a.nav-link {
+  color: #495057 !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  border-radius: 0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+div.card-tabs ul.nav-tabs li.nav-item a.nav-link:hover {
+  color: #212529 !important;
+  background: #f4f6f9 !important;
+  text-decoration: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+div.card-tabs ul.nav-tabs li.nav-item a.nav-link.active {
+  color: #007bff !important;
+  background: #fff !important;
+  border-bottom: 2px solid #007bff !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+div.card-tabs ul.nav-tabs li.nav-item a.nav-link i {
+  margin-right: 0.25rem !important;
+  opacity: 1 !important;
+  display: inline-block !important;
+  visibility: visible !important;
+}
+
+// Force tab-pane visibility
+.tab-content .tab-pane {
+  display: none !important;
+}
+
+.tab-content .tab-pane.show {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}

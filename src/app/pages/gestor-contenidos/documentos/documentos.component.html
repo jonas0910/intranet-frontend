@@ -1,0 +1,139 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0">Documentos</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor</a></li>
+          <li class="breadcrumb-item active">Documentos</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-file-alt mr-2"></i>Listado de Documentos</h3>
+        <div class="card-tools">
+          <button class="btn btn-primary btn-sm" (click)="openCreate()">
+            <i class="fas fa-plus mr-1"></i>Nuevo Documento
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="text-center py-5" *ngIf="loading">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+        </div>
+        <div class="table-responsive" *ngIf="!loading">
+          <table class="table table-hover table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Tipo Archivo</th>
+                <th>Categoría</th>
+                <th>Público</th>
+                <th>Descargas</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="documentos.length === 0">
+                <td colspan="6" class="text-center text-muted py-4">No hay documentos registrados</td>
+              </tr>
+              <tr *ngFor="let item of documentos">
+                <td>
+                  <i class="fas fa-file mr-1 text-muted"></i>
+                  {{ item.titulo }}
+                </td>
+                <td><span class="badge badge-{{ getTipoArchivoBadge(item.tipo_archivo) }}">{{ item.tipo_archivo | uppercase }}</span></td>
+                <td>{{ getCategoriaName(item.categoria_id) }}</td>
+                <td>
+                  <span class="badge" [ngClass]="item.publico ? 'badge-success' : 'badge-warning'">
+                    {{ item.publico ? 'Público' : 'Privado' }}
+                  </span>
+                </td>
+                <td>
+                  <i class="fas fa-download text-muted mr-1"></i>
+                  {{ item.descargas || 0 }}
+                </td>
+                <td class="text-right">
+                  <a *ngIf="item.archivo_url" [href]="item.archivo_url" target="_blank"
+                     class="btn btn-default btn-xs mr-1" title="Descargar">
+                    <i class="fas fa-download"></i>
+                  </a>
+                  <button class="btn btn-info btn-xs mr-1" (click)="openEdit(item)" title="Editar">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn btn-danger btn-xs" (click)="delete(item.id)" title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal -->
+<div class="modal fade show d-block" *ngIf="showModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ editing ? 'Editar' : 'Nuevo' }} Documento</h5>
+        <button type="button" class="close" (click)="showModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Título</label>
+          <input type="text" class="form-control" [(ngModel)]="form.titulo" placeholder="Título del documento">
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="form.descripcion" placeholder="Descripción del documento"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Archivo URL</label>
+          <input type="text" class="form-control" [(ngModel)]="form.archivo_url" placeholder="URL del archivo">
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Tipo de Archivo</label>
+              <select class="form-control" [(ngModel)]="form.tipo_archivo">
+                <option *ngFor="let t of tiposArchivo" [value]="t">{{ t | uppercase }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Categoría</label>
+              <select class="form-control" [(ngModel)]="form.categoria_id">
+                <option [ngValue]="null">-- Seleccionar --</option>
+                <option *ngFor="let c of categorias" [ngValue]="c.id">{{ c.nombre }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Público</label>
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="docPublico" [(ngModel)]="form.publico">
+            <label class="custom-control-label" for="docPublico">{{ form.publico ? 'Sí' : 'No' }}</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="showModal = false">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="save()">
+          <i class="fas fa-save mr-1"></i>{{ editing ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

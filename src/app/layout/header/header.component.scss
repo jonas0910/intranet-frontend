@@ -1,0 +1,25 @@
+/* Header Component - AdminLTE Clean */
+
+/* No custom styles needed - AdminLTE handles everything */
+
+/* Small improvements without breaking AdminLTE structure */
+.navbar-nav .nav-link {
+  transition: background-color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}

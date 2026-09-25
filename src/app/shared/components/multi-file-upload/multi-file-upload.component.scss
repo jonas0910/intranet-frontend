@@ -1,0 +1,35 @@
+.multi-file-upload {
+  .drop-zone {
+    border: 2px dashed var(--primary, #007bff);
+    background: rgba(0, 123, 255, 0.04);
+    padding: 1.25rem 1rem;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      background: rgba(0, 123, 255, 0.08);
+      box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.15);
+    }
+
+    &.drag-over {
+      background: rgba(0, 123, 255, 0.14);
+      border-style: solid;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+  }
+
+  .preview-card {
+    .card-img-wrap {
+      height: 100px;
+      overflow: hidden;
+    }
+
+    .preview-img {
+      max-width: 100%;
+      max-height: 100px;
+      width: auto;
+      height: auto;
+      object-fit: cover;
+    }
+  }
+}

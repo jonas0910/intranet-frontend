@@ -1,0 +1,42 @@
+// Estilos para el componente de departamentos
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+  border-radius: 0.375rem;
+}
+
+.table {
+  th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+  }
+
+  td {
+    vertical-align: middle;
+  }
+}
+
+.badge {
+  padding: 0.35em 0.65em;
+  font-size: 0.75em;
+  font-weight: 600;
+}
+
+.btn-group-sm > .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.text-danger {
+  font-size: 0.875rem;
+}

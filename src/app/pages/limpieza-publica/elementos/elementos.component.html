@@ -1,0 +1,478 @@
+<app-system-layout [title]="'Infraestructura Urbana'"
+    [subtitle]="'Gestión de mobiliario, contenedores y activos de limpieza pública'" [subtitleItems]="[
+        { label: 'Mapa de ubicación de contenedores de residuos sólidos', icon: 'fas fa-trash' },
+        { label: 'Censo arbóreo e inventario de áreas verdes', icon: 'fas fa-tree' },
+        { label: 'Mapa de contenedores (estado bueno, regular, malo)', icon: 'fas fa-map-marker-alt' },
+        { label: 'Registro de metraje de pavimento de áreas verdes', icon: 'fas fa-ruler-combined' },
+        { label: 'Mapa de ubicación de los puntos de reciclaje', icon: 'fas fa-recycle' },
+        { label: 'Registro de zonas', icon: 'fas fa-layer-group' }
+    ]"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Limpieza Pública', url: '/limpieza-publica'}, {label: 'Elementos'}]"
+    [subsystem]="'limpieza-publica'">
+
+    <!-- Tabs de Gestión -->
+    <div class="card card-primary card-outline card-tabs shadow-sm">
+        <div class="card-header p-0 pt-1 border-bottom-0">
+            <ul class="nav nav-tabs" id="lp-elementos-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active font-weight-bold" id="tabs-elementos-tab" data-toggle="pill"
+                        href="#tabs-elementos" role="tab" aria-controls="tabs-elementos" aria-selected="true">
+                        <i class="fas fa-trash-restore mr-2"></i> Inventario de Elementos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link font-weight-bold" id="tabs-tipos-tab" data-toggle="pill" href="#tabs-tipos"
+                        role="tab" aria-controls="tabs-tipos" aria-selected="false">
+                        <i class="fas fa-tags mr-2"></i> Tipos de Elementos
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="tab-content" id="lp-elementos-tabsContent">
+
+                <!-- TAB 1: ELEMENTOS URBANOS -->
+                <div class="tab-pane fade show active" id="tabs-elementos" role="tabpanel"
+                    aria-labelledby="tabs-elementos-tab">
+
+                    <!-- Toolbar -->
+                    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white m-0">
+                        <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+                            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                                <i class="fas fa-trash-restore mr-1 text-primary"></i> Inventario de Elementos
+                            </h3>
+                            <button class="btn btn-sm btn-outline-info ml-1 px-2"
+                                (click)="filtrosColapsados = !filtrosColapsados"
+                                [title]="filtrosColapsados ? 'Ver filtros' : 'Ocultar filtros'"
+                                style="height: 24px; line-height: 1;">
+                                <i class="fas"
+                                    [ngClass]="filtrosColapsados ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+                            </button>
+                            <ng-container *ngIf="cv.showExportButtons">
+                                <button type="button" class="btn btn-sm btn-flat"
+                                    [ngClass]="cv.excelBtnClass || 'btn-success'" title="Exportar Excel"
+                                    (click)="onExportExcel()">
+                                    <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{
+                                    cv.excelBtnLabel || 'Excel' }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-flat"
+                                    [ngClass]="cv.pdfBtnClass || 'btn-danger'" title="Exportar PDF"
+                                    (click)="onExportPdf()">
+                                    <i [class]="(cv.pdfBtnIcon || 'fas fa-file-pdf') + ' mr-1'"></i> {{ cv.pdfBtnLabel
+                                    || 'PDF' }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-flat"
+                                    [ngClass]="cv.printBtnClass || 'btn-info'" title="Imprimir"
+                                    (click)="onExportPrint()">
+                                    <i [class]="(cv.printBtnIcon || 'fas fa-print') + ' mr-1'"></i> {{ cv.printBtnLabel
+                                    || 'Imprimir' }}
+                                </button>
+                            </ng-container>
+                            <button class="btn btn-sm btn-flat text-muted" (click)="cargarElementos()"
+                                title="Actualizar">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info ml-1" (click)="abrirMapaGlobal()"
+                                title="Ver Inventario en Mapa">
+                                <i class="fas fa-map-marked-alt mr-1"></i> Mapa General
+                            </button>
+                        </div>
+                        <div class="ms-auto flex-shrink-0">
+                            <button type="button" class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-primary'"
+                                (click)="abrirNuevoElemento()">
+                                <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> Registrar Elemento
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="bg-light p-3 border-bottom shadow-none" [hidden]="filtrosColapsados">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="ds-crud-label ds-crud-label">Tipo Mobiliario</label>
+                                <select class="form-control form-control-sm ds-crud-filter ds-crud-filter"
+                                    [(ngModel)]="filtros.id_tipo_elemento" (change)="cargarElementos()">
+                                    <option [value]="null">Todos los tipos</option>
+                                    <option *ngFor="let t of tiposElemento" [value]="t.id_tipo_elemento">{{ t.nombre }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="ds-crud-label ds-crud-label">Sector / Zona</label>
+                                <select class="form-control form-control-sm ds-crud-filter ds-crud-filter"
+                                    [(ngModel)]="filtros.id_sector" (change)="cargarElementos()">
+                                    <option [value]="null">Cualquier sector</option>
+                                    <option *ngFor="let s of catalogos?.sectores" [value]="s.id_sector">{{
+                                        s.nombre_sector }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="ds-crud-label ds-crud-label">Estado Operativo</label>
+                                <select class="form-control form-control-sm ds-crud-filter ds-crud-filter"
+                                    [(ngModel)]="filtros.estado_operativo" (change)="cargarElementos()">
+                                    <option [value]="null">Cualquier estado</option>
+                                    <option value="operativo">Operativo / Bueno</option>
+                                    <option value="mantenimiento">En Mantenimiento</option>
+                                    <option value="dañado">Dañado / Inoperativo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="ds-crud-label ds-crud-label">Búsqueda Rápida</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control ds-crud-filter ds-crud-filter"
+                                        placeholder="Código/Nombre..." [(ngModel)]="filtros.q"
+                                        (keyup.enter)="cargarElementos()">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" (click)="cargarElementos()">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla Elementos -->
+                    <div class="p-3">
+                        <div class="table-responsive">
+                            <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger"
+                                class="table table-hover table-sm text-nowrap w-100 ds-crud-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Nombre / Descripción</th>
+                                        <th>Tipo</th>
+                                        <th>Ubicación</th>
+                                        <th>Estado</th>
+                                        <th class="text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let el of elementos">
+                                        <td class="align-middle font-weight-bold">{{ el.codigo }}</td>
+                                        <td class="align-middle">
+                                            <div class="font-weight-bold d-block">{{ el.nombre }}</div>
+                                            <small class="text-muted">{{ el.descripcion | slice:0:50 }}...</small>
+                                        </td>
+                                        <td class="align-middle">
+                                            <span class="badge badge-info-light">{{ el.tipo_elemento?.nombre }}</span>
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="small">
+                                                <i class="fas fa-map-marker-alt text-danger mr-1"></i>
+                                                {{ el.direccion_referencia || 'Sin dirección' }}
+                                            </div>
+                                            <div *ngIf="el.latitud" class="text-muted extra-small">
+                                                GPS: {{ el.latitud }}, {{ el.longitud }}
+                                            </div>
+                                        </td>
+                                        <td class="align-middle">
+                                            <span class="badge" [ngClass]="getStatusClass(el.estado_operativo)">
+                                                {{ el.estado_operativo | uppercase }}
+                                            </span>
+                                        </td>
+                                        <td class="align-middle text-right">
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm" [class]="cv.editBtnClass"
+                                                    (click)="abrirEditarElemento(el)" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger"
+                                                    (click)="eliminarElemento(el)" title="Eliminar">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: TIPOS DE ELEMENTOS -->
+                <div class="tab-pane fade" id="tabs-tipos" role="tabpanel" aria-labelledby="tabs-tipos-tab">
+                    <!-- Toolbar Tipos -->
+                    <div class="p-3 d-flex justify-content-between align-items-center bg-white border-bottom">
+                        <div class="d-flex gap-2">
+                            <button [class]="'btn ' + cv.newBtnClass" (click)="abrirNuevoTipo()">
+                                <i [class]="cv.newBtnIcon + ' mr-1'"></i> Nuevo Tipo
+                            </button>
+                            <button class="btn btn-outline-info" (click)="cargarTipos()">
+                                <i class="fas fa-sync-alt mr-1"></i> Actualizar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla Tipos -->
+                    <div class="p-3">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm text-nowrap w-100">
+                                <thead class="bg-light text-muted small uppercase">
+                                    <tr>
+                                        <th>Nombre del Tipo</th>
+                                        <th>Categoría</th>
+                                        <th>Mantenimiento</th>
+                                        <th class="text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let t of tiposElemento">
+                                        <td class="align-middle font-weight-bold text-primary">{{ t.nombre }}</td>
+                                        <td class="align-middle text-muted">{{ t.categoria || 'Sin categoría' }}</td>
+                                        <td class="align-middle text-center">
+                                            <i class="fas fa-check-circle text-success"
+                                                *ngIf="t.requiere_mantenimiento"></i>
+                                            <i class="fas fa-times-circle text-muted"
+                                                *ngIf="!t.requiere_mantenimiento"></i>
+                                        </td>
+                                        <td class="align-middle text-right">
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-link text-info"
+                                                    (click)="abrirEditarTipo(t)">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-link text-danger"
+                                                    (click)="eliminarTipo(t)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ELEMENTO URBANO -->
+    <div class="modal fade" id="modalElemento" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg" [style.border-radius]="mc.borderRadius + 'px'">
+                <div class="modal-header text-white" [style.background-color]="mc.headerBg">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-white rounded-circle mr-3 d-flex align-items-center justify-content-center"
+                            style="width: 40px; height: 40px;">
+                            <i [class]="mc.headerIcon + ' text-primary'"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title font-weight-bold mb-0">
+                                {{ editando ? 'Actualizar Elemento' : 'Nuevo Registro de Infraestructura' }}
+                            </h5>
+                            <small class="opacity-75">Complete la información técnica y geográfica</small>
+                        </div>
+                    </div>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-0 bg-white">
+                    <div class="row no-gutters">
+                        <!-- Formulario -->
+                        <div class="col-lg-7 p-4 bg-light">
+                            <form #elForm="ngForm">
+                                <div class="row">
+                                    <div class="col-md-5 form-group">
+                                        <label class="ds-crud-label ds-crud-label">Identificador / Código</label>
+                                        <input type="text" class="form-control ds-crud-filter" name="codigo"
+                                            [(ngModel)]="formElemento.codigo" required placeholder="Ej: CONT-001">
+                                    </div>
+                                    <div class="col-md-7 form-group">
+                                        <label class="ds-crud-label ds-crud-label">Nombre Comercial/Técnico</label>
+                                        <input type="text" class="form-control ds-crud-filter" name="nombre"
+                                            [(ngModel)]="formElemento.nombre" required
+                                            placeholder="Ej: Contenedor Principal Plaza">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12 form-group">
+                                        <label class="ds-crud-label ds-crud-label">Sector / Urbanización</label>
+                                        <select class="form-control ds-crud-filter" name="id_sector"
+                                            [(ngModel)]="formElemento.id_sector" required>
+                                            <option [ngValue]="null" disabled>Seleccione un sector...</option>
+                                            <option *ngFor="let s of catalogos?.sectores" [value]="s.id_sector">{{
+                                                s.nombre_sector }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 form-group">
+                                        <label class="ds-crud-label ds-crud-label">Tipo de Elemento</label>
+                                        <select class="form-control ds-crud-filter" name="id_tipo_elemento"
+                                            [(ngModel)]="formElemento.id_tipo_elemento" required>
+                                            <option [ngValue]="null" disabled>Seleccione un tipo...</option>
+                                            <option *ngFor="let t of tiposElemento" [value]="t.id_tipo_elemento">{{
+                                                t.nombre }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 form-group">
+                                        <label class="ds-crud-label ds-crud-label">Estado Inicial</label>
+                                        <select class="form-control ds-crud-filter" name="estado_operativo"
+                                            [(ngModel)]="formElemento.estado_operativo" required>
+                                            <option value="operativo">Operativo</option>
+                                            <option value="mantenimiento">En Mantenimiento</option>
+                                            <option value="dañado">Dañado / Reparar</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="ds-crud-label ds-crud-label">Dirección / Referencia de
+                                        Ubicación</label>
+                                    <textarea class="form-control" name="direccion_referencia"
+                                        [(ngModel)]="formElemento.direccion_referencia" rows="2"
+                                        placeholder="Describa la ubicación exacta..."></textarea>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 form-group">
+                                        <label class="ds-crud-label ds-crud-label">Latitud</label>
+                                        <input type="number" step="any" class="form-control bg-white ds-crud-filter"
+                                            name="latitud" [(ngModel)]="formElemento.latitud" placeholder="-0.000000">
+                                    </div>
+                                    <div class="col-md-6 form-group">
+                                        <label class="ds-crud-label ds-crud-label">Longitud</label>
+                                        <input type="number" step="any" class="form-control bg-white ds-crud-filter"
+                                            name="longitud" [(ngModel)]="formElemento.longitud" placeholder="-0.000000">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="ds-crud-label ds-crud-label">Descripción Técnica / Notas</label>
+                                    <textarea class="form-control" name="descripcion"
+                                        [(ngModel)]="formElemento.descripcion" rows="3"
+                                        placeholder="Material, dimensiones, capacidad, etc..."></textarea>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Mapa Interactivo (CUP-STYLE) -->
+                        <div class="col-lg-5 position-relative border-left"
+                            style="min-height: 400px; background-color: #eee;">
+                            <div id="mapSelector" style="width: 100%; height: 100%; z-index: 1;"></div>
+                            <div class="position-absolute p-2 bg-white shadow-sm rounded border"
+                                style="bottom: 10px; right: 10px; z-index: 1000; max-width: 250px;">
+                                <small class="text-muted d-block mb-1 font-weight-bold"><i
+                                        class="fas fa-info-circle mr-1"></i> Ayuda de Geolocalización</small>
+                                <p class="mb-0 extra-small">Haga clic en el mapa para posicionar el elemento
+                                    automáticamente.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top-0 justify-content-between">
+                    <div class="text-muted small">
+                        <i class="fas fa-lock mr-2"></i> Datos almacenados con seguridad
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-link text-muted mr-3" data-dismiss="modal">Cancelar
+                            Operación</button>
+                        <button type="button" [class]="'btn px-5 rounded-pill shadow-sm ' + mc.saveBtnClass"
+                            (click)="guardarElemento()" [disabled]="!elForm.valid">
+                            <i [class]="mc.saveBtnIcon + ' mr-2'"></i> {{ mc.saveBtnLabel }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TIPO ELEMENTO -->
+    <div class="modal fade" id="modalTipoElemento" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold">
+                        <i class="fas fa-tag mr-2"></i> {{ editando ? 'Editar Tipo' : 'Nuevo Tipo de Elemento' }}
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <form #tForm="ngForm">
+                        <div class="form-group">
+                            <label class="ds-crud-label ds-crud-label">Nombre del Tipo</label>
+                            <input type="text" class="form-control shadow-none ds-crud-filter" name="nombre"
+                                [(ngModel)]="formTipo.nombre" required placeholder="Ej: Contenedor Sotuerrado">
+                        </div>
+                        <div class="form-group">
+                            <label class="ds-crud-label ds-crud-label">Categoría</label>
+                            <input type="text" class="form-control shadow-none ds-crud-filter" name="categoria"
+                                [(ngModel)]="formTipo.categoria" placeholder="Ej: Mobiliario Urbano">
+                        </div>
+                        <div class="form-group">
+                            <label class="ds-crud-label ds-crud-label">Descripción</label>
+                            <textarea class="form-control shadow-none" name="descripcion"
+                                [(ngModel)]="formTipo.descripcion" rows="3"></textarea>
+                        </div>
+
+                        <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-success">
+                            <input type="checkbox" class="custom-control-input ds-crud-filter" id="swMantenimiento"
+                                name="requiere_mantenimiento" [(ngModel)]="formTipo.requiere_mantenimiento">
+                            <label class="custom-control-label font-weight-normal ds-crud-label"
+                                for="swMantenimiento">Requiere Plan
+                                de Mantenimiento</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary btn-sm px-4" (click)="guardarTipo()"
+                        [disabled]="!tForm.valid">
+                        <i class="fas fa-save mr-1"></i> Confirmar Guardado
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>
+
+<!-- MODAL MAPA GLOBAL -->
+<div class="modal fade" id="modalMapaGlobal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg" [style.border-radius]="mc.borderRadius + 'px'">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title font-weight-bold">
+                    <i class="fas fa-map-marked-alt mr-2"></i> Inventario Geográfico de Elementos
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0" style="height: 75vh; position: relative;">
+                <div id="mapaGlobal" style="width: 100%; height: 100%; z-index: 1;"></div>
+
+                <!-- Leyenda Flotante -->
+                <div class="position-absolute bg-white p-3 shadow rounded border"
+                    style="top: 20px; right: 20px; z-index: 1000; width: 250px;">
+                    <h6 class="font-weight-bold text-xs mb-3 text-uppercase">Tipos de Elementos</h6>
+                    <div class="d-flex flex-column gap-2 overflow-auto" style="max-height: 200px;">
+                        <div *ngFor="let t of tiposElemento" class="d-flex align-items-center small mb-2">
+                            <span
+                                class="badge badge-primary rounded-circle mr-2 d-flex align-items-center justify-content-center"
+                                style="width: 24px; height: 24px;">
+                                <i [class]="getIconForTipo(t.nombre) + ' extra-small'"></i>
+                            </span>
+                            <span>{{ t.nombre }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <div class="text-muted small w-100">
+                    <i class="fas fa-info-circle mr-1"></i> Se están visualizando {{ elementos.length }} elementos
+                    registrados en el sistema.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

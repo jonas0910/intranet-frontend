@@ -1,0 +1,126 @@
+<!-- Contenido de conversaciones con tema AdminLTE profesional -->
+<div class="card card-primary card-outline shadow-sm">
+  <div class="card-header bg-gradient-primary">
+    <h3 class="card-title text-white">
+      <i class="fas fa-comments mr-2"></i>
+      Conversaciones Activas
+      <span class="badge badge-light ml-2" *ngIf="conversations.length > 0">{{ conversations.length }}</span>
+    </h3>
+    <div class="card-tools">
+      <button type="button" class="btn btn-light btn-sm mr-2" (click)="onNewConversation()">
+        <i class="fas fa-plus mr-1"></i> Nueva Conversación
+      </button>
+      <button type="button" class="btn btn-tool text-white" (click)="onRefresh()" [disabled]="loading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+      </button>
+      <button type="button" class="btn btn-tool text-white" data-card-widget="collapse">
+        <i class="fas fa-minus"></i>
+      </button>
+    </div>
+  </div>
+  
+  <div class="card-body p-0">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center p-4">
+      <div class="spinner-border text-success" role="status">
+        <span class="sr-only">Cargando...</span>
+      </div>
+      <p class="text-muted mt-2">Cargando conversaciones...</p>
+    </div>
+    
+    <!-- Empty State -->
+    <div *ngIf="!loading && conversations.length === 0" class="text-center p-5">
+      <i class="fas fa-comments fa-4x text-muted mb-3"></i>
+      <h5 class="text-muted">No hay conversaciones</h5>
+      <p class="text-muted">No se encontraron conversaciones activas</p>
+      <button class="btn btn-success btn-sm mt-2" (click)="onNewConversation()">
+        <i class="fas fa-plus mr-1"></i> Iniciar Nueva Conversación
+      </button>
+    </div>
+
+    <!-- Conversations List - Diseño AdminLTE profesional -->
+    <div *ngIf="!loading && conversations.length > 0" class="conversations-list">
+      <div *ngFor="let conversation of conversations; let i = index"
+           class="conversation-item border-bottom hover-shadow"
+           [class.bg-light]="(conversation.unread_count || 0) > 0"
+           (click)="onConversationSelect(conversation)">
+
+        <div class="conversation-avatar position-relative">
+          <img src="assets/img/user3-128x128.jpg"
+               class="img-circle elevation-2"
+               alt="User Avatar"
+               onerror="this.onerror=null; this.src='assets/img/user-default.png'">
+          <span class="position-absolute badge badge-success badge-pill online-indicator"
+                *ngIf="isOnline(conversation)"
+                style="top: 0; right: 0;">
+            <i class="fas fa-circle"></i>
+          </span>
+        </div>
+
+        <div class="conversation-content flex-grow-1">
+          <div class="conversation-header d-flex justify-content-between align-items-start mb-1">
+            <h6 class="conversation-title mb-0"
+                [class.font-weight-bold]="(conversation.unread_count || 0) > 0">
+              {{ getSenderName(conversation) || conversation.title || 'Conversación sin título' }}
+            </h6>
+            <div class="conversation-meta d-flex align-items-center">
+              <small class="conversation-time text-muted mr-2">
+                {{ getLastMessageAt(conversation) | date:'HH:mm' }}
+              </small>
+              <span class="badge badge-danger badge-pill"
+                    *ngIf="(conversation.unread_count || 0) > 0">
+                {{ conversation.unread_count }}
+              </span>
+            </div>
+          </div>
+
+          <div class="conversation-preview mb-1">
+            <p class="mb-0 text-truncate"
+               [class.font-weight-bold]="(conversation.unread_count || 0) > 0"
+               [class.text-dark]="(conversation.unread_count || 0) > 0"
+               [class.text-muted]="(conversation.unread_count || 0) === 0">
+              <i class="fas fa-comment-dots mr-1"></i>
+              {{ getLastMessage(conversation) || 'Sin mensajes' }}
+            </p>
+          </div>
+
+          <div class="conversation-footer d-flex justify-content-between align-items-center">
+            <div>
+              <small class="text-muted">
+                <i class="fas fa-envelope mr-1"></i>
+                {{ conversation.message_count || 0 }} mensajes
+              </small>
+            </div>
+            <small class="text-muted" *ngIf="getChannelName(conversation)">
+              <i class="fas fa-hashtag mr-1"></i>
+              {{ getChannelName(conversation) }}
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Card Footer -->
+  <div class="card-footer clearfix" *ngIf="!loading && conversations.length > 0">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="btn-group">
+          <button type="button" class="btn btn-default btn-sm">
+            <i class="fas fa-check-double"></i> Marcar todo como leído
+          </button>
+          <button type="button" class="btn btn-default btn-sm">
+            <i class="fas fa-archive"></i> Archivar
+          </button>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="float-right">
+          <span class="text-muted">
+            {{ conversations.length }} conversaciones activas
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

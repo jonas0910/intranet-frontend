@@ -1,0 +1,30 @@
+<div class="modal-mensaje-overlay" *ngIf="modalActual" (click)="onCerrar()">
+  <div class="modal-mensaje-content" (click)="$event.stopPropagation()">
+    <div class="modal-mensaje-header">
+      <h5 class="modal-mensaje-title">
+        <i class="fas fa-bullhorn mr-2"></i>{{ modalActual.titulo }}
+      </h5>
+      <button type="button" class="modal-mensaje-close" (click)="onCerrar()" aria-label="Cerrar">
+        <span>&times;</span>
+      </button>
+    </div>
+    <div class="modal-mensaje-body">
+      <div *ngIf="modalActual.imagen" class="mb-3 text-center">
+        <img [src]="modalActual.imagen" alt="" class="img-fluid rounded" style="max-height: 200px;" />
+      </div>
+      <div class="modal-mensaje-texto">{{ modalActual.contenido || '' }}</div>
+    </div>
+    <div class="modal-mensaje-footer">
+      <span class="badge badge-secondary mr-2" *ngIf="modales.length > 1">
+        {{ indiceActual + 1 }} / {{ modales.length }}
+      </span>
+      <button type="button" class="btn btn-secondary mr-2" (click)="onCerrar()">Cerrar</button>
+      <button type="button" class="btn btn-primary" (click)="onSiguiente()" *ngIf="indiceActual < modales.length - 1">
+        Siguiente <i class="fas fa-arrow-right ml-1"></i>
+      </button>
+      <button type="button" class="btn btn-primary" (click)="onCerrar()" *ngIf="indiceActual >= modales.length - 1 && modales.length > 0">
+        Entendido
+      </button>
+    </div>
+  </div>
+</div>

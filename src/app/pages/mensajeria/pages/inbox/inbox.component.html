@@ -1,0 +1,461 @@
+<!-- User Selector for Inbox -->
+<app-inbox-user-selector></app-inbox-user-selector>
+
+<!-- Contenido del inbox con tema AdminLTE -->
+<div class="card card-primary card-outline">
+  <div class="card-header">
+    <h3 class="card-title">
+      <i class="fas fa-inbox mr-2"></i>
+      {{ getFolderTitle() }}
+      <span class="badge badge-primary ml-2" *ngIf="messages.length > 0">{{ messages.length }}</span>
+    </h3>
+    <div class="card-tools">
+      <button type="button" class="btn btn-primary btn-sm mr-2" (click)="composeNewMessage()">
+        <i class="fas fa-plus-circle mr-1"></i>
+        Nuevo Mensaje
+      </button>
+      <button type="button" class="btn btn-tool" (click)="onRefresh()" [disabled]="loading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+      </button>
+      <button type="button" class="btn btn-tool" data-card-widget="collapse">
+        <i class="fas fa-minus"></i>
+      </button>
+    </div>
+  </div>
+  
+  <div class="card-body p-0">
+    <!-- Typing Indicator -->
+    <div *ngIf="getTypingUsersText()" class="alert alert-info m-3 mb-0">
+      <i class="fas fa-keyboard mr-2"></i>
+      <em>{{ getTypingUsersText() }}</em>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center p-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Cargando...</span>
+      </div>
+      <p class="text-muted mt-2">Cargando mensajes...</p>
+    </div>
+    
+    <!-- Empty State -->
+    <div *ngIf="!loading && messages.length === 0" class="text-center p-5">
+      <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+      <h5 class="text-muted">No hay mensajes</h5>
+      <p class="text-muted">No se encontraron mensajes en {{ getFolderTitle().toLowerCase() }}</p>
+    </div>
+
+    <!-- Messages List -->
+    <div *ngIf="!loading && messages.length > 0" class="table-responsive">
+      <table class="table table-hover">
+        <thead class="thead-light">
+          <tr>
+            <th width="50">
+              <div class="form-check">
+                <input class="form-check-input"
+                       type="checkbox"
+                       id="selectAll"
+                       [(ngModel)]="selectAll"
+                       (change)="toggleSelectAll()">
+                <label class="form-check-label" for="selectAll"></label>
+              </div>
+            </th>
+            <th width="40">
+              <i class="fas fa-star text-warning" title="Importante"></i>
+            </th>
+            <th width="40">
+              <i class="fas fa-paperclip text-info" title="Adjuntos"></i>
+            </th>
+                <th>Remitente</th>
+                <th>Asunto</th>
+                <th width="120">Fecha</th>
+                <th width="100">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let message of messages; let i = index" 
+              class="message-row"
+              [class.table-primary]="!message.is_read"
+              [class.font-weight-bold]="!message.is_read"
+              (click)="showMessageDetails(message)"
+              style="cursor: pointer;">
+            
+            <!-- Checkbox -->
+            <td (click)="$event.stopPropagation()">
+              <div class="form-check">
+                <input class="form-check-input"
+                       type="checkbox"
+                       [id]="'message-' + message.id"
+                       [checked]="isMessageSelected(message.id)"
+                       (change)="toggleMessageSelection(message.id, $event)">
+                <label class="form-check-label" [for]="'message-' + message.id"></label>
+              </div>
+            </td>
+            
+            <!-- Important Star -->
+            <td>
+              <i class="fas fa-star text-warning" 
+                 *ngIf="message.is_urgent || message.priority === 'urgent'"
+                 title="Mensaje urgente"></i>
+              <i class="far fa-star text-muted" 
+                 *ngIf="!message.is_urgent && message.priority !== 'urgent'"
+                 title="Marcar como importante"></i>
+            </td>
+            
+            <!-- Attachments -->
+            <td>
+              <i class="fas fa-paperclip text-info" 
+                 *ngIf="message.has_attachments || message.attachments_count > 0"
+                 title="Tiene adjuntos"></i>
+              <span class="badge badge-info badge-sm" 
+                    *ngIf="message.attachments_count > 1">{{ message.attachments_count }}</span>
+            </td>
+            
+            <!-- Sender -->
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="user-avatar mr-2">
+                  <img src="assets/img/user2-160x160.jpg"
+                       class="img-circle img-size-32"
+                       alt="User Avatar"
+                       onerror="this.onerror=null; this.src='assets/img/user-default.png'">
+                </div>
+                <div>
+                  <div class="font-weight-bold">{{ message.sender.name || 'Desconocido' }}</div>
+                  <small class="text-muted">{{ message.sender.email }}</small>
+                </div>
+              </div>
+            </td>
+            
+            <!-- Subject and Preview -->
+            <td>
+              <div class="message-preview">
+                <div class="font-weight-bold" [class.text-primary]="!message.is_read">
+                  {{ message.subject || 'Sin asunto' }}
+                </div>
+                <div class="text-muted text-sm mt-1" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  {{ message.content || 'Sin contenido' }}
+                </div>
+              </div>
+            </td>
+            
+            <!-- Date -->
+            <td>
+              <div class="text-sm">
+                <div>{{ message.created_at | date:'dd/MM' }}</div>
+                <div class="text-muted">{{ message.created_at | date:'HH:mm' }}</div>
+              </div>
+            </td>
+            
+            <!-- Actions -->
+            <td>
+              <div class="btn-group btn-group-sm">
+                <button type="button" 
+                        class="btn btn-primary btn-sm" 
+                        (click)="onReply(message)"
+                        title="Responder">
+                  <i class="fas fa-reply"></i>
+                </button>
+                <button type="button" 
+                        class="btn btn-info btn-sm" 
+                        (click)="showMessageDetails(message)"
+                        title="Ver detalles">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  
+  <!-- Card Footer -->
+  <div class="card-footer clearfix" *ngIf="!loading && messages.length > 0">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="btn-group">
+          <button type="button"
+                  class="btn btn-default btn-sm"
+                  (click)="markSelectedAsRead()"
+                  [disabled]="selectedMessageIds.size === 0"
+                  title="Marcar seleccionados como leídos">
+            <i class="fas fa-check"></i> Marcar como leído
+            <span class="badge badge-primary ml-1" *ngIf="selectedMessageIds.size > 0">
+              {{ selectedMessageIds.size }}
+            </span>
+          </button>
+          <button type="button"
+                  class="btn btn-default btn-sm"
+                  (click)="archiveSelected()"
+                  [disabled]="selectedMessageIds.size === 0"
+                  title="Archivar seleccionados">
+            <i class="fas fa-archive"></i> Archivar
+            <span class="badge badge-primary ml-1" *ngIf="selectedMessageIds.size > 0">
+              {{ selectedMessageIds.size }}
+            </span>
+          </button>
+          <button type="button"
+                  class="btn btn-default btn-sm"
+                  (click)="deleteSelected()"
+                  [disabled]="selectedMessageIds.size === 0"
+                  title="Eliminar seleccionados">
+            <i class="fas fa-trash"></i> Eliminar
+            <span class="badge badge-danger ml-1" *ngIf="selectedMessageIds.size > 0">
+              {{ selectedMessageIds.size }}
+            </span>
+          </button>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="float-right">
+          <span class="text-muted">
+            Mostrando {{ messages.length }} mensaje{{ messages.length !== 1 ? 's' : '' }}
+            <span *ngIf="selectedMessageIds.size > 0" class="ml-2 badge badge-info">
+              {{ selectedMessageIds.size }} seleccionado{{ selectedMessageIds.size !== 1 ? 's' : '' }}
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Message Details Modal -->
+<div class="modal fade" 
+     id="messageDetailsModal" 
+     tabindex="-1" 
+     role="dialog" 
+     aria-labelledby="messageDetailsModalLabel" 
+     [attr.aria-hidden]="!showMessageDetailsModal"
+     [class.show]="showMessageDetailsModal"
+     [style.display]="showMessageDetailsModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="messageDetailsModalLabel">
+          <i class="fas fa-envelope-open mr-2"></i>
+          Detalles del Mensaje
+        </h5>
+        <button type="button" 
+                class="close text-white" 
+                (click)="closeMessageDetails()"
+                aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      
+      <div class="modal-body" *ngIf="messageDetails">
+        <!-- Message Header -->
+        <div class="row mb-3">
+          <div class="col-md-8">
+            <h6 class="mb-1">
+              <i class="fas fa-user mr-1"></i>
+              <strong>{{ messageDetails.sender.name || 'Desconocido' }}</strong>
+            </h6>
+            <small class="text-muted">
+              <i class="fas fa-envelope mr-1"></i>
+              {{ messageDetails.sender.email }}
+            </small>
+          </div>
+          <div class="col-md-4 text-right">
+            <div class="text-sm">
+              <div>
+                <i class="fas fa-calendar mr-1"></i>
+                {{ messageDetails.created_at | date:'dd/MM/yyyy' }}
+              </div>
+              <div class="text-muted">
+                <i class="fas fa-clock mr-1"></i>
+                {{ messageDetails.created_at | date:'HH:mm' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Subject -->
+        <div class="mb-3">
+          <h5 class="mb-1">
+            <i class="fas fa-tag mr-2"></i>
+            {{ messageDetails.subject || 'Sin asunto' }}
+          </h5>
+          <div class="d-flex align-items-center">
+            <span class="badge badge-primary mr-2" 
+                  *ngIf="messageDetails.priority === 'urgent'">
+              <i class="fas fa-exclamation-triangle mr-1"></i>
+              Urgente
+            </span>
+            <span class="badge badge-warning mr-2" 
+                  *ngIf="messageDetails.priority === 'high'">
+              <i class="fas fa-exclamation mr-1"></i>
+              Alta Prioridad
+            </span>
+            <span class="badge badge-info mr-2" 
+                  *ngIf="messageDetails.message_type === 'broadcast'">
+              <i class="fas fa-bullhorn mr-1"></i>
+              Difusión
+            </span>
+            <span class="badge badge-success" 
+                  *ngIf="messageDetails.is_read">
+              <i class="fas fa-check mr-1"></i>
+              Leído
+            </span>
+            <span class="badge badge-secondary" 
+                  *ngIf="!messageDetails.is_read">
+              <i class="fas fa-envelope mr-1"></i>
+              No leído
+            </span>
+          </div>
+        </div>
+
+        <!-- Message Content -->
+        <div class="mb-3">
+          <h6>
+            <i class="fas fa-comment mr-2"></i>
+            Contenido del Mensaje:
+          </h6>
+          <div class="border rounded p-3 bg-light">
+            <div [innerHTML]="messageDetails.content || 'Sin contenido'"></div>
+          </div>
+        </div>
+
+        <!-- Attachments -->
+        <div class="mb-3" *ngIf="messageDetails.has_attachments || messageDetails.attachments_count > 0">
+          <h6>
+            <i class="fas fa-paperclip mr-2"></i>
+            Adjuntos ({{ messageDetails.attachments_count || 0 }}):
+          </h6>
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle mr-2"></i>
+            Este mensaje tiene adjuntos. La funcionalidad de descarga estará disponible próximamente.
+          </div>
+        </div>
+
+        <!-- Message Metadata -->
+        <div class="row">
+          <div class="col-md-6">
+            <small class="text-muted">
+              <i class="fas fa-folder mr-1"></i>
+              Carpeta: {{ getFolderTitle() }}
+            </small>
+          </div>
+          <div class="col-md-6 text-right">
+            <small class="text-muted">
+              <i class="fas fa-hashtag mr-1"></i>
+              ID: {{ messageDetails.id }}
+            </small>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" 
+                class="btn btn-primary"
+                (click)="onReply(messageDetails!)"
+                *ngIf="messageDetails">
+          <i class="fas fa-reply mr-1"></i>
+          Responder
+        </button>
+        <button type="button" 
+                class="btn btn-secondary"
+                (click)="closeMessageDetails()">
+          <i class="fas fa-times mr-1"></i>
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reply Message Modal -->
+<div class="modal fade" 
+     id="replyMessageModal" 
+     tabindex="-1" 
+     role="dialog" 
+     aria-labelledby="replyMessageModalLabel" 
+     [attr.aria-hidden]="!showReplyForm"
+     [class.show]="showReplyForm"
+     [style.display]="showReplyForm ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="replyMessageModalLabel">
+          <i class="fas fa-reply mr-2"></i>
+          Responder Mensaje
+        </h5>
+        <button type="button" 
+                class="close text-white" 
+                (click)="onCancelReply()"
+                aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      
+      <div class="modal-body" *ngIf="selectedMessage">
+        <!-- Original Message Preview -->
+        <div class="alert alert-light border mb-3">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <strong>
+                <i class="fas fa-user mr-1"></i>
+                {{ selectedMessage.sender.name }}
+              </strong>
+              <small class="text-muted ml-2">
+                <i class="fas fa-clock mr-1"></i>
+                {{ selectedMessage.created_at | date:'dd/MM/yyyy HH:mm' }}
+              </small>
+            </div>
+            <span class="badge badge-secondary">{{ selectedMessage.subject || 'Sin asunto' }}</span>
+          </div>
+          <div class="mt-2">
+            <em class="text-muted">"{{ selectedMessage.content || 'Sin contenido' }}"</em>
+          </div>
+        </div>
+        
+        <!-- Reply Form -->
+        <form (ngSubmit)="onSendReply()">
+          <div class="form-group">
+            <label for="replyContent">
+              <i class="fas fa-comment mr-1"></i>
+              Tu respuesta:
+            </label>
+            <textarea 
+              id="replyContent"
+              class="form-control" 
+              rows="6" 
+              [(ngModel)]="replyContent"
+              name="replyContent"
+              placeholder="Escribe tu respuesta aquí..."
+              [disabled]="replyLoading"
+              required>
+            </textarea>
+          </div>
+        </form>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" 
+                class="btn btn-success"
+                (click)="onSendReply()"
+                [disabled]="!replyContent.trim() || replyLoading">
+          <i class="fas fa-paper-plane mr-1" *ngIf="!replyLoading"></i>
+          <i class="fas fa-spinner fa-spin mr-1" *ngIf="replyLoading"></i>
+          {{ replyLoading ? 'Enviando...' : 'Enviar Respuesta' }}
+        </button>
+        <button type="button" 
+                class="btn btn-secondary"
+                (click)="onCancelReply()"
+                [disabled]="replyLoading">
+          <i class="fas fa-times mr-1"></i>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" 
+     [class.show]="showMessageDetailsModal || showReplyForm"
+     [style.display]="(showMessageDetailsModal || showReplyForm) ? 'block' : 'none'"
+     (click)="closeMessageDetails(); onCancelReply()"></div>

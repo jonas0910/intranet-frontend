@@ -1,0 +1,131 @@
+<app-system-layout
+  title="Documentos PDF"
+  subtitle="Gestionar RIT, Directivas y otros documentos institucionales"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comunicados', url: '/comunicados'}, {label: 'Admin Documentos'}]"
+  subsystem="comunicados">
+
+  <div class="mb-3">
+    <button type="button" class="btn btn-primary" (click)="openCreate()">
+      <i class="fas fa-plus mr-1"></i>Subir documento PDF
+    </button>
+  </div>
+
+  <!-- Modal: formulario crear/editar documento -->
+  <ng-template #documentFormModal let-modal>
+    <div class="modal-header bg-primary text-white">
+      <h5 class="modal-title">
+        <i class="fas fa-file-pdf mr-2"></i>{{ editDoc?.id ? 'Editar' : 'Nuevo' }} documento
+      </h5>
+      <button type="button" class="close text-white" aria-label="Cerrar" (click)="cancelForm()">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body" *ngIf="editDoc">
+      <div class="row">
+        <div class="col-md-6">
+          <label>Título <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="editDoc.titulo" placeholder="Título del documento" />
+        </div>
+        <div class="col-md-3">
+          <label>Categoría</label>
+          <select class="form-control" [(ngModel)]="editDoc.categoria_id">
+            <option [ngValue]="undefined">-- Seleccione --</option>
+            <option *ngFor="let c of categorias" [ngValue]="c.id">{{ c.nombre }}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label>Tipo</label>
+          <select class="form-control" [(ngModel)]="editDoc.tipo">
+            <option value="general">General</option>
+            <option value="rit">RIT</option>
+            <option value="directiva">Directiva</option>
+            <option value="manual">Manual</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <label>Descripción</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="editDoc.descripcion" placeholder="Descripción opcional"></textarea>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <label>Archivo PDF {{ editDoc.id ? '(dejar vacío para mantener)' : '' }} <span class="text-danger" *ngIf="!editDoc.id">*</span></label>
+          <input
+            #fileInput
+            type="file"
+            class="form-control"
+            accept=".pdf"
+            (change)="onFileSelect($event)"
+          />
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+          <div class="form-group mb-0">
+            <label class="d-flex align-items-center">
+              <input type="checkbox" [(ngModel)]="editDoc.activo" class="mr-2" />
+              Activo
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="cancelForm()">
+        <i class="fas fa-times mr-1"></i>Cancelar
+      </button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="saving">
+        <span *ngIf="saving" class="spinner-border spinner-border-sm mr-1"></span>
+        <i *ngIf="!saving" class="fas fa-save mr-1"></i>Guardar
+      </button>
+    </div>
+  </ng-template>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+    <p class="mt-2 text-muted">Cargando documentos...</p>
+  </div>
+
+  <div *ngIf="!loading && documentos.length === 0" class="alert alert-info">
+    <i class="fas fa-info-circle mr-2"></i>No hay documentos registrados. Use el botón «Subir documento PDF» para agregar uno.
+  </div>
+
+  <div *ngIf="!loading && documentos.length > 0" class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+    <div class="card-header d-flex justify-content-between align-items-center" [style.background]="cv.tableHeaderBg" [style.color]="cv.tableHeaderColor" [style.border-radius]="cv.cardBorderRadius + 'px ' + cv.cardBorderRadius + 'px 0 0'">
+      <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+        <i class="fas fa-file-pdf mr-1"></i> Listado de documentos
+      </h3>
+      <button type="button" class="btn btn-sm btn-primary" (click)="openCreate()">
+        <i class="fas fa-plus mr-1"></i>Subir documento PDF
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize" class="table table-bordered table-hover mb-0 w-100">
+          <thead [style.background]="cv.tableHeaderBg" [style.color]="cv.tableHeaderColor">
+            <tr>
+              <th [style.font-size]="cv.headerFontSize">Título</th>
+              <th [style.font-size]="cv.headerFontSize">Categoría</th>
+              <th [style.font-size]="cv.headerFontSize">Tipo</th>
+              <th [style.font-size]="cv.headerFontSize">Activo</th>
+              <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of documentos">
+              <td>{{ d.titulo }}</td>
+              <td>{{ d.categoria?.nombre || '-' }}</td>
+              <td><span class="badge badge-info">{{ getTipoLabel(d.tipo) }}</span></td>
+              <td>
+                <span class="badge" [class.badge-success]="d.activo" [class.badge-secondary]="!d.activo">{{ d.activo ? 'Sí' : 'No' }}</span>
+              </td>
+              <td class="text-center">
+                <app-crud-actions [showView]="false" [showEdit]="true" [showDelete]="true" subsystem="comunicados" (onEdit)="openEdit(d)" (onDelete)="confirmDelete(d)"></app-crud-actions>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</app-system-layout>

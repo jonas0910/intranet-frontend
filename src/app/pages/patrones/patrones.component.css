@@ -1,0 +1,201 @@
+/* Estilos para el componente de patrones de diseño */
+
+/* Tarjetas de patrones */
+.pattern-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+}
+
+.pattern-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para botones */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Estilos para badges */
+.badge {
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.badge.bg-light {
+  border: 1px solid #e9ecef;
+}
+
+/* Estilos para cards */
+.card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 1rem 1.25rem;
+}
+
+.card-body {
+  padding: 1rem 1.25rem;
+}
+
+.card-footer {
+  padding: 0.75rem 1.25rem;
+}
+
+/* Estilos para formularios */
+.form-select, .form-control {
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  transition: border-color 0.2s ease;
+}
+
+.form-select:focus, .form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Estilos para alertas */
+.alert {
+  border-radius: 12px;
+}
+
+.alert.alert-light {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+/* Estilos para spinners */
+.spinner-border {
+  border-width: 2px;
+}
+
+/* Estilos para menús */
+.menu-list .menu-item {
+  transition: background-color 0.2s ease;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.menu-list .menu-item:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+.menu-list .menu-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Estilos para textos */
+.fw-light {
+  font-weight: 300 !important;
+}
+
+.fw-medium {
+  font-weight: 500 !important;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+.bg-light {
+  background-color: #f8f9fa !important;
+}
+
+/* Sombras */
+.shadow-sm {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Container */
+.container-fluid {
+  padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 1rem;
+  }
+}
+
+/* Iconos */
+.fas {
+  width: 16px;
+  text-align: center;
+}
+
+/* Filtros */
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+/* Estadísticas */
+.h4, .h6 {
+  font-weight: 300;
+}
+
+/* Responsive para tarjetas */
+@media (max-width: 576px) {
+  .pattern-card .card-body {
+    padding: 0.75rem 1rem;
+  }
+  
+  .pattern-card .card-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .pattern-card .card-footer {
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pattern-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Estados de hover para elementos interactivos */
+.btn-outline-primary:hover {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.btn-outline-success:hover {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+/* Estilos para filtros activos */
+.form-select:not([value=""]):not([value="Todas las categorías"]):not([value="Todas las prioridades"]) {
+  background-color: #e3f2fd;
+  border-color: #2196f3;
+}
+
+/* Estilos para búsqueda activa */
+.form-control:not([placeholder="Buscar patrones..."]) {
+  background-color: #fff3cd;
+  border-color: #ffc107;
+}

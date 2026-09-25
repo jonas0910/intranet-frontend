@@ -1,0 +1,25 @@
+.modal {
+  &.show { opacity: 1; pointer-events: auto; }
+  .modal-dialog { margin: 1.75rem auto; }
+  .modal-content { border-radius: 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+  .modal-body { max-height: calc(100vh - 200px); overflow-y: auto; }
+}
+
+.modal-backdrop {
+  position: fixed; top: 0; left: 0; z-index: 1040;
+  width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5);
+  &.show { opacity: 1; }
+}
+
+.btn-group-sm .btn { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+.badge-lg { font-size: 1rem; padding: 0.5rem 0.75rem; }
+
+.info-box {
+  min-height: 90px;
+  
+  .info-box-number {
+    font-size: 2rem;
+    font-weight: bold;
+  }
+}
+

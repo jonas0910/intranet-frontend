@@ -1,0 +1,309 @@
+<!-- Content Header -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0"><i class="fas fa-file-alt mr-2"></i>Trámite Documentario</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/dashboard">Inicio</a></li>
+          <li class="breadcrumb-item active">Trámite Documentario</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+
+    <!-- Selector de Área -->
+    <div class="row mb-3" *ngIf="areas.length > 1">
+      <div class="col-md-4">
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text"><i class="fas fa-building"></i></span>
+          </div>
+          <select class="form-control" [(ngModel)]="areaSeleccionada" (change)="cambiarArea()">
+            <option *ngFor="let area of areas" [ngValue]="area.id">{{ area.nombre }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-5">
+      <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+      <p class="mt-3">Cargando dashboard...</p>
+    </div>
+
+    <ng-container *ngIf="!loading">
+      <!-- Stats Boxes -->
+      <div class="row">
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>{{ resumen.total_expedientes || 0 }}</h3>
+              <p>Total Expedientes</p>
+            </div>
+            <div class="icon"><i class="fas fa-file-alt"></i></div>
+            <a routerLink="/tramite-documentario/buscar" class="small-box-footer">Ver todos <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3>{{ resumen.pendientes_recibir || 0 }}</h3>
+              <p>Pendientes de Recibir</p>
+            </div>
+            <div class="icon"><i class="fas fa-inbox"></i></div>
+            <a routerLink="/tramite-documentario/documentos-recibidos" class="small-box-footer">Bandeja entrada <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>{{ resumen.en_proceso_mi_area || 0 }}</h3>
+              <p>En Proceso (Mi Área)</p>
+            </div>
+            <div class="icon"><i class="fas fa-sync"></i></div>
+            <a routerLink="/tramite-documentario/documentos-recibidos" class="small-box-footer">Ver recibidos <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-danger">
+            <div class="inner">
+              <h3>{{ resumen.vencidos_global || 0 }}</h3>
+              <p>Vencidos</p>
+            </div>
+            <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <a routerLink="/tramite-documentario/buscar" class="small-box-footer">Ver vencidos <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Second row stats -->
+      <div class="row">
+        <div class="col-lg-4 col-6">
+          <div class="info-box">
+            <span class="info-box-icon bg-primary"><i class="fas fa-share"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Derivados sin recibir</span>
+              <span class="info-box-number">{{ resumen.derivados_sin_recibir || 0 }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4 col-6">
+          <div class="info-box">
+            <span class="info-box-icon bg-secondary"><i class="fas fa-archive"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Archivados</span>
+              <span class="info-box-number">{{ resumen.archivados || 0 }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4 col-6">
+          <div class="info-box">
+            <span class="info-box-icon bg-teal"><i class="fas fa-copy"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Copias pendientes</span>
+              <span class="info-box-number">{{ resumen.copias_pendientes_mi_area || 0 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Pendientes de Recepción -->
+        <div class="col-lg-8">
+          <div class="card card-warning card-outline">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fas fa-inbox mr-2"></i>Pendientes de Recepción</h3>
+              <div class="card-tools">
+                <span class="badge badge-warning">{{ tramitesPendientes.length }}</span>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-striped table-sm">
+                <thead>
+                  <tr>
+                    <th>Expediente</th>
+                    <th>Asunto</th>
+                    <th>Estado</th>
+                    <th>Prioridad</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let t of tramitesPendientes">
+                    <td><a [routerLink]="['/tramite-documentario/detalle', t.id]"><strong>{{ t.numero_expediente }}</strong></a></td>
+                    <td class="text-truncate" style="max-width:250px">{{ t.asunto }}</td>
+                    <td><span class="badge" [ngClass]="getEstadoClass(t.estado)">{{ getEstadoLabel(t.estado) }}</span></td>
+                    <td><span class="badge" [ngClass]="getPrioridadClass(t.prioridad)">{{ t.prioridad }}</span></td>
+                    <td><small>{{ t.fecha_ingreso }}</small></td>
+                    <td><a [routerLink]="['/tramite-documentario/detalle', t.id]" class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div *ngIf="tramitesPendientes.length === 0" class="text-center p-4 text-muted">
+                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                <p>No hay documentos pendientes de recepción</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Árbol de Áreas -->
+        <div class="col-lg-4">
+          <div class="card card-primary card-outline">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fas fa-sitemap mr-2"></i>Áreas</h3>
+            </div>
+            <div class="card-body p-0" style="max-height:400px;overflow-y:auto">
+              <ul class="nav nav-pills nav-sidebar flex-column" *ngIf="areasArbol.length > 0">
+                <ng-container *ngFor="let area of areasArbol">
+                  <ng-container *ngTemplateOutlet="areaNode; context: { $implicit: area, level: 0 }"></ng-container>
+                </ng-container>
+              </ul>
+              <div *ngIf="areasArbol.length === 0" class="text-center p-3 text-muted">Sin áreas configuradas</div>
+            </div>
+          </div>
+
+          <!-- Trámites Urgentes -->
+          <div class="card card-danger card-outline">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fas fa-exclamation-circle mr-2"></i>Urgentes</h3>
+            </div>
+            <div class="card-body p-0" style="max-height:300px;overflow-y:auto">
+              <ul class="products-list product-list-in-card pl-2 pr-2">
+                <li class="item" *ngFor="let t of tramitesUrgentes">
+                  <div class="product-info">
+                    <a [routerLink]="['/tramite-documentario/detalle', t.id]" class="product-title">
+                      {{ t.numero_expediente }}
+                      <span class="badge badge-danger float-right">URGENTE</span>
+                    </a>
+                    <span class="product-description text-truncate">{{ t.asunto }}</span>
+                  </div>
+                </li>
+              </ul>
+              <div *ngIf="tramitesUrgentes.length === 0" class="text-center p-3 text-muted">
+                <i class="fas fa-check-circle text-success"></i> Sin trámites urgentes
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recuperables + Recientes -->
+      <div class="row">
+        <div class="col-lg-4" *ngIf="tramitesRecuperables.length > 0">
+          <div class="card card-info card-outline">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fas fa-undo-alt mr-2"></i>Recuperables</h3>
+            </div>
+            <div class="card-body p-0">
+              <ul class="products-list product-list-in-card pl-2 pr-2">
+                <li class="item" *ngFor="let t of tramitesRecuperables">
+                  <div class="product-info">
+                    <a [routerLink]="['/tramite-documentario/detalle', t.id]" class="product-title">
+                      {{ t.numero_expediente }}
+                      <span class="badge badge-info float-right">Recuperable</span>
+                    </a>
+                    <span class="product-description text-truncate">{{ t.asunto }}</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div [ngClass]="tramitesRecuperables.length > 0 ? 'col-lg-8' : 'col-lg-12'">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fas fa-list mr-2"></i>Trámites Recientes del Área</h3>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-striped table-sm">
+                <thead>
+                  <tr>
+                    <th>Expediente</th>
+                    <th>Asunto</th>
+                    <th>Área Actual</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let t of tramitesRecientes">
+                    <td><a [routerLink]="['/tramite-documentario/detalle', t.id]"><strong>{{ t.numero_expediente }}</strong></a></td>
+                    <td class="text-truncate" style="max-width:250px">{{ t.asunto }}</td>
+                    <td>{{ t.area_actual_nombre || '—' }}</td>
+                    <td><span class="badge" [ngClass]="getEstadoClass(t.estado)">{{ getEstadoLabel(t.estado) }}</span></td>
+                    <td><small>{{ t.fecha_ingreso }}</small></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div *ngIf="tramitesRecientes.length === 0" class="text-center p-4 text-muted">Sin trámites recientes</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accesos Rápidos -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-bolt mr-2"></i>Accesos Rápidos</h3></div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3 col-6 mb-3">
+                  <button class="btn btn-primary btn-block btn-lg" routerLink="/tramite-documentario/crear">
+                    <i class="fas fa-plus-circle fa-2x mb-2"></i><br>Crear Documento
+                  </button>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                  <button class="btn btn-warning btn-block btn-lg" routerLink="/tramite-documentario/documentos-recibidos">
+                    <i class="fas fa-inbox fa-2x mb-2"></i><br>Bandeja de Entrada
+                  </button>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                  <button class="btn btn-success btn-block btn-lg" routerLink="/tramite-documentario/documentos-creados">
+                    <i class="fas fa-file-export fa-2x mb-2"></i><br>Documentos Creados
+                  </button>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                  <button class="btn btn-info btn-block btn-lg" routerLink="/tramite-documentario/buscar">
+                    <i class="fas fa-search fa-2x mb-2"></i><br>Buscar Documento
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+</div>
+
+<!-- Template for area tree nodes -->
+<ng-template #areaNode let-area let-level="level">
+  <li class="nav-item">
+    <a class="nav-link" [class.active]="area.id === areaSeleccionada" [style.padding-left.px]="12 + level * 16" style="cursor:pointer" (click)="areaSeleccionada = area.id; cambiarArea()">
+      <i class="fas fa-building nav-icon" *ngIf="level === 0"></i>
+      <i class="fas fa-angle-right nav-icon" *ngIf="level > 0"></i>
+      <p>
+        {{ area.nombre }}
+        <span class="badge badge-warning right" *ngIf="area.pendientes > 0">{{ area.pendientes }}</span>
+        <span class="badge badge-info right mr-1" *ngIf="area.en_proceso > 0">{{ area.en_proceso }}</span>
+      </p>
+    </a>
+  </li>
+  <ng-container *ngIf="area.children && area.children.length > 0">
+    <ng-container *ngFor="let child of area.children">
+      <ng-container *ngTemplateOutlet="areaNode; context: { $implicit: child, level: level + 1 }"></ng-container>
+    </ng-container>
+  </ng-container>
+</ng-template>

@@ -1,0 +1,246 @@
+<!-- Compose Form -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">
+      <i class="fas fa-edit"></i>
+      {{ mode === 'reply' ? 'Responder Mensaje' : mode === 'forward' ? 'Reenviar Mensaje' : 'Redactar Mensaje' }}
+    </h3>
+    <div class="card-tools">
+      <button type="button" 
+              class="btn btn-tool" 
+              (click)="onCancel()"
+              title="Cerrar">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <form [formGroup]="composeForm" (ngSubmit)="onSubmit()">
+    <div class="card-body">
+      
+      <!-- Recipients -->
+      <div class="form-group">
+        <label for="recipients">Para:</label>
+        <div class="recipient-container">
+          <!-- Selected Recipients -->
+          <div class="selected-recipients mb-2" *ngIf="recipients.length > 0">
+            <span class="badge badge-pill badge-primary me-1 mb-1" 
+                  *ngFor="let recipient of recipients; let i = index">
+              <i [class]="getRecipientIcon(recipient)"></i>
+              {{ getRecipientDisplayName(recipient) }}
+              <button type="button" 
+                      class="btn-close btn-close-white ms-1" 
+                      (click)="removeRecipient(i)"
+                      aria-label="Eliminar">
+                <i class="fas fa-times"></i>
+              </button>
+            </span>
+          </div>
+
+          <!-- Recipient Search Input -->
+          <div class="position-relative">
+            <input type="text" 
+                   class="form-control"
+                   #recipientInput
+                   formControlName="recipientSearch"
+                   placeholder="Buscar usuarios o departamentos..."
+                   (focus)="onRecipientSearchFocus()"
+                   (blur)="onRecipientSearchBlur()"
+                   autocomplete="off">
+
+            <!-- Search Suggestions -->
+            <div class="recipient-suggestions" 
+                 *ngIf="showRecipientSuggestions && recipientSuggestions.length > 0">
+              <div class="list-group">
+                <button type="button" 
+                        class="list-group-item list-group-item-action"
+                        *ngFor="let suggestion of recipientSuggestions"
+                        (click)="addRecipient(suggestion)">
+                  <div class="d-flex align-items-center">
+                    <i [class]="getRecipientIcon(suggestion)" class="me-2"></i>
+                    <div>
+                      <div class="fw-bold">{{ suggestion.name }}</div>
+                      <small class="text-muted" *ngIf="suggestion.email">
+                        {{ suggestion.email }}
+                      </small>
+                      <small class="text-muted" *ngIf="suggestion.department">
+                        {{ suggestion.department }}
+                      </small>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recipient Count -->
+          <small class="text-muted mt-1" *ngIf="recipientCount > 0">
+            {{ recipientCount }} destinatario(s) seleccionado(s)
+          </small>
+        </div>
+        
+        <!-- Validation Error -->
+        <div class="invalid-feedback d-block" 
+             *ngIf="composeForm.get('recipients')?.invalid && composeForm.get('recipients')?.touched">
+          Debe seleccionar al menos un destinatario
+        </div>
+      </div>
+
+      <!-- Subject -->
+      <div class="form-group">
+        <label for="subject">Asunto:</label>
+        <input type="text" 
+               class="form-control"
+               id="subject"
+               formControlName="subject"
+               placeholder="Asunto del mensaje (opcional)"
+               maxlength="255">
+      </div>
+
+      <!-- Priority -->
+      <div class="form-group">
+        <label for="priority">Prioridad:</label>
+        <select class="form-control" 
+                id="priority" 
+                formControlName="priority">
+          <option value="normal">Normal</option>
+          <option value="high">Alta</option>
+          <option value="urgent">Urgente</option>
+        </select>
+      </div>
+
+      <!-- Content -->
+      <div class="form-group">
+        <label for="content">Mensaje: *</label>
+        <textarea class="form-control"
+                  id="content"
+                  formControlName="content"
+                  rows="8"
+                  placeholder="Escriba su mensaje aquí..."
+                  [class.is-invalid]="composeForm.get('content')?.invalid && composeForm.get('content')?.touched"
+                  [class.is-valid]="composeForm.get('content')?.valid && composeForm.get('content')?.touched"></textarea>
+        
+        <!-- Character Counter -->
+        <div class="d-flex justify-content-between mt-1">
+          <div class="invalid-feedback" 
+               *ngIf="composeForm.get('content')?.invalid && composeForm.get('content')?.touched">
+            <span *ngIf="composeForm.get('content')?.errors?.['required']">
+              El contenido del mensaje es obligatorio
+            </span>
+            <span *ngIf="composeForm.get('content')?.errors?.['maxlength']">
+              El mensaje es demasiado largo
+            </span>
+          </div>
+          <small class="text-muted">
+            {{ contentLength }} / {{ maxContentLength }}
+            <span class="text-danger" *ngIf="isContentTooLong">
+              (Demasiado largo)
+            </span>
+          </small>
+        </div>
+      </div>
+
+      <!-- Attachments -->
+      <div class="form-group">
+        <label>Archivos adjuntos:</label>
+        
+        <!-- File Drop Zone -->
+        <div class="file-drop-zone"
+             (drop)="onFileDrop($event)"
+             (dragover)="onDragOver($event)"
+             (dragleave)="onDragLeave($event)">
+          <div class="text-center py-3">
+            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+            <p class="text-muted mb-2">
+              Arrastra archivos aquí o 
+              <button type="button" 
+                      class="btn btn-link p-0" 
+                      (click)="fileInput.click()">
+                haz clic para seleccionar
+              </button>
+            </p>
+            <small class="text-muted">
+              Máximo {{ maxAttachments }} archivos, {{ formatFileSize(maxFileSize) }} por archivo
+            </small>
+          </div>
+        </div>
+
+        <!-- Hidden File Input -->
+        <input type="file" 
+               #fileInput
+               multiple
+               accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+               (change)="onFileSelect($event)"
+               style="display: none;">
+
+        <!-- Attachment List -->
+        <div class="attachment-list mt-3" *ngIf="attachments.length > 0">
+          <div class="attachment-item" 
+               *ngFor="let attachment of attachments; let i = index">
+            <div class="d-flex align-items-center">
+              <i [class]="getAttachmentIcon(attachment.file.type)" class="me-2"></i>
+              <div class="flex-grow-1">
+                <div class="fw-bold">{{ attachment.file.name }}</div>
+                <small class="text-muted">{{ formatFileSize(attachment.file.size) }}</small>
+              </div>
+              <button type="button" 
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="removeAttachment(i)"
+                      title="Eliminar archivo">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <!-- Upload Progress -->
+            <div class="progress mt-2" 
+                 *ngIf="attachment.status === 'uploading'">
+              <div class="progress-bar" 
+                   [style.width.%]="attachment.progress">
+                {{ attachment.progress }}%
+              </div>
+            </div>
+            
+            <!-- Upload Error -->
+            <div class="text-danger mt-1" 
+                 *ngIf="attachment.status === 'error'">
+              <small>{{ attachment.error }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Card Footer with Actions -->
+    <div class="card-footer">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <button type="button" 
+                  class="btn btn-outline-secondary me-2"
+                  (click)="onSaveDraft()"
+                  [disabled]="sending">
+            <i class="fas fa-save"></i>
+            Guardar Borrador
+          </button>
+        </div>
+        
+        <div>
+          <button type="button" 
+                  class="btn btn-secondary me-2"
+                  (click)="onCancel()"
+                  [disabled]="sending">
+            Cancelar
+          </button>
+          
+          <button type="submit" 
+                  class="btn btn-primary"
+                  [disabled]="!canSend">
+            <span *ngIf="sending" class="spinner-border spinner-border-sm me-2"></span>
+            <i class="fas fa-paper-plane" *ngIf="!sending"></i>
+            {{ sending ? 'Enviando...' : 'Enviar Mensaje' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

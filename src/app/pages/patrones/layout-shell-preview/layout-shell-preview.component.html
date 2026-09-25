@@ -1,0 +1,144 @@
+<div class="ds-lsp-root pv-layout" [style.background-color]="L.contentBg" [ngStyle]="treeStyle()">
+
+  <!-- Sidebar -->
+  <div class="pv-sidebar" [style.background-color]="L.sidebarBg" [style.width.px]="L.sidebarWidth" [style.min-width.px]="L.sidebarWidth">
+    <div class="pv-brand" [style.background-color]="L.brandBg" [style.color]="L.brandText">
+      <b>Intranet</b> Notaria
+    </div>
+
+    <div class="pv-user" [style.color]="L.sidebarText">
+      <div class="pv-user-avatar"><i class="fas fa-user-circle"></i></div>
+      <span class="pv-user-name">Alexander Pierce</span>
+    </div>
+
+    <div class="pv-search-placeholder small text-muted px-3 py-2 border-bottom border-secondary border-opacity-25">
+      <i class="fas fa-search mr-1"></i> Buscar menú…
+    </div>
+
+    <nav class="mt-1 pb-2">
+      <ul class="nav nav-pills nav-sidebar flex-column nav-child-indent" role="menu">
+        <li class="nav-item">
+          <a class="nav-link active" href="javascript:void(0)">
+            <i class="nav-icon fas fa-tachometer-alt"></i>
+            <p>Dashboard</p>
+          </a>
+        </li>
+
+        <li class="nav-header">SISTEMAS</li>
+
+        <li class="nav-item menu-open">
+          <a class="nav-link" href="javascript:void(0)">
+            <i class="nav-icon fas fa-cubes"></i>
+            <p>Sistema demo <i class="fas fa-angle-left right"></i></p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a class="nav-link" href="javascript:void(0)">
+                <i class="nav-icon far fa-circle"></i>
+                <p>Vista lista</p>
+              </a>
+            </li>
+            <li class="nav-item menu-open">
+              <a class="nav-link" href="javascript:void(0)">
+                <i class="nav-icon far fa-circle"></i>
+                <p>Con submenús <i class="fas fa-angle-left right"></i></p>
+              </a>
+              <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <a class="nav-link" href="javascript:void(0)">
+                    <i class="nav-icon far fa-dot-circle"></i>
+                    <p>Nivel 3 A</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="javascript:void(0)">
+                    <i class="nav-icon far fa-dot-circle"></i>
+                    <p>Nivel 3 B</p>
+                  </a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-header">ADMINISTRACIÓN</li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0)">
+            <i class="nav-icon fas fa-users"></i>
+            <p>Usuarios</p>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Content -->
+  <div class="pv-content">
+    <div class="pv-navbar" [style.background-color]="L.navbarBg" [style.color]="L.navbarText" [style.height.px]="L.navbarHeight" [style.min-height.px]="L.navbarHeight">
+      <i class="fas fa-bars pv-toggle"></i>
+      <span>Inicio</span>
+      <div class="pv-nav-right">
+        <span class="pv-nav-btn"><i class="fas fa-search"></i></span>
+        <span class="pv-nav-btn"><i class="fas fa-envelope"></i></span>
+        <span class="pv-nav-btn pv-has-badge"><i class="far fa-bell"></i><span class="pv-notif-badge">3</span></span>
+        <span class="pv-nav-btn"><i class="far fa-user"></i></span>
+      </div>
+    </div>
+
+    <div class="pv-page" [style.padding]="L.containerFluidPadding">
+      <div class="pv-breadcrumb">
+        <span>Gestión de Proyectos</span>
+        <span class="pv-bc-trail">Inicio / Proyectos</span>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-3">
+          <div class="pv-info-box"><span class="pv-ib-icon bg-info"><i class="fas fa-cog"></i></span><div><div class="pv-ib-label">CPU</div><div class="pv-ib-value">10%</div></div></div>
+        </div>
+        <div class="col-3">
+          <div class="pv-info-box"><span class="pv-ib-icon bg-danger"><i class="fas fa-thumbs-up"></i></span><div><div class="pv-ib-label">Likes</div><div class="pv-ib-value">41,410</div></div></div>
+        </div>
+        <div class="col-3">
+          <div class="pv-info-box"><span class="pv-ib-icon bg-success"><i class="fas fa-shopping-cart"></i></span><div><div class="pv-ib-label">Ventas</div><div class="pv-ib-value">760</div></div></div>
+        </div>
+        <div class="col-3">
+          <div class="pv-info-box"><span class="pv-ib-icon bg-warning"><i class="fas fa-users"></i></span><div><div class="pv-ib-label">Nuevos</div><div class="pv-ib-value">2,000</div></div></div>
+        </div>
+      </div>
+
+      <div class="pv-card" [style.border-left-color]="L.cardBorderColor">
+        <div class="pv-card-header d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-list mr-1"></i> Listado de Proyectos</span>
+          <button class="btn btn-primary btn-sm"><i class="fas fa-plus mr-1"></i> Nuevo</button>
+        </div>
+        <div class="pv-card-body p-0">
+          <table class="pv-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Proyecto</th>
+                <th>Presupuesto</th>
+                <th class="text-center">Estado</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of items">
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.budget | currency }}</td>
+                <td class="text-center">
+                  <app-status-badge [status]="item.status"></app-status-badge>
+                </td>
+                <td class="text-right">
+                  <app-crud-actions></app-crud-actions>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

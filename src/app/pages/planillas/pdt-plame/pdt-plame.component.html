@@ -1,0 +1,209 @@
+<div class="container-fluid">
+  
+  <!-- Header -->
+  <div class="row mb-3">
+    <div class="col-md-12">
+      <h2><i class="fas fa-file-export mr-2"></i>PDT PLAME - Exportación SUNAT</h2>
+      <p class="text-muted">Genera archivos en formato PLAME para declaración ante SUNAT</p>
+    </div>
+  </div>
+
+  <!-- Generador -->
+  <div class="card card-info card-outline mb-3">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fas fa-cog mr-2"></i>Generar Archivo PDT PLAME</h3>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-danger mb-2" *ngIf="error" role="alert">
+        <i class="fas fa-exclamation-triangle mr-2"></i>{{ error }}
+      </div>
+      <div class="alert alert-success mb-2" *ngIf="mensajeExito" role="alert">
+        <i class="fas fa-check-circle mr-2"></i>{{ mensajeExito }}
+      </div>
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle mr-2"></i>
+        <strong>Importante:</strong> El archivo generado debe ser importado en el PDT PLAME de SUNAT. 
+        Asegúrese de que todos los datos de la planilla estén correctos antes de generar.
+      </div>
+      
+      <div class="row">
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Año <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" 
+                   [(ngModel)]="filtros.anio" 
+                   min="2020" 
+                   [max]="filtros.anio + 1">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Mes <span class="text-danger">*</span></label>
+            <select class="form-control" 
+                    [(ngModel)]="filtros.mes">
+              <option *ngFor="let mes of meses" [value]="mes.value">
+                {{mes.label}}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>RUC de la Entidad</label>
+            <input type="text" class="form-control" 
+                   [(ngModel)]="filtros.ruc" 
+                   maxlength="11"
+                   readonly>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="button" 
+                    class="btn btn-success btn-block" 
+                    (click)="generarArchivo()"
+                    [disabled]="generando">
+              <i class="fas fa-cog" [class.fa-spin]="generando"></i>
+              {{ generando ? 'Generando...' : 'Generar Archivo PLAME' }}
+            </button>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="button" 
+                    class="btn btn-info btn-block" 
+                    (click)="validarFormato()">
+              <i class="fas fa-check-circle"></i>
+              Validar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Especificaciones -->
+  <div class="row mb-3">
+    <div class="col-md-3">
+      <div class="info-box">
+        <span class="info-box-icon bg-info">
+          <i class="fas fa-file-alt"></i>
+        </span>
+        <div class="info-box-content">
+          <span class="info-box-text">Formato</span>
+          <span class="info-box-number">TXT - PLAME</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="info-box">
+        <span class="info-box-icon bg-success">
+          <i class="fas fa-university"></i>
+        </span>
+        <div class="info-box-content">
+          <span class="info-box-text">Destino</span>
+          <span class="info-box-number">PDT SUNAT</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="info-box">
+        <span class="info-box-icon bg-warning">
+          <i class="fas fa-users"></i>
+        </span>
+        <div class="info-box-content">
+          <span class="info-box-text">Incluye</span>
+          <span class="info-box-number">Todos los trabajadores</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="info-box">
+        <span class="info-box-icon bg-danger">
+          <i class="fas fa-calendar"></i>
+        </span>
+        <div class="info-box-content">
+          <span class="info-box-text">Periodicidad</span>
+          <span class="info-box-number">Mensual</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center p-5">
+    <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+    <p class="mt-3">Cargando historial...</p>
+  </div>
+
+  <!-- Historial de Archivos Generados -->
+  <div *ngIf="!loading" class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fas fa-history mr-2"></i>Historial de Archivos Generados
+        <span class="badge badge-info ml-2">{{archivosGenerados.length}}</span>
+      </h3>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Periodo</th>
+              <th>Nombre del Archivo</th>
+              <th>Fecha Generación</th>
+              <th>Tamaño</th>
+              <th>Registros</th>
+              <th>Estado</th>
+              <th style="width: 150px;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let archivo of archivosGenerados; let i = index">
+              <td>{{i + 1}}</td>
+              <td><strong>{{archivo.periodo}}</strong></td>
+              <td>
+                <i class="fas fa-file-alt text-info mr-1"></i>
+                {{archivo.nombre_archivo}}
+              </td>
+              <td><small>{{formatDate(archivo.fecha_generacion)}}</small></td>
+              <td>{{archivo.tamanio}}</td>
+              <td>{{archivo.registros}}</td>
+              <td>
+                <span class="badge" [ngClass]="getEstadoBadge(archivo.estado)">
+                  {{archivo.estado | titlecase}}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" 
+                          class="btn btn-success" 
+                          (click)="descargarArchivo(archivo)" 
+                          title="Descargar">
+                    <i class="fas fa-download"></i>
+                  </button>
+                  <button type="button" 
+                          class="btn btn-info" 
+                          (click)="verDetalleArchivo(archivo)" 
+                          title="Ver Detalle">
+                    <i class="fas fa-info-circle"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="archivosGenerados.length === 0">
+              <td colspan="8" class="text-center p-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p>No se han generado archivos PDT PLAME</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+

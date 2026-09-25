@@ -1,0 +1,432 @@
+<!-- AdminLTE 3.2.0 Layout Structure -->
+<div class="wrapper">
+
+  <!-- Preloader -->
+  <div class="preloader flex-column justify-content-center align-items-center" *ngIf="isLoading">
+    <img class="animation__shake" src="assets/img/municipio-logo.png" alt="MunicipioLogo" height="60" width="60">
+  </div>
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" role="button">
+          <i class="fas fa-bars"></i>
+        </a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a [routerLink]="['/dashboard']" class="nav-link" routerLinkActive="active">Inicio</a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a [routerLink]="['/contacto']" class="nav-link" routerLinkActive="active">Contacto</a>
+      </li>
+    </ul>
+
+    <!-- Right navbar links -->
+    <ul class="navbar-nav ml-auto">
+      <!-- Navbar Search -->
+      <li class="nav-item">
+        <a class="nav-link" data-widget="navbar-search" href="#" role="button">
+          <i class="fas fa-search"></i>
+        </a>
+        <div class="navbar-search-block">
+          <form class="form-inline">
+            <div class="input-group input-group-sm">
+              <input class="form-control form-control-navbar" type="search" placeholder="Buscar" aria-label="Search">
+              <div class="input-group-append">
+                <button class="btn btn-navbar" type="submit">
+                  <i class="fas fa-search"></i>
+                </button>
+                <button class="btn btn-navbar" type="button" data-widget="navbar-search">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </li>
+
+      <!-- Messages (direct link) -->
+      <li class="nav-item">
+        <a class="nav-link nav-link-icon" [routerLink]="['/mensajeria']" title="Mensajes">
+          <i class="far fa-comments"></i>
+          <span class="nav-badge" *ngIf="unreadMessagesCount > 0">{{ formatUnreadCount() }}</span>
+        </a>
+      </li>
+
+      <!-- Notifications Dropdown -->
+      <li class="nav-item dropdown">
+        <a class="nav-link nav-link-icon dropdown-toggle" data-bs-toggle="dropdown" data-toggle="dropdown" href="#">
+          <i class="far fa-bell"></i>
+          <span class="nav-badge" *ngIf="recentNotifications.length > 0">{{ recentNotifications.length }}</span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right notification-dropdown">
+          <div class="notification-dropdown-header">
+            <span>Notificaciones</span>
+            <a [routerLink]="['/mensajeria']" class="see-all-link">Ver todo</a>
+          </div>
+
+          <div class="notification-dropdown-body" *ngIf="recentNotifications.length > 0; else noNotifications">
+            <a [routerLink]="['/mensajeria/messages', notification.id]"
+               class="notification-item"
+               *ngFor="let notification of recentNotifications.slice(0, 5)">
+              <div class="notification-item-icon">
+                <i class="fas fa-envelope"></i>
+              </div>
+              <div class="notification-item-content">
+                <div class="notification-item-title">{{ notification.subject || 'Sin asunto' }}</div>
+                <div class="notification-item-meta">
+                  {{ notification.sender?.name || 'Desconocido' }}
+                  <span class="notification-item-time">{{ getTimeAgo(notification.created_at) }}</span>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <ng-template #noNotifications>
+            <div class="notification-empty">
+              <i class="far fa-bell-slash"></i>
+              <span>Sin notificaciones</span>
+            </div>
+          </ng-template>
+        </div>
+      </li>
+
+      <!-- User Menu (controlado por Angular para que siempre se vea al hacer clic) -->
+      <li class="nav-item dropdown user-menu-dropdown" [class.show]="userMenuOpen">
+        <a class="nav-link dropdown-toggle user-menu-toggle" href="#" role="button" (click)="toggleUserMenu($event)" [attr.aria-expanded]="userMenuOpen">
+          <img [src]="currentUser?.empleado?.foto || 'assets/img/user1-128x128.jpg'" alt="Avatar" class="img-size-32 img-circle">
+          <span class="d-none d-md-inline ml-1">{{ currentUser?.name || 'Usuario' }}</span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right user-dropdown" [class.show]="userMenuOpen" (click)="$event.stopPropagation()">
+          <!-- Cabecera azul con datos del usuario -->
+          <div class="user-dropdown-header">
+            <img [src]="currentUser?.empleado?.foto || 'assets/img/user1-128x128.jpg'" alt="Avatar" class="user-dropdown-avatar">
+            <div class="user-dropdown-info">
+              <div class="user-dropdown-name">{{ currentUser?.name || 'Administrador Sistema' }}</div>
+              <div class="user-dropdown-role">{{ currentUser?.empleado?.cargo || 'Empleado Notaria' }}</div>
+              <div class="user-dropdown-badge-admin" *ngIf="isAdminUser()">
+                <i class="fas fa-shield-alt"></i> Admin
+              </div>
+            </div>
+          </div>
+          <!-- Opciones del menú -->
+          <a [routerLink]="['/perfil']" class="dropdown-item user-dropdown-item" (click)="closeUserMenu()" routerLinkActive="active">
+            <i class="fas fa-user user-dropdown-icon user-dropdown-icon-profile"></i>
+            <span>Mi Perfil</span>
+          </a>
+          <a href="#" class="dropdown-item user-dropdown-item" (click)="closeUserMenu(); $event.preventDefault()">
+            <i class="fas fa-cogs user-dropdown-icon user-dropdown-icon-settings"></i>
+            <span>Configuración</span>
+          </a>
+          <a [routerLink]="['/mensajeria']" class="dropdown-item user-dropdown-item" (click)="closeUserMenu()">
+            <i class="fas fa-envelope user-dropdown-icon user-dropdown-icon-messages"></i>
+            <span>Mensajes</span>
+            <span class="user-dropdown-badge badge-messages" *ngIf="unreadMessagesCount > 0">{{ unreadMessagesCount > 99 ? '99+' : unreadMessagesCount }}</span>
+          </a>
+          <a href="#" class="dropdown-item user-dropdown-item" (click)="closeUserMenu(); $event.preventDefault()">
+            <i class="fas fa-bell user-dropdown-icon user-dropdown-icon-notifications"></i>
+            <span>Notificaciones</span>
+            <span class="user-dropdown-badge badge-notifications" *ngIf="recentNotifications.length > 0">{{ recentNotifications.length > 99 ? '99+' : recentNotifications.length }}</span>
+          </a>
+          <div class="dropdown-item user-dropdown-item user-dropdown-item-online">
+            <i class="fas fa-circle user-dropdown-icon user-dropdown-icon-online"></i>
+            <span>En línea</span>
+            <span class="user-dropdown-time">{{ getCurrentTime() }}</span>
+          </div>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item user-dropdown-item user-dropdown-item-logout" (click)="logout($event)">
+            <i class="fas fa-sign-out-alt user-dropdown-icon user-dropdown-icon-logout"></i>
+            <span>Cerrar Sesión</span>
+          </a>
+        </div>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+          <i class="fas fa-expand-arrows-alt"></i>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button">
+          <i class="fas fa-th-large"></i>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a [routerLink]="['/dashboard']" class="brand-link">
+      <img src="assets/img/municipio-logo.png" alt="Municipio Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+      <span class="brand-text font-weight-light"><b>Intranet</b> Notaria</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Logo del Municipio -->
+      <div class="municipio-logo-panel mt-3 pb-3 mb-3">
+        <div class="text-center">
+          <img src="assets/img/municipio-logo.png" alt="Municipio Provincial Jorge Basadre" class="img-fluid municipio-logo">
+          <p class="municipio-name">Notaria PROVINCIAL<br><strong>JORGE BASADRE</strong></p>
+        </div>
+      </div>
+
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <!-- Búsqueda Mejorada -->
+        <div class="form-inline mb-3 px-2">
+          <div class="input-group input-group-sm w-100">
+            <input 
+              class="form-control form-control-sidebar" 
+              type="search" 
+              placeholder="Buscar módulo o función..." 
+              aria-label="Search"
+              [(ngModel)]="searchQuery"
+              (input)="onSearchMenu($event)">
+            <div class="input-group-append">
+              <button class="btn btn-sidebar" type="button" (click)="clearSearch()" *ngIf="searchQuery">
+                <i class="fas fa-times"></i>
+              </button>
+              <button class="btn btn-sidebar" type="button" *ngIf="!searchQuery">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scroll Event Handler -->
+        <div class="sidebar-menu-container" (scroll)="onSidebarScroll($event)">
+          <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="true">
+            
+            <!-- Dashboard Fijo -->
+            <li class="nav-item">
+              <a [routerLink]="['/dashboard']" class="nav-link" routerLinkActive="active">
+                <i class="nav-icon fas fa-tachometer-alt"></i>
+                <p>Dashboard</p>
+              </a>
+            </li>
+
+            <!-- Sección de Favoritos -->
+            <ng-container *ngIf="favoriteMenus.length > 0">
+              <li class="nav-header text-uppercase">
+                <i class="fas fa-star text-warning mr-2"></i>
+                FAVORITOS
+              </li>
+              <li class="nav-item" *ngFor="let favorite of favoriteMenus; trackBy: trackByMenuItem">
+                <a [routerLink]="[favorite.route]" class="nav-link" routerLinkActive="active">
+                  <i class="nav-icon" [ngClass]="favorite.icon"></i>
+                  <p>
+                    {{ favorite.nombre }}
+                    <i class="fas fa-star text-warning right" 
+                       (click)="toggleFavorite({route: favorite.route, nombre: favorite.nombre, icono: favorite.icon}, $event)"
+                       style="cursor: pointer;"></i>
+                  </p>
+                </a>
+              </li>
+              <li class="nav-header"></li>
+            </ng-container>
+
+            <!-- Menús Organizados por Categoría (si se implementó en backend) -->
+            <ng-container *ngIf="menuCategories.size > 1">
+              <ng-container *ngFor="let category of getCategoriesArray()">
+                <li class="nav-header text-uppercase">
+                  <i [ngClass]="category.icon" class="mr-2"></i>
+                  {{ category.label }}
+                </li>
+                
+                <ng-container *ngFor="let menuItem of category.menus; let i = index; trackBy: trackByMenuItem">
+                  <!-- Menú sin submenús -->
+                  <li class="nav-item" *ngIf="!menuItem.submenus || menuItem.submenus.length === 0">
+                    <a [routerLink]="[menuItem.url || menuItem.route || '/']" 
+                       class="nav-link" 
+                       routerLinkActive="active">
+                      <i class="nav-icon" [ngClass]="menuItem.icono || 'fas fa-circle'"></i>
+                      <p>
+                        {{ menuItem.nombre || menuItem.titulo }}
+                        <i class="far fa-star right" 
+                           [class.fas]="isFavorite(menuItem.route || menuItem.url || '/')"
+                           [class.text-warning]="isFavorite(menuItem.route || menuItem.url || '/')"
+                           (click)="toggleFavorite(menuItem, $event)"
+                           style="cursor: pointer;"></i>
+                      </p>
+                    </a>
+                  </li>
+
+                  <!-- Menú con submenús (ACCORDION) -->
+                  <li class="nav-item has-treeview" 
+                      [class.menu-open]="isMenuOpen(i)"
+                      *ngIf="menuItem.submenus && menuItem.submenus.length > 0">
+                    <a (click)="toggleMenu(i); $event.preventDefault(); $event.stopPropagation()" 
+                       class="nav-link"
+                       href="javascript:void(0)">
+                      <i class="nav-icon" [ngClass]="menuItem.icono || 'fas fa-folder'"></i>
+                      <p>
+                        {{ menuItem.nombre || menuItem.titulo }}
+                        <span class="badge badge-info right">{{ menuItem.submenus.length }}</span>
+                        <i class="fas fa-angle-left right"></i>
+                      </p>
+                    </a>
+                    <ul class="nav nav-treeview" 
+                        [class.show]="isMenuOpen(i)"
+                        [hidden]="!isMenuOpen(i)">
+                      <li class="nav-item" *ngFor="let submenu of menuItem.submenus; trackBy: trackBySubmenu">
+                        <a [routerLink]="[submenu.url || submenu.route || '/']" 
+                           class="nav-link" 
+                           routerLinkActive="active">
+                          <i class="nav-icon" [ngClass]="submenu.icono || 'far fa-circle'"></i>
+                          <p>
+                            {{ submenu.nombre || submenu.titulo }}
+                            <i class="far fa-star right" 
+                               [class.fas]="isFavorite(submenu.route || submenu.url || '/')"
+                               [class.text-warning]="isFavorite(submenu.route || submenu.url || '/')"
+                               (click)="toggleFavorite(submenu, $event)"
+                               style="cursor: pointer; font-size: 0.8rem;"></i>
+                          </p>
+                        </a>
+                      </li>
+                    </ul>
+                  </li>
+                </ng-container>
+              </ng-container>
+            </ng-container>
+
+            <!-- Menús Sin Categorías (fallback al comportamiento actual) -->
+            <ng-container *ngIf="menuCategories.size <= 1">
+              <li class="nav-header text-uppercase">
+                <i class="fas fa-th-large mr-2"></i>
+                MÓDULOS
+              </li>
+              
+              <ng-container *ngFor="let menuItem of filteredMenuItems; let i = index; trackBy: trackByMenuItem">
+                <!-- Menú sin submenús -->
+                <li class="nav-item" *ngIf="!menuItem.submenus || menuItem.submenus.length === 0">
+                  <a [routerLink]="[menuItem.url || menuItem.route || '/']" 
+                     class="nav-link" 
+                     routerLinkActive="active">
+                    <i class="nav-icon" [ngClass]="menuItem.icono || 'fas fa-circle'"></i>
+                    <p>
+                      {{ menuItem.nombre || menuItem.titulo }}
+                      <i class="far fa-star right" 
+                         [class.fas]="isFavorite(menuItem.route || menuItem.url || '/')"
+                         [class.text-warning]="isFavorite(menuItem.route || menuItem.url || '/')"
+                         (click)="toggleFavorite(menuItem, $event)"
+                         style="cursor: pointer;"></i>
+                    </p>
+                  </a>
+                </li>
+
+                <!-- Menú con submenús (ACCORDION) -->
+                <li class="nav-item has-treeview" 
+                    [class.menu-open]="isMenuOpen(i)"
+                    *ngIf="menuItem.submenus && menuItem.submenus.length > 0">
+                  <a (click)="toggleMenu(i); $event.preventDefault(); $event.stopPropagation()" 
+                     class="nav-link"
+                     href="javascript:void(0)">
+                    <i class="nav-icon" [ngClass]="menuItem.icono || 'fas fa-folder'"></i>
+                    <p>
+                      {{ menuItem.nombre || menuItem.titulo }}
+                      <span class="badge badge-info right">{{ menuItem.submenus.length }}</span>
+                      <i class="fas fa-angle-left right"></i>
+                    </p>
+                  </a>
+                  <ul class="nav nav-treeview" 
+                      [class.show]="isMenuOpen(i)"
+                      [hidden]="!isMenuOpen(i)">
+                    <li class="nav-item" *ngFor="let submenu of menuItem.submenus; trackBy: trackBySubmenu">
+                      <a [routerLink]="[submenu.url || submenu.route || '/']" 
+                         class="nav-link" 
+                         routerLinkActive="active">
+                        <i class="nav-icon" [ngClass]="submenu.icono || 'far fa-circle'"></i>
+                        <p>
+                          {{ submenu.nombre || submenu.titulo }}
+                          <i class="far fa-star right" 
+                             [class.fas]="isFavorite(submenu.route || submenu.url || '/')"
+                             [class.text-warning]="isFavorite(submenu.route || submenu.url || '/')"
+                             (click)="toggleFavorite(submenu, $event)"
+                             style="cursor: pointer; font-size: 0.8rem;"></i>
+                        </p>
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+              </ng-container>
+            </ng-container>
+
+            <!-- Mensaje cuando no hay resultados de búsqueda -->
+            <li class="nav-item" *ngIf="searchQuery && filteredMenuItems.length === 0">
+              <div class="text-center text-muted p-3">
+                <i class="fas fa-search fa-2x mb-2"></i>
+                <p>No se encontraron resultados</p>
+                <button class="btn btn-sm btn-secondary" (click)="clearSearch()">
+                  Limpiar búsqueda
+                </button>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    <router-outlet></router-outlet>
+  </div>
+
+  <!-- Main Footer -->
+  <footer class="main-footer">
+    <strong>Copyright &copy; {{ currentYear }} <a href="#">Notaria</a>.</strong>
+    Todos los derechos reservados.
+    <div class="float-right d-none d-sm-inline-block">
+      <b>Versión</b> 1.0.0
+    </div>
+  </footer>
+
+  <!-- Control Sidebar -->
+  <aside class="control-sidebar control-sidebar-dark">
+    <div class="p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0 text-white">
+          <i class="far fa-bell mr-1"></i> Mensajería
+        </h6>
+        <span class="badge badge-sm" [class.badge-light]="unreadMessagesCount > 0" [class.badge-secondary]="unreadMessagesCount === 0">
+          {{ unreadMessagesCount }} sin leer
+        </span>
+      </div>
+
+      <div *ngIf="recentNotifications.length > 0; else noNotificationsSidebar">
+        <a [routerLink]="['/mensajeria/messages', notification.id]"
+           class="sidebar-notification-item d-block mb-2"
+           *ngFor="let notification of recentNotifications.slice(0, 8)">
+          <div class="d-flex align-items-start">
+            <i class="fas fa-envelope text-info mr-2 mt-1" style="font-size: 0.75rem;"></i>
+            <div class="flex-grow-1 min-width-0">
+              <div class="text-white text-truncate" style="font-size: 0.8rem;">{{ notification.subject || 'Sin asunto' }}</div>
+              <div class="d-flex justify-content-between" style="font-size: 0.7rem;">
+                <span class="text-muted text-truncate">{{ notification.sender?.name || 'Desconocido' }}</span>
+                <span class="text-muted ml-2 flex-shrink-0">{{ getTimeAgo(notification.created_at) }}</span>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <ng-template #noNotificationsSidebar>
+        <div class="text-center text-muted py-3" style="font-size: 0.85rem;">
+          <i class="far fa-bell-slash d-block mb-2" style="font-size: 1.5rem; opacity: 0.4;"></i>
+          No hay notificaciones
+        </div>
+      </ng-template>
+
+      <a [routerLink]="['/mensajeria']" class="btn btn-sm btn-outline-light btn-block mt-3">
+        <i class="fas fa-envelope mr-1"></i> Ver mensajes
+      </a>
+    </div>
+  </aside>
+</div>
+
+<!-- Toast Notifications Container -->
+<app-toast-container></app-toast-container>

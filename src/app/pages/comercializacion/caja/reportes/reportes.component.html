@@ -1,0 +1,162 @@
+<app-system-layout [title]="viewConfig.title" [subtitle]="'Totales por filtros: recibos pagados por áreas, conceptos, trámites'"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comercialización', url: '/comercializacion'}, {label: 'Reportes'}]"
+    [subsystem]="'comercializacion'">
+
+    <div class="row">
+        <!-- Filtros de Reporte -->
+        <div class="col-md-12">
+            <div class="card elevation-1" [ngClass]="cv.cardOutlineColor"
+                [style.border-radius.px]="cv.cardBorderRadius">
+                <div class="card-header bg-white">
+                    <h3 class="card-title"><i class="fas fa-filter mr-1 text-muted"></i> Filtros de Reporte</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Fecha desde</label>
+                                <input type="date" class="form-control form-control-sm" [(ngModel)]="fechaInicio">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Fecha hasta</label>
+                                <input type="date" class="form-control form-control-sm" [(ngModel)]="fechaFin">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Área / Centro de Costo</label>
+                                <select class="form-control form-control-sm" [(ngModel)]="filtroArea">
+                                    <option value="">TODAS LAS ÁREAS</option>
+                                    <option value="Licencias">Licencias y Trámites</option>
+                                    <option value="Mercados">Mercados y Abastos</option>
+                                    <option value="Fiscalización">Fiscalización (Multas)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Concepto de Pago</label>
+                                <select class="form-control form-control-sm" [(ngModel)]="filtroConcepto">
+                                    <option value="">TODOS LOS CONCEPTOS</option>
+                                    <option *ngFor="let c of conceptos" [value]="c.id">{{c.codigo}} - {{c.descripcion}}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-sm btn-primary shadow-sm mb-3 w-100"
+                                (click)="generarReporte()" [disabled]="isGenerating">
+                                <i class="fas fa-spinner fa-spin mr-1" *ngIf="isGenerating"></i>
+                                <i class="fas fa-search mr-1" *ngIf="!isGenerating"></i>
+                                Generar Reporte
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen Total General -->
+        <div class="col-md-12" *ngIf="reporteData?.total_general">
+            <div class="info-box bg-success shadow-sm elevation-1 mb-3">
+                <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">TOTAL RECAUDADO ({{ reporteData.fecha_inicio }} al {{ reporteData.fecha_fin }})</span>
+                    <span class="info-box-number">S/ {{ reporteData.total_general.monto_total | number:'1.2-2' }}</span>
+                    <span class="progress-description">{{ reporteData.total_general.cantidad }} operaciones</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Por Áreas -->
+        <div class="col-md-6" *ngIf="reporteData?.por_areas?.length">
+            <div class="card shadow-sm border-0" [style.border-radius.px]="cv.cardBorderRadius">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt mr-1"></i> Totales por Área</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Área</th><th class="text-right">Cant.</th><th class="text-right">Total (S/)</th></tr></thead>
+                        <tbody>
+                            <tr *ngFor="let r of reporteData.por_areas">
+                                <td>{{ r.nombre || r.centro_costos_id }}</td>
+                                <td class="text-right">{{ r.cantidad }}</td>
+                                <td class="text-right font-weight-bold text-success">S/ {{ r.monto_total | number:'1.2-2' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Por Conceptos -->
+        <div class="col-md-6" *ngIf="reporteData?.por_conceptos?.length">
+            <div class="card shadow-sm border-0" [style.border-radius.px]="cv.cardBorderRadius">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-tags mr-1"></i> Totales por Concepto</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Concepto</th><th class="text-right">Cant.</th><th class="text-right">Total (S/)</th></tr></thead>
+                        <tbody>
+                            <tr *ngFor="let r of reporteData.por_conceptos">
+                                <td>{{ r.codigo }} - {{ r.descripcion }}</td>
+                                <td class="text-right">{{ r.cantidad }}</td>
+                                <td class="text-right font-weight-bold text-success">S/ {{ r.monto_total | number:'1.2-2' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Por Trámites -->
+        <div class="col-md-12" *ngIf="reporteData?.por_tramites?.length">
+            <div class="card shadow-sm border-0" [style.border-radius.px]="cv.cardBorderRadius">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-invoice mr-1"></i> Totales por Tipo de Trámite</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Tipo de Trámite</th><th class="text-right">Cantidad</th><th class="text-right">Total (S/)</th></tr></thead>
+                        <tbody>
+                            <tr *ngFor="let r of reporteData.por_tramites">
+                                <td>{{ r.tipo_tramite }}</td>
+                                <td class="text-right">{{ r.cantidad }}</td>
+                                <td class="text-right font-weight-bold text-success">S/ {{ r.monto_total | number:'1.2-2' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sin datos -->
+        <div class="col-md-12" *ngIf="reporteData && (!reporteData.por_areas?.length && !reporteData.por_conceptos?.length)">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle mr-1"></i> No hay recibos pagados en el rango de fechas seleccionado.
+            </div>
+        </div>
+
+        <!-- Botones de Exportación -->
+        <div class="col-md-12 mt-3" *ngIf="reporteData?.total_general">
+            <div class="card-footer bg-white border-0 d-flex justify-content-end gap-2">
+                <ng-container *ngIf="cv.showExportButtons">
+                    <button type="button" class="btn btn-sm" [ngClass]="cv.excelBtnClass" (click)="onExportExcel()">
+                        <i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}
+                    </button>
+                    <button type="button" class="btn btn-sm" [ngClass]="cv.pdfBtnClass" (click)="onExportPdf()">
+                        <i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}
+                    </button>
+                </ng-container>
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>

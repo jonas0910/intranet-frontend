@@ -1,0 +1,451 @@
+<!-- Content Header -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-edit mr-2"></i>{{ editMode ? 'Editar' : 'Crear' }} Plantilla</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/plantillas">Plantillas</a></li>
+          <li class="breadcrumb-item active">{{ editMode ? 'Editar' : 'Crear' }}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <div class="text-center py-5" *ngIf="loading"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">Cargando...</p></div>
+
+    <div class="row" *ngIf="!loading">
+      <!-- LEFT COLUMN -->
+      <div class="col-lg-8">
+        <!-- Información Básica -->
+        <div class="card">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-info-circle mr-1"></i>Información Básica</h3></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <div class="form-group">
+                  <label>Nombre <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" [(ngModel)]="plantilla.nombre" (blur)="generarSlug()">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Icono</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend"><span class="input-group-text"><i [ngClass]="plantilla.icono || 'fas fa-file-alt'"></i></span></div>
+                    <input type="text" class="form-control" [(ngModel)]="plantilla.icono" placeholder="fas fa-file-alt">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Slug</label>
+                  <input type="text" class="form-control" [(ngModel)]="plantilla.slug">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Vista Blade</label>
+                  <input type="text" class="form-control" [(ngModel)]="plantilla.vista" placeholder="plantillas.nombre-plantilla">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Categoría</label>
+                  <select class="form-control" [(ngModel)]="plantilla.categoria">
+                    <option value="basica">Básica</option>
+                    <option value="intermedia">Intermedia</option>
+                    <option value="avanzada">Avanzada</option>
+                    <option value="especial">Especial</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Nivel</label>
+                  <select class="form-control" [(ngModel)]="plantilla.nivel">
+                    <option value="basico">Básico</option>
+                    <option value="intermedio">Intermedio</option>
+                    <option value="avanzado">Avanzado</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Orden</label>
+                  <input type="number" class="form-control" [(ngModel)]="plantilla.orden">
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Descripción</label>
+              <textarea class="form-control" rows="3" [(ngModel)]="plantilla.descripcion"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Imagen de Preview (URL)</label>
+              <input type="text" class="form-control" [(ngModel)]="plantilla.preview_imagen" placeholder="URL de la imagen">
+              <img *ngIf="plantilla.preview_imagen" [src]="getPreviewUrl(plantilla.preview_imagen)" class="img-thumbnail mt-2" style="max-width:200px">
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== VISTA PREVIA DEL ORDEN (DRAG & DROP) ==================== -->
+        <div class="card card-primary card-outline">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-arrows-alt mr-1"></i> Vista Previa del Orden
+              <small class="text-muted ml-2">Arrastra para reordenar</small>
+            </h3>
+            <div class="card-tools">
+              <span class="badge badge-primary">{{ cachedActiveComponentes.length }}</span>
+            </div>
+          </div>
+          <div class="card-body p-2">
+            <div class="alert alert-info alert-sm mb-2 py-1 px-2">
+              <i class="fas fa-hand-pointer mr-1"></i>
+              <small><strong>Tip:</strong> Arrastra los elementos para cambiar el orden automáticamente</small>
+            </div>
+
+            <div class="list-group list-group-flush" *ngIf="cachedActiveComponentes.length > 0">
+              <!-- Layout Header -->
+              <div class="list-group-item bg-info text-white text-center small py-2">
+                <i class="fas fa-columns mr-1"></i><strong>Layout de la Página</strong>
+              </div>
+
+              <!-- Layout Columns Indicator -->
+              <div *ngIf="plantilla.sidebar_habilitado" class="list-group-item py-2">
+                <div class="row no-gutters">
+                  <div class="col-9 pr-1">
+                    <div class="bg-primary text-white px-2 py-1 rounded small text-center">
+                      <i class="fas fa-desktop mr-1"></i>CONTENIDO PRINCIPAL (75%)
+                    </div>
+                  </div>
+                  <div class="col-3 pl-1">
+                    <div class="bg-warning text-white px-1 py-1 rounded small text-center" style="font-size:0.7rem">
+                      SIDEBAR (25%)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Draggable Items Container -->
+              <div #previewContainer>
+                <div *ngFor="let item of cachedActiveComponentes; trackBy: trackByKey"
+                     class="list-group-item py-2 d-flex align-items-center preview-item"
+                     [class.full-width-item]="item.anchoCompleto"
+                     [attr.data-key]="item.key">
+                  <i class="fas fa-grip-vertical drag-handle mr-2 text-secondary"></i>
+                  <span class="badge badge-primary badge-pill mr-2" style="min-width:30px">{{ item.orden }}</span>
+                  <i [ngClass]="item.comp.icono" class="mr-2 text-muted"></i>
+                  <span class="small flex-grow-1">{{ item.comp.nombre }}</span>
+                  <i *ngIf="item.anchoCompleto" class="fas fa-arrows-alt-h text-success ml-2" title="Ancho Completo"></i>
+                </div>
+              </div>
+
+              <!-- Sidebar Widgets -->
+              <ng-container *ngIf="plantilla.sidebar_habilitado && cachedActiveSidebarWidgets.length > 0">
+                <div class="list-group-item bg-warning text-white py-2">
+                  <i class="fas fa-columns mr-1"></i><strong>Widgets del Sidebar:</strong>
+                </div>
+                <div *ngFor="let sw of cachedActiveSidebarWidgets; trackBy: trackByKey"
+                     class="list-group-item py-1 pl-4 small d-flex align-items-center" style="background-color:#fff9e6">
+                  <span class="badge badge-warning badge-pill mr-2" style="min-width:25px;font-size:0.7rem">{{ sw.orden }}</span>
+                  <i [ngClass]="sw.widget.icono" class="mr-1 text-warning"></i>
+                  <span>{{ sw.widget.nombre }}</span>
+                </div>
+              </ng-container>
+
+              <!-- Summary Footer -->
+              <div class="list-group-item bg-success text-white text-center small py-2">
+                <i class="fas fa-check mr-1"></i>
+                {{ cachedActiveComponentes.length }} componente{{ cachedActiveComponentes.length !== 1 ? 's' : '' }}
+                <ng-container *ngIf="plantilla.sidebar_habilitado && cachedActiveSidebarWidgets.length > 0">
+                  + Sidebar ({{ cachedActiveSidebarWidgets.length }} widget{{ cachedActiveSidebarWidgets.length !== 1 ? 's' : '' }})
+                </ng-container>
+              </div>
+            </div>
+
+            <div *ngIf="cachedActiveComponentes.length === 0" class="text-center text-muted py-3">
+              <em>Activa componentes abajo para ver el orden aquí</em>
+            </div>
+          </div>
+        </div>
+
+        <!-- INSTRUCCIONES -->
+        <div class="callout callout-info">
+          <h5><i class="fas fa-info-circle mr-1"></i>Cómo diseñar tu página:</h5>
+          <ol class="mb-0 pl-3">
+            <li>Selecciona los componentes que quieres (abajo en las pestañas)</li>
+            <li>Configura el orden (1 = primero, 2 = segundo, etc.)</li>
+            <li>Ajusta opciones de cada componente</li>
+            <li>Guarda y ve el resultado en tu página</li>
+          </ol>
+        </div>
+
+        <!-- ==================== COMPONENTES DE LA PAGINA ==================== -->
+        <div class="card card-success">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-th-large mr-1"></i>Componentes de la Página</h3>
+            <div class="card-tools"><span class="badge badge-light">Activa los que necesites</span></div>
+          </div>
+          <div class="card-body">
+            <ul class="nav nav-tabs nav-tabs-custom mb-4">
+              <li class="nav-item">
+                <a class="nav-link" [class.active]="activeComponentTab==='visuales'" (click)="switchTab('visuales')" href="javascript:void(0)">
+                  <i class="fas fa-eye mr-1"></i><strong>Visuales</strong><br><small>Banner, Estadísticas, Galerías</small>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" [class.active]="activeComponentTab==='contenidos'" (click)="switchTab('contenidos')" href="javascript:void(0)">
+                  <i class="fas fa-newspaper mr-1"></i><strong>Contenidos</strong><br><small>Noticias, Servicios, Testimonios</small>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" [class.active]="activeComponentTab==='sociales'" (click)="switchTab('sociales')" href="javascript:void(0)">
+                  <i class="fas fa-share-alt mr-1"></i><strong>Redes Sociales</strong><br><small>Facebook, YouTube</small>
+                </a>
+              </li>
+            </ul>
+
+            <ng-container *ngFor="let item of cachedTabComponents; trackBy: trackByKey">
+              <div class="card mb-3 componente-profesional">
+                <div class="card-header bg-light">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" [id]="'comp_' + item.key"
+                             [checked]="isComponenteActivo(item.key)" (change)="toggleComponente(item.key)">
+                      <label class="custom-control-label" [for]="'comp_' + item.key">
+                        <i [ngClass]="item.comp.icono" class="mr-1"></i><strong>{{ item.comp.nombre }}</strong>
+                      </label>
+                    </div>
+                  </div>
+                  <small class="text-muted d-block mt-1">{{ item.comp.descripcion }}</small>
+                </div>
+                <div class="card-body" *ngIf="isComponenteActivo(item.key)">
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <label class="small">Orden de Aparición</label>
+                      <input type="number" class="form-control form-control-sm"
+                             [ngModel]="getConfigValue(item.key, 'orden', 999)"
+                             (ngModelChange)="setConfig(item.key, 'orden', $event)" min="1" max="100">
+                      <small class="text-muted">1 = primero</small>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="small">Color de Fondo</label>
+                      <select class="form-control form-control-sm"
+                              [ngModel]="getConfigValue(item.key, 'fondo', 'white')"
+                              (ngModelChange)="setConfig(item.key, 'fondo', $event)">
+                        <option value="white">Blanco</option>
+                        <option value="light">Gris Claro</option>
+                        <option value="primary">Color Primario</option>
+                        <option value="success">Color Success</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4 mb-3" *ngIf="hasConfigOption(item.comp, 'cantidad')">
+                      <label class="small">Cantidad a Mostrar</label>
+                      <input type="number" class="form-control form-control-sm"
+                             [ngModel]="getConfigValue(item.key, 'cantidad', 6)"
+                             (ngModelChange)="setConfig(item.key, 'cantidad', $event)" min="1" max="20">
+                    </div>
+                    <div class="col-md-4 mb-3" *ngIf="hasConfigOption(item.comp, 'columnas')">
+                      <label class="small">Columnas</label>
+                      <select class="form-control form-control-sm"
+                              [ngModel]="getConfigValue(item.key, 'columnas', '3')"
+                              (ngModelChange)="setConfig(item.key, 'columnas', $event)">
+                        <option value="2">2 columnas</option>
+                        <option value="3">3 columnas</option>
+                        <option value="4">4 columnas</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4 mb-3" *ngIf="hasConfigOption(item.comp, 'vista')">
+                      <label class="small">Vista / Estilo</label>
+                      <select class="form-control form-control-sm"
+                              [ngModel]="getConfigValue(item.key, 'vista', 'grid')"
+                              (ngModelChange)="setConfig(item.key, 'vista', $event)">
+                        <option value="grid">Grid (Tarjetas)</option>
+                        <option value="carousel-list">Carrusel + Lista</option>
+                        <option value="list">Lista</option>
+                        <option value="timeline">Timeline</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4 mb-3" *ngIf="hasConfigOption(item.comp, 'estilo')">
+                      <label class="small">Estilo</label>
+                      <select class="form-control form-control-sm"
+                              [ngModel]="getConfigValue(item.key, 'estilo', 'default')"
+                              (ngModelChange)="setConfig(item.key, 'estilo', $event)">
+                        <option value="default">Por Defecto</option>
+                        <option value="cards">Tarjetas</option>
+                        <option value="list">Lista</option>
+                      </select>
+                    </div>
+                    <div class="col-12">
+                      <label class="small d-block mb-2">Opciones de Visualización:</label>
+                      <div class="row">
+                        <div class="col-md-4" *ngIf="hasConfigOption(item.comp, 'mostrar_imagen')">
+                          <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" [id]="'comp_'+item.key+'_img'"
+                                   [ngModel]="getConfigValue(item.key, 'mostrar_imagen', true)"
+                                   (ngModelChange)="setConfig(item.key, 'mostrar_imagen', $event)">
+                            <label class="custom-control-label small" [for]="'comp_'+item.key+'_img'">Mostrar Imagen</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4" *ngIf="hasConfigOption(item.comp, 'mostrar_fecha')">
+                          <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" [id]="'comp_'+item.key+'_fecha'"
+                                   [ngModel]="getConfigValue(item.key, 'mostrar_fecha', true)"
+                                   (ngModelChange)="setConfig(item.key, 'mostrar_fecha', $event)">
+                            <label class="custom-control-label small" [for]="'comp_'+item.key+'_fecha'">Mostrar Fecha</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4" *ngIf="hasConfigOption(item.comp, 'mostrar_progreso')">
+                          <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" [id]="'comp_'+item.key+'_prog'"
+                                   [ngModel]="getConfigValue(item.key, 'mostrar_progreso', true)"
+                                   (ngModelChange)="setConfig(item.key, 'mostrar_progreso', $event)">
+                            <label class="custom-control-label small" [for]="'comp_'+item.key+'_prog'">Mostrar Progreso</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4" *ngIf="hasConfigOption(item.comp, 'mostrar_estado')">
+                          <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" [id]="'comp_'+item.key+'_estado'"
+                                   [ngModel]="getConfigValue(item.key, 'mostrar_estado', true)"
+                                   (ngModelChange)="setConfig(item.key, 'mostrar_estado', $event)">
+                            <label class="custom-control-label small" [for]="'comp_'+item.key+'_estado'">Mostrar Estado</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4" *ngIf="hasConfigOption(item.comp, 'mostrar_precio')">
+                          <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" [id]="'comp_'+item.key+'_precio'"
+                                   [ngModel]="getConfigValue(item.key, 'mostrar_precio', true)"
+                                   (ngModelChange)="setConfig(item.key, 'mostrar_precio', $event)">
+                            <label class="custom-control-label small" [for]="'comp_'+item.key+'_precio'">Mostrar Precio</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4" *ngIf="hasConfigOption(item.comp, 'autoplay')">
+                          <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" [id]="'comp_'+item.key+'_autoplay'"
+                                   [ngModel]="getConfigValue(item.key, 'autoplay', false)"
+                                   (ngModelChange)="setConfig(item.key, 'autoplay', $event)">
+                            <label class="custom-control-label small" [for]="'comp_'+item.key+'_autoplay'">Autoplay</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 mt-3 pt-3 border-top" *ngIf="item.comp.soporta_ancho_completo">
+                      <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" [id]="'comp_'+item.key+'_ancho'"
+                               [ngModel]="getConfigValue(item.key, 'ancho_completo', false)"
+                               (ngModelChange)="setConfig(item.key, 'ancho_completo', $event)">
+                        <label class="custom-control-label font-weight-bold" [for]="'comp_'+item.key+'_ancho'">
+                          <i class="fas fa-arrows-alt-h text-primary mr-1"></i>Ancho Completo (sin sidebar)
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- ==================== SIDEBAR WIDGETS ==================== -->
+        <div class="card card-warning mt-4">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-columns mr-1"></i>Sidebar Lateral (Widgets)</h3></div>
+          <div class="card-body">
+            <div class="alert alert-warning">
+              <i class="fas fa-info-circle mr-1"></i><strong>Layout con Sidebar:</strong>
+              Activa una columna lateral (25%) con widgets útiles. El contenido principal ocupará el 75%.
+            </div>
+            <div class="mb-4 p-3 bg-light rounded">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="sidebar_activo"
+                       [(ngModel)]="plantilla.sidebar_habilitado" (ngModelChange)="onSidebarToggle()">
+                <label class="custom-control-label" for="sidebar_activo">
+                  <strong><i class="fas fa-toggle-on mr-1"></i>Activar Sidebar Lateral</strong>
+                </label>
+              </div>
+            </div>
+            <div *ngIf="plantilla.sidebar_habilitado">
+              <h6 class="mb-3 text-warning"><i class="fas fa-puzzle-piece mr-1"></i>Widgets Disponibles:</h6>
+              <div *ngFor="let wkey of sidebarWidgetKeys" class="card mb-2 border-warning">
+                <div class="card-body p-2">
+                  <div class="row align-items-center">
+                    <div class="col-md-7">
+                      <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" [id]="'sidebar_' + wkey"
+                               [checked]="isSidebarWidgetActivo(wkey)" (change)="toggleSidebarWidget(wkey)">
+                        <label class="custom-control-label small" [for]="'sidebar_' + wkey">
+                          <i [ngClass]="sidebarWidgetsDisponibles[wkey].icono" class="mr-1"></i>
+                          <strong>{{ sidebarWidgetsDisponibles[wkey].nombre }}</strong>
+                        </label>
+                      </div>
+                      <small class="text-muted d-block ml-4">{{ sidebarWidgetsDisponibles[wkey].descripcion }}</small>
+                    </div>
+                    <div class="col-md-5">
+                      <label class="small mb-0">Orden:</label>
+                      <input type="number" class="form-control form-control-sm"
+                             [ngModel]="getSidebarWidgetOrden(wkey)"
+                             (ngModelChange)="setSidebarWidgetOrden(wkey, $event)" min="1" max="20">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-check-circle mr-1"></i>Características</h3></div>
+          <div class="card-body">
+            <div class="custom-control custom-switch mb-3">
+              <input type="checkbox" class="custom-control-input" id="activa" [(ngModel)]="plantilla.activa">
+              <label class="custom-control-label" for="activa">Plantilla Activa</label>
+            </div>
+            <div class="custom-control custom-switch mb-3">
+              <input type="checkbox" class="custom-control-input" id="permite_sidebar"
+                     [(ngModel)]="plantilla.sidebar_habilitado" (ngModelChange)="onSidebarToggle()">
+              <label class="custom-control-label" for="permite_sidebar">Permite Sidebar</label>
+            </div>
+            <div class="custom-control custom-switch mb-3">
+              <input type="checkbox" class="custom-control-input" id="permite_galeria" [(ngModel)]="plantilla.permite_galeria">
+              <label class="custom-control-label" for="permite_galeria">Permite Galería</label>
+            </div>
+            <div class="custom-control custom-switch mb-3">
+              <input type="checkbox" class="custom-control-input" id="permite_tablas" [(ngModel)]="plantilla.permite_tablas">
+              <label class="custom-control-label" for="permite_tablas">Permite Tablas</label>
+            </div>
+            <div class="custom-control custom-switch mb-3">
+              <input type="checkbox" class="custom-control-input" id="permite_formularios" [(ngModel)]="plantilla.permite_formularios">
+              <label class="custom-control-label" for="permite_formularios">Permite Formularios</label>
+            </div>
+            <div class="custom-control custom-switch mb-3">
+              <input type="checkbox" class="custom-control-input" id="es_dinamica" [(ngModel)]="plantilla.es_dinamica">
+              <label class="custom-control-label" for="es_dinamica">Contenido Dinámico</label>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <button class="btn btn-primary btn-block" (click)="guardar()" [disabled]="saving">
+              <i class="fas fa-save mr-1"></i>{{ saving ? 'Guardando...' : 'Guardar Cambios' }}
+            </button>
+            <a routerLink="/gestor-contenidos/plantillas" class="btn btn-secondary btn-block">
+              <i class="fas fa-times mr-1"></i>Cancelar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

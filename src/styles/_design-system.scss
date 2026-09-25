@@ -1,0 +1,130 @@
+/* ========== DESIGN SYSTEM: CSS Variables & Tokens ========== */
+
+:root {
+  --container-fluid-padding: 2rem;
+
+  /* CrudView CSS Variables (set by DesignSystemService) */
+  --ds-font-size: 0.82rem;
+  --ds-header-font-size: 0.9rem;
+  --ds-label-font-size: 0.78rem;
+  --ds-cell-padding-y: 0.35rem;
+  --ds-cell-padding-x: 0.5rem;
+  --ds-table-header-bg: #f8f9fa;
+  --ds-table-header-color: #495057;
+  --ds-filter-input-font-size: 0.8rem;
+  --ds-card-border-radius: 6px;
+
+  /* Form & Modal Variables */
+  --ds-label-margin-bottom: 0.4rem;
+  --ds-form-padding: 1rem 1.25rem;
+  --ds-label-color: #495057;
+  --ds-label-weight: 500;
+  --ds-modal-header-bg: #1877f2;
+  --ds-modal-header-text: #ffffff;
+  --ds-modal-header-padding: 0.75rem 1rem;
+  --ds-modal-header-title-size: 1.1rem;
+  --ds-modal-footer-bg: #ffffff;
+  --ds-modal-border-radius: 12px;
+
+  /* Confirm Dialog Defaults */
+  --ds-confirm-danger-bg: #dc3545;
+  --ds-confirm-danger-text: #ffffff;
+  --ds-confirm-warning-bg: #ffc107;
+  --ds-confirm-warning-text: #1c1e21;
+  --ds-confirm-info-bg: #17a2b8;
+  --ds-confirm-info-text: #ffffff;
+  --ds-confirm-border-radius: 12px;
+
+  /* Toast Defaults */
+  --ds-toast-success-bg: #28a745;
+  --ds-toast-error-bg: #dc3545;
+  --ds-toast-warning-bg: #ffc107;
+  --ds-toast-info-bg: #17a2b8;
+  --ds-toast-border-radius: 6px;
+}
+
+/* ===== CRUD Tables ===== */
+.ds-crud-table {
+  font-size: var(--ds-font-size) !important;
+
+  thead {
+    background-color: var(--ds-table-header-bg);
+    color: var(--ds-table-header-color);
+
+    th {
+      font-size: var(--ds-header-font-size);
+      color: var(--ds-table-header-color);
+      padding: var(--ds-cell-padding-y) var(--ds-cell-padding-x);
+      font-weight: 600;
+      border-bottom: 2px solid #dee2e6;
+      vertical-align: middle;
+    }
+  }
+
+  tbody td {
+    padding: var(--ds-cell-padding-y) var(--ds-cell-padding-x);
+    vertical-align: middle;
+  }
+}
+
+/* Labels y filtros CRUD */
+.ds-crud-label {
+  font-size: var(--ds-label-font-size);
+}
+
+.ds-crud-filter {
+  font-size: var(--ds-filter-input-font-size);
+}
+
+/* Cards con Design System */
+.card.card-outline {
+  border: 1px solid #dee2e6 !important;
+  border-top: 3px solid var(--ds-card-outline-color, #6c757d) !important;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  .table-responsive {
+    border: 1px solid #dee2e6 !important;
+    border-radius: 8px;
+    margin: 1rem !important;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  }
+}
+
+/* ===== Design System Badges ===== */
+.ds-badge-success { background-color: #28a745 !important; color: white !important; border-radius: 6px; padding: 0.25rem 0.5rem; font-weight: 600; font-size: 0.75rem; }
+.ds-badge-danger  { background-color: #dc3545 !important; color: white !important; border-radius: 6px; padding: 0.25rem 0.5rem; font-weight: 600; font-size: 0.75rem; }
+.ds-badge-warning { background-color: #ffc107 !important; color: #1f2d3d !important; border-radius: 6px; padding: 0.25rem 0.5rem; font-weight: 600; font-size: 0.75rem; }
+.ds-badge-info    { background-color: #17a2b8 !important; color: white !important; border-radius: 6px; padding: 0.25rem 0.5rem; font-weight: 600; font-size: 0.75rem; }
+.ds-badge-secondary { background-color: #6c757d !important; color: white !important; border-radius: 6px; padding: 0.25rem 0.5rem; font-weight: 600; font-size: 0.75rem; }
+
+/* Status Badges */
+.ds-badge-active   { background-color: var(--ds-status-active-color, #28a745) !important; color: white !important; border-radius: 6px; padding: 0.25rem 0.5rem; font-weight: 600; font-size: 0.75rem; }
+.ds-badge-inactive { background-color: var(--ds-status-inactive-color, #6c757d) !important; color: white !important; border-radius: 6px; padding: 0.25rem 0.5rem; font-weight: 600; font-size: 0.75rem; }
+
+/* Select2 Variants */
+.select2-purple .select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background-color: #6f42c1 !important; border-color: #5a32a3 !important; color: #fff !important;
+}
+.select2-danger .select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background-color: #dc3545 !important; border-color: #bd2130 !important; color: #fff !important;
+}
+
+/* Global label styles from Design System */
+label:not(.custom-control-label):not(.btn) {
+  margin-bottom: var(--ds-label-margin-bottom) !important;
+  color: var(--ds-label-color) !important;
+  font-weight: var(--ds-label-weight) !important;
+  font-size: var(--ds-label-font-size) !important;
+}
+
+.form-group, .mb-3 {
+  label:not(.custom-control-label):not(.btn) {
+    margin-bottom: var(--ds-label-margin-bottom) !important;
+  }
+}
+
+.form-control {
+  font-size: var(--ds-font-size);
+}

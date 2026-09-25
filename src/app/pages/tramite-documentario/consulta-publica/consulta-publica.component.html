@@ -1,0 +1,104 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-12 text-center">
+        <h1 class="m-0"><i class="fas fa-globe mr-2"></i>Consulta Pública de Trámites</h1>
+        <p class="text-muted">Consulte el estado de su trámite ingresando el número de expediente o código de verificación</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+
+        <!-- Formulario de consulta -->
+        <div class="card card-primary card-outline">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-search mr-2"></i>Consultar Expediente</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Número de Expediente o Código de Verificación:</label>
+              <div class="input-group input-group-lg">
+                <input type="text" class="form-control" placeholder="Ej: EXP-2026-000001 o 2026-000001" [(ngModel)]="codigoConsulta" (keyup.enter)="consultar()">
+                <div class="input-group-append">
+                  <button class="btn btn-primary" [disabled]="loading" (click)="consultar()">
+                    <i class="fas fa-search mr-1" *ngIf="!loading"></i>
+                    <i class="fas fa-spinner fa-spin mr-1" *ngIf="loading"></i>
+                    Consultar
+                  </button>
+                </div>
+              </div>
+              <small class="form-text text-muted">Ingrese el número de expediente o código de verificación que le proporcionaron</small>
+            </div>
+
+            <div *ngIf="error" class="alert alert-danger mt-3">
+              <i class="fas fa-exclamation-triangle mr-2"></i>{{ error }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Resultado -->
+        <div *ngIf="resultado" class="card card-success card-outline">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-check-circle mr-2"></i>Expediente Encontrado</h3></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <dl>
+                  <dt>N° Expediente</dt><dd><strong class="text-primary">{{ resultado.expediente?.numero_expediente }}</strong></dd>
+                  <dt>Asunto</dt><dd>{{ resultado.expediente?.asunto }}</dd>
+                  <dt>Tipo</dt><dd>{{ resultado.expediente?.tipo_nombre || '—' }}</dd>
+                  <dt>Código de Verificación</dt><dd><code>{{ resultado.expediente?.codigo_verificacion }}</code></dd>
+                </dl>
+              </div>
+              <div class="col-md-6">
+                <dl>
+                  <dt>Estado</dt>
+                  <dd><span class="badge badge-lg" [ngClass]="getEstadoClass(resultado.expediente?.estado)">{{ getEstadoLabel(resultado.expediente?.estado) }}</span></dd>
+                  <dt>Fecha Ingreso</dt><dd>{{ resultado.expediente?.fecha_ingreso }}</dd>
+                  <dt>Fecha Límite</dt><dd>{{ resultado.expediente?.fecha_limite || '—' }}</dd>
+                  <dt>Área Actual</dt><dd>{{ resultado.expediente?.area_actual_nombre || '—' }}</dd>
+                </dl>
+              </div>
+            </div>
+
+            <!-- Línea de Tiempo -->
+            <hr>
+            <h5><i class="fas fa-route mr-2"></i>Trazabilidad</h5>
+            <div class="timeline" *ngIf="resultado.linea_tiempo?.length > 0">
+              <div *ngFor="let ev of resultado.linea_tiempo">
+                <i class="fas fa-circle bg-white" [ngClass]="{'text-success':ev.accion==='creado' || ev.accion==='atendido','text-primary':ev.accion==='recibido','text-info':ev.accion==='derivado','text-warning':ev.accion==='observado','text-dark':ev.accion==='archivado','text-danger':ev.accion==='rechazado'}"></i>
+                <div class="timeline-item">
+                  <span class="time"><i class="fas fa-clock"></i> {{ ev.fecha }}</span>
+                  <h3 class="timeline-header"><strong>{{ ev.titulo }}</strong></h3>
+                  <div class="timeline-body" *ngIf="ev.detalle">{{ ev.detalle }}</div>
+                  <div class="timeline-footer" *ngIf="ev.area_origen_nombre || ev.area_destino_nombre">
+                    <small class="text-muted">
+                      <span *ngIf="ev.area_origen_nombre">De: {{ ev.area_origen_nombre }}</span>
+                      <span *ngIf="ev.area_destino_nombre"> → A: {{ ev.area_destino_nombre }}</span>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info -->
+        <div class="alert alert-info">
+          <h5><i class="icon fas fa-info"></i> Información Importante</h5>
+          <ul class="mb-0">
+            <li>Esta consulta es pública y no requiere iniciar sesión</li>
+            <li>Solo se muestran movimientos públicos del expediente</li>
+            <li>El código de verificación se encuentra en su constancia de recepción</li>
+          </ul>
+        </div>
+
+        <div class="text-center">
+          <button class="btn btn-secondary" (click)="limpiar()" *ngIf="resultado || error"><i class="fas fa-redo mr-1"></i>Nueva Consulta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

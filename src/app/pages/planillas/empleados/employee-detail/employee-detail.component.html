@@ -1,0 +1,375 @@
+<div class="employee-detail-container">
+  <!-- Header -->
+  <div class="detail-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button 
+          type="button" 
+          class="btn btn-outline-secondary btn-back"
+          (click)="goBack()">
+          <i class="fas fa-arrow-left"></i>
+          Volver
+        </button>
+        <div class="page-info" *ngIf="employee">
+          <h1 class="page-title">{{ getEmployeeFullName() }}</h1>
+          <span class="employee-code">{{ employee.employee_code }}</span>
+        </div>
+      </div>
+      <div class="header-actions" *ngIf="employee">
+        <button 
+          type="button" 
+          class="btn btn-outline-primary"
+          (click)="printEmployee()"
+          title="Imprimir">
+          <i class="fas fa-print"></i>
+        </button>
+        <button 
+          *ngIf="canExportEmployee"
+          type="button" 
+          class="btn btn-outline-info"
+          (click)="exportEmployee()"
+          title="Exportar">
+          <i class="fas fa-download"></i>
+        </button>
+        <button 
+          *ngIf="canEditEmployee"
+          type="button" 
+          class="btn btn-primary"
+          (click)="editEmployee()">
+          <i class="fas fa-edit"></i>
+          Editar
+        </button>
+        <button 
+          *ngIf="canDeleteEmployee"
+          type="button" 
+          class="btn btn-danger"
+          (click)="deleteEmployee()"
+          [disabled]="!canDeleteEmployeeByStatus()"
+          title="Solo se pueden eliminar empleados inactivos">
+          <i class="fas fa-trash"></i>
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span>Cargando información del empleado...</span>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !loading">
+    <div class="error-content">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h3>Error al cargar empleado</h3>
+      <p>{{ error }}</p>
+      <button 
+        type="button" 
+        class="btn btn-primary"
+        (click)="reloadEmployee()">
+        <i class="fas fa-refresh"></i>
+        Reintentar
+      </button>
+    </div>
+  </div>
+
+  <!-- Employee Details -->
+  <div class="employee-details" *ngIf="employee && !loading && !error">
+    
+    <!-- Employee Summary Card -->
+    <div class="summary-card">
+      <div class="employee-avatar">
+        <div class="avatar-circle">
+          {{ getEmployeeInitials() }}
+        </div>
+      </div>
+      <div class="employee-summary">
+        <h2 class="employee-name">{{ getEmployeeFullName() }}</h2>
+        <div class="employee-meta">
+          <span class="badge" [class]="getStatusBadgeClass()">
+            {{ getStatusText() }}
+          </span>
+          <span class="meta-item">
+            <i class="fas fa-id-card"></i>
+            {{ employee.dni }}
+          </span>
+          <span class="meta-item" *ngIf="employee.department?.name">
+            <i class="fas fa-building"></i>
+            {{ employee.department?.name }}
+          </span>
+          <span class="meta-item" *ngIf="employee.position?.name">
+            <i class="fas fa-user-tie"></i>
+            {{ employee.position?.name }}
+          </span>
+        </div>
+        <div class="employee-stats">
+          <div class="stat-item" *ngIf="getEmployeeAge()">
+            <span class="stat-value">{{ getEmployeeAge() }}</span>
+            <span class="stat-label">años</span>
+          </div>
+          <div class="stat-item" *ngIf="getYearsOfService() !== null">
+            <span class="stat-value">{{ getYearsOfService() }}</span>
+            <span class="stat-label">años de servicio</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ formatCurrency(employee.base_salary) }}</span>
+            <span class="stat-label">sueldo base</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Sections -->
+    <div class="detail-sections">
+      
+      <!-- Personal Information -->
+      <div class="detail-section">
+        <div class="section-header">
+          <h3 class="section-title">
+            <i class="fas fa-user"></i>
+            Información Personal
+          </h3>
+        </div>
+        <div class="section-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>DNI:</label>
+              <span>{{ employee.dni }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.ruc">
+              <label>RUC:</label>
+              <span>{{ employee.ruc }}</span>
+            </div>
+            <div class="info-item">
+              <label>Nombres:</label>
+              <span>{{ employee.first_name }}</span>
+            </div>
+            <div class="info-item">
+              <label>Apellidos:</label>
+              <span>{{ employee.last_name }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.email">
+              <label>Email:</label>
+              <span>{{ employee.email }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.phone">
+              <label>Teléfono:</label>
+              <span>{{ employee.phone }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.birth_date">
+              <label>Fecha de Nacimiento:</label>
+              <span>{{ formatDate(employee.birth_date) }}</span>
+            </div>
+            <div class="info-item">
+              <label>Género:</label>
+              <span>{{ getGenderText() }}</span>
+            </div>
+            <div class="info-item">
+              <label>Estado Civil:</label>
+              <span>{{ getMaritalStatusText() }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.children_count !== null">
+              <label>Número de Hijos:</label>
+              <span>{{ employee.children_count }}</span>
+            </div>
+            <div class="info-item full-width" *ngIf="employee.address">
+              <label>Dirección:</label>
+              <span>{{ employee.address }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employment Information -->
+      <div class="detail-section">
+        <div class="section-header">
+          <h3 class="section-title">
+            <i class="fas fa-briefcase"></i>
+            Información Laboral
+          </h3>
+        </div>
+        <div class="section-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Código de Empleado:</label>
+              <span class="highlight">{{ employee.employee_code }}</span>
+            </div>
+            <div class="info-item">
+              <label>Fecha de Ingreso:</label>
+              <span>{{ formatDate(employee.hire_date) }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.department?.name">
+              <label>Departamento:</label>
+              <span>{{ employee.department?.name }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.position?.name">
+              <label>Cargo:</label>
+              <span>{{ employee.position?.name }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.cost_center?.name">
+              <label>Centro de Costo:</label>
+              <span>{{ employee.cost_center?.name }}</span>
+            </div>
+            <div class="info-item">
+              <label>Régimen Laboral:</label>
+              <span>{{ getLaborRegimeText() }}</span>
+            </div>
+            <div class="info-item">
+              <label>Sueldo Base:</label>
+              <span class="highlight">{{ formatCurrency(employee.base_salary) }}</span>
+            </div>
+            <div class="info-item">
+              <label>Estado:</label>
+              <span class="badge" [class]="getStatusBadgeClass()">
+                {{ getStatusText() }}
+              </span>
+            </div>
+          </div>
+          
+          <!-- Termination Information (if inactive) -->
+          <div class="termination-info" *ngIf="employee.status === 'inactive'">
+            <h4 class="subsection-title">
+              <i class="fas fa-calendar-times"></i>
+              Información de Cese
+            </h4>
+            <div class="info-grid">
+              <div class="info-item" *ngIf="employee.termination_date">
+                <label>Fecha de Cese:</label>
+                <span>{{ formatDate(employee.termination_date) }}</span>
+              </div>
+              <div class="info-item full-width" *ngIf="employee.termination_reason">
+                <label>Motivo de Cese:</label>
+                <span>{{ employee.termination_reason }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pension Information -->
+      <div class="detail-section">
+        <div class="section-header">
+          <h3 class="section-title">
+            <i class="fas fa-shield-alt"></i>
+            Información Previsional
+          </h3>
+        </div>
+        <div class="section-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Sistema de Pensiones:</label>
+              <span>{{ getPensionSystemText() }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.afp?.name">
+              <label>AFP:</label>
+              <span>{{ employee.afp?.name }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.cuspp">
+              <label>CUSPP:</label>
+              <span>{{ employee.cuspp }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Banking Information -->
+      <div class="detail-section" *ngIf="employee.bank_name || employee.bank_account">
+        <div class="section-header">
+          <h3 class="section-title">
+            <i class="fas fa-university"></i>
+            Información Bancaria
+          </h3>
+        </div>
+        <div class="section-content">
+          <div class="info-grid">
+            <div class="info-item" *ngIf="employee.bank_name">
+              <label>Banco:</label>
+              <span>{{ employee.bank_name }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.account_type">
+              <label>Tipo de Cuenta:</label>
+              <span>{{ getAccountTypeText() }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.bank_account">
+              <label>Número de Cuenta:</label>
+              <span>{{ employee.bank_account }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Benefits Information -->
+      <div class="detail-section">
+        <div class="section-header">
+          <h3 class="section-title">
+            <i class="fas fa-gift"></i>
+            Beneficios
+          </h3>
+        </div>
+        <div class="section-content">
+          <div class="benefits-grid">
+            <div class="benefit-item">
+              <div class="benefit-icon" [class.active]="employee.receives_family_allowance">
+                <i class="fas fa-home"></i>
+              </div>
+              <div class="benefit-info">
+                <span class="benefit-name">Asignación Familiar</span>
+                <span class="benefit-status" [class.active]="employee.receives_family_allowance">
+                  {{ employee.receives_family_allowance ? 'Sí recibe' : 'No recibe' }}
+                </span>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <div class="benefit-icon" [class.active]="employee.is_unionized">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="benefit-info">
+                <span class="benefit-name">Sindicalizado</span>
+                <span class="benefit-status" [class.active]="employee.is_unionized">
+                  {{ employee.is_unionized ? 'Sí' : 'No' }}
+                </span>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <div class="benefit-icon" [class.active]="employee.has_life_insurance">
+                <i class="fas fa-shield-alt"></i>
+              </div>
+              <div class="benefit-info">
+                <span class="benefit-name">Seguro de Vida</span>
+                <span class="benefit-status" [class.active]="employee.has_life_insurance">
+                  {{ employee.has_life_insurance ? 'Sí tiene' : 'No tiene' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit Information -->
+      <div class="detail-section" *ngIf="employee.created_at || employee.updated_at">
+        <div class="section-header">
+          <h3 class="section-title">
+            <i class="fas fa-history"></i>
+            Información de Auditoría
+          </h3>
+        </div>
+        <div class="section-content">
+          <div class="info-grid">
+            <div class="info-item" *ngIf="employee.created_at">
+              <label>Fecha de Creación:</label>
+              <span>{{ formatDate(employee.created_at) }}</span>
+            </div>
+            <div class="info-item" *ngIf="employee.updated_at">
+              <label>Última Actualización:</label>
+              <span>{{ formatDate(employee.updated_at) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

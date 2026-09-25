@@ -1,0 +1,220 @@
+<!-- AdminLTE 3.2.0 Menu Form -->
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">
+            <i class="fas fa-edit"></i> 
+            {{ isEditMode ? 'Editar Menú' : 'Crear Nuevo Menú' }}
+          </h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin-menu-management">Administrador</a></li>
+            <li class="breadcrumb-item"><a href="/admin-menu-management/menus">Menús</a></li>
+            <li class="breadcrumb-item active">{{ isEditMode ? 'Editar' : 'Crear' }}</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+<section class="content">
+  <div class="container-fluid form-container">
+      
+      <form (ngSubmit)="onSubmit()" #menuForm="ngForm">
+        <div class="row">
+          <!-- Formulario Principal -->
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-info-circle"></i> Información del Menú
+                </h3>
+              </div>
+              <div class="card-body">
+                
+                <!-- Nombre del Menú -->
+                <div class="form-group">
+                  <label for="nombre">Nombre del Menú *</label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="nombre"
+                    name="nombre"
+                    [(ngModel)]="menu.nombre"
+                    required
+                    placeholder="Ej: Gestión de Usuarios">
+                  <small class="form-text text-muted">
+                    Este será el texto que aparecerá en el menú lateral
+                  </small>
+                </div>
+
+                <!-- URL -->
+                <div class="form-group">
+                  <label for="url">URL *</label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="url"
+                    name="url"
+                    [(ngModel)]="menu.url"
+                    required
+                    placeholder="Ej: /usuarios">
+                  <small class="form-text text-muted">
+                    Ruta donde dirigirá el menú. Use # para menús padre
+                  </small>
+                </div>
+
+                <!-- Icono -->
+                <div class="form-group">
+                  <label for="icono">Icono</label>
+                  <select 
+                    class="form-control" 
+                    id="icono"
+                    name="icono"
+                    [(ngModel)]="menu.icono">
+                    <option *ngFor="let icono of iconos" [value]="icono.value">
+                      {{ icono.label }} ({{ icono.value }})
+                    </option>
+                  </select>
+                  <small class="form-text text-muted">
+                    Icono que aparecerá junto al nombre del menú
+                  </small>
+                </div>
+
+                <!-- Módulo -->
+                <div class="form-group">
+                  <label for="modulo">Módulo</label>
+                  <select 
+                    class="form-control" 
+                    id="modulo"
+                    name="modulo"
+                    [(ngModel)]="menu.modulo">
+                    <option *ngFor="let modulo of modulos" [value]="modulo.value">
+                      {{ modulo.label }}
+                    </option>
+                  </select>
+                  <small class="form-text text-muted">
+                    Módulo al que pertenece este menú
+                  </small>
+                </div>
+
+                <!-- Menú Padre -->
+                <div class="form-group">
+                  <label for="padre_id">Menú Padre</label>
+                  <select 
+                    class="form-control" 
+                    id="padre_id"
+                    name="padre_id"
+                    [(ngModel)]="menu.padre_id">
+                    <option *ngFor="let padre of menusPadre" [value]="padre.value">
+                      {{ padre.label }}
+                    </option>
+                  </select>
+                  <small class="form-text text-muted">
+                    Seleccione un menú padre para crear un submenú
+                  </small>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Configuración Adicional -->
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-cog"></i> Configuración
+                </h3>
+              </div>
+              <div class="card-body">
+                
+                <!-- Orden -->
+                <div class="form-group">
+                  <label for="orden">Orden</label>
+                  <input 
+                    type="number" 
+                    class="form-control" 
+                    id="orden"
+                    name="orden"
+                    [(ngModel)]="menu.orden"
+                    min="1"
+                    max="100">
+                  <small class="form-text text-muted">
+                    Posición en el menú (1 = primero)
+                  </small>
+                </div>
+
+                <!-- Estado -->
+                <div class="form-group">
+                  <div class="form-check">
+                    <input 
+                      type="checkbox" 
+                      class="form-check-input" 
+                      id="activo"
+                      name="activo"
+                      [(ngModel)]="menu.activo">
+                    <label class="form-check-label" for="activo">
+                      Menú Activo
+                    </label>
+                  </div>
+                  <small class="form-text text-muted">
+                    Los menús inactivos no se mostrarán en el sidebar
+                  </small>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Vista Previa -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-eye"></i> Vista Previa
+                </h3>
+              </div>
+              <div class="card-body">
+                <div class="nav-item">
+                  <a href="#" class="nav-link">
+                    <i [ngClass]="menu.icono"></i>
+                    <p>{{ menu.nombre || 'Nombre del Menú' }}</p>
+                  </a>
+                </div>
+                <small class="text-muted">
+                  Así se verá el menú en el sidebar
+                </small>
+              </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="card">
+              <div class="card-body">
+                <button 
+                  type="submit" 
+                  class="btn btn-primary btn-block"
+                  [disabled]="!menuForm.form.valid">
+                  <i class="fas fa-save"></i> 
+                  {{ isEditMode ? 'Actualizar Menú' : 'Crear Menú' }}
+                </button>
+                <button 
+                  type="button" 
+                  class="btn btn-secondary btn-block"
+                  (click)="onCancel()">
+                  <i class="fas fa-times"></i> Cancelar
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </section>
+</div>

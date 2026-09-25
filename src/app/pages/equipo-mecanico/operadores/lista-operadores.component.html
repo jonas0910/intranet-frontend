@@ -1,0 +1,314 @@
+<app-system-layout [title]="'Gestión de Operadores'" [subtitle]="'Control de personal encargado de maquinaria y equipos'"
+  [subtitleItems]="subtitleItems"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Equipo Mecánico', url: '/equipo-mecanico'}, {label: 'Operadores'}]"
+  [subsystem]="subsystem">
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-primary'"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+        
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white rounded-top">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-user-hard-hat mr-1"></i> Lista de Operadores
+            </h3>
+            <span class="badge"
+              [ngClass]="cv.cardOutlineColor ? 'bg-' + cv.cardOutlineColor.replace('card-', '') : 'badge-primary'"
+              *ngIf="cv.showRecordCount">{{operadores.length}}</span>
+            
+            <ng-container *ngIf="cv.showExportButtons">
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'" title="Exportar Excel">
+                <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{ cv.excelBtnLabel || 'Excel' }}
+              </button>
+            </ng-container>
+          </div>
+          
+          <div class="ms-auto flex-shrink-0">
+            <button type="button" class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-primary'"
+              (click)="abrirModalNuevo()">
+              <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> Nuevo Operador
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="p-3 border-bottom bg-light">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+              <label class="mb-1 ds-crud-label">Buscar</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" [(ngModel)]="filtros.search"
+                  (ngModelChange)="onFilterChange()" placeholder="Nombre, email, licencia...">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label class="mb-1 ds-crud-label">Estado</label>
+              <select class="form-control form-control-sm" [(ngModel)]="filtros.activo"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Cualquier estado</option>
+                <option value="true">Activos</option>
+                <option value="false">Inactivos</option>
+              </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-sm btn-outline-secondary btn-block" (click)="limpiarFiltros()">
+                <i class="fas fa-times mr-1"></i> Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card-body px-0 pt-0 pb-2">
+          <div *ngIf="loading" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+            <p class="text-muted">Cargando operadores...</p>
+          </div>
+
+          <div class="table-responsive p-2" [hidden]="loading">
+            <table id="operadoresTable" class="table mb-0 w-100 ds-crud-table" [ngClass]="cv.tableClasses">
+              <!-- DataTable se inicializa dinámicamente -->
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-system-layout>
+
+<!-- Modal CRUD Operador -->
+<div class="modal fade" id="modalOperador" tabindex="-1" role="dialog" aria-labelledby="modalOperadorLabel" aria-hidden="true" data-backdrop="static">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" [style.border-radius.px]="cv.cardBorderRadius">
+      <div class="modal-header text-white" [style.background-color]="modalMode === 'view' ? '#17a2b8' : (modalMode === 'edit' ? '#ffc107' : '#007bff')">
+        <h5 class="modal-title" id="modalOperadorLabel">
+          <i class="fas fa-user-hard-hat mr-2"></i>
+          <span *ngIf="modalMode === 'create'">Registrar Nuevo Operador</span>
+          <span *ngIf="modalMode === 'edit'">Editar Ficha del Operador</span>
+          <span *ngIf="modalMode === 'view'">Detalle del Operador</span>
+        </h5>
+        <button type="button" class="close text-white" (click)="cerrarModal()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <form [formGroup]="operadorForm" (ngSubmit)="guardarOperador()">
+        <div class="modal-body p-0" style="background-color: #f4f6f9;">
+          <!-- Tabs Navigation -->
+          <ul class="nav nav-tabs px-3 pt-2 bg-white border-bottom" id="operadorTabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active font-weight-bold" id="info-tab" data-toggle="tab" href="#info" role="tab" (click)="activeTab = 'info'">
+                <i class="fas fa-info-circle mr-1"></i> Datos Principales
+              </a>
+            </li>
+            <li class="nav-item" *ngIf="modalMode !== 'create'">
+              <a class="nav-link font-weight-bold" id="contracts-tab" data-toggle="tab" href="#contracts" role="tab" (click)="activeTab = 'contracts'; loadContracts()">
+                <i class="fas fa-file-contract mr-1"></i> Contratos / Órdenes
+              </a>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="operadorTabsContent">
+            <!-- Tab: Información General -->
+            <div class="tab-pane fade show active p-4" id="info" role="tabpanel">
+              <div class="card card-outline card-primary shadow-sm mb-0">
+                <div class="card-body">
+              <div class="row">
+                <!-- Datos Personales -->
+                <div class="col-md-12 mb-3">
+                  <h6 class="text-primary font-weight-bold border-bottom pb-2 mb-3">
+                    <i class="fas fa-user mr-1"></i> Identificación del Operador
+                  </h6>
+                  <p *ngIf="modalMode === 'create'" class="small text-muted mb-0">
+                    <i class="fas fa-info-circle mr-1"></i> El personal creado en este módulo se registra como <strong>Tipo Servicio / Externo</strong>.
+                  </p>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Nombres <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="first_name" placeholder="Ej: Juan" [readonly]="modalMode === 'view'">
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Apellidos <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="last_name" placeholder="Ej: Pérez García" [readonly]="modalMode === 'view'">
+                  </div>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">DNI <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="dni" placeholder="12345678" maxlength="8" [readonly]="modalMode === 'view'">
+                  </div>
+                </div>
+
+                <div class="col-md-3 mb-3" *ngIf="modalMode === 'view'">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Código (Generado)</label>
+                    <input type="text" class="form-control" formControlName="employee_code" placeholder="Auto-generado" [readonly]="true">
+                  </div>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Fecha de Ingreso <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="fecha_ingreso" [readonly]="modalMode === 'view'">
+                  </div>
+                </div>
+
+                <div class="col-md-3 mb-3 d-flex align-items-end">
+                  <div class="form-group mb-2 w-100">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="activo" formControlName="activo">
+                      <label class="custom-control-label" for="activo">
+                        {{ operadorForm.get('activo')?.value ? 'HABILITADO' : 'INHABILITADO' }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-12 mb-3 mt-2">
+                  <h6 class="text-info font-weight-bold border-bottom pb-2 mb-3">
+                    <i class="fas fa-id-card mr-1"></i> Información de Licencia
+                  </h6>
+                </div>
+
+                <!-- Licencia -->
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Nro. de Licencia</label>
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                      </div>
+                      <input type="text" class="form-control" formControlName="licencia" placeholder="Ej: Q12345678" [readonly]="modalMode === 'view'">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Categoría Licencia -->
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Categoría</label>
+                    <select class="form-control" formControlName="categoria_licencia">
+                      <option value="">Seleccione categoría</option>
+                      <option value="A-I">A-I</option>
+                      <option value="A-IIa">A-IIa</option>
+                      <option value="A-IIb">A-IIb</option>
+                      <option value="A-IIIa">A-IIIa</option>
+                      <option value="A-IIIb">A-IIIb</option>
+                      <option value="A-IIIc">A-IIIc</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Fecha Vencimiento -->
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Fecha de Vencimiento</label>
+                    <input type="date" class="form-control" formControlName="fecha_vencimiento_licencia" [readonly]="modalMode === 'view'">
+                  </div>
+                </div>
+                  </div><!-- /row -->
+                </div><!-- /card-body -->
+              </div><!-- /card-outline -->
+            </div><!-- /tab-pane -->
+
+            <!-- Tab: Contratos / Órdenes -->
+            <div class="tab-pane fade p-4" id="contracts" role="tabpanel">
+              <div class="card card-outline card-info shadow-sm mb-0">
+                <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                  <h6 class="card-title text-info font-weight-bold mb-0">
+                    <i class="fas fa-history mr-1"></i> Historial de Contratos / Órdenes de Servicio
+                  </h6>
+                  <button *ngIf="modalMode !== 'view'" type="button" class="btn btn-sm btn-info shadow-sm" (click)="openContractModal()">
+                    <i class="fas fa-plus mr-1"></i> Nuevo Contrato
+                  </button>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive" *ngIf="!loadingContracts && contracts.length > 0">
+                    <table class="table table-hover table-striped mb-0 small">
+                      <thead class="bg-light">
+                        <tr>
+                          <th>N° Orden / Contrato</th>
+                          <th>Periodo</th>
+                          <th class="text-right">Monto</th>
+                          <th>Estado</th>
+                          <th *ngIf="modalMode !== 'view'" class="text-center">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let contract of contracts">
+                          <td class="font-weight-bold">{{ contract.contract_number }}</td>
+                          <td>
+                            <div class="d-flex flex-column">
+                              <span><i class="fas fa-calendar-alt mr-1 text-muted"></i> {{ contract.start_date | date: 'dd/MM/yyyy' }}</span>
+                              <small class="text-muted"><i class="fas fa-calendar-check mr-1"></i> {{ contract.end_date ? (contract.end_date | date: 'dd/MM/yyyy') : 'Indefinido' }}</small>
+                            </div>
+                          </td>
+                          <td class="text-right font-weight-bold text-dark">S/ {{ contract.salary | number: '1.2-2' }}</td>
+                          <td>
+                            <span class="badge" [ngClass]="getContractStatusClass(contract.status)">
+                              {{ contract.status | uppercase }}
+                            </span>
+                          </td>
+                          <td *ngIf="modalMode !== 'view'" class="text-center">
+                            <div class="btn-group btn-group-sm">
+                              <button type="button" class="btn btn-outline-info" (click)="editContract(contract)" title="Editar">
+                                <i class="fas fa-edit"></i>
+                              </button>
+                              <button type="button" class="btn btn-outline-danger" (click)="deleteContract(contract)" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Empty State -->
+                  <div class="text-center py-5 text-muted" *ngIf="!loadingContracts && contracts.length === 0">
+                    <i class="fas fa-file-signature fa-3x mb-3 opacity-50"></i>
+                    <h6>No hay contratos registrados</h6>
+                    <p class="small mb-0 text-muted">Haga clic en "Nuevo Contrato" para asignar un periodo y monto.</p>
+                  </div>
+
+                  <!-- Loading State -->
+                  <div class="text-center py-5" *ngIf="loadingContracts">
+                    <i class="fas fa-spinner fa-spin fa-2x text-info"></i>
+                    <p class="mt-2 text-muted small">Cargando contratos...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light border-top">
+          <button type="button" class="btn btn-secondary shadow-sm px-4" (click)="cerrarModal()">
+            <i class="fas fa-times mr-1"></i> {{ modalMode === 'view' ? 'Cerrar' : 'Cancelar' }}
+          </button>
+          <button type="submit" class="btn shadow-sm px-4" [ngClass]="modalMode === 'edit' ? 'btn-warning' : 'btn-primary'" *ngIf="modalMode !== 'view' && activeTab === 'info'" [disabled]="submitting">
+            <i class="fas" [ngClass]="submitting ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{ submitting ? 'Guardando...' : (modalMode === 'edit' ? 'Actualizar Cambios' : 'Registrar Operador') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Service Modal (Equipo Mecánico) -->
+<app-service-modal-em
+  [isVisible]="showContractModal"
+  [employeeId]="operadorSeleccionado?.id"
+  [contract]="contractModalData"
+  (modalClosed)="onContractModalClosed($event)">
+</app-service-modal-em>

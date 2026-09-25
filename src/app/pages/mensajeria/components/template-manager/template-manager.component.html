@@ -1,0 +1,558 @@
+<!-- Template Manager -->
+<div class="template-manager">
+  <!-- Header -->
+  <div class="template-header" *ngIf="mode === 'manage'">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">
+        <i class="fas fa-file-alt text-primary mr-2"></i>
+        Plantillas de Mensajes
+      </h5>
+      <button type="button" 
+              class="btn btn-primary"
+              (click)="onCreateTemplate()"
+              *ngIf="showCreateButton">
+        <i class="fas fa-plus mr-1"></i>
+        Nueva Plantilla
+      </button>
+    </div>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="template-filters mb-3">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text">
+              <i class="fas fa-search"></i>
+            </span>
+          </div>
+          <input type="text" 
+                 class="form-control" 
+                 placeholder="Buscar plantillas..."
+                 [(ngModel)]="searchQuery"
+                 (input)="onSearchChange()">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <select class="form-control" 
+                [(ngModel)]="selectedCategory"
+                (change)="onCategoryChange()">
+          <option *ngFor="let category of categories" 
+                  [value]="category.value">
+            {{ category.label }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template List -->
+  <div class="template-list" *ngIf="!loading">
+    <div class="template-item" 
+         *ngFor="let template of filteredTemplates"
+         [class.system-template]="template.category === 'system'">
+      
+      <div class="template-content">
+        <!-- Template Header -->
+        <div class="template-header-info">
+          <div class="template-title">
+            <h6 class="mb-1">{{ template.name }}</h6>
+            <span class="badge badge-sm mr-2"
+                  [class]="'badge-' + getCategoryColor(template.category)">
+              {{ getCategoryLabel(template.category) }}
+            </span>
+            <span class="badge badge-secondary badge-sm" 
+                  *ngIf="!template.is_active">
+              Inactiva
+            </span>
+          </div>
+          <div class="template-meta">
+            <small class="text-muted">
+              <i class="fas fa-user mr-1"></i>
+              {{ template.creator?.name || 'Sistema' }}
+              <span class="mx-2">•</span>
+              <i class="fas fa-calendar mr-1"></i>
+              {{ formatDate(template.created_at) }}
+              <span class="mx-2">•</span>
+              <i class="fas fa-chart-line mr-1"></i>
+              {{ template.usage_count }} usos
+            </small>
+          </div>
+        </div>
+
+        <!-- Template Preview -->
+        <div class="template-preview">
+          <div class="template-subject">
+            <strong>Asunto:</strong> {{ template.subject }}
+          </div>
+          <div class="template-content-preview">
+            {{ template.content.substring(0, 150) }}
+            <span *ngIf="template.content.length > 150">...</span>
+          </div>
+        </div>
+
+        <!-- Template Tags -->
+        <div class="template-tags" *ngIf="template.tags.length > 0">
+          <span class="badge badge-light mr-1" 
+                *ngFor="let tag of template.tags">
+            <i class="fas fa-tag mr-1"></i>{{ tag }}
+          </span>
+        </div>
+
+        <!-- Template Variables -->
+        <div class="template-variables" *ngIf="template.variables.length > 0">
+          <small class="text-muted">
+            <i class="fas fa-code mr-1"></i>
+            {{ template.variables.length }} variable(s):
+            <span *ngFor="let variable of template.variables; let last = last">
+              {{ variable.label }}<span *ngIf="!last">, </span>
+            </span>
+          </small>
+        </div>
+      </div>
+
+      <!-- Template Actions -->
+      <div class="template-actions">
+        <div class="btn-group btn-group-sm">
+          <button type="button" 
+                  class="btn btn-outline-primary"
+                  (click)="onUseTemplate(template)"
+                  title="Usar plantilla">
+            <i class="fas fa-play"></i>
+          </button>
+          <button type="button" 
+                  class="btn btn-outline-secondary"
+                  (click)="onEditTemplate(template)"
+                  *ngIf="mode === 'manage'"
+                  title="Editar">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button type="button" 
+                  class="btn btn-outline-info"
+                  (click)="onDuplicateTemplate(template)"
+                  *ngIf="mode === 'manage'"
+                  title="Duplicar">
+            <i class="fas fa-copy"></i>
+          </button>
+          <button type="button" 
+                  class="btn btn-outline-danger"
+                  (click)="onDeleteTemplate(template)"
+                  *ngIf="mode === 'manage' && template.category !== 'system'"
+                  title="Eliminar">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="text-center py-5" *ngIf="loading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only">Cargando plantillas...</span>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state text-center py-5" 
+       *ngIf="!loading && !hasTemplates && !isSearching && !isFiltering">
+    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">No hay plantillas disponibles</h5>
+    <p class="text-muted">Crea tu primera plantilla para comenzar.</p>
+    <button type="button" 
+            class="btn btn-primary"
+            (click)="onCreateTemplate()"
+            *ngIf="showCreateButton">
+      <i class="fas fa-plus mr-1"></i>
+      Crear Primera Plantilla
+    </button>
+  </div>
+
+  <!-- No Results State -->
+  <div class="no-results-state text-center py-5" 
+       *ngIf="!loading && !hasTemplates && (isSearching || isFiltering)">
+    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">No se encontraron plantillas</h5>
+    <p class="text-muted">
+      No hay plantillas que coincidan con tu búsqueda o filtros.
+    </p>
+    <button type="button" 
+            class="btn btn-outline-secondary"
+            (click)="searchQuery = ''; selectedCategory = 'all'; onSearchChange()">
+      <i class="fas fa-times mr-1"></i>
+      Limpiar filtros
+    </button>
+  </div>
+</div>
+
+<!-- Create/Edit Template Modal -->
+<div class="modal fade" 
+     [class.show]="showCreateModal || showEditModal"
+     [style.display]="(showCreateModal || showEditModal) ? 'block' : 'none'"
+     *ngIf="showCreateModal || showEditModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-alt mr-2"></i>
+          {{ showCreateModal ? 'Nueva Plantilla' : 'Editar Plantilla' }}
+        </h5>
+        <button type="button" class="close" (click)="closeModals()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <form [formGroup]="templateForm" (ngSubmit)="onSaveTemplate()">
+        <div class="modal-body">
+          <!-- Basic Info -->
+          <div class="row">
+            <div class="col-md-8">
+              <div class="form-group">
+                <label for="templateName">Nombre de la plantilla *</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="templateName"
+                       formControlName="name"
+                       placeholder="Ej: Reunión de trabajo">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="templateCategory">Categoría *</label>
+                <select class="form-control" 
+                        id="templateCategory"
+                        formControlName="category">
+                  <option value="personal">Personal</option>
+                  <option value="department">Departamento</option>
+                  <option value="system">Sistema</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subject -->
+          <div class="form-group">
+            <label for="templateSubject">Asunto *</label>
+            <input type="text" 
+                   class="form-control" 
+                   id="templateSubject"
+                   formControlName="subject"
+                   placeholder="Ej: Reunión: {{titulo}}">
+            <small class="form-text text-muted">
+              Usa {{variable}} para campos dinámicos
+            </small>
+          </div>
+
+          <!-- Content -->
+          <div class="form-group">
+            <label for="templateContent">Contenido *</label>
+            <textarea class="form-control" 
+                      id="templateContent"
+                      formControlName="content"
+                      rows="8"
+                      placeholder="Contenido de la plantilla..."></textarea>
+            <small class="form-text text-muted">
+              Usa {{variable}} para campos dinámicos
+            </small>
+          </div>
+
+          <!-- Tags -->
+          <div class="form-group">
+            <label for="templateTags">Etiquetas</label>
+            <input type="text" 
+                   class="form-control" 
+                   id="templateTags"
+                   formControlName="tags"
+                   placeholder="reunión, trabajo, convocatoria">
+            <small class="form-text text-muted">
+              Separar con comas
+            </small>
+          </div>
+
+          <!-- Variables -->
+          <div class="form-group">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label>Variables</label>
+              <button type="button" 
+                      class="btn btn-outline-primary btn-sm"
+                      (click)="addVariable()">
+                <i class="fas fa-plus mr-1"></i>
+                Agregar Variable
+              </button>
+            </div>
+            
+            <div formArrayName="variables">
+              <div class="variable-item mb-3" 
+                   *ngFor="let variable of variablesArray.controls; let i = index"
+                   [formGroupName]="i">
+                <div class="card">
+                  <div class="card-body p-3">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="form-group mb-2">
+                          <label class="form-label-sm">Nombre</label>
+                          <input type="text" 
+                                 class="form-control form-control-sm" 
+                                 formControlName="name"
+                                 placeholder="nombre">
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="form-group mb-2">
+                          <label class="form-label-sm">Etiqueta</label>
+                          <input type="text" 
+                                 class="form-control form-control-sm" 
+                                 formControlName="label"
+                                 placeholder="Nombre del destinatario">
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="form-group mb-2">
+                          <label class="form-label-sm">Tipo</label>
+                          <select class="form-control form-control-sm" 
+                                  formControlName="type">
+                            <option *ngFor="let type of variableTypes" 
+                                    [value]="type.value">
+                              {{ type.label }}
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-md-1">
+                        <div class="form-group mb-2">
+                          <label class="form-label-sm">&nbsp;</label>
+                          <button type="button" 
+                                  class="btn btn-outline-danger btn-sm d-block"
+                                  (click)="removeVariable(i)">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="form-group mb-2">
+                          <label class="form-label-sm">Valor por defecto</label>
+                          <input type="text" 
+                                 class="form-control form-control-sm" 
+                                 formControlName="default_value">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group mb-2">
+                          <label class="form-label-sm">Opciones (para selección)</label>
+                          <input type="text" 
+                                 class="form-control form-control-sm" 
+                                 formControlName="options"
+                                 placeholder="opción1, opción2, opción3">
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-8">
+                        <div class="form-group mb-0">
+                          <label class="form-label-sm">Descripción</label>
+                          <input type="text" 
+                                 class="form-control form-control-sm" 
+                                 formControlName="description">
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="form-check mt-4">
+                          <input type="checkbox" 
+                                 class="form-check-input" 
+                                 formControlName="required">
+                          <label class="form-check-label">
+                            Requerido
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Status -->
+          <div class="form-group">
+            <div class="form-check">
+              <input type="checkbox" 
+                     class="form-check-input" 
+                     id="templateActive"
+                     formControlName="is_active">
+              <label class="form-check-label" for="templateActive">
+                Plantilla activa
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" 
+                  class="btn btn-secondary" 
+                  (click)="closeModals()">
+            Cancelar
+          </button>
+          <button type="submit" 
+                  class="btn btn-primary"
+                  [disabled]="!templateForm.valid">
+            <i class="fas fa-save mr-1"></i>
+            {{ showCreateModal ? 'Crear' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div><!-- Vari
+ables Modal -->
+<div class="modal fade" 
+     [class.show]="showVariablesModal"
+     [style.display]="showVariablesModal ? 'block' : 'none'"
+     *ngIf="showVariablesModal && selectedTemplate">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-code mr-2"></i>
+          Completar Variables - {{ selectedTemplate.name }}
+        </h5>
+        <button type="button" class="close" (click)="closeModals()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <form [formGroup]="variablesForm" (ngSubmit)="onApplyTemplate()">
+        <div class="modal-body">
+          <div formArrayName="variables">
+            <div class="form-group" 
+                 *ngFor="let variable of selectedTemplate.variables; let i = index">
+              <label [for]="'var-' + i">
+                {{ variable.label }}
+                <span class="text-danger" *ngIf="variable.required">*</span>
+              </label>
+              
+              <!-- Text Input -->
+              <input *ngIf="variable.type === 'text'" 
+                     type="text" 
+                     class="form-control" 
+                     [id]="'var-' + i"
+                     [formControlName]="i"
+                     [placeholder]="variable.default_value">
+              
+              <!-- Number Input -->
+              <input *ngIf="variable.type === 'number'" 
+                     type="number" 
+                     class="form-control" 
+                     [id]="'var-' + i"
+                     [formControlName]="i"
+                     [placeholder]="variable.default_value">
+              
+              <!-- Date Input -->
+              <input *ngIf="variable.type === 'date'" 
+                     type="date" 
+                     class="form-control" 
+                     [id]="'var-' + i"
+                     [formControlName]="i">
+              
+              <!-- Select Input -->
+              <select *ngIf="variable.type === 'select'" 
+                      class="form-control" 
+                      [id]="'var-' + i"
+                      [formControlName]="i">
+                <option value="">Seleccionar...</option>
+                <option *ngFor="let option of variable.options" 
+                        [value]="option">
+                  {{ option }}
+                </option>
+              </select>
+              
+              <!-- Boolean Input -->
+              <div *ngIf="variable.type === 'boolean'" class="form-check">
+                <input type="checkbox" 
+                       class="form-check-input" 
+                       [id]="'var-' + i"
+                       [formControlName]="i">
+                <label class="form-check-label" [for]="'var-' + i">
+                  Sí
+                </label>
+              </div>
+              
+              <small class="form-text text-muted" *ngIf="variable.description">
+                {{ variable.description }}
+              </small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" 
+                  class="btn btn-outline-secondary" 
+                  (click)="onPreviewTemplate()">
+            <i class="fas fa-eye mr-1"></i>
+            Vista Previa
+          </button>
+          <button type="button" 
+                  class="btn btn-secondary" 
+                  (click)="closeModals()">
+            Cancelar
+          </button>
+          <button type="submit" 
+                  class="btn btn-primary"
+                  [disabled]="!variablesForm.valid">
+            <i class="fas fa-check mr-1"></i>
+            Aplicar Plantilla
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" 
+     [class.show]="showPreviewModal"
+     [style.display]="showPreviewModal ? 'block' : 'none'"
+     *ngIf="showPreviewModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-eye mr-2"></i>
+          Vista Previa de la Plantilla
+        </h5>
+        <button type="button" class="close" (click)="closeModals()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="preview-container">
+          <div class="form-group">
+            <label><strong>Asunto:</strong></label>
+            <div class="preview-subject">{{ previewSubject }}</div>
+          </div>
+          <div class="form-group">
+            <label><strong>Contenido:</strong></label>
+            <div class="preview-content">{{ previewContent }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" 
+                class="btn btn-secondary" 
+                (click)="closeModals()">
+          Cerrar
+        </button>
+        <button type="button" 
+                class="btn btn-primary"
+                (click)="onApplyTemplate()">
+          <i class="fas fa-check mr-1"></i>
+          Aplicar Plantilla
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show" 
+     *ngIf="showCreateModal || showEditModal || showVariablesModal || showPreviewModal"
+     (click)="closeModals()">
+</div>

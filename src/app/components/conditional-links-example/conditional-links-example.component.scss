@@ -1,0 +1,116 @@
+// Estilos para el componente de enlaces condicionales
+
+.card {
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.list-group-item {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background-color: rgba(0,123,255,0.05);
+  }
+}
+
+.nav-link {
+  transition: all 0.3s ease;
+  
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    
+    &:hover {
+      color: inherit !important;
+      background-color: transparent !important;
+    }
+  }
+  
+  &:not(.disabled):hover {
+    background-color: rgba(0,123,255,0.1);
+    transform: translateX(2px);
+  }
+}
+
+pre {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  
+  code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+}
+
+code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.badge {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+}
+
+// Animaciones suaves
+.list-group-item,
+.nav-link,
+.card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Mejoras responsivas
+@media (max-width: 768px) {
+  .card-body pre {
+    font-size: 0.75rem;
+  }
+  
+  .nav-link {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+}
+
+// Estados especiales
+.nav-link.active {
+  background-color: rgba(0,123,255,0.1);
+  border-left: 3px solid #007bff;
+  font-weight: 500;
+}
+
+.nav-link.disabled {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #6c757d;
+    opacity: 0.3;
+  }
+}
+
+
+

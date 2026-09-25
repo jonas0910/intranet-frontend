@@ -1,0 +1,413 @@
+<!-- Facebook Messenger Style Direct Chat -->
+<div class="messenger-chat-container">
+  
+  <!-- Left Panel - Contacts List -->
+  <div class="contacts-panel">
+    <div class="contacts-header">
+      <h5 class="mb-0">
+        <i class="fas fa-comments mr-2"></i>
+        Chats
+      </h5>
+      <button type="button" 
+              class="btn btn-sm btn-primary"
+              (click)="openStartConversation()"
+              title="Nuevo chat">
+        <i class="fas fa-plus"></i>
+      </button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="contacts-search">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text">
+            <i class="fas fa-search"></i>
+          </span>
+        </div>
+        <input type="text" 
+               class="form-control" 
+               placeholder="Buscar contactos..."
+               [(ngModel)]="searchQuery"
+               (input)="filterContacts()">
+      </div>
+    </div>
+
+    <!-- Contacts List -->
+    <div class="contacts-list">
+      <!-- Loading State -->
+      <div *ngIf="loading && contacts.length === 0" class="text-center p-4">
+        <div class="spinner-border spinner-border-sm text-primary" role="status">
+          <span class="sr-only">Cargando contactos...</span>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && filteredContacts.length === 0" class="text-center p-4">
+        <i class="fas fa-users fa-2x text-muted mb-2"></i>
+        <p class="text-muted mb-0">No hay contactos disponibles</p>
+      </div>
+
+      <!-- Contact Items -->
+      <div *ngFor="let contact of filteredContacts" 
+           class="contact-item"
+           [class.active]="selectedContactId === contact.id"
+           (click)="selectContact(contact)">
+        <div class="contact-avatar-wrapper">
+          <img [src]="contact.avatar" 
+               [alt]="contact.name" 
+               class="contact-avatar"
+               (error)="onImageError($event)">
+          <span class="online-indicator" *ngIf="contact.is_online"></span>
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">{{ contact.name }}</div>
+          <div class="contact-last-message" *ngIf="contact.last_message">
+            {{ contact.last_message }}
+          </div>
+          <div class="contact-status" *ngIf="!contact.last_message">
+            <span *ngIf="contact.is_online" class="text-success">En línea</span>
+            <span *ngIf="!contact.is_online" class="text-muted">Desconectado</span>
+          </div>
+        </div>
+        <div class="contact-meta">
+          <div class="contact-time" *ngIf="contact.last_message_time">
+            {{ formatMessageDate(contact.last_message_time) }}
+          </div>
+          <span class="unread-badge" *ngIf="contact.unread_count > 0">
+            {{ contact.unread_count }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel - Chat Area -->
+  <div class="chat-panel">
+    <!-- Chat Header -->
+    <div class="chat-header" *ngIf="selectedContactId">
+      <div class="d-flex align-items-center">
+        <img [src]="getSelectedContact()?.avatar" 
+             [alt]="getSelectedContact()?.name" 
+             class="chat-avatar"
+             (error)="onImageError($event)">
+        <div class="ml-3">
+          <h6 class="mb-0">{{ conversationTitle || getSelectedContact()?.name }}</h6>
+          <small class="text-muted" *ngIf="getSelectedContact()?.is_online">
+            <i class="fas fa-circle text-success" style="font-size: 8px;"></i> En línea
+          </small>
+          <small class="text-muted" *ngIf="!getSelectedContact()?.is_online && getSelectedContact()?.last_message_time">
+            Última vez hace {{ formatMessageDate(getSelectedContact()!.last_message_time!) }}
+          </small>
+        </div>
+      </div>
+      <div class="chat-header-actions">
+        <button type="button" class="btn btn-sm btn-light" (click)="toggleSearch()" title="Buscar en el chat">
+          <i class="fas fa-search"></i>
+        </button>
+        <button type="button" class="btn btn-sm btn-light" title="Llamar">
+          <i class="fas fa-phone"></i>
+        </button>
+        <button type="button" class="btn btn-sm btn-light" title="Videollamada">
+          <i class="fas fa-video"></i>
+        </button>
+        <button type="button" 
+                class="btn btn-sm btn-light" 
+                (click)="toggleContactsPanel()"
+                title="Info del chat">
+          <i class="fas fa-info-circle"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="chat-search-bar" *ngIf="showSearch">
+      <div class="input-group">
+        <input type="text" 
+               class="form-control" 
+               [(ngModel)]="conversationSearchQuery"
+               (input)="searchMessages()"
+               placeholder="Buscar en la conversación...">
+        <div class="input-group-append">
+          <button class="btn btn-outline-secondary" (click)="clearSearch()">
+            <i class="fas fa-times"></i>
+          </button>
+          <span class="btn btn-outline-secondary">
+            {{ searchResults.length }} resultados
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty Chat State -->
+    <div *ngIf="!selectedContactId" class="empty-chat-state">
+      <div class="text-center">
+        <i class="fas fa-comments fa-5x text-primary mb-4"></i>
+        <h4 class="text-muted">Selecciona un chat</h4>
+        <p class="text-muted">
+          Elige una conversación del panel izquierdo o<br>
+          inicia una nueva conversación
+        </p>
+        <button type="button" 
+                class="btn btn-primary btn-lg mt-3"
+                (click)="openStartConversation()">
+          <i class="fas fa-plus mr-2"></i>
+          Nuevo Chat
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat Messages Area -->
+    <div class="chat-messages" *ngIf="selectedContactId">
+      <!-- Loading State -->
+      <div *ngIf="loading" class="text-center p-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Cargando mensajes...</span>
+        </div>
+        <p class="text-muted mt-2">Cargando conversación...</p>
+      </div>
+
+      <!-- Empty Messages State -->
+      <div *ngIf="!loading && messages.length === 0" class="empty-messages-state">
+        <i class="fas fa-comment-dots fa-3x text-muted mb-3"></i>
+        <h6 class="text-muted">No hay mensajes aún</h6>
+        <p class="text-muted">Envía un mensaje para iniciar la conversación</p>
+      </div>
+
+      <!-- Messages List -->
+      <div class="messages-list">
+        <div *ngFor="let msg of messages; let i = index" class="message-wrapper">
+          <!-- Date Divider -->
+          <div *ngIf="showDateDivider(i)" class="date-divider">
+            {{ formatDateDivider(msg.sent_at) }}
+          </div>
+
+          <!-- Message Bubble -->
+          <div class="message-item" [class.message-sent]="msg.type === 'sent'" [class.message-received]="msg.type === 'received'">
+            <!-- Avatar for received messages -->
+            <img *ngIf="msg.type === 'received'" 
+                 [src]="msg.sender_avatar" 
+                 [alt]="msg.sender_name" 
+                 class="message-avatar"
+                 (error)="onImageError($event)">
+
+            <div class="message-bubble">
+              <!-- Sender name for received messages -->
+              <div *ngIf="msg.type === 'received'" class="message-sender">
+                {{ msg.sender_name }}
+              </div>
+
+              <!-- Message Content -->
+              <div *ngIf="msg.content" class="message-text">
+                {{ msg.content }}
+              </div>
+
+              <!-- Attachments -->
+              <div *ngIf="msg.attachments && msg.attachments.length > 0" class="message-attachments">
+                <div *ngFor="let attachment of msg.attachments" class="attachment-item">
+                  <!-- Image Preview -->
+                  <div *ngIf="attachment.is_image" class="image-attachment">
+                    <img [src]="attachment.url" 
+                         [alt]="attachment.original_name"
+                         class="attachment-image">
+                  </div>
+
+                  <!-- File Attachment -->
+                  <div *ngIf="!attachment.is_image" class="file-attachment">
+                    <i [class]="attachment.icon_class || 'fas fa-file'"></i>
+                    <div class="file-info">
+                      <div class="file-name">{{ attachment.original_name }}</div>
+                      <div class="file-size">{{ formatFileSize(attachment.file_size || attachment.size || 0) }}</div>
+                    </div>
+                    <a [href]="attachment.download_url" 
+                       download 
+                       class="btn btn-sm btn-light"
+                       title="Descargar">
+                      <i class="fas fa-download"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Message Time -->
+              <div class="message-time">
+                {{ formatMessageTime(msg.sent_at) }}
+                <i *ngIf="msg.type === 'sent' && msg.is_read" class="fas fa-check-double ml-1 text-primary"></i>
+                <i *ngIf="msg.type === 'sent' && !msg.is_read" class="fas fa-check ml-1"></i>
+              </div>
+            </div>
+
+            <!-- Avatar for sent messages -->
+            <img *ngIf="msg.type === 'sent'" 
+                 [src]="msg.sender_avatar" 
+                 [alt]="msg.sender_name" 
+                 class="message-avatar"
+                 (error)="onImageError($event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Typing Indicator -->
+      <div *ngIf="typingText" class="typing-indicator">
+        <div class="typing-bubble">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <small class="text-muted ml-2">{{ typingText }}</small>
+      </div>
+    </div>
+
+    <!-- Chat Input Area -->
+    <div class="chat-input-area" *ngIf="selectedContactId">
+      <!-- Recording Indicator -->
+      <div class="recording-indicator" *ngIf="isRecording">
+        <div class="d-flex align-items-center justify-content-between p-3 bg-danger text-white">
+          <div>
+            <i class="fas fa-microphone fa-pulse mr-2"></i>
+            <span>Grabando... {{ getRecordingTime() }}</span>
+          </div>
+          <div>
+            <button type="button" class="btn btn-sm btn-light mr-2" (click)="stopRecording()">
+              <i class="fas fa-stop"></i> Enviar
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-light" (click)="cancelRecording()">
+              <i class="fas fa-times"></i> Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <form [formGroup]="chatForm" (ngSubmit)="sendMessageWithAttachments()" *ngIf="!isRecording">
+        <div class="input-wrapper">
+          <!-- Emoji Picker Button -->
+          <button type="button" 
+                  class="btn btn-light btn-icon"
+                  (click)="toggleEmoticonPicker()"
+                  title="Emojis">
+            <i class="fas fa-smile"></i>
+          </button>
+
+          <!-- File Attachment Button -->
+          <button type="button" 
+                  class="btn btn-light btn-icon"
+                  (click)="selectFiles()"
+                  title="Adjuntar archivo">
+            <i class="fas fa-paperclip"></i>
+          </button>
+
+          <!-- Voice Recording Button -->
+          <button type="button" 
+                  class="btn btn-light btn-icon"
+                  (click)="startRecording()"
+                  title="Grabar mensaje de voz">
+            <i class="fas fa-microphone"></i>
+          </button>
+
+          <!-- Message Input -->
+          <input type="text" 
+                 formControlName="message" 
+                 class="form-control message-input" 
+                 placeholder="Escribe un mensaje..."
+                 (keypress)="onTyping()"
+                 (input)="onMessageInput($event)"
+                 (keydown.enter)="sendMessageWithAttachments(); $event.preventDefault()">
+
+          <!-- Send Button -->
+          <button type="submit" 
+                  class="btn btn-primary btn-send"
+                  [disabled]="(!chatForm.valid && selectedFiles.length === 0) || sending">
+            <i *ngIf="!sending" class="fas fa-paper-plane"></i>
+            <span *ngIf="sending" class="spinner-border spinner-border-sm"></span>
+          </button>
+        </div>
+
+        <!-- Selected Files Preview -->
+        <div *ngIf="selectedFiles.length > 0" class="selected-files-preview">
+          <div *ngFor="let file of selectedFiles; let i = index" class="file-preview-item">
+            <i class="fas fa-file mr-2"></i>
+            <span>{{ file.name }}</span>
+            <button type="button" 
+                    class="btn btn-sm btn-link text-danger"
+                    (click)="removeFile(i)">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Emoji Picker -->
+        <div *ngIf="showEmoticonPicker" class="emoji-picker">
+          <div class="emoji-picker-header">
+            <span>Emojis</span>
+            <button type="button" 
+                    class="btn btn-sm btn-link"
+                    (click)="showEmoticonPicker = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="emoji-picker-content">
+            <span *ngFor="let emoji of emoticons" 
+                  class="emoji-item"
+                  (click)="insertEmoticon(emoji)">
+              {{ emoji }}
+            </span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Right Sidebar - Chat Info (optional) -->
+  <div class="chat-info-panel" *ngIf="showContactsPanel && selectedContactId">
+    <div class="chat-info-header">
+      <h6 class="mb-0">Información del chat</h6>
+      <button type="button" 
+              class="btn btn-sm btn-link"
+              (click)="toggleContactsPanel()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="chat-info-content">
+      <!-- Contact Info -->
+      <div class="text-center p-4">
+        <img [src]="getSelectedContact()?.avatar" 
+             [alt]="getSelectedContact()?.name" 
+             class="rounded-circle mb-3"
+             style="width: 80px; height: 80px;"
+             (error)="onImageError($event)">
+        <h6>{{ getSelectedContact()?.name }}</h6>
+        <p class="text-muted mb-0">
+          <i class="fas fa-circle text-success" style="font-size: 8px;" *ngIf="getSelectedContact()?.is_online"></i>
+          {{ getSelectedContact()?.is_online ? 'En línea' : 'Desconectado' }}
+        </p>
+      </div>
+
+      <!-- Actions -->
+      <div class="list-group list-group-flush">
+        <button type="button" class="list-group-item list-group-item-action">
+          <i class="fas fa-bell mr-3"></i>
+          Notificaciones
+        </button>
+        <button type="button" class="list-group-item list-group-item-action">
+          <i class="fas fa-search mr-3"></i>
+          Buscar en el chat
+        </button>
+        <button type="button" class="list-group-item list-group-item-action">
+          <i class="fas fa-image mr-3"></i>
+          Archivos multimedia
+        </button>
+        <button type="button" class="list-group-item list-group-item-action text-danger">
+          <i class="fas fa-ban mr-3"></i>
+          Bloquear usuario
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden File Input -->
+<input type="file" 
+       #fileInput 
+       (change)="onFileSelected($event)" 
+       style="display: none;" 
+       multiple>

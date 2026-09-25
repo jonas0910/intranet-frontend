@@ -1,0 +1,31 @@
+<div class="btn-group btn-group-sm">
+  <button *ngIf="showView" 
+          type="button" 
+          class="btn" 
+          [ngClass]="btnViewClass"
+          (click)="onView.emit()" 
+          [disabled]="disabled"
+          title="Ver detalles">
+    <i class="fas fa-eye"></i>
+  </button>
+  
+  <button *ngIf="showEdit" 
+          type="button" 
+          class="btn" 
+          [ngClass]="btnEditClass"
+          (click)="onEdit.emit()" 
+          [disabled]="disabled"
+          title="Editar">
+    <i class="fas fa-pencil-alt"></i>
+  </button>
+  
+  <button *ngIf="showDelete" 
+          type="button" 
+          class="btn" 
+          [ngClass]="btnDeleteClass"
+          (click)="onDelete.emit()" 
+          [disabled]="disabled"
+          title="Eliminar">
+    <i class="fas fa-trash"></i>
+  </button>
+</div>

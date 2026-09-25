@@ -1,0 +1,257 @@
+<!-- Contact Requests Management -->
+<div class="contact-requests-container">
+  
+  <!-- Header -->
+  <div class="card card-warning card-outline">
+    <div class="card-header bg-gradient-warning">
+      <h3 class="card-title text-white">
+        <i class="fas fa-user-plus mr-2"></i>
+        Solicitudes de Contacto
+        <span class="badge badge-light ml-2">{{ stats.received.pending }}</span>
+      </h3>
+      <div class="card-tools">
+        <button type="button" class="btn btn-sm btn-light" (click)="loadRequests()">
+          <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+          Actualizar
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="card-body">
+      <div class="row mb-4">
+        <div class="col-md-3 col-6">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3>{{ stats.received.pending }}</h3>
+              <p>Pendientes Recibidas</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-inbox"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>{{ stats.received.total }}</h3>
+              <p>Total Recibidas</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="small-box bg-primary">
+            <div class="inner">
+              <h3>{{ stats.sent.pending }}</h3>
+              <p>Pendientes Enviadas</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-paper-plane"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="small-box bg-secondary">
+            <div class="inner">
+              <h3>{{ stats.sent.total }}</h3>
+              <p>Total Enviadas</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-share"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab === 'received'" (click)="setActiveTab('received')" href="javascript:void(0)">
+            <i class="fas fa-inbox mr-2"></i>
+            Recibidas
+            <span class="badge badge-warning ml-2" *ngIf="stats.received.pending > 0">
+              {{ stats.received.pending }}
+            </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab === 'sent'" (click)="setActiveTab('sent')" href="javascript:void(0)">
+            <i class="fas fa-paper-plane mr-2"></i>
+            Enviadas
+            <span class="badge badge-primary ml-2" *ngIf="stats.sent.pending > 0">
+              {{ stats.sent.pending }}
+            </span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="text-center p-5">
+        <div class="spinner-border text-warning" role="status">
+          <span class="sr-only">Cargando solicitudes...</span>
+        </div>
+      </div>
+
+      <!-- Received Requests Tab -->
+      <div *ngIf="activeTab === 'received' && !loading">
+        <!-- Empty State -->
+        <div *ngIf="receivedRequests.length === 0" class="text-center p-5">
+          <i class="fas fa-user-check fa-5x text-muted mb-4" style="opacity: 0.3;"></i>
+          <h4 class="text-muted">No tienes solicitudes pendientes</h4>
+          <p class="text-muted">Cuando alguien quiera agregarte como contacto, aparecerá aquí</p>
+        </div>
+
+        <!-- Requests List -->
+        <div class="row">
+          <div class="col-md-6" *ngFor="let request of receivedRequests">
+            <div class="card card-widget widget-user shadow-sm mb-3">
+              <div class="widget-user-header" [ngClass]="request.status === 'pending' ? 'bg-warning' : 'bg-secondary'">
+                <h3 class="widget-user-username">{{ request.sender.name }}</h3>
+                <h5 class="widget-user-desc">{{ request.sender.position || 'Empleado' }}</h5>
+              </div>
+              <div class="widget-user-image">
+                <img class="img-circle elevation-2" 
+                     [src]="request.sender.avatar || 'assets/img/user-default.png'" 
+                     (error)="onImageError($event)"
+                     alt="{{ request.sender.name }}">
+              </div>
+              <div class="card-body">
+                <div class="row mb-3">
+                  <div class="col-sm-6">
+                    <div class="description-block">
+                      <h5 class="description-header">
+                        <i class="fas fa-building text-primary mr-1"></i>
+                      </h5>
+                      <span class="description-text">{{ request.sender.department || 'Sin departamento' }}</span>
+                    </div>
+                  </div>
+                  <div class="col-sm-6">
+                    <div class="description-block">
+                      <h5 class="description-header">
+                        <span class="badge" [ngClass]="getRequestBadgeClass(request.status)">
+                          {{ getRequestStatusLabel(request.status) }}
+                        </span>
+                      </h5>
+                      <span class="description-text">Estado</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="alert alert-light" *ngIf="request.message">
+                  <i class="fas fa-comment-alt mr-2"></i>
+                  <strong>Mensaje:</strong>
+                  <p class="mb-0 mt-1">{{ request.message }}</p>
+                </div>
+
+                <div class="text-muted small mb-3">
+                  <i class="far fa-clock mr-1"></i>
+                  Enviada {{ formatDate(request.created_at) }}
+                </div>
+
+                <div class="btn-group btn-group-sm w-100" *ngIf="request.status === 'pending'">
+                  <button type="button" class="btn btn-success" (click)="acceptRequest(request)" [disabled]="processing">
+                    <i class="fas fa-check mr-1"></i>
+                    Aceptar
+                  </button>
+                  <button type="button" class="btn btn-danger" (click)="rejectRequest(request)" [disabled]="processing">
+                    <i class="fas fa-times mr-1"></i>
+                    Rechazar
+                  </button>
+                  <button type="button" class="btn btn-info" (click)="viewProfile(request.sender)">
+                    <i class="fas fa-user mr-1"></i>
+                    Ver Perfil
+                  </button>
+                </div>
+
+                <div class="alert alert-success mb-0" *ngIf="request.status === 'accepted'">
+                  <i class="fas fa-check-circle mr-2"></i>
+                  Solicitud aceptada
+                  <button type="button" class="btn btn-sm btn-success float-right" (click)="startChat(request)">
+                    <i class="fas fa-comment-dots mr-1"></i>
+                    Chatear
+                  </button>
+                </div>
+
+                <div class="alert alert-secondary mb-0" *ngIf="request.status === 'rejected'">
+                  <i class="fas fa-times-circle mr-2"></i>
+                  Solicitud rechazada
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sent Requests Tab -->
+      <div *ngIf="activeTab === 'sent' && !loading">
+        <!-- Empty State -->
+        <div *ngIf="sentRequests.length === 0" class="text-center p-5">
+          <i class="fas fa-paper-plane fa-5x text-muted mb-4" style="opacity: 0.3;"></i>
+          <h4 class="text-muted">No has enviado solicitudes</h4>
+          <p class="text-muted">Puedes enviar solicitudes desde la lista de contactos</p>
+          <button type="button" class="btn btn-primary" routerLink="/mensajeria/contacts">
+            <i class="fas fa-users mr-2"></i>
+            Ir a Contactos
+          </button>
+        </div>
+
+        <!-- Requests List -->
+        <div class="list-group">
+          <div class="list-group-item" *ngFor="let request of sentRequests">
+            <div class="d-flex align-items-center">
+              <img src="assets/img/user-default.png" 
+                   class="img-circle mr-3 elevation-1" 
+                   style="width: 50px; height: 50px;"
+                   (error)="onImageError($event)"
+                   alt="{{ request.receiver?.name }}">
+              
+              <div class="flex-grow-1">
+                <h6 class="mb-1">
+                  {{ request.receiver?.name }}
+                  <span class="badge ml-2" [ngClass]="getRequestBadgeClass(request.status)">
+                    {{ getRequestStatusLabel(request.status) }}
+                  </span>
+                </h6>
+                <p class="text-muted small mb-0">
+                  {{ request.receiver?.email }}
+                </p>
+                <p class="text-muted small mb-0" *ngIf="request.message">
+                  <i class="fas fa-comment mr-1"></i>
+                  {{ request.message | slice:0:80 }}{{ request.message.length > 80 ? '...' : '' }}
+                </p>
+                <small class="text-muted">
+                  <i class="far fa-clock mr-1"></i>
+                  Enviada {{ formatDate(request.created_at) }}
+                  <span *ngIf="request.responded_at"> · Respondida {{ formatDate(request.responded_at) }}</span>
+                </small>
+              </div>
+
+              <div class="ml-3">
+                <button type="button" class="btn btn-sm btn-danger" 
+                        *ngIf="request.status === 'pending'"
+                        (click)="cancelRequest(request)"
+                        [disabled]="processing">
+                  <i class="fas fa-times mr-1"></i>
+                  Cancelar
+                </button>
+                <button type="button" class="btn btn-sm btn-success" 
+                        *ngIf="request.status === 'accepted'"
+                        (click)="startChat(request)">
+                  <i class="fas fa-comment-dots mr-1"></i>
+                  Chatear
+                </button>
+                <span class="badge badge-secondary" *ngIf="request.status === 'rejected'">
+                  Rechazada
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,697 @@
+<!-- Content Header (Page header) -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0"><i class="fas fa-folder-open mr-2"></i>Mis Documentos</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/">Inicio</a></li>
+          <li class="breadcrumb-item active">Gestión Documental</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-2 d-none d-md-block mb-3">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0"><i class="fas fa-folder-open mr-2"></i> Carpetas</h3>
+            <button class="btn btn-sm btn-primary" (click)="openCreateFolderModal()"><i class="fas fa-plus"></i></button>
+          </div>
+          <div class="card-body p-2" style="max-height: 70vh; overflow:auto;">
+            <nav class="mt-1 nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false" id="gd-treeview">
+              <li class="nav-item">
+                <a href="javascript:void(0)" class="nav-link" (click)="navigateToFolder(null)">
+                  <i class="nav-icon fas fa-home"></i>
+                  <p class="font-weight-bold">Raíz</p>
+                </a>
+              </li>
+              <li class="nav-item has-treeview" *ngFor="let node of folderTree" [class.menu-open]="node.expanded" (contextmenu)="onFolderContextMenu($event, node)">
+                <a href="javascript:void(0)" class="nav-link" (click)="toggleNode(node)">
+                  <i class="nav-icon fas fa-folder text-warning"></i>
+                  <p>
+                    {{node.nombre}}
+                    <span *ngIf="node.loading" class="spinner-border spinner-border-sm text-secondary ml-2" role="status"></span>
+                    <i class="right fas fa-angle-left" [ngClass]="{'fa-rotate-90': node.expanded}"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview" *ngIf="node.expanded">
+                  <li class="nav-item" *ngFor="let child of node.children" [class.has-treeview]="true" [class.menu-open]="child.expanded" (contextmenu)="onFolderContextMenu($event, child)">
+                    <a href="javascript:void(0)" class="nav-link" (click)="toggleNode(child)">
+                      <i class="far fa-folder nav-icon text-warning"></i>
+                      <p>
+                        {{child.nombre}}
+                        <span *ngIf="child.loading" class="spinner-border spinner-border-sm text-secondary ml-2" role="status"></span>
+                        <i class="right fas fa-angle-left" [ngClass]="{'fa-rotate-90': child.expanded}"></i>
+                      </p>
+                    </a>
+                    <ul class="nav nav-treeview" *ngIf="child.expanded">
+                      <li class="nav-item" *ngFor="let g of child.children" (contextmenu)="onFolderContextMenu($event, g)">
+                        <a href="javascript:void(0)" class="nav-link" (click)="goToNode(g)">
+                          <i class="far fa-folder nav-icon text-warning"></i>
+                          <p>{{g.nombre}}</p>
+                        </a>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </nav>
+          </div>
+        </div>
+
+        <!-- Context Menu -->
+        <div class="card position-absolute" *ngIf="contextMenuVisible" [ngStyle]="contextMenuStyle" (mouseleave)="hideContextMenu()" style="z-index: 1050; min-width: 200px;">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item p-2"><a href="javascript:void(0)" (click)="actionNewFolder()"><i class="fas fa-folder-plus mr-2"></i> Nueva carpeta</a></li>
+            <li class="list-group-item p-2"><a href="javascript:void(0)" (click)="actionRenameFolder()"><i class="fas fa-i-cursor mr-2"></i> Renombrar</a></li>
+            <li class="list-group-item p-2"><a href="javascript:void(0)" (click)="actionDeleteFolder()"><i class="fas fa-trash mr-2"></i> Eliminar</a></li>
+            <li class="list-group-item p-2"><a href="javascript:void(0)" (click)="actionMoveHere()"><i class="fas fa-level-down-alt mr-2"></i> Mover aquí</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-10">
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3">
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab==='gestor'" href="javascript:void(0)" (click)="setTab('gestor')">
+              <i class="fas fa-folder-open mr-1"></i> Mis Documentos
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab==='compartidos'" href="javascript:void(0)" (click)="setTab('compartidos')">
+              <i class="fas fa-share-alt mr-1"></i> Compartidos Conmigo
+              <span class="badge badge-warning ml-1" *ngIf="compartidosConmigo.length > 0">{{compartidosConmigo.length}}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab==='estadisticas'" href="javascript:void(0)" (click)="setTab('estadisticas')">
+              <i class="fas fa-chart-pie mr-1"></i> Estadísticas
+            </a>
+          </li>
+        </ul>
+        
+        <!-- KPIs Row (full width) -->
+        <div class="row mb-3" *ngIf="activeTab==='estadisticas'">
+          <div class="col-lg-3 col-sm-6 mb-2">
+            <div class="small-box bg-primary">
+              <div class="inner">
+                <h3>{{stats.total}}</h3>
+                <p>Total de Documentos</p>
+              </div>
+              <div class="icon"><i class="fas fa-folder-open"></i></div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-sm-6 mb-2">
+            <div class="small-box bg-success">
+              <div class="inner">
+                <h3>{{stats.firmados}}</h3>
+                <p>Firmados</p>
+              </div>
+              <div class="icon"><i class="fas fa-signature"></i></div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-sm-6 mb-2">
+            <div class="small-box bg-warning">
+              <div class="inner">
+                <h3>{{stats.pendientes}}</h3>
+                <p>Pendientes (Borrador/Rev.)</p>
+              </div>
+              <div class="icon"><i class="fas fa-tasks"></i></div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-sm-6 mb-2">
+            <div class="small-box bg-danger">
+              <div class="inner">
+                <h3>{{stats.bloqueados}}</h3>
+                <p>Bloqueados por Cierre</p>
+              </div>
+              <div class="icon"><i class="fas fa-lock"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wide Distributions + Quick Filters -->
+        <div class="row mb-4" *ngIf="activeTab==='estadisticas'">
+          <div class="col-xl-4 col-lg-6 mb-3">
+            <div class="card h-100">
+              <div class="card-header"><h3 class="card-title mb-0">Por Tipo</h3></div>
+              <div class="card-body">
+                <div *ngFor="let item of stats.porTipo" class="mb-2">
+                  <div class="d-flex justify-content-between">
+                    <small>{{item.nombre}}</small>
+                    <small>{{item.total}}</small>
+                  </div>
+                  <div class="progress progress-xs">
+                    <div class="progress-bar bg-primary" [style.width]="(item.total / (stats.total || 1) * 100) + '%'" role="progressbar"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-4 col-lg-6 mb-3">
+            <div class="card h-100">
+              <div class="card-header"><h3 class="card-title mb-0">Por Clasificación</h3></div>
+              <div class="card-body">
+                <div *ngFor="let item of stats.porClasificacion" class="mb-2">
+                  <div class="d-flex justify-content-between">
+                    <small>{{item.nombre | titlecase}}</small>
+                    <small>{{item.total}}</small>
+                  </div>
+                  <div class="progress progress-xs">
+                    <div class="progress-bar bg-info" [style.width]="(item.total / (stats.total || 1) * 100) + '%'" role="progressbar"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-4 col-lg-12 mb-3">
+            <div class="card h-100">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">Clasificación</h3>
+                <button class="btn btn-tool" title="Exportar CSV" (click)="exportCsv()"><i class="fas fa-file-csv"></i></button>
+              </div>
+              <div class="card-body">
+                <div class="d-flex align-items-center">
+                  <div style="width:120px;height:120px;border-radius:50%;margin-right:16px;" [style.background]="getClasifDonutBackground()"></div>
+                  <div class="flex-grow-1">
+                    <div *ngFor="let s of getClasifLegend()" class="d-flex align-items-center mb-1">
+                      <span class="badge mr-2" [style.backgroundColor]="s.color">&nbsp;</span>
+                      <small class="mr-auto">{{s.nombre | titlecase}}</small>
+                      <small>{{s.total}} ({{s.percent}}%)</small>
+                    </div>
+                  </div>
+                </div>
+                <hr>
+                <div class="d-flex flex-wrap">
+                  <button class="btn btn-sm btn-outline-primary mr-2 mb-2" *ngFor="let tipo of tiposDocumento" (click)="filtros.tipo_documento_id = tipo.id; onFilterChange()">{{tipo.nombre}}</button>
+                  <button class="btn btn-sm btn-outline-secondary mr-2 mb-2" *ngFor="let c of clasificaciones" (click)="filtros.clasificacion = c.value; onFilterChange()">{{c.label}}</button>
+                  <button class="btn btn-sm btn-outline-info mr-2 mb-2" *ngFor="let a of areas" (click)="filtros.area_id = a.id; onFilterChange()">{{a.nombre}}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breadcrumb carpeta -->
+        <div class="mb-2" *ngIf="breadcrumb.length && activeTab==='gestor'">
+          <small>
+            <a href="javascript:void(0)" (click)="navigateToFolder(null)"><i class="fas fa-home"></i> Raíz</a>
+            <span *ngFor="let bc of breadcrumb"> / <a href="javascript:void(0)" (click)="navigateToFolder(bc.id)">{{bc.nombre}}</a></span>
+          </small>
+        </div>
+
+        <!-- Folders grid (inside current folder) -->
+        <div class="row mb-3" *ngIf="contentFolders.length && activeTab==='gestor'">
+          <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-2" *ngFor="let d of contentFolders">
+            <div class="card card-outline h-100">
+              <div class="card-body p-2">
+                <a href="javascript:void(0)" (click)="navigateToFolder(d.id)" title="Abrir carpeta">
+                  <i class="fas fa-folder fa-2x text-warning mr-2"></i> {{d.nombre}}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters Advanced Card moved below -->
+        <div class="card card-primary card-outline collapsed-card mb-3" *ngIf="activeTab==='gestor'">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-filter mr-2"></i> Filtros de Búsqueda</h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Buscar</label>
+                  <input type="text" class="form-control" [(ngModel)]="filtros.q" 
+                         (ngModelChange)="onFilterChange()" placeholder="Título, código, número...">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Área</label>
+                  <select class="form-control" [(ngModel)]="filtros.area_id" (ngModelChange)="onFilterChange()">
+                    <option [ngValue]="undefined">Todas las áreas</option>
+                    <option *ngFor="let area of areas" [ngValue]="area.id">{{area.nombre}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Tipo de Documento</label>
+                  <select class="form-control" [(ngModel)]="filtros.tipo_documento_id" (ngModelChange)="onFilterChange()">
+                    <option [ngValue]="undefined">Todos los tipos</option>
+                    <option *ngFor="let tipo of tiposDocumento" [ngValue]="tipo.id">{{tipo.nombre}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Estado</label>
+                  <select class="form-control" [(ngModel)]="filtros.estado" (ngModelChange)="onFilterChange()">
+                    <option [ngValue]="undefined">Todos los estados</option>
+                    <option *ngFor="let estado of estados" [value]="estado.value">{{estado.label}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Desde</label>
+                  <input type="date" class="form-control" [(ngModel)]="filtros.fecha_desde" 
+                         (ngModelChange)="onFilterChange()">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Hasta</label>
+                  <input type="date" class="form-control" [(ngModel)]="filtros.fecha_hasta" 
+                         (ngModelChange)="onFilterChange()">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <!-- Documents Table -->
+      <div class="card datatable-container" *ngIf="activeTab==='gestor'">
+        <div class="datatable-header d-flex justify-content-between align-items-center">
+          <div>
+            <button type="button" class="btn btn-primary btn-sm" routerLink="/gestion-documental/cargar">
+              <i class="fas fa-plus mr-2"></i> Nuevo Documento
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm ml-2" (click)="onRefresh()">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
+          <div class="form-inline">
+            <input class="form-control form-control-sm mr-2" style="height:28px; font-size:12px;" type="search" placeholder="Buscar..." [(ngModel)]="dt.search" (ngModelChange)="onSearchChange()">
+            <select class="form-control form-control-sm" style="height:28px; font-size:12px;" [(ngModel)]="dt.pageSize" (change)="onPageSizeChange()">
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="15">15</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+            </select>
+          </div>
+        </div>
+        <div class="datatable-body p-0">
+          <div *ngIf="loading" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+            <p class="mt-3">Cargando documentos...</p>
+          </div>
+
+          <div *ngIf="!loading" class="dt-grid mb-0">
+            <div class="dt-header">
+              <div class="dt-col">
+                <input type="checkbox" (change)="toggleSelectAll($any($event.target).checked)">
+              </div>
+              <div class="dt-col">ID</div>
+              <div class="dt-col">Código</div>
+              <div class="dt-col">Título</div>
+              <div class="dt-col">Tipo</div>
+              <div class="dt-col">Área</div>
+              <div class="dt-col">Estado</div>
+              <div class="dt-col">Clasificación</div>
+              <div class="dt-col">Fecha</div>
+              <div class="dt-col">Tamaño</div>
+              <div class="dt-col">Acciones</div>
+            </div>
+            <div class="dt-row" *ngFor="let doc of documentos">
+              <div class="dt-col">
+                <input type="checkbox" [checked]="selection[doc.id]" (change)="toggleSelect(doc.id, $any($event.target).checked)">
+                <i [ngClass]="getFileIcon(doc.extension)" class="ml-2" title="{{doc.extension | uppercase}}"></i>
+              </div>
+              <div class="dt-col">{{doc.id}}</div>
+              <div class="dt-col">
+                <small class="text-muted">{{doc.codigo}}</small>
+                <span *ngIf="doc.firmado" class="badge badge-success badge-sm ml-2" title="Firmado digitalmente">
+                  <i class="fas fa-signature"></i>
+                </span>
+                <span *ngIf="doc.bloqueado && doc.cierre_id" 
+                      class="badge badge-warning badge-sm ml-1" 
+                      title="Bloqueado por cierre de periodo">
+                  <i class="fas fa-lock"></i> Cierre
+                </span>
+                <span *ngIf="doc.bloqueado && !doc.cierre_id" 
+                      class="badge badge-danger badge-sm ml-1" 
+                      title="Bloqueado manualmente">
+                  <i class="fas fa-lock"></i>
+                </span>
+              </div>
+              <div class="dt-col"><strong>{{doc.titulo}}</strong><br><small class="text-muted">{{doc.numero_documento || 'Sin número'}}</small></div>
+              <div class="dt-col">{{doc.tipo_documento?.nombre || '-'}}</div>
+              <div class="dt-col">{{doc.area?.nombre || '-'}}</div>
+              <div class="dt-col"><span class="badge" [ngClass]="getEstadoBadgeClass(doc.estado)">{{doc.estado | titlecase}}</span></div>
+              <div class="dt-col"><span class="badge" [ngClass]="getClasificacionBadgeClass(doc.clasificacion)">{{doc.clasificacion | titlecase}}</span></div>
+              <div class="dt-col"><small>{{formatDate(doc.fecha_documento)}}</small></div>
+              <div class="dt-col"><small>{{formatFileSize(doc.tamano_bytes)}}</small></div>
+              <div class="dt-col">
+                <div class="btn-group btn-group-sm">
+                  <button type="button" class="btn btn-info" title="Ver detalles" [routerLink]="['/gestion-documental/documento', doc.id]"><i class="fas fa-eye"></i></button>
+                  <button type="button" class="btn btn-success" title="Descargar" (click)="descargarDocumento(doc)"><i class="fas fa-download"></i></button>
+                  <button type="button" class="btn btn-primary" title="Compartir" (click)="openShareModal(doc)"><i class="fas fa-share-alt"></i></button>
+                  <button type="button" class="btn btn-warning" title="Mover a carpeta" (click)="openMoveModal(doc)"><i class="fas fa-folder-open"></i></button>
+                  <button type="button" 
+                          [class]="doc.bloqueado && doc.cierre_id ? 'btn btn-warning' : 
+                                   doc.bloqueado ? 'btn btn-danger' : 
+                                   'btn btn-outline-secondary'" 
+                          [title]="doc.bloqueado && doc.cierre_id ? 
+                                   'Bloqueado por cierre de periodo - No se puede desbloquear manualmente' : 
+                                   doc.bloqueado ? 'Clic para desbloquear documento' : 
+                                   'Clic para bloquear documento'" 
+                          [disabled]="doc.bloqueado && doc.cierre_id"
+                          (click)="toggleBloqueo(doc)">
+                    <i [class]="doc.bloqueado ? 'fas fa-lock' : 'fas fa-unlock'"></i>
+                    <small *ngIf="doc.bloqueado && doc.cierre_id" class="ml-1">Cierre</small>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="p-4 text-center text-muted" *ngIf="documentos.length === 0">
+              <i class="fas fa-inbox fa-3x mb-3"></i>
+              <p>No se encontraron documentos</p>
+            </div>
+          </div>
+        </div>
+        <div class="datatable-footer d-flex justify-content-between align-items-center" *ngIf="!loading && documentos.length > 0">
+          <div>
+            Mostrando {{paginacion.from}} a {{paginacion.to}} de {{paginacion.total}} registros
+            <button class="btn btn-sm btn-outline-secondary ml-2" (click)="copySelected()"><i class="fas fa-copy mr-1"></i> Copiar selección</button>
+          </div>
+          <ul class="pagination pagination-sm m-0">
+            <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+              <a class="page-link" (click)="onPageChange(paginacion.currentPage - 1)" href="javascript:void(0)">«</a>
+            </li>
+            <li class="page-item" *ngFor="let page of [].constructor(paginacion.lastPage); let i = index"
+                [class.active]="i + 1 === paginacion.currentPage">
+              <a class="page-link" (click)="onPageChange(i + 1)" href="javascript:void(0)">{{i + 1}}</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+              <a class="page-link" (click)="onPageChange(paginacion.currentPage + 1)" href="javascript:void(0)">»</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Compartidos Conmigo Tab Content -->
+      <div class="card" *ngIf="activeTab==='compartidos'">
+        <div class="card-header bg-warning">
+          <h3 class="card-title">
+            <i class="fas fa-share-alt mr-2"></i>Documentos Compartidos Conmigo
+          </h3>
+        </div>
+        <div class="card-body">
+          <!-- Información -->
+          <div class="alert alert-info">
+            <h5><i class="fas fa-info-circle mr-2"></i>Sobre esta sección:</h5>
+            <p class="mb-0">
+              Aquí verás todos los documentos que <strong>otros usuarios u oficinas han compartido contigo</strong>.
+              Puedes filtrar por permiso, estado de lectura, área, tipo, etc.
+            </p>
+          </div>
+
+          <!-- Filtros Rápidos -->
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <select class="form-control form-control-sm" [(ngModel)]="filtros.area_id" (ngModelChange)="loadCompartidosConmigo()">
+                <option [ngValue]="undefined">Todas las áreas</option>
+                <option *ngFor="let area of areas" [ngValue]="area.id">{{area.nombre}}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <select class="form-control form-control-sm" [(ngModel)]="filtros.tipo_documento_id" (ngModelChange)="loadCompartidosConmigo()">
+                <option [ngValue]="undefined">Todos los tipos</option>
+                <option *ngFor="let tipo of tiposDocumento" [ngValue]="tipo.id">{{tipo.nombre}}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="filtros.q" 
+                     (ngModelChange)="loadCompartidosConmigo()" placeholder="Buscar...">
+            </div>
+            <div class="col-md-3">
+              <button class="btn btn-sm btn-outline-secondary btn-block" (click)="clearFilters(); loadCompartidosConmigo()">
+                <i class="fas fa-eraser mr-1"></i> Limpiar
+              </button>
+            </div>
+          </div>
+
+          <!-- Lista de Documentos Compartidos -->
+          <div *ngIf="loading" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+          </div>
+
+          <div *ngIf="!loading && compartidosConmigo.length === 0" class="text-center p-5">
+            <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+            <h5>No tienes documentos compartidos</h5>
+            <p class="text-muted">Cuando otros usuarios compartan documentos contigo, aparecerán aquí.</p>
+          </div>
+
+          <div class="table-responsive" *ngIf="!loading && compartidosConmigo.length > 0">
+            <table class="table table-hover table-sm">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">Tipo</th>
+                  <th>Documento</th>
+                  <th>Área</th>
+                  <th>Mi Permiso</th>
+                  <th>Compartido Por</th>
+                  <th>Fecha</th>
+                  <th>Estado</th>
+                  <th style="width: 180px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let comp of compartidosConmigo">
+                  <td class="text-center">
+                    <i [class]="getFileIcon(comp.documento.extension)" class="fa-2x"></i>
+                  </td>
+                  <td>
+                    <strong>{{comp.documento.titulo}}</strong>
+                    <br>
+                    <small class="text-muted">{{comp.documento.codigo}}</small>
+                    <span *ngIf="comp.documento.firmado" class="badge badge-success badge-sm ml-2">
+                      <i class="fas fa-signature"></i> Firmado
+                    </span>
+                  </td>
+                  <td>{{comp.documento.area?.nombre || '-'}}</td>
+                  <td>
+                    <span *ngIf="comp.permiso === 'solo-lectura'" class="badge badge-info">
+                      <i class="fas fa-eye"></i> Solo Lectura
+                    </span>
+                    <span *ngIf="comp.permiso === 'lectura-descarga'" class="badge badge-primary">
+                      <i class="fas fa-download"></i> Lectura + Descarga
+                    </span>
+                    <span *ngIf="comp.permiso === 'comentar'" class="badge badge-info">
+                      <i class="fas fa-comment"></i> Comentar
+                    </span>
+                    <span *ngIf="comp.permiso === 'edicion'" class="badge badge-warning">
+                      <i class="fas fa-edit"></i> Edición
+                    </span>
+                    <span *ngIf="comp.permiso === 'edicion-completa'" class="badge badge-warning">
+                      <i class="fas fa-file-alt"></i> Edición Completa
+                    </span>
+                    <span *ngIf="comp.permiso === 'administrar'" class="badge badge-danger">
+                      <i class="fas fa-user-shield"></i> Administrar
+                    </span>
+                  </td>
+                  <td>
+                    <i class="fas fa-user text-muted mr-1"></i>
+                    {{comp.compartido_por?.nombre || 'Usuario desconocido'}}
+                    <br>
+                    <small class="text-muted" *ngIf="comp.mensaje">
+                      <i class="fas fa-comment-dots mr-1"></i>{{comp.mensaje}}
+                    </small>
+                  </td>
+                  <td><small>{{comp.compartido_en | date:'dd/MM/yy HH:mm'}}</small></td>
+                  <td>
+                    <span *ngIf="comp.leido_en" class="badge badge-success badge-sm">
+                      <i class="fas fa-check"></i> Leído
+                    </span>
+                    <span *ngIf="!comp.leido_en" class="badge badge-warning badge-sm">
+                      <i class="fas fa-clock"></i> Nuevo
+                    </span>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <button type="button" class="btn btn-info" title="Ver documento" 
+                              [routerLink]="['/gestion-documental/documento', comp.documento.id]">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button type="button" class="btn btn-success" title="Descargar" 
+                              (click)="descargarDocumento(comp.documento)">
+                        <i class="fas fa-download"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginación -->
+          <div class="d-flex justify-content-between align-items-center" *ngIf="compartidosConmigo.length > 0">
+            <div>
+              Mostrando {{paginacion.from}} - {{paginacion.to}} de {{paginacion.total}} registros
+            </div>
+            <ul class="pagination pagination-sm m-0">
+              <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                <a class="page-link" href="javascript:void(0)" (click)="onPageChange(paginacion.currentPage - 1)">Anterior</a>
+              </li>
+              <li class="page-item" *ngFor="let p of [].constructor(paginacion.lastPage); let i = index" 
+                  [class.active]="i + 1 === paginacion.currentPage">
+                <a class="page-link" href="javascript:void(0)" (click)="onPageChange(i + 1)">{{i + 1}}</a>
+              </li>
+              <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                <a class="page-link" href="javascript:void(0)" (click)="onPageChange(paginacion.currentPage + 1)">Siguiente</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      </div><!-- /col-md-10 -->
+    </div><!-- /row -->
+  </div><!-- /container-fluid -->
+</section>
+
+<!-- Share Modal -->
+  <div class="modal" [class.show]="showShareModal" [style.display]="showShareModal ? 'block' : 'none'">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h4 class="modal-title"><i class="fas fa-share-alt mr-2"></i>Compartir Documento</h4>
+          <button type="button" class="close text-white" (click)="closeShareModal()"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div *ngIf="shareTarget" class="alert alert-info mb-3">
+            <strong><i class="fas fa-file mr-2"></i>{{ shareTarget.titulo }}</strong>
+          </div>
+          
+          <div class="form-group">
+            <label for="usuario_select"><i class="fas fa-user mr-2"></i>Usuario de la Intranet *</label>
+            <select id="usuario_select" class="form-control" [(ngModel)]="shareForm.usuario_id" name="usuario_id" required>
+              <option [ngValue]="null">-- Seleccionar Usuario --</option>
+              <option *ngFor="let usuario of usuarios" [ngValue]="usuario.id">
+                {{ usuario.nombre }} ({{ usuario.email }})
+              </option>
+            </select>
+            <small class="form-text text-muted">
+              <i class="fas fa-info-circle"></i> Usuario con quien compartir el documento
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fas fa-key mr-2"></i>Nivel de Permiso *</label>
+            <small class="form-text text-muted mb-2">
+              Selecciona el nivel de acceso que tendrá el usuario sobre este documento
+            </small>
+            <div class="row">
+              <div class="col-md-6" *ngFor="let nivel of nivelesPermiso">
+                <div class="card mb-2 cursor-pointer" 
+                     [class.border-primary]="shareForm.permiso === nivel.value"
+                     [class.bg-light]="shareForm.permiso === nivel.value"
+                     (click)="shareForm.permiso = nivel.value"
+                     style="cursor: pointer;">
+                  <div class="card-body p-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" 
+                             [id]="'permiso_' + nivel.value" 
+                             [(ngModel)]="shareForm.permiso" 
+                             [value]="nivel.value" 
+                             name="permiso">
+                      <label class="form-check-label w-100" [for]="'permiso_' + nivel.value" style="cursor: pointer;">
+                        <strong>
+                          <i class="fas" [class]="nivel.icono" [class.text-info]="nivel.color === 'info'" 
+                             [class.text-primary]="nivel.color === 'primary'"
+                             [class.text-warning]="nivel.color === 'warning'" 
+                             [class.text-danger]="nivel.color === 'danger'"></i>
+                          {{ nivel.label }}
+                        </strong>
+                        <br>
+                        <small class="text-muted">{{ nivel.descripcion }}</small>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="mensaje_compartir"><i class="fas fa-comment mr-2"></i>Mensaje (opcional)</label>
+            <textarea id="mensaje_compartir" class="form-control" [(ngModel)]="shareForm.mensaje" name="mensaje" rows="2" 
+                      placeholder="Escribe un mensaje para el usuario..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeShareModal()">
+            <i class="fas fa-times mr-2"></i>Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" (click)="onConfirmShare()" [disabled]="!shareForm.usuario_id">
+            <i class="fas fa-share-alt mr-2"></i>Compartir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showShareModal" *ngIf="showShareModal"></div>
+
+  <!-- Create Folder Modal -->
+  <div class="modal" [class.show]="showCreateFolderModal" [style.display]="showCreateFolderModal ? 'block' : 'none'">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Nueva carpeta</h4>
+          <button type="button" class="close" (click)="closeCreateFolderModal()"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" class="form-control" [(ngModel)]="newFolder.nombre" placeholder="Nombre de carpeta">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeCreateFolderModal()">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="onCreateFolder()">Crear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showCreateFolderModal" *ngIf="showCreateFolderModal"></div>
+
+  <!-- Move Document Modal -->
+  <div class="modal" [class.show]="showMoveModal" [style.display]="showMoveModal ? 'block' : 'none'">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Mover documento</h4>
+          <button type="button" class="close" (click)="closeMoveModal()"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Carpeta destino (ID)</label>
+            <input type="number" class="form-control" [(ngModel)]="moveForm.carpeta_id" placeholder="ID de carpeta o vacío para raíz">
+            <small class="text-muted">Próximo: selector de árbol de carpetas</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeMoveModal()">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="onConfirmMove()">Mover</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showMoveModal" *ngIf="showMoveModal"></div>
+

@@ -1,0 +1,17 @@
+.table td, .table th {
+  vertical-align: middle;
+}
+
+/* Ensure modal header text is white when using bg-primary/info */
+.modal-header {
+  .close {
+    color: #fff;
+    opacity: 0.8;
+    text-shadow: none;
+    outline: none;
+    
+    &:hover {
+      opacity: 1;
+    }
+  }
+}

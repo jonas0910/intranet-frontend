@@ -1,0 +1,193 @@
+<app-system-layout [title]="'Bienes patrimoniales'" [subtitle]="'Bienes asignados a su persona (solo visualización)'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Activos Fijos', url: '/activos-fijos'}, {label: 'Bienes patrimoniales'}]"
+  [subsystem]="'activos-fijos'">
+
+  <!-- Main content -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-success'"
+        [style.border-radius.px]="(cv.cardBorderRadius != null ? cv.cardBorderRadius : 6)">
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-box-open mr-1"></i> Mis bienes asignados
+            </h3>
+            <span class="badge"
+              [ngClass]="cv.cardOutlineColor ? 'bg-' + cv.cardOutlineColor.replace('card-', '') : 'badge-info'">{{
+              paginacion.total }}</span>
+            <button class="btn btn-sm btn-outline-info ml-1 px-2" *ngIf="cv.collapsibleFilters"
+              (click)="isFiltersCollapsed = !isFiltersCollapsed"
+              [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'" style="height: 24px; line-height: 1;">
+              <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+            </button>
+            <ng-container *ngIf="cv.showExportButtons">
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'"
+                title="Exportar Excel" (click)="onExportExcel()">
+                <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{ cv.excelBtnLabel || 'Excel' }}
+              </button>
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass || 'btn-danger'"
+                title="Exportar PDF" (click)="onExportPdf()">
+                <i [class]="(cv.pdfBtnIcon || 'fas fa-file-pdf') + ' mr-1'"></i> {{ cv.pdfBtnLabel || 'PDF' }}
+              </button>
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass || 'btn-info'"
+                title="Imprimir" (click)="onExportPrint()">
+                <i [class]="(cv.printBtnIcon || 'fas fa-print') + ' mr-1'"></i> {{ cv.printBtnLabel || 'Imprimir' }}
+              </button>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="border-bottom bg-light overflow-hidden" [style.max-height]="isFiltersCollapsed ? '0px' : '500px'"
+          [style.padding]="isFiltersCollapsed ? '0px' : '0.5rem'"
+          style="transition: max-height 0.3s ease, padding 0.3s ease;">
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="mb-1 ds-crud-label">Buscar</label>
+              <input type="text" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.search"
+                (ngModelChange)="onFilterChange()" placeholder="Código, descripción o serie...">
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Categoría</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.categoria_id"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todas</option>
+                <option *ngFor="let c of categorias" [value]="c.id">{{ c.nombre }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Estado</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.estado"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todos</option>
+                <option value="activo">Activo</option>
+                <option value="baja">Baja</option>
+                <option value="transferido">Transferido</option>
+                <option value="extraviado">Extraviado</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Condición</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.condicion"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todas</option>
+                <option value="bueno">Bueno</option>
+                <option value="regular">Regular</option>
+                <option value="malo">Malo</option>
+                <option value="obsoleto">Obsoleto</option>
+              </select>
+            </div>
+            <div class="col-md-1">
+              <label class="mb-1 ds-crud-label">Por página</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.per_page"
+                (ngModelChange)="onFilterChange()">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div *ngIf="loading" class="text-center p-5">
+          <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+          <p class="mt-3">Cargando bienes asignados...</p>
+        </div>
+
+        <!-- Tabla -->
+        <div *ngIf="!loading" class="card-body px-0 pt-0 pb-2">
+          <div class="table-responsive p-2">
+            <table [ngClass]="cv.tableClasses || 'table table-hover table-striped table-sm'"
+              class="table mb-0 w-100 ds-crud-table" id="bienesPatrimonialesTable">
+              <thead>
+                <tr>
+                  <th style="width: 50px;" class="border-0">#</th>
+                  <th class="border-0">Código patrimonial</th>
+                  <th class="border-0">Descripción</th>
+                  <th class="border-0">Categoría</th>
+                  <th class="border-0">Estado</th>
+                  <th class="border-0">Condición</th>
+                  <th class="text-right border-0">Valor neto</th>
+                  <th class="text-center border-0" style="width: 100px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let a of activos; let i = index">
+                  <td>{{ (paginacion.currentPage - 1) * paginacion.perPage + i + 1 }}</td>
+                  <td>
+                    <strong class="text-primary">{{ a.codigo_patrimonial }}</strong>
+                    <br><small class="text-muted" *ngIf="a.codigo_sbn">{{ a.codigo_sbn }}</small>
+                  </td>
+                  <td>
+                    <div>{{ a.descripcion }}</div>
+                    <small class="text-muted" *ngIf="a.marca"><i class="fas fa-tag"></i> {{ a.marca }} {{ a.modelo
+                      }}</small>
+                  </td>
+                  <td><span class="badge badge-secondary">{{ a.categoria?.nombre ?? '-' }}</span></td>
+                  <td><span class="badge" [ngClass]="getEstadoBadgeClass(a.estado)">{{ estadoLabel(a.estado) }}</span>
+                  </td>
+                  <td><span class="badge badge-pill" [ngClass]="getCondicionBadgeClass(a.condicion)">{{
+                      condicionLabel(a.condicion) }}</span></td>
+                  <td class="text-right"><strong class="text-success">{{ formatMoneda(a.valor_neto) }}</strong></td>
+                  <td class="text-center">
+                    <a [routerLink]="['/activos-fijos/activos', a.id]" class="btn btn-sm btn-info" title="Ver detalle">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+                <tr *ngIf="activos.length === 0">
+                  <td colspan="8" class="text-center p-5">
+                    <i class="fas fa-inbox fa-4x text-muted mb-3 d-block"></i>
+                    <p class="text-muted">No tiene bienes patrimoniales asignados.</p>
+                    <button type="button" class="btn btn-sm btn-primary" (click)="limpiarFiltros()"><i
+                        class="fas fa-redo mr-1"></i> Limpiar filtros</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Paginación (footer) -->
+        <div *ngIf="!loading" class="card-footer clearfix">
+          <div class="row">
+            <div class="col-sm-12 col-md-5">
+              <div class="dataTables_info" style="font-size: var(--ds-font-size);">
+                Mostrando {{ paginacion.from }} a {{ paginacion.to }} de {{ paginacion.total }} registros
+              </div>
+            </div>
+            <div class="col-sm-12 col-md-7">
+              <ul class="pagination m-0 float-right" [ngClass]="cv.paginationSize || 'pagination-sm'"
+                *ngIf="paginacion.lastPage > 1">
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage > 1 && onPageChange(1)">«</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === 1">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage > 1 && onPageChange(paginacion.currentPage - 1)">‹</a>
+                </li>
+                <li class="page-item" *ngFor="let page of getPaginationPages()"
+                  [class.active]="page === paginacion.currentPage" [class.disabled]="page === -1">
+                  <a class="page-link" href="javascript:void(0)" (click)="page !== -1 && onPageChange(page)">{{ page ===
+                    -1 ? '...' : page }}</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage < paginacion.lastPage && onPageChange(paginacion.currentPage + 1)">›</a>
+                </li>
+                <li class="page-item" [class.disabled]="paginacion.currentPage === paginacion.lastPage">
+                  <a class="page-link" href="javascript:void(0)"
+                    (click)="paginacion.currentPage < paginacion.lastPage && onPageChange(paginacion.lastPage)">»</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-system-layout>

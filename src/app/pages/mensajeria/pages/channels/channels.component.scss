@@ -1,0 +1,154 @@
+.channels-container {
+  padding: 1rem;
+
+  .channel-card {
+    transition: all 0.3s ease;
+    border: none;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .card-header {
+      background: #fff;
+      padding: 1rem;
+      border-bottom: 1px solid #e9ecef;
+
+      .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+      }
+    }
+
+    .latest-post {
+      background: #f8f9fa;
+      padding: 0.75rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+
+      small {
+        line-height: 1.5;
+      }
+    }
+  }
+
+  .small-box {
+    border-radius: 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .inner {
+      h3 {
+        font-size: 2.2rem;
+        font-weight: 700;
+      }
+
+      p {
+        font-size: 0.9rem;
+      }
+    }
+
+    .icon {
+      i {
+        font-size: 4rem;
+        opacity: 0.3;
+      }
+    }
+  }
+}
+
+// Modal styles
+.modal {
+  &.show {
+    opacity: 1;
+  }
+
+  .modal-content {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .modal-header {
+    border-radius: 10px 10px 0 0;
+    border-bottom: none;
+  }
+
+  .post-composer {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+  }
+
+  .posts-list {
+    .post-item {
+      padding: 1rem 0;
+
+      .post-actions {
+        .btn-link {
+          padding: 0.25rem 0.5rem;
+          text-decoration: none;
+
+          &:hover {
+            color: #007bff !important;
+          }
+        }
+      }
+
+      hr {
+        margin: 1rem 0;
+      }
+
+      &:last-child {
+        hr {
+          display: none;
+        }
+      }
+    }
+  }
+}
+
+.modal-backdrop {
+  &.show {
+    opacity: 0.5;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .channels-container {
+    padding: 0.5rem;
+
+    .channel-card {
+      margin-bottom: 0.75rem;
+    }
+
+    .small-box {
+      margin-bottom: 0.75rem;
+    }
+  }
+
+  .modal-dialog {
+    margin: 0.5rem;
+
+    &.modal-xl {
+      max-width: calc(100% - 1rem);
+    }
+  }
+}
+
+
+
+
+
+
+
+
+

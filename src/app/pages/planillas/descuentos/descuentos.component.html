@@ -1,0 +1,448 @@
+<!-- Page Header (patrón de diseño) -->
+<app-page-header
+  title="Descuentos"
+  subtitle="Gestión de descuentos"
+  [breadcrumbs]="breadcrumbs">
+</app-page-header>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : ''" [style.border-radius.px]="cv.cardBorderRadius">
+          <div class="border-bottom bg-white px-3 pt-2 pb-0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+                <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                  <i class="fas fa-minus-circle mr-1"></i> Gestión de Descuentos
+                </h3>
+                <span class="badge bg-primary align-self-center">{{ descuentos.length }} registros</span>
+                <ng-container *ngIf="cv.showExportButtons">
+                  <button class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"><i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}</button>
+                  <button class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"><i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}</button>
+                  <button class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass"><i [class]="cv.printBtnIcon + ' mr-1'"></i> {{ cv.printBtnLabel }}</button>
+                </ng-container>
+                <button *ngIf="!cv.showExportButtons" class="btn btn-sm btn-flat" [ngClass]="cv.exportBtnClass"><i [class]="cv.exportBtnIcon + ' mr-1'"></i> {{ cv.exportBtnLabel }}</button>
+              </div>
+              <div class="ms-auto flex-shrink-0">
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                  <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{ cv.newBtnLabel }} Descuento
+                </button>
+              </div>
+            </div>
+
+            <!-- Tabs de Categorías -->
+            <ul class="nav nav-tabs" role="tablist">
+              <li class="nav-item" role="presentation" *ngFor="let cat of categoriaDescuento">
+                <button class="nav-link"
+                        [class.active]="isTabActive(cat.value)"
+                        (click)="setActiveTab(cat.value)"
+                        type="button">
+                  <i [class]="cat.icon + ' me-1'"></i>
+                  {{ cat.label }}
+                  <span class="badge bg-{{cat.color}} ms-2">{{ getDescuentosByCategory(cat.value).length }}</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Contenido: spinner + tabs/tablas (patrón de diseño) -->
+          <div class="card-body p-0">
+            <app-loading-spinner [loading]="loading" message="Cargando descuentos..."></app-loading-spinner>
+
+            <div *ngIf="!loading">
+              <div *ngIf="descuentos.length === 0" class="text-center py-5">
+                <i class="fas fa-minus-circle fa-2x text-muted mb-3"></i>
+                <h6 class="text-muted">No se encontraron descuentos</h6>
+                <p class="text-muted small">Crea un nuevo descuento para comenzar.</p>
+                <button class="btn btn-sm" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                  <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{ cv.newBtnLabel }} Descuento
+                </button>
+              </div>
+
+              <!-- Tab Proveedores -->
+              <div *ngIf="descuentos.length > 0 && isTabActive('proveedores')" class="table-responsive p-4">
+                <h6 class="text-primary mb-3"><i class="fas fa-truck me-2"></i>Descuentos de Proveedores</h6>
+                <table datatable [dtOptions]="dtOptionsProveedores" [dtTrigger]="dtTriggerProveedores" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize" class="table mb-0 w-100">
+                  <thead class="bg-light">
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize">Código</th>
+                    <th [style.font-size]="cv.headerFontSize">Nombre</th>
+                    <th [style.font-size]="cv.headerFontSize">Tipo</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">%</th>
+                    <th [style.font-size]="cv.headerFontSize">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let descuento of getDescuentosByCategory('proveedores')">
+                    <td><span class="badge bg-dark">{{ descuento.code }}</span></td>
+                    <td>
+                      <strong>{{ descuento.name }}</strong>
+                      <p class="text-muted small mb-0" *ngIf="descuento.description">{{ descuento.description }}</p>
+                    </td>
+                    <td><span class="badge bg-warning">{{ getTipoLabel(descuento.type) }}</span></td>
+                    <td class="text-center">{{ descuento.percentage || '-' }}</td>
+                    <td class="text-center">
+                      <app-status-badge [status]="descuento.is_active"></app-status-badge>
+                    </td>
+                    <td class="text-center">
+                      <div class="btn-group btn-group-sm">
+                        <button class="btn btn-success btn-sm" (click)="openAssignModal(descuento)" title="Asignar a Empleado">
+                          <i class="fas fa-user-plus"></i>
+                        </button>
+                      </div>
+                      <app-crud-actions [showView]="true" [showEdit]="true" [showDelete]="true" (onView)="openViewModal(descuento)" (onEdit)="openEditModal(descuento)" (onDelete)="confirmDelete(descuento)"></app-crud-actions>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+              <!-- Tab Bancos -->
+              <div *ngIf="descuentos.length > 0 && isTabActive('bancos')" class="table-responsive p-4">
+                <h6 class="text-success mb-3"><i class="fas fa-university me-2"></i>Descuentos Bancarios</h6>
+                <table datatable [dtOptions]="dtOptionsBancos" [dtTrigger]="dtTriggerBancos" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize" class="table mb-0 w-100">
+                  <thead class="bg-light">
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize">Código</th>
+                    <th [style.font-size]="cv.headerFontSize">Nombre</th>
+                    <th [style.font-size]="cv.headerFontSize">Tipo</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">%</th>
+                    <th [style.font-size]="cv.headerFontSize">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let descuento of getDescuentosByCategory('bancos')">
+                    <td><span class="badge bg-dark">{{ descuento.code }}</span></td>
+                    <td>
+                      <strong>{{ descuento.name }}</strong>
+                      <p class="text-muted small mb-0" *ngIf="descuento.description">{{ descuento.description }}</p>
+                    </td>
+                    <td><span class="badge bg-warning">{{ getTipoLabel(descuento.type) }}</span></td>
+                    <td class="text-center">{{ descuento.percentage || '-' }}</td>
+                    <td class="text-center">
+                      <app-status-badge [status]="descuento.is_active"></app-status-badge>
+                    </td>
+                    <td class="text-center">
+                      <div class="btn-group btn-group-sm">
+                        <button class="btn btn-success btn-sm" (click)="openAssignModal(descuento)" title="Asignar a Empleado">
+                          <i class="fas fa-user-plus"></i>
+                        </button>
+                      </div>
+                      <app-crud-actions [showView]="true" [showEdit]="true" [showDelete]="true" (onView)="openViewModal(descuento)" (onEdit)="openEditModal(descuento)" (onDelete)="confirmDelete(descuento)"></app-crud-actions>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+              <!-- Tab Otros -->
+              <div *ngIf="descuentos.length > 0 && isTabActive('otros')" class="table-responsive p-4">
+                <h6 class="text-info mb-3"><i class="fas fa-list me-2"></i>Otros Descuentos</h6>
+                <table datatable [dtOptions]="dtOptionsOtros" [dtTrigger]="dtTriggerOtros" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize" class="table mb-0 w-100">
+                  <thead class="bg-light">
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize">Código</th>
+                    <th [style.font-size]="cv.headerFontSize">Nombre</th>
+                    <th [style.font-size]="cv.headerFontSize">Tipo</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">%</th>
+                    <th [style.font-size]="cv.headerFontSize">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let descuento of getDescuentosByCategory('otros')">
+                    <td><span class="badge bg-dark">{{ descuento.code }}</span></td>
+                    <td>
+                      <strong>{{ descuento.name }}</strong>
+                      <p class="text-muted small mb-0" *ngIf="descuento.description">{{ descuento.description }}</p>
+                    </td>
+                    <td><span class="badge bg-warning">{{ getTipoLabel(descuento.type) }}</span></td>
+                    <td class="text-center">{{ descuento.percentage || '-' }}</td>
+                    <td class="text-center">
+                      <app-status-badge [status]="descuento.is_active"></app-status-badge>
+                    </td>
+                    <td class="text-center">
+                      <div class="btn-group btn-group-sm">
+                        <button class="btn btn-success btn-sm" (click)="openAssignModal(descuento)" title="Asignar a Empleado">
+                          <i class="fas fa-user-plus"></i>
+                        </button>
+                      </div>
+                      <app-crud-actions [showView]="true" [showEdit]="true" [showDelete]="true" (onView)="openViewModal(descuento)" (onEdit)="openEditModal(descuento)" (onDelete)="confirmDelete(descuento)"></app-crud-actions>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Crear/Editar Descuento -->
+<div class="modal fade" id="descuentoModal" tabindex="-1" aria-hidden="true" #descuentoModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title">
+          <i class="fas" [ngClass]="isEditMode ? 'fa-edit' : 'fa-plus'"></i>
+          {{ isEditMode ? 'Editar' : 'Nuevo' }} Descuento
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()" aria-label="Close"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg">
+        <form [formGroup]="descuentoForm">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Código <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="code" placeholder="DESC-001">
+              <div class="text-danger small" *ngIf="descuentoForm.get('code')?.invalid && descuentoForm.get('code')?.touched">
+                Código es requerido
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Categoría <span class="text-danger">*</span></label>
+              <select class="form-control" [ngClass]="mc.inputSize" formControlName="category">
+                <option *ngFor="let cat of categoriaDescuento" [value]="cat.value">
+                  {{ cat.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Nombre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="name" placeholder="Nombre del descuento">
+            <div class="text-danger small" *ngIf="descuentoForm.get('name')?.invalid && descuentoForm.get('name')?.touched">
+              Nombre es requerido
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Descripción</label>
+            <textarea class="form-control" [ngClass]="mc.inputSize" formControlName="description" rows="2" placeholder="Descripción del descuento"></textarea>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Tipo <span class="text-danger">*</span></label>
+              <select class="form-control" [ngClass]="mc.inputSize" formControlName="type">
+                <option *ngFor="let tipo of tiposDescuento" [value]="tipo.value">{{ tipo.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Porcentaje (%)</label>
+              <input type="number" step="0.01" class="form-control" [ngClass]="mc.inputSize" formControlName="percentage" placeholder="0.00">
+              <small class="text-muted">Solo para descuentos porcentuales</small>
+            </div>
+          </div>
+
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" formControlName="is_active" id="isActive">
+            <label class="form-check-label" for="isActive">Activo</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeModal()"><i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}</button>
+        <button type="button" class="btn btn-sm" [ngClass]="mc.saveBtnClass" (click)="saveDescuento()" [disabled]="descuentoForm.invalid || saving"><i [class]="mc.saveBtnIcon + ' mr-1'"></i> {{ isEditMode ? 'Actualizar' : mc.saveBtnLabel }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Asignar Descuento a Empleado -->
+<div class="modal fade" id="assignModal" tabindex="-1" aria-hidden="true" #assignModal>
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title">
+          <i class="fas me-2" [ngClass]="isEditAssignmentMode ? 'fa-edit' : 'fa-user-plus'"></i>
+          {{ isEditAssignmentMode ? 'Editar asignación de descuento' : 'Asignar Descuento a Empleado' }}
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeAssignModal()" aria-label="Close"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Descuento:</strong> {{ selectedDescuento?.name }}
+          <span *ngIf="isEditAssignmentMode" class="ms-2">— <strong>Empleado:</strong> {{ getEmployeeName(editingAssignment?.employee_id!) }}</span>
+        </div>
+
+        <form [formGroup]="assignForm">
+          <div class="row">
+            <div class="col-md-6 mb-3" *ngIf="!isEditAssignmentMode">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Empleado <span class="text-danger">*</span></label>
+              <select class="form-control" [ngClass]="mc.inputSize" formControlName="employee_id">
+                <option value="">Seleccione un empleado</option>
+                <option *ngFor="let emp of employees" [value]="emp.id">
+                  {{ emp.employee_code }} - {{ emp.first_name }} {{ emp.last_name }}
+                </option>
+              </select>
+              <div class="text-danger small" *ngIf="assignForm.get('employee_id')?.invalid && assignForm.get('employee_id')?.touched">
+                Debe seleccionar un empleado
+              </div>
+            </div>
+            <div class="col-md-6 mb-3" *ngIf="isEditAssignmentMode">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Empleado</label>
+              <input type="text" class="form-control" [ngClass]="mc.inputSize" [value]="getEmployeeName(editingAssignment?.employee_id!)" readonly>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Fecha de Inicio <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" [ngClass]="mc.inputSize" formControlName="start_date">
+              <div class="text-danger small" *ngIf="assignForm.get('start_date')?.invalid && assignForm.get('start_date')?.touched">
+                Fecha de inicio es requerida
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Monto Total <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">S/</span>
+                <input type="number" step="0.01" class="form-control" [ngClass]="mc.inputSize" formControlName="total_amount" placeholder="0.00">
+              </div>
+              <div class="text-danger small" *ngIf="assignForm.get('total_amount')?.invalid && assignForm.get('total_amount')?.touched">
+                Monto total es requerido
+              </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Número de Cuotas/Meses <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" [ngClass]="mc.inputSize" formControlName="installments" placeholder="1" min="1">
+              <small class="text-muted">En cuántos meses se dividirá el descuento</small>
+            </div>
+
+            <div class="col-md-3 mb-3" *ngIf="isEditAssignmentMode">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Cuotas restantes</label>
+              <input type="number" class="form-control" [ngClass]="mc.inputSize" formControlName="remaining_installments" min="0" placeholder="0">
+            </div>
+          </div>
+
+          <div class="row" *ngIf="isEditAssignmentMode">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Estado</label>
+              <select class="form-control" [ngClass]="mc.inputSize" formControlName="status">
+                <option value="active">Activo</option>
+                <option value="completed">Completado</option>
+                <option value="suspended">Suspendido</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Cálculo Automático -->
+          <div class="alert alert-success" *ngIf="assignForm.get('total_amount')?.value > 0 && assignForm.get('installments')?.value > 0">
+            <h6 class="alert-heading"><i class="fas fa-calculator me-2"></i>Cálculo Automático:</h6>
+            <p class="mb-0">
+              <strong>Monto Mensual:</strong> 
+              {{ formatCurrency(assignForm.get('total_amount')?.value / assignForm.get('installments')?.value) }}
+            </p>
+            <p class="mb-0">
+              <strong>Total de Cuotas:</strong> {{ assignForm.get('installments')?.value }} meses
+            </p>
+          </div>
+
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Notas / Observaciones</label>
+            <textarea class="form-control" [ngClass]="mc.inputSize" formControlName="notes" rows="2" placeholder="Observaciones sobre este descuento"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeAssignModal()"><i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}</button>
+        <button type="button" class="btn btn-sm" [ngClass]="mc.saveBtnClass" (click)="saveAssignment()" [disabled]="assignForm.invalid">
+          <i class="fas mr-1" [ngClass]="isEditAssignmentMode ? 'fa-save' : 'fa-user-check'"></i>
+          {{ isEditAssignmentMode ? 'Actualizar' : 'Asignar Descuento' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ver Detalle -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true" #viewModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detalles del Descuento</h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeViewModal()" aria-label="Close"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg" *ngIf="selectedDescuento">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Código:</strong>
+            <p>{{ selectedDescuento.code }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Tipo:</strong>
+            <p><span class="badge bg-warning">{{ getTipoLabel(selectedDescuento.type) }}</span></p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Nombre:</strong>
+            <p>{{ selectedDescuento.name }}</p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Descripción:</strong>
+            <p>{{ selectedDescuento.description || 'Sin descripción' }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Porcentaje:</strong>
+            <p class="h4 text-primary" *ngIf="selectedDescuento.percentage">{{ selectedDescuento.percentage }}%</p>
+            <p *ngIf="!selectedDescuento.percentage">N/A</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Estado:</strong>
+            <p><app-status-badge [status]="selectedDescuento.is_active"></app-status-badge></p>
+          </div>
+        </div>
+        <hr>
+        <h6 class="mb-3"><i class="fas fa-users me-2"></i>Empleados asignados</h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-striped">
+            <thead>
+              <tr>
+                <th>Empleado</th>
+                <th>Monto Total</th>
+                <th>Mensual</th>
+                <th>Cuotas</th>
+                <th>Restantes</th>
+                <th>Inicio</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ed of employeeDeductions">
+                <td>{{ getEmployeeName(ed.employee_id) }}</td>
+                <td class="text-end">{{ formatCurrency(ed.total_amount) }}</td>
+                <td class="text-end">{{ formatCurrency(ed.monthly_amount) }}</td>
+                <td>{{ ed.installments }}</td>
+                <td>{{ ed.remaining_installments }}</td>
+                <td>{{ ed.start_date | date:'dd/MM/yyyy' }}</td>
+                <td><span class="badge" [ngClass]="ed.status==='active' ? 'bg-success' : (ed.status==='completed' ? 'bg-secondary' : 'bg-warning')">{{ ed.status }}</span></td>
+                <td class="text-center">
+                  <button type="button" class="btn btn-sm btn-outline-primary" (click)="openEditAssignment(ed)" title="Editar asignación">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="employeeDeductions.length===0">
+                <td colspan="8" class="text-center text-muted">No hay empleados asignados</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeViewModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

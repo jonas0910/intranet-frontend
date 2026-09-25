@@ -1,0 +1,497 @@
+<app-system-layout [title]="'Monitoreo en Tiempo Real'"
+    [subtitle]="'Seguimiento GPS de personal, vehículos y gestión de incidencias en campo'" [subtitleItems]="[
+        { label: 'Registro y control de personal de limpieza', icon: 'fas fa-user-check' },
+        { label: 'Mapa de rutas de recorrido de los barridos de vías públicas', icon: 'fas fa-map-marked-alt' }
+    ]"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Limpieza Pública', url: '/limpieza-publica'}, {label: 'Monitoreo'}]"
+    [subsystem]="'limpieza-publica'">
+
+    <div class="actions">
+        <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" (click)="recargar()" [disabled]="loading">
+            <i class="fas fa-sync-alt mr-1" [class.fa-spin]="loading"></i>
+            Sincronizar
+        </button>
+    </div>
+
+    <!-- Main content -->
+    <div class="container-fluid bg-white rounded shadow-sm border p-0 overflow-hidden">
+        <!-- Notificación Flotante -->
+        <div *ngIf="showNotification" class="floating-alert-toast shadow-lg animate__animated animate__fadeInDown">
+            <div class="d-flex align-items-center p-3 border-left-danger bg-white rounded shadow">
+                <div class="icon-pulse mr-3">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-0 font-weight-bold text-danger">
+                        ALERTA DETECTADA
+                    </h6>
+                    <p class="mb-0 text-sm text-dark">{{ ultimoEventoRecibido }}</p>
+                </div>
+                <button type="button" class="ml-3 close" (click)="showNotification = false">
+                    <span>&times;</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Navigation Tabs -->
+        <div class="p-3 border-bottom bg-light">
+            <ul class="nav nav-pills" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link px-4" [class.active]="tabActiva === 'mapa'" (click)="cambiarTab('mapa')"
+                        role="tab">
+                        <i class="fas fa-map-marked-alt mr-2"></i> Mapa de Operaciones
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-4" [class.active]="tabActiva === 'tipos-alerta'"
+                        (click)="cambiarTab('tipos-alerta')" role="tab">
+                        <i class="fas fa-cog mr-2"></i> Configuración de Alertas
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- MAP INTERFACE WITH SIDEBAR -->
+        <div class="row m-0" [hidden]="tabActiva !== 'mapa'">
+            <!-- SIDEBAR CONTROLS -->
+            <div *ngIf="!isMapExpanded"
+                class="col-md-4 col-lg-3 p-0 bg-white border-right shadow-sm sidebar-container animate__animated animate__fadeInLeft">
+                <!-- Sidebar Header Nav -->
+                <div class="d-flex border-bottom bg-light">
+                    <button class="flex-fill btn btn-flat py-2 px-1 text-sm border-right"
+                        [class.btn-primary]="modoNavegacion === 'alertas'"
+                        [class.text-muted]="modoNavegacion !== 'alertas'" (click)="cambiarModoNavegacion('alertas')">
+                        <i class="fas fa-bell mr-1"></i> Alertas
+                        <span *ngIf="unreadAlerts.length > 0" class="badge badge-danger ml-1"
+                            style="padding: 0.2rem 0.4rem; font-size: 0.65rem;">{{ unreadAlerts.length }}</span>
+                    </button>
+                    <button class="flex-fill btn btn-flat py-2 px-1 text-sm"
+                        [class.btn-primary]="modoNavegacion === 'personal'"
+                        [class.text-muted]="modoNavegacion !== 'personal'" (click)="cambiarModoNavegacion('personal')">
+                        <i class="fas fa-users-viewfinder mr-1"></i> Personal
+                    </button>
+                </div>
+
+                <!-- SEARCH BAR -->
+                <div class="p-2 border-bottom">
+                    <div class="input-group input-group-sm">
+                        <input *ngIf="modoNavegacion === 'alertas'" type="text" class="form-control border-0 bg-light"
+                            placeholder="Filtrar alertas..." [(ngModel)]="filtroAlertas" />
+                        <input *ngIf="modoNavegacion === 'personal'" type="text" class="form-control border-0 bg-light"
+                            placeholder="Buscar personal..." [(ngModel)]="filtroPersonal" />
+                        <div class="input-group-append">
+                            <span class="input-group-text bg-light border-0"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LIST CONTAINER -->
+                <div class="scrollable-list custom-scrollbar" style="height: calc(100vh - 350px); overflow-y: auto">
+                    <!-- View: Alertas -->
+                    <ng-container *ngIf="modoNavegacion === 'alertas'">
+                        <div *ngFor="let a of filtrarAlertas()" class="list-item-custom p-2 border-bottom pointer"
+                            [style.border-left]="a.estado === 'pendiente' ? '4px solid ' + (a.tipo_color_hex || '#dc3545') : ''"
+                            [style.background-color]="a.estado === 'pendiente' ? (a.tipo_color_hex + '1a') : ''"
+                            (click)="seleccionarAlerta(a)">
+                            <div class="d-flex justify-content-between align-items-start mb-0">
+                                <span class="badge text-xxs" [style.background]="a.tipo_color_hex"
+                                    style="color: white; padding: 0.15rem 0.35rem;">
+                                    {{ a.tipo_nombre }}
+                                </span>
+                                <small class="text-muted text-xxs">{{
+                                    formatFecha(a.created_at)
+                                    }}</small>
+                            </div>
+                            <div class="font-weight-bold text-xs mb-0">
+                                {{ a.personal_nombres }}
+                            </div>
+                            <div class="text-xxs text-muted text-truncate" style="max-width: 90%;">
+                                {{ a.mensaje || "Incidencia reportada" }}
+                            </div>
+                            <div *ngIf="a.estado === 'pendiente'" class="mt-1 d-flex justify-content-end">
+                                <button class="btn btn-xxs btn-outline-danger mr-1"
+                                    (click)="$event.stopPropagation(); abrirModalResolver(a.id || a.id_alerta, true)">
+                                    Rechazar
+                                </button>
+                                <button class="btn btn-xxs btn-success"
+                                    (click)="$event.stopPropagation(); abrirModalResolver(a.id || a.id_alerta)">
+                                    Resolver
+                                </button>
+                            </div>
+                        </div>
+                        <div *ngIf="alertas.length === 0" class="p-4 text-center text-muted">
+                            <i class="fas fa-check-circle fa-2x mb-2 opacity-50"></i>
+                            <p class="text-sm">No hay alertas recientes</p>
+                        </div>
+                    </ng-container>
+
+                    <!-- View: Personal -->
+                    <ng-container *ngIf="modoNavegacion === 'personal'">
+                        <div *ngFor="let p of filtrarPersonal()"
+                            class="list-item-custom p-2 border-bottom pointer transition"
+                            [class.selected-p]="personalSeleccionadoId === (p.id_personal || p.id)"
+                            (click)="seleccionarPersonal(p)">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-neutral-sm mr-2" [class.has-alert]="tieneAlertaActiva(p)">
+                                    <i class="fas fa-user-circle" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <div class="font-weight-bold text-xs text-truncate">
+                                        {{ p.personal?.name || p.nombres || p.personal_nombres || 'Personal Sin Nombre'
+                                        }}
+                                    </div>
+                                    <small class="text-muted text-xxs d-block">GPS Activo • {{ p.updated_at |
+                                        date:'HH:mm' }}</small>
+                                </div>
+                                <div class="text-right">
+                                    <i *ngIf="personalSeleccionadoId !== (p.id_personal || p.id)"
+                                        class="fas fa-chevron-right text-muted text-xxs opacity-50"></i>
+                                    <i *ngIf="personalSeleccionadoId === (p.id_personal || p.id)"
+                                        class="fas fa-chevron-down text-primary text-xxs"></i>
+                                </div>
+                            </div>
+
+                            <!-- Opciones Expandidas al Seleccionar -->
+                            <div *ngIf="personalSeleccionadoId === (p.id_personal || p.id)" class="mt-2 w-100">
+                                <div class="d-flex flex-wrap text-center border-top pt-2">
+                                    <div class="col-4 p-1">
+                                        <button
+                                            class="btn btn-xs btn-outline-primary btn-block text-xxs p-1 text-truncate"
+                                            title="Ver Trayectoria GPS"
+                                            (click)="$event.stopPropagation(); abrirModalHistorial(p, 'ubicacion')">
+                                            <i class="fas fa-route d-block mb-1"></i> Historial
+                                        </button>
+                                    </div>
+                                    <div class="col-4 p-1">
+                                        <button
+                                            class="btn btn-xs btn-outline-danger btn-block text-xxs p-1 text-truncate"
+                                            title="Historial de Alertas"
+                                            (click)="$event.stopPropagation(); abrirModalHistorial(p, 'alertas')">
+                                            <i class="fas fa-bell d-block mb-1"></i> Alertas
+                                        </button>
+                                    </div>
+                                    <div class="col-4 p-1">
+                                        <button
+                                            class="btn btn-xs btn-outline-success btn-block text-xxs p-1 text-truncate"
+                                            title="Ver Rutas Asignadas"
+                                            (click)="$event.stopPropagation(); toggleRutasPersonal(p)">
+                                            <i class="fas fa-map-marked-alt d-block mb-1"></i> Rutas
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div *ngIf="mostrarSelectorRutas"
+                                    class="mt-2 text-left bg-light p-2 rounded shadow-sm border animate__animated animate__fadeIn"
+                                    (click)="$event.stopPropagation()" (mousedown)="$event.stopPropagation()">
+                                    <label class="text-xxs font-weight-bold mb-1 text-dark"><i
+                                            class="fas fa-route mr-1 text-success"></i> Rutas Asignadas (Hoy)</label>
+                                    <select class="form-control form-control-sm text-xs"
+                                        [(ngModel)]="rutaSeleccionadaId" (change)="graficarRutaUnicaSeleccionada()"
+                                        (click)="$event.stopPropagation()" (mousedown)="$event.stopPropagation()">
+                                        <option value="">-- Seleccione ruta --</option>
+                                        <option *ngIf="loadingRutasPersonal" value="loading" disabled>Cargando rutas...
+                                        </option>
+                                        <option *ngIf="!loadingRutasPersonal && rutasDelPersonal.length === 0"
+                                            value="empty" disabled>Sin rutas hoy</option>
+                                        <option *ngFor="let r of rutasDelPersonal" [value]="r.id_ruta">{{ r.nombre }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div *ngIf="personalConUbicacion.length === 0" class="p-4 text-center text-muted">
+                            <i class="fas fa-user-slash fa-2x mb-2 opacity-50"></i>
+                            <p class="text-sm">Sin personal conectado</p>
+                        </div>
+                    </ng-container>
+                </div>
+            </div>
+
+            <!-- MAP AREA -->
+            <div [class]="isMapExpanded ? 'col-12 p-0 position-relative' : 'col-md-8 col-lg-9 p-0 position-relative'">
+                <div id="map-lp" class="map-full-height shadow-inner bg-dark"></div>
+
+                <!-- Map Overlay Tools -->
+                <div class="map-overlay-tools">
+                    <div class="btn-group-vertical shadow-sm">
+                        <button class="btn btn-white btn-sm text-danger" (click)="limpiarCapasBusqueda()"
+                            title="Limpiar búsqueda">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <button class="btn btn-white btn-sm border-top" (click)="toggleMapExpanded()"
+                            [title]="isMapExpanded ? 'Reducir mapa' : 'Agrandar mapa'">
+                            <i class="fas" [class.fa-expand]="!isMapExpanded" [class.fa-compress]="isMapExpanded"></i>
+                        </button>
+                        <button class="btn btn-white btn-sm border-top" (click)="ajustarVistaATodos()"
+                            title="Ver todos">
+                            <i class="fas fa-compress-arrows-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Map Legend -->
+                <div class="map-legend shadow-sm" style="background: rgba(0,0,0,0.6); color: white;">
+                    <div class="d-flex align-items-center text-xs">
+                        <div class="mr-3 d-flex align-items-center">
+                            <span class="dot bg-primary mr-1 shadow-sm"></span> Personal
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="dot bg-danger mr-1 shadow-sm pulse-dot"></span>
+                            Alerta Activa
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TIPOS DE ALERTA TAB -->
+        <div *ngIf="tabActiva === 'tipos-alerta'" class="p-3">
+            <div class="card shadow-sm border-0 rounded-lg overflow-hidden">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h3 class="card-title font-weight-bold mb-0">
+                        Categorías de Alertas
+                    </h3>
+                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-3"
+                        (click)="abrirModalTipoAlerta()">
+                        <i class="fas fa-plus-circle mr-1"></i> Nueva Categoría
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0">Código</th>
+                                    <th class="border-0">Nombre / Descripción</th>
+                                    <th class="border-0 text-center">Color Visual</th>
+                                    <th class="border-0 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let t of tiposAlerta">
+                                    <td class="align-middle">
+                                        <code>{{ t.codigo }}</code>
+                                    </td>
+                                    <td class="align-middle font-weight-bold">{{ t.descripcion }}</td>
+                                    <td class="align-middle text-center">
+                                        <span class="color-preview shadow-sm" [style.background]="t.color_hex"
+                                            [title]="t.color_hex"></span>
+                                    </td>
+                                    <td class="align-middle text-right">
+                                        <button class="btn btn-icon btn-light btn-sm mr-2"
+                                            (click)="editarTipoAlerta(t)">
+                                            <i class="fas fa-edit text-primary"></i>
+                                        </button>
+                                        <button class="btn btn-icon btn-light-danger btn-sm"
+                                            (click)="eliminarTipoAlerta(t)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="!tiposAlerta?.length">
+                                    <td colspan="5" class="text-center p-4 text-muted">No hay categorías configuradas
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Modal Tipo Alerta -->
+    <div class="modal fade" [class.show]="mostrarModalTipo" [style.display]="mostrarModalTipo ? 'block' : 'none'"
+        tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title font-weight-bold">
+                        {{ tipoAlertaEdicion?.id ? "Editar" : "Nueva" }} Categoría de Alerta
+                    </h5>
+                    <button type="button" class="close" (click)="cerrarModalTipoAlerta()">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <form (ngSubmit)="guardarTipoAlerta()" #formTipo="ngForm">
+                        <div class="row">
+                            <div class="col-md-5 form-group">
+                                <label class="small font-weight-bold">CÓDIGO ID</label>
+                                <input type="text" class="form-control" [(ngModel)]="formTipoAlerta.codigo"
+                                    name="codigo" required placeholder="ej. LP-01" />
+                            </div>
+                            <div class="col-md-7 form-group">
+                                <label class="small font-weight-bold">DESCRIPCIÓN</label>
+                                <input type="text" class="form-control" [(ngModel)]="formTipoAlerta.descripcion"
+                                    name="descripcion" required placeholder="ej. RECOJO URGENTE" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="small font-weight-bold">COLOR IDENTIFICADOR (HEX)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text p-0 overflow-hidden" style="width: 40px">
+                                        <input type="color" class="form-control border-0 p-0"
+                                            [(ngModel)]="formTipoAlerta.color_hex" name="color_hex_picker"
+                                            style="height: 100%" />
+                                    </span>
+                                </div>
+                                <input type="text" class="form-control" [(ngModel)]="formTipoAlerta.color_hex"
+                                    name="color_hex" maxlength="7" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 form-group">
+                                <label class="small font-weight-bold">ORDEN DE PRIORIDAD (Visualización)</label>
+                                <input type="number" class="form-control" [(ngModel)]="formTipoAlerta.orden"
+                                    name="orden" min="0" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-link text-muted" (click)="cerrarModalTipoAlerta()">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary px-4 rounded-pill" (click)="guardarTipoAlerta()">
+                        <i class="fas fa-save mr-1"></i> Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade" [class.show]="mostrarModalTipo" *ngIf="mostrarModalTipo"></div>
+
+    <!-- Modal Resolver/Rechazar Alerta -->
+    <div class="modal fade" [class.show]="mostrarModalResolver"
+        [style.display]="mostrarModalResolver ? 'block' : 'none'" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header" [class.bg-success]="!isRechazo" [class.bg-danger]="isRechazo">
+                    <h5 class="modal-title font-weight-bold text-white">
+                        {{ isRechazo ? 'Rechazar Alerta' : 'Atender Incidencia' }}
+                    </h5>
+                    <button type="button" class="close text-white" (click)="cerrarModalResolver()">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <div *ngIf="alertaParaResolver" class="mb-4 p-3 bg-light rounded text-sm border">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="font-weight-bold text-primary text-uppercase">{{ alertaParaResolver.tipo_nombre
+                                }}</span>
+                            <small class="text-muted">{{ formatFecha(alertaParaResolver.created_at) }}</small>
+                        </div>
+                        <div class="mb-1"><strong>Emisor:</strong> {{ alertaParaResolver.personal_nombres }}</div>
+                        <div><strong>Mensaje:</strong> "{{ alertaParaResolver.mensaje || 'Reporte enviado desde app
+                            móvil'
+                            }}"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="small font-weight-bold">
+                            {{ isRechazo ? 'MOTIVO DEL RECHAZO (Obligatorio)' : 'DETALLE DE LA ATENCIÓN / OBSERVACIONES'
+                            }}
+                        </label>
+                        <textarea class="form-control" [(ngModel)]="observacionResolucion" rows="3"
+                            [placeholder]="isRechazo ? 'Explique por qué se descarta esta alerta...' : 'Escriba las acciones tomadas...'"></textarea>
+                    </div>
+
+                    <div class="alert alert-warning text-xs p-2 mb-0 border-0">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Esta alerta pasará al historial de incidencias resueltas.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-link text-muted" (click)="cerrarModalResolver()">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn px-4 rounded-pill shadow" [class.btn-success]="!isRechazo"
+                        [class.btn-danger]="isRechazo" (click)="confirmarGestionAlerta()"
+                        [disabled]="guardandoResolucion">
+                        <i class="fas mr-1" [class.fa-check-circle]="!isRechazo" [class.fa-times-circle]="isRechazo"
+                            [class.fa-spinner]="guardandoResolucion" [class.fa-spin]="guardandoResolucion"></i>
+                        {{ isRechazo ? 'Confirmar Rechazo' : 'Marcar como Atendida' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade" [class.show]="mostrarModalResolver" *ngIf="mostrarModalResolver"></div>
+
+    <!-- Modal Consulta Historial Avanzado -->
+    <div class="modal fade" [class.show]="mostrarModalHistorial"
+        [style.display]="mostrarModalHistorial ? 'block' : 'none'" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title font-weight-bold">
+                        <i class="fas fa-search-location mr-2"></i>Consulta de Historial
+                    </h5>
+                    <button type="button" class="close text-white" (click)="cerrarModalHistorial()">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <div *ngIf="personalParaHistorial" class="mb-4 d-flex align-items-center">
+                        <div class="avatar-neutral mr-3"
+                            style="width: 50px; height: 50px; background: #007bff; color: white;">
+                            <i class="fas fa-user-circle fa-2x"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 font-weight-bold">{{ personalParaHistorial.nombres ||
+                                personalParaHistorial.personal_nombres }}</h6>
+                            <small class="text-muted">Personal de Limpieza Pública</small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="small font-weight-bold text-uppercase">Desde:</label>
+                            <input type="date" class="form-control" [(ngModel)]="filtrosHistorial.fecha_desde">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="small font-weight-bold text-uppercase">Hasta:</label>
+                            <input type="date" class="form-control" [(ngModel)]="filtrosHistorial.fecha_hasta">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="small font-weight-bold text-uppercase">¿Qué desea visualizar?</label>
+                        <div class="btn-group btn-group-toggle w-100 shadow-sm" data-toggle="buttons">
+                            <button class="btn btn-sm btn-outline-primary py-2"
+                                [class.active]="filtrosHistorial.tipo === 'ubicacion'"
+                                (click)="filtrosHistorial.tipo = 'ubicacion'">
+                                <i class="fas fa-route mr-1"></i> Recorrido
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary py-2"
+                                [class.active]="filtrosHistorial.tipo === 'alertas'"
+                                (click)="filtrosHistorial.tipo = 'alertas'">
+                                <i class="fas fa-bell mr-1"></i> Alertas
+                            </button>
+                        </div>
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            {{ filtrosHistorial.tipo === 'ubicacion' ? 'Se mostrará la trayectoria detallada en ese
+                            periodo.' : 'Se mostrarán todas las alertas emitidas.' }}
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-link text-muted" (click)="cerrarModalHistorial()">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary px-4 rounded-pill shadow"
+                        (click)="consultarHistorialFiltros()" [disabled]="loadingHistorialModal">
+                        <i class="fas mr-1" [class.fa-search]="!loadingHistorialModal"
+                            [class.fa-spinner]="loadingHistorialModal" [class.fa-spin]="loadingHistorialModal"></i>
+                        {{ loadingHistorialModal ? 'Consultando...' : 'Visualizar Historial' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade" [class.show]="mostrarModalHistorial" *ngIf="mostrarModalHistorial"></div>
+</app-system-layout>

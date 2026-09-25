@@ -1,0 +1,321 @@
+<!-- Message Detail View -->
+<div class="card" *ngIf="currentMessage">
+  <!-- Header with Navigation -->
+  <div class="card-header" *ngIf="showNavigation || showActions">
+    <div class="d-flex justify-content-between align-items-center">
+      <!-- Navigation Controls -->
+      <div class="btn-group" *ngIf="showNavigation">
+        <button type="button" 
+                class="btn btn-outline-secondary btn-sm"
+                (click)="onNavigate('prev')"
+                [disabled]="!hasPrevious"
+                title="Mensaje anterior">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button type="button" 
+                class="btn btn-outline-secondary btn-sm"
+                (click)="onNavigate('next')"
+                [disabled]="!hasNext"
+                title="Mensaje siguiente">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="btn-group" *ngIf="showActions">
+        <button type="button" 
+                class="btn btn-outline-primary btn-sm"
+                (click)="onReply()"
+                title="Responder">
+          <i class="fas fa-reply"></i>
+        </button>
+        <button type="button" 
+                class="btn btn-outline-primary btn-sm"
+                (click)="onReplyAll()"
+                title="Responder a todos">
+          <i class="fas fa-reply-all"></i>
+        </button>
+        <button type="button" 
+                class="btn btn-outline-secondary btn-sm"
+                (click)="onForward()"
+                title="Reenviar">
+          <i class="fas fa-share"></i>
+        </button>
+        <div class="btn-group" ngbDropdown>
+          <button type="button" 
+                  class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                  ngbDropdownToggle
+                  title="Más acciones">
+            <i class="fas fa-ellipsis-v"></i>
+          </button>
+          <div class="dropdown-menu" ngbDropdownMenu>
+            <button class="dropdown-item" 
+                    (click)="onMarkAsUnread()"
+                    *ngIf="currentMessage.is_read">
+              <i class="fas fa-envelope text-primary"></i>
+              Marcar como no leído
+            </button>
+            <button class="dropdown-item" 
+                    (click)="onToggleImportant()">
+              <i class="fas fa-star" 
+                 [class.text-warning]="isImportant"
+                 [class.text-muted]="!isImportant"></i>
+              {{ isImportant ? 'Quitar importancia' : 'Marcar como importante' }}
+            </button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item text-danger" 
+                    (click)="onDelete()">
+              <i class="fas fa-trash"></i>
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Close Button -->
+      <button type="button" 
+              class="btn btn-outline-secondary btn-sm"
+              (click)="onClose()"
+              title="Cerrar">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Message Content -->
+  <div class="card-body">
+    <!-- Subject and Priority -->
+    <div class="message-header mb-3">
+      <h4 class="message-subject mb-2">
+        <i [class]="getPriorityIcon(currentMessage.priority)" 
+           *ngIf="currentMessage.priority !== 'normal'"></i>
+        <i class="fas fa-star text-warning mr-2" *ngIf="isImportant"></i>
+        <i class="fas fa-envelope text-primary mr-2" *ngIf="isUnread"></i>
+        {{ currentMessage.subject || 'Sin asunto' }}
+      </h4>
+      
+      <!-- Priority Badge -->
+      <span class="badge badge-pill mr-2"
+            *ngIf="currentMessage.priority !== 'normal'"
+            [class.badge-danger]="currentMessage.priority === 'urgent'"
+            [class.badge-warning]="currentMessage.priority === 'high'">
+        {{ getPriorityLabel(currentMessage.priority) }}
+      </span>
+    </div>
+
+    <!-- Sender Information -->
+    <div class="message-meta mb-3">
+      <div class="d-flex align-items-center mb-2">
+        <div class="sender-avatar mr-3">
+          <div class="avatar-circle">
+            {{ currentMessage.sender.name.charAt(0).toUpperCase() }}
+          </div>
+        </div>
+        <div class="sender-info flex-grow-1">
+          <div class="sender-name font-weight-bold">
+            {{ currentMessage.sender.name }}
+          </div>
+          <div class="sender-email text-muted">
+            {{ currentMessage.sender.email }}
+          </div>
+        </div>
+        <div class="message-date text-muted">
+          {{ formatDate(currentMessage.created_at) }}
+        </div>
+      </div>
+
+      <!-- Recipients (Basic View) -->
+      <div class="recipients-basic" *ngIf="!showFullHeaders">
+        <small class="text-muted">
+          <strong>Para:</strong> {{ getRecipientsList(currentMessage.recipients) }}
+        </small>
+      </div>
+
+      <!-- Full Headers Toggle -->
+      <button type="button" 
+              class="btn btn-link btn-sm p-0 text-muted"
+              (click)="toggleFullHeaders()">
+        <i class="fas" 
+           [class.fa-chevron-down]="!showFullHeaders"
+           [class.fa-chevron-up]="showFullHeaders"></i>
+        {{ showFullHeaders ? 'Ocultar detalles' : 'Mostrar detalles' }}
+      </button>
+
+      <!-- Full Headers (Expanded View) -->
+      <div class="recipients-full mt-2" *ngIf="showFullHeaders">
+        <div class="row">
+          <div class="col-sm-2">
+            <small class="text-muted font-weight-bold">De:</small>
+          </div>
+          <div class="col-sm-10">
+            <small>{{ currentMessage.sender.name }} &lt;{{ currentMessage.sender.email }}&gt;</small>
+          </div>
+        </div>
+        <div class="row" *ngIf="currentMessage.recipients.length > 0">
+          <div class="col-sm-2">
+            <small class="text-muted font-weight-bold">Para:</small>
+          </div>
+          <div class="col-sm-10">
+            <small>
+              <span *ngFor="let recipient of currentMessage.recipients; let last = last">
+                {{ recipient.name }} &lt;{{ recipient.email }}&gt;<span *ngIf="!last">, </span>
+              </span>
+            </small>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-2">
+            <small class="text-muted font-weight-bold">Fecha:</small>
+          </div>
+          <div class="col-sm-10">
+            <small>{{ currentMessage.created_at | date:'full' }}</small>
+          </div>
+        </div>
+        <div class="row" *ngIf="currentMessage.conversation_id">
+          <div class="col-sm-2">
+            <small class="text-muted font-weight-bold">Conversación:</small>
+          </div>
+          <div class="col-sm-10">
+            <small>ID: {{ currentMessage.conversation_id }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attachments Preview -->
+    <div class="attachments-preview mb-3" *ngIf="hasAttachments">
+      <div class="attachments-header mb-2">
+        <h6 class="mb-0">
+          <i class="fas fa-paperclip text-muted mr-2"></i>
+          {{ currentMessage.attachments.length }} archivo(s) adjunto(s)
+        </h6>
+      </div>
+      
+      <div class="attachments-list">
+        <div class="attachment-item mb-2" 
+             *ngFor="let attachment of currentMessage.attachments">
+          <div class="card border-left-0 border-right-0 border-bottom-0">
+            <div class="card-body p-2">
+              <div class="d-flex align-items-center">
+                <div class="attachment-icon mr-3">
+                  <i [class]="getAttachmentIcon(attachment) + ' ' + getAttachmentColor(attachment)"
+                     style="font-size: 1.5rem;"></i>
+                </div>
+                <div class="attachment-info flex-grow-1">
+                  <div class="attachment-name font-weight-bold">
+                    {{ attachment.original_name }}
+                  </div>
+                  <div class="attachment-meta text-muted">
+                    <small>
+                      {{ formatFileSize(attachment.size) }}
+                      <span *ngIf="attachment.mime_type"> • {{ attachment.mime_type }}</span>
+                    </small>
+                  </div>
+                </div>
+                <div class="attachment-actions">
+                  <button type="button" 
+                          class="btn btn-outline-primary btn-sm mr-1"
+                          (click)="onPreviewAttachment(attachment)"
+                          *ngIf="isPreviewable(attachment)"
+                          title="Vista previa">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button type="button" 
+                          class="btn btn-outline-secondary btn-sm"
+                          (click)="onDownloadAttachment(attachment)"
+                          [disabled]="downloadingAttachment"
+                          title="Descargar">
+                    <i class="fas fa-download" *ngIf="!downloadingAttachment"></i>
+                    <i class="fas fa-spinner fa-spin" *ngIf="downloadingAttachment"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Image Preview -->
+              <div class="attachment-preview mt-2" 
+                   *ngIf="isImage(attachment) && isAttachmentExpanded(attachment.id)">
+                <img [src]="attachment.preview_url" 
+                     [alt]="attachment.original_name"
+                     class="img-fluid rounded"
+                     style="max-height: 300px;">
+              </div>
+              
+              <!-- Expand/Collapse for images -->
+              <button type="button" 
+                      class="btn btn-link btn-sm p-0 mt-1"
+                      (click)="onToggleAttachmentExpansion(attachment.id)"
+                      *ngIf="isImage(attachment)">
+                <small>
+                  <i class="fas" 
+                     [class.fa-chevron-down]="!isAttachmentExpanded(attachment.id)"
+                     [class.fa-chevron-up]="isAttachmentExpanded(attachment.id)"></i>
+                  {{ isAttachmentExpanded(attachment.id) ? 'Ocultar' : 'Mostrar' }} vista previa
+                </small>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message Content -->
+    <div class="message-content">
+      <div class="content-body" 
+           [innerHTML]="currentMessage.content"
+           style="white-space: pre-wrap; word-wrap: break-word;">
+      </div>
+    </div>
+
+    <!-- Read Status -->
+    <div class="message-status mt-3" *ngIf="currentMessage.read_at">
+      <small class="text-muted">
+        <i class="fas fa-check-double text-primary"></i>
+        Leído el {{ formatDate(currentMessage.read_at) }}
+      </small>
+    </div>
+  </div>
+
+  <!-- Footer with Quick Actions -->
+  <div class="card-footer" *ngIf="showActions">
+    <div class="d-flex justify-content-between">
+      <div class="quick-actions">
+        <button type="button" 
+                class="btn btn-primary btn-sm mr-2"
+                (click)="onReply()">
+          <i class="fas fa-reply"></i> Responder
+        </button>
+        <button type="button" 
+                class="btn btn-outline-secondary btn-sm"
+                (click)="onForward()">
+          <i class="fas fa-share"></i> Reenviar
+        </button>
+      </div>
+      <div class="message-actions">
+        <button type="button" 
+                class="btn btn-outline-danger btn-sm"
+                (click)="onDelete()">
+          <i class="fas fa-trash"></i> Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="card" *ngIf="loading">
+  <div class="card-body text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only">Cargando mensaje...</span>
+    </div>
+    <p class="mt-3 text-muted">Cargando mensaje...</p>
+  </div>
+</div>
+
+<!-- Empty State -->
+<div class="card" *ngIf="!loading && !currentMessage">
+  <div class="card-body text-center py-5">
+    <i class="fas fa-envelope-open fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">No hay mensaje seleccionado</h5>
+    <p class="text-muted">Selecciona un mensaje para ver su contenido</p>
+  </div>
+</div>

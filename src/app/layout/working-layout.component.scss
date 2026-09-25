@@ -1,0 +1,76 @@
+/* Estilos para el layout funcional */
+.wrapper {
+  min-height: 100vh;
+}
+
+.main-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 1030;
+  width: 250px;
+}
+
+.content-wrapper {
+  margin-left: 250px;
+  min-height: 100vh;
+}
+
+.main-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  margin-left: 250px;
+}
+
+.main-footer {
+  margin-left: 250px;
+}
+
+/* Estilos para el menú de administración */
+.nav-header {
+  padding: 10px 25px 10px 15px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #4b646f;
+  text-transform: uppercase;
+}
+
+.nav-item.has-treeview.menu-open > .nav-link {
+  background-color: rgba(255,255,255,.1);
+  color: #fff;
+}
+
+.nav-item.has-treeview.menu-open > .nav-link .right {
+  transform: rotate(-90deg);
+}
+
+.nav-treeview {
+  display: none;
+}
+
+.nav-item.has-treeview.menu-open > .nav-treeview {
+  display: block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .content-wrapper {
+    margin-left: 0;
+  }
+  
+  .main-footer {
+    margin-left: 0;
+  }
+  
+  .main-header {
+    margin-left: 0;
+  }
+  
+  .main-sidebar {
+    transform: translateX(-250px);
+  }
+}

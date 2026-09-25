@@ -1,0 +1,72 @@
+<div class="modal-search-overlay" *ngIf="visible" (click)="cerrarModal()">
+    <div class="modal-search-content" (click)="$event.stopPropagation()">
+  
+      <div class="modal-search-header">
+        <h6><i class="fas fa-plus-circle mr-2 text-primary"></i>Nueva conversación</h6>
+        <button (click)="cerrarModal()" class="btn-close-modal"><i class="fas fa-times"></i></button>
+      </div>
+  
+      <!-- Tabs tipo -->
+      <div class="tipo-tabs">
+        <button [class.active]="tipoNueva === 'individual'"
+                (click)="tipoNueva = 'individual'; contactosSeleccionados = []">
+          <i class="fas fa-user mr-1"></i> Individual
+        </button>
+        <button [class.active]="tipoNueva === 'group'"
+                (click)="tipoNueva = 'group'">
+          <i class="fas fa-users mr-1"></i> Grupo
+        </button>
+      </div>
+  
+      <!-- Nombre del grupo -->
+      <div *ngIf="tipoNueva === 'group'" class="grupo-title-input p-2">
+        <input type="text" class="form-control form-control-sm" placeholder="Nombre del grupo..." [(ngModel)]="tituloGrupo">
+      </div>
+  
+      <!-- Buscar contacto -->
+      <div class="contacto-search p-2">
+        <div class="input-group input-group-sm">
+          <div class="input-group-prepend">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+          </div>
+          <input type="text" class="form-control" placeholder="Buscar usuario..."
+                 [(ngModel)]="busquedaContacto"
+                 (ngModelChange)="onBusquedaContacto()">
+        </div>
+      </div>
+  
+      <!-- Lista contactos -->
+      <div class="contacto-list">
+        <div class="contacto-loading text-center p-3" *ngIf="cargandoContactos">
+          <i class="fas fa-circle-notch fa-spin mr-1"></i>
+        </div>
+  
+        <div class="contacto-item"
+             *ngFor="let c of contactosFiltrados"
+             (click)="tipoNueva === 'individual' ? crearConvIndividual(c) : toggleContactoGrupo(c)"
+             [class.selected]="isContactoSeleccionado(c)">
+          <div class="contacto-avatar">{{ c.name?.charAt(0)?.toUpperCase() }}</div>
+          <div class="contacto-info">
+            <div class="contacto-name">{{ c.name }}</div>
+            <div class="contacto-email">{{ c.email }}</div>
+          </div>
+          <i class="fas fa-check check-icon" *ngIf="tipoNueva === 'group' && isContactoSeleccionado(c)"></i>
+        </div>
+  
+        <div class="contacto-empty text-center p-4 text-muted" *ngIf="!cargandoContactos && contactosFiltrados.length === 0">
+          <i class="fas fa-user-slash mb-2"></i>
+          <p><small>Sin resultados</small></p>
+        </div>
+      </div>
+  
+      <!-- Crear grupo -->
+      <div *ngIf="tipoNueva === 'group'" class="grupo-actions p-2 border-top">
+        <button class="btn btn-primary btn-sm btn-block"
+                [disabled]="contactosSeleccionados.length < 1 || !tituloGrupo.trim() || creandoConv"
+                (click)="crearConvGrupal()">
+          <i class="fas fa-plus mr-1"></i>
+          {{ creandoConv ? 'Creando...' : 'Crear grupo' }}
+        </button>
+      </div>
+    </div>
+  </div>

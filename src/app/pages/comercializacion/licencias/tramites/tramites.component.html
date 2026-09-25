@@ -1,0 +1,229 @@
+<app-system-layout [title]="viewConfig.title" [subtitle]="'Licencias de Funcionamiento'"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comercialización', url: '/comercializacion'}, {label: 'Trámites'}]"
+    [subsystem]="'comercializacion'">
+
+    <div class="card elevation-1" [ngClass]="cv.cardOutlineColor" [style.border-radius.px]="cv.cardBorderRadius">
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                    <i [class]="viewConfig.icon + ' mr-1 text-muted'"></i> Bandeja de Expedientes
+                </h3>
+                <span class="badge badge-info ml-2" *ngIf="cv.showRecordCount">{{data.length}} expedientes</span>
+
+                <ng-container *ngIf="cv.showExportButtons">
+                    <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"
+                        (click)="onExportExcel()">
+                        <i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"
+                        (click)="onExportPdf()">
+                        <i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}
+                    </button>
+                </ng-container>
+            </div>
+            <div>
+                <button type="button" class="btn btn-sm shadow-sm" [ngClass]="cv.newBtnClass"
+                    (click)="onAction('create')">
+                    <i [class]="viewConfig.actions?.create?.icon + ' mr-1'"></i> {{viewConfig.actions?.create?.label}}
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table">
+                    <thead>
+                        <tr>
+                            <th *ngFor="let h of viewConfig.table.headers" [class.text-center]="h.key === 'acciones'">
+                                {{h.label}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let p of data">
+                            <td><strong class="text-success">{{p.nro_expediente}}</strong></td>
+                            <td>{{p.solicitante}}</td>
+                            <td>{{p.giro_negocio}}</td>
+                            <td><span class="text-muted small">{{p.tipo_tramite}}</span></td>
+                            <td>
+                                <span class="badge badge-pill"
+                                    [ngClass]="p.fase.includes('Finalizado') ? 'badge-success' : 'badge-warning'">
+                                    {{p.fase}}
+                                </span>
+                            </td>
+                            <td class="text-center" style="white-space: nowrap;">
+                                <button class="btn btn-sm btn-outline-success" title="Liquidar Pago"
+                                    (click)="openLiquidar(p)">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </button>
+                                <button class="btn btn-sm ml-1" [ngClass]="cv.viewBtnClass" title="Ver Expediente"
+                                    (click)="onAction('view', p)">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                                <button class="btn btn-sm ml-1" [ngClass]="cv.editBtnClass" title="Editar"
+                                    (click)="onAction('edit', p)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm ml-1 btn-outline-danger" title="Eliminar"
+                                    (click)="onAction('delete', p)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="data.length === 0">
+                            <td colspan="6" class="text-center p-5">
+                                <i class="fas fa-id-card fa-3x text-muted mb-3 d-block"></i>
+                                <p class="text-muted">No hay trámites registrados.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-light py-2">
+            <small class="text-muted"><i class="fas fa-info-circle mr-1"></i> Mostrando trámites recientes.</small>
+        </div>
+    </div>
+
+</app-system-layout>
+
+<!-- Modal Nuevo Expediente -->
+<div class="modal fade" id="modalTramite" [ngClass]="{'show': showModal}" [style.display]="showModal ? 'block' : 'none'"
+    tabindex="-1" role="dialog" [ngStyle]="{'background-color': showModal ? 'rgba(0,0,0,0.5)' : 'transparent'}">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content elevation-3" [style.border-radius.px]="mc.borderRadius">
+            <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+                [style.padding]="mc.headerPadding">
+                <h5 class="modal-title" [style.font-size]="mc.headerFontSize">
+                    <i [class]="mc.headerIcon + ' mr-2'"></i>
+                    {{ viewMode === 'view' ? 'Detalle de Expediente' : (viewMode === 'edit' ? 'Editar Expediente' :
+                    'Registrar Nuevo Expediente') }}
+                </h5>
+                <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" [style.background]="mc.bodyBg" [style.padding]="mc.formPadding">
+                <form [formGroup]="form">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Nº
+                                Expediente</label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize"
+                                formControlName="nro_expediente" placeholder="EXP-2026-XXXX">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Vincular
+                                Comerciante (Padrón)</label>
+                            <select class="form-control" [ngClass]="mc.inputSize" formControlName="comerciante_id"
+                                (change)="onComercianteChange($event)">
+                                <option [value]="null">-- Seleccionar del Padrón (Opcional) --</option>
+                                <option *ngFor="let c of comerciantesPadron" [value]="c.id">
+                                    {{c.contribuyente}} (Puesto: {{c.nro_puesto}})
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Solicitante /
+                                Administrado (Manual)</label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize"
+                                formControlName="solicitante" placeholder="Nombre completo o Razón Social">
+                        </div>
+                        <div class="col-md-8 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Giro de Negocio /
+                                Actividad</label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize"
+                                formControlName="giro_negocio" placeholder="Ej: Clínica Dental, Bodega, etc.">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Fase
+                                Actual</label>
+                            <select class="form-control" [ngClass]="mc.inputSize" formControlName="fase">
+                                <option value="Evaluación Técnica">Evaluación Técnica</option>
+                                <option value="Inspección ITSE">Inspección ITSE</option>
+                                <option value="Emitido / Finalizado">Emitido / Finalizado</option>
+                                <option value="Observado">Observado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Tipo de
+                                Trámite</label>
+                            <select class="form-control" [ngClass]="mc.inputSize" formControlName="tipo_tramite">
+                                <option value="Definitiva de Funcionamiento">Definitiva de Funcionamiento</option>
+                                <option value="Licencia Temporal">Licencia Temporal</option>
+                                <option value="Ampliación de Giro">Ampliación de Giro</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0" [style.background]="mc.footerBg">
+                <button type="button" class="btn" [ngClass]="mc.cancelBtnClass" (click)="closeModal()"
+                    [disabled]="isSaving">
+                    <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ viewMode === 'view' ? 'Cerrar' : 'Cancelar' }}
+                </button>
+                <button type="button" class="btn shadow-sm" [ngClass]="mc.saveBtnClass" (click)="save()"
+                    [disabled]="form.invalid || isSaving" *ngIf="viewMode !== 'view'">
+                    <i class="fas fa-circle-notch fa-spin mr-1" *ngIf="isSaving"></i>
+                    <i [class]="mc.saveBtnIcon + ' mr-1'" *ngIf="!isSaving"></i>
+                    {{ isSaving ? 'Guardando...' : (viewMode === 'edit' ? 'Actualizar' : 'Guardar Expediente') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Liquidar Pago -->
+<div class="modal fade" id="modalLiquidar" [ngClass]="{'show': showLiquidarModal}"
+    [style.display]="showLiquidarModal ? 'block' : 'none'" tabindex="-1" role="dialog"
+    [ngStyle]="{'background-color': showLiquidarModal ? 'rgba(0,0,0,0.5)' : 'transparent'}">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content elevation-3" [style.border-radius.px]="mc.borderRadius">
+            <div class="modal-header bg-success text-white" [style.padding]="mc.headerPadding">
+                <h5 class="modal-title" [style.font-size]="mc.headerFontSize">
+                    <i class="fas fa-file-invoice-dollar mr-2"></i> Liquidar Derecho de Trámite
+                </h5>
+                <button type="button" class="close text-white" (click)="closeLiquidar()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" [style.background]="mc.bodyBg" [style.padding]="mc.formPadding">
+                <div class="alert alert-info py-2 small mb-3">
+                    <i class="fas fa-info-circle mr-1"></i> Se generará un pre-recibo a nombre de
+                    <strong>{{ selectedTramite?.solicitante }}</strong> para el expediente <strong>{{
+                        selectedTramite?.nro_expediente }}</strong>.
+                </div>
+                <form [formGroup]="liquidarForm">
+                    <div class="form-group">
+                        <label>Tipo de Concepto / Tasa</label>
+                        <select class="form-control" formControlName="concepto_id" (change)="onConceptoChange($event)">
+                            <option [value]="null">-- Seleccione el concepto --</option>
+                            <option *ngFor="let c of conceptos" [value]="c.id">{{ c.descripcion }} (S/ {{ c.monto |
+                                number:'1.2-2' }})</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto a Liquidar (S/)</label>
+                        <input type="number" class="form-control form-control-lg font-weight-bold text-success"
+                            formControlName="monto" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones adicionales</label>
+                        <textarea class="form-control" formControlName="observaciones" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0" [style.background]="mc.footerBg">
+                <button type="button" class="btn" [ngClass]="mc.cancelBtnClass" (click)="closeLiquidar()"
+                    [disabled]="isSaving">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-success shadow-sm" (click)="confirmLiquidar()"
+                    [disabled]="liquidarForm.invalid || isSaving">
+                    <i class="fas fa-circle-notch fa-spin mr-1" *ngIf="isSaving"></i>
+                    <i class="fas fa-check-circle mr-1" *ngIf="!isSaving"></i>
+                    {{ isSaving ? 'Procesando...' : 'Generar Pre-Recibo' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,334 @@
+// Estilos para el componente de gestión de menús
+
+.menu-tree {
+  .menu-item {
+    margin-bottom: 1rem;
+    
+    .menu-header {
+      transition: all 0.2s ease;
+      
+      &:hover {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+      }
+    }
+    
+    .submenu {
+      border-left: 2px solid #e9ecef;
+      padding-left: 1rem;
+      margin-top: 0.5rem;
+      
+      .menu-header {
+        background-color: #f8f9fa !important;
+        border-color: #dee2e6;
+        
+        &:hover {
+          background-color: #e9ecef !important;
+        }
+      }
+    }
+  }
+}
+
+// Estilos para la tabla
+.table {
+  th {
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  
+  td {
+    vertical-align: middle;
+  }
+  
+  .btn-group {
+    .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+      
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+}
+
+// Estilos para los badges
+.badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  
+  &.bg-secondary {
+    background-color: #6c757d !important;
+  }
+  
+  &.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+  }
+}
+
+// Estilos para los filtros
+.card {
+  .card-body {
+    .form-label {
+      font-weight: 500;
+      color: #495057;
+    }
+    
+    .form-control, .form-select {
+      border-radius: 0.375rem;
+      border: 1px solid #ced4da;
+      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      
+      &:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+      }
+    }
+  }
+}
+
+// Estilos para los modales
+.modal {
+  .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    
+    .modal-title {
+      color: #495057;
+      font-weight: 600;
+    }
+  }
+  
+  .modal-body {
+    .form-label {
+      font-weight: 500;
+      color: #495057;
+    }
+    
+    .form-control, .form-select {
+      border-radius: 0.375rem;
+      
+      &:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+      }
+    }
+    
+    .form-check {
+      .form-check-input {
+        &:checked {
+          background-color: #0d6efd;
+          border-color: #0d6efd;
+        }
+        
+        &:focus {
+          box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+      }
+      
+      .form-check-label {
+        color: #495057;
+        font-weight: 500;
+      }
+    }
+  }
+  
+  .modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+  }
+}
+
+// Estilos para los botones
+.btn {
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    
+    &:hover {
+      background-color: #0b5ed7;
+      border-color: #0a58ca;
+    }
+  }
+  
+  &.btn-success {
+    background-color: #198754;
+    border-color: #198754;
+    
+    &:hover {
+      background-color: #157347;
+      border-color: #146c43;
+    }
+  }
+  
+  &.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    
+    &:hover {
+      background-color: #bb2d3b;
+      border-color: #b02a37;
+    }
+  }
+  
+  &.btn-outline-primary {
+    color: #0d6efd;
+    border-color: #0d6efd;
+    
+    &:hover {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+  }
+  
+  &.btn-outline-success {
+    color: #198754;
+    border-color: #198754;
+    
+    &:hover {
+      background-color: #198754;
+      border-color: #198754;
+    }
+  }
+  
+  &.btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+    
+    &:hover {
+      background-color: #dc3545;
+      border-color: #dc3545;
+    }
+  }
+}
+
+// Estilos para el loading spinner
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+// Estilos para las alertas
+.alert {
+  border-radius: 0.375rem;
+  border: none;
+  
+  &.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border-left: 4px solid #ffc107;
+  }
+}
+
+// Estilos para el código
+code {
+  background-color: #f8f9fa;
+  color: #e83e8c;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+// Estilos para los iconos
+.fas, .far, .fab {
+  &.text-primary {
+    color: #0d6efd !important;
+  }
+  
+  &.text-info {
+    color: #0dcaf0 !important;
+  }
+  
+  &.text-success {
+    color: #198754 !important;
+  }
+  
+  &.text-warning {
+    color: #ffc107 !important;
+  }
+  
+  &.text-danger {
+    color: #dc3545 !important;
+  }
+  
+  &.text-secondary {
+    color: #6c757d !important;
+  }
+}
+
+// Estilos responsive
+@media (max-width: 768px) {
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 1rem;
+    
+    .d-flex.gap-2 {
+      justify-content: center;
+    }
+  }
+  
+  .table-responsive {
+    font-size: 0.875rem;
+    
+    .btn-group {
+      flex-direction: column;
+      
+      .btn {
+        margin-bottom: 0.25rem;
+      }
+    }
+  }
+  
+  .modal-dialog {
+    margin: 0.5rem;
+    
+    .modal-body {
+      padding: 1rem;
+    }
+  }
+}
+
+// Estilos para el estado vacío
+.text-center.py-4 {
+  .fas.fa-inbox {
+    opacity: 0.5;
+  }
+  
+  .text-muted {
+    color: #6c757d !important;
+  }
+}
+
+// Estilos para el modal backdrop
+.modal-backdrop {
+  z-index: 1040;
+}
+
+// Estilos para los tooltips
+[title] {
+  cursor: help;
+}
+
+// Estilos para el focus visible
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}

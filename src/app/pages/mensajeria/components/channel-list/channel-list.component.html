@@ -1,0 +1,68 @@
+<!-- Channel List Card -->
+<div class="card card-primary card-outline">
+  <div class="card-header">
+    <h3 class="card-title">
+      <i class="fas fa-comments mr-2"></i>
+      Canales
+    </h3>
+    <div class="card-tools">
+      <button type="button" class="btn btn-tool" (click)="refreshChannels()" [disabled]="loading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center p-3">
+      <div class="spinner-border spinner-border-sm text-primary" role="status">
+        <span class="sr-only">Cargando...</span>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && channels.length === 0" class="text-center p-3">
+      <i class="fas fa-comments fa-2x text-muted mb-2"></i>
+      <p class="text-muted mb-0">No hay canales disponibles</p>
+    </div>
+
+    <!-- Channels List -->
+    <div *ngIf="!loading && channels.length > 0" class="list-group list-group-flush">
+      <a *ngFor="let channel of channels"
+         href="javascript:void(0)"
+         class="list-group-item list-group-item-action"
+         [class.active]="isSelected(channel.id)"
+         (click)="selectChannel(channel)">
+        <div class="d-flex align-items-center">
+          <div class="channel-icon mr-3">
+            <i [class]="getChannelIcon(channel)"
+               [class.text-primary]="!isSelected(channel.id)"
+               [class.text-white]="isSelected(channel.id)"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="mb-0">{{ channel.nombre }}</h6>
+                <small [class.text-muted]="!isSelected(channel.id)"
+                       [class.text-white-50]="isSelected(channel.id)">
+                  {{ channel.descripcion || 'Sin descripción' }}
+                </small>
+              </div>
+              <span *ngIf="channel.unread_count && channel.unread_count > 0"
+                    class="badge badge-danger badge-pill">
+                {{ channel.unread_count }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="card-footer">
+    <small class="text-muted">
+      <i class="fas fa-info-circle mr-1"></i>
+      {{ channels.length }} canal{{ channels.length !== 1 ? 'es' : '' }} disponible{{ channels.length !== 1 ? 's' : '' }}
+    </small>
+  </div>
+</div>

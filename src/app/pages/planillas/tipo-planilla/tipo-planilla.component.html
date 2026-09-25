@@ -1,0 +1,173 @@
+<!-- Page Header (patrón Design System) -->
+<app-page-header
+  title="Tipos de Planilla"
+  subtitle="Gestión de tipos de planilla"
+  [breadcrumbs]="breadcrumbs">
+</app-page-header>
+
+<section class="content">
+  <div class="container-fluid form-container">
+    <div class="row">
+      <div class="col-12">
+        <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-primary card-outline'" [style.border-radius.px]="cv.cardBorderRadius">
+          <!-- Toolbar -->
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+              <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+                <i class="fas fa-file-alt mr-1"></i> Tipos de Planilla
+              </h3>
+              <span class="badge bg-primary align-self-center">{{ tipos.length }} registros</span>
+              <ng-container *ngIf="cv.showExportButtons">
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"><i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"><i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}</button>
+                <button class="btn btn-sm btn-flat" [ngClass]="cv.printBtnClass"><i [class]="cv.printBtnIcon + ' mr-1'"></i> {{ cv.printBtnLabel }}</button>
+              </ng-container>
+              <button *ngIf="!cv.showExportButtons" class="btn btn-sm btn-flat" [ngClass]="cv.exportBtnClass"><i [class]="cv.exportBtnIcon + ' mr-1'"></i> {{ cv.exportBtnLabel }}</button>
+            </div>
+            <div class="ms-auto flex-shrink-0">
+              <button class="btn btn-sm btn-flat" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{ cv.newBtnLabel }} Tipo
+              </button>
+            </div>
+          </div>
+
+          <!-- Contenido: spinner + tabla (patrón de diseño) -->
+          <div class="card-body p-0 position-relative">
+            <app-loading-spinner [loading]="loading" message="Cargando tipos de planilla..."></app-loading-spinner>
+
+            <div class="table-responsive" [class.tipo-planilla-table-loading]="loading">
+              <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize" class="table mb-0 w-100">
+                <thead class="bg-light">
+                  <tr>
+                    <th [style.font-size]="cv.headerFontSize">Código</th>
+                    <th [style.font-size]="cv.headerFontSize">Nombre</th>
+                    <th [style.font-size]="cv.headerFontSize">Periodicidad</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Estado</th>
+                    <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let tipo of tipos">
+                    <td><span class="badge bg-dark">{{ tipo.code }}</span></td>
+                    <td>
+                      <strong>{{ tipo.name }}</strong>
+                      <p class="text-muted small mb-0" *ngIf="tipo.description">{{ tipo.description }}</p>
+                    </td>
+                    <td><span class="badge bg-info">{{ getPeriodicidadLabel(tipo.periodicity) }}</span></td>
+                    <td class="text-center">
+                      <app-status-badge [status]="tipo.is_active"></app-status-badge>
+                    </td>
+                    <td class="text-center">
+                      <app-crud-actions [showView]="true" [showEdit]="true" [showDelete]="true" (onView)="openViewModal(tipo)" (onEdit)="openEditModal(tipo)" (onDelete)="confirmDelete(tipo)"></app-crud-actions>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div *ngIf="tipos.length === 0 && !loading" class="text-center py-5">
+                <i class="fas fa-file-alt fa-2x text-muted mb-3"></i>
+                <h6 class="text-muted">No se encontraron tipos de planilla</h6>
+                <p class="text-muted small">Crea un nuevo tipo para comenzar.</p>
+                <button class="btn btn-sm" [ngClass]="cv.newBtnClass" (click)="openCreateModal()">
+                  <i [class]="cv.newBtnIcon + ' mr-1'"></i> {{ cv.newBtnLabel }} Tipo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Crear/Editar -->
+<div class="modal fade" id="tipoModal" tabindex="-1" aria-hidden="true" #tipoModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title">
+          <i class="fas" [ngClass]="isEditMode ? 'fa-edit' : 'fa-plus'"></i>
+          {{ isEditMode ? 'Editar' : 'Nuevo' }} Tipo de Planilla
+        </h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()" aria-label="Close"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg">
+        <form [formGroup]="tipoForm">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Código <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="code" placeholder="TP-001">
+              <div class="text-danger small" *ngIf="tipoForm.get('code')?.invalid && tipoForm.get('code')?.touched">
+                Código es requerido
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Periodicidad <span class="text-danger">*</span></label>
+              <select class="form-select" [ngClass]="mc.inputSize" formControlName="periodicity">
+                <option *ngFor="let per of periodicidades" [value]="per.value">{{ per.label }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Nombre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [ngClass]="mc.inputSize" formControlName="name" placeholder="Nombre del tipo">
+            <div class="text-danger small" *ngIf="tipoForm.get('name')?.invalid && tipoForm.get('name')?.touched">
+              Nombre es requerido
+            </div>
+          </div>
+          <div class="mb-3">
+            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Descripción</label>
+            <textarea class="form-control" [ngClass]="mc.inputSize" formControlName="description" rows="3"></textarea>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" formControlName="is_active" id="isActive">
+            <label class="form-check-label" for="isActive">Activo</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeModal()"><i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}</button>
+        <button type="button" class="btn btn-sm" [ngClass]="mc.saveBtnClass" (click)="saveTipo()" [disabled]="tipoForm.invalid || saving"><i [class]="mc.saveBtnIcon + ' mr-1'"></i> {{ isEditMode ? 'Actualizar' : mc.saveBtnLabel }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ver -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true" #viewModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detalles del Tipo de Planilla</h5>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeViewModal()" aria-label="Close"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg" *ngIf="selectedTipo">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Código:</strong>
+            <p>{{ selectedTipo.code }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Periodicidad:</strong>
+            <p><span class="badge bg-info">{{ getPeriodicidadLabel(selectedTipo.periodicity) }}</span></p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Nombre:</strong>
+            <p>{{ selectedTipo.name }}</p>
+          </div>
+          <div class="col-12 mb-3">
+            <strong [style.color]="mc.labelColor">Descripción:</strong>
+            <p>{{ selectedTipo.description || 'Sin descripción' }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong [style.color]="mc.labelColor">Estado:</strong>
+            <p><app-status-badge [status]="selectedTipo.is_active"></app-status-badge></p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between" [style.background]="mc.footerBg">
+        <button type="button" class="btn btn-sm" [ngClass]="mc.cancelBtnClass" (click)="closeViewModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

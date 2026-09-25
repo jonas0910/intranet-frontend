@@ -1,0 +1,753 @@
+<!-- Page Header -->
+<app-page-header
+  title="Gestión de roles y permisos"
+  subtitle="Matriz del menú lateral fijo (visibilidad por permiso Spatie), plantillas accesos_roles y herramientas. Solo Super Admin ve todo el bloque sin matriz; rutas de administración pueden usar bypass más amplio (roles Admin, trío pilar). Requiere sesión con API."
+  [breadcrumbs]="breadcrumbs">
+</app-page-header>
+
+<section class="content">
+  <div class="container-fluid form-container">
+
+    <!-- Pestañas principales -->
+    <div class="card elevation-1 role-tabs-card"
+         [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-primary card-outline'"
+         [style.border-radius.px]="cv.cardBorderRadius">
+      <div class="card-header p-0 border-bottom-0 bg-white">
+        <ul class="nav nav-pills nav-fill role-main-nav flex-column flex-md-row px-2 pt-3" role="tablist">
+          <li class="nav-item" *ngFor="let t of mainTabs">
+            <button type="button"
+                    class="nav-link text-md-left py-3"
+                    [class.active]="activeMainTab === t.id"
+                    (click)="setMainTab(t.id)">
+              <span class="d-flex align-items-start">
+                <i [class]="t.icon + ' mr-2 mt-1 tab-icon'"></i>
+                <span>
+                  <span class="d-block font-weight-bold tab-label">{{ t.label }}</span>
+                  <small class="d-block text-muted tab-desc">{{ t.desc }}</small>
+                </span>
+              </span>
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card-body pt-3">
+
+        <!-- ——— Pestaña: Roles (d-none: mantener DataTable en DOM) ——— -->
+        <div class="tab-pane-content" [class.d-none]="activeMainTab !== 'roles'">
+          <div class="alert alert-light border mb-3 small mb-4">
+            <i class="fas fa-info-circle text-primary mr-1"></i>
+            <strong>Paso 1 — Roles:</strong> cree roles, edite su nombre o abra <strong>Permisos</strong> para asignar capacidades por área funcional.
+          </div>
+
+          <div class="d-flex flex-wrap align-items-center mb-3">
+            <button [class]="'btn btn-sm ' + cv.newBtnClass" (click)="openCreateModal()">
+              <i [class]="cv.newBtnIcon + ' mr-1'"></i> Nuevo rol
+            </button>
+            <button [class]="'btn btn-sm btn-outline-secondary ml-2'" type="button" (click)="bulkUpdatePermissions()" title="Acción masiva (revisar antes de usar en producción)">
+              <i class="fas fa-sync-alt mr-1"></i> Actualización masiva
+            </button>
+            <button [class]="'btn btn-sm ' + cv.exportBtnClass + ' ml-2'" type="button" disabled title="Próximamente">
+              <i [class]="cv.exportBtnIcon + ' mr-1'"></i> {{ cv.exportBtnLabel }}
+            </button>
+          </div>
+
+          <div class="mb-0">
+            <div class="d-flex justify-content-between align-items-center px-3 py-2 border bg-light rounded-top">
+              <h3 class="card-title mb-0 small text-uppercase text-muted">
+                <i class="fas fa-list-alt mr-1"></i> Listado de roles
+              </h3>
+            </div>
+            <div class="border border-top-0 rounded-bottom">
+              <app-loading-spinner [loading]="isLoading" message="Cargando roles..."></app-loading-spinner>
+              <div *ngIf="!isLoading" class="table-responsive">
+                <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger"
+                       class="table mb-0 w-100" [ngClass]="cv.tableClasses" [style.font-size]="cv.fontSize">
+                  <thead class="bg-light">
+                    <tr>
+                      <th [style.font-size]="cv.headerFontSize" style="width: 50px">ID</th>
+                      <th [style.font-size]="cv.headerFontSize">Rol</th>
+                      <th [style.font-size]="cv.headerFontSize">Guard</th>
+                      <th [style.font-size]="cv.headerFontSize" class="text-center">Usuarios</th>
+                      <th [style.font-size]="cv.headerFontSize" class="text-center">Permisos</th>
+                      <th [style.font-size]="cv.headerFontSize">Creado</th>
+                      <th [style.font-size]="cv.headerFontSize" class="text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let role of roles">
+                      <td>{{ role.id }}</td>
+                      <td><strong>{{ role.name | uppercase }}</strong></td>
+                      <td><span class="badge badge-light border">{{ role.guard_name }}</span></td>
+                      <td class="text-center">
+                        <span class="badge" [ngClass]="cv.statusActiveClass">{{ role.users_count || 0 }}</span>
+                      </td>
+                      <td class="text-center">
+                        <span class="badge badge-info">{{ getGrantedPermissionsCount(role) }}</span>
+                      </td>
+                      <td>{{ role.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                      <td class="text-center">
+                        <div class="btn-group">
+                          <button [class]="'btn btn-xs ' + cv.editBtnClass" (click)="selectRole(role)" title="Permisos Spatie">
+                            <i class="fas fa-key"></i> Permisos
+                          </button>
+                          <button [class]="'btn btn-xs btn-outline-info'" (click)="openMenusForRole(role)" title="Menús y sistemas (plantilla intranet)">
+                            <i class="fas fa-sitemap"></i> Menús
+                          </button>
+                          <button [class]="'btn btn-xs ' + cv.editBtnClass" (click)="openEditModal(role)" title="Editar nombre">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button [class]="'btn btn-xs ' + cv.deleteBtnClass" (click)="deleteRole(role)" title="Eliminar rol">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr *ngIf="roles.length === 0">
+                      <td colspan="7" class="text-center text-muted py-4">No hay roles registrados.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ——— Pestaña: Menús por rol (accesos_roles) ——— -->
+        <div class="tab-pane-content" [class.d-none]="activeMainTab !== 'menus-rol'">
+          <div class="alert alert-info border small mb-3">
+            <i class="fas fa-info-circle mr-1"></i>
+            <strong>Plantilla intranet:</strong> define qué ítems del menú lateral verán los usuarios con este rol (tabla
+            <code>accesos_roles</code>). Al guardar se actualiza <code>accesos_usuarios</code> con origen
+            <code>rol</code> (no pisa asignaciones <strong>manual</strong>).
+          </div>
+
+          <div class="form-row align-items-end mb-3">
+            <div class="form-group col-md-5 mb-0">
+              <label class="small font-weight-bold">Rol</label>
+              <select class="form-control form-control-sm"
+                      [(ngModel)]="menuRolSelectedId"
+                      (change)="onMenuRolSelectChange()">
+                <option *ngFor="let r of roles" [ngValue]="r.id">{{ r.name }}</option>
+              </select>
+            </div>
+            <div class="col-md-7 text-md-right mb-2 mb-md-0">
+              <button type="button" class="btn btn-sm btn-outline-secondary mr-1" (click)="loadMenuCatalogAndPlantillas()"
+                      [disabled]="loadingMenuCatalog || menuRolSelectedId == null">
+                <i class="fas fa-redo mr-1" [class.fa-spin]="loadingMenuCatalog"></i> Recargar
+              </button>
+              <button type="button" class="btn btn-sm btn-success mr-1" (click)="guardarPlantillasMenus()"
+                      [disabled]="savingPlantillas || loadingMenuCatalog || menuRolSelectedId == null">
+                <i class="fas fa-save mr-1"></i> {{ savingPlantillas ? 'Guardando…' : 'Guardar plantilla' }}
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="sincronizarUsuariosSoloRol()"
+                      [disabled]="syncingUsuariosRol || menuRolSelectedId == null">
+                <i class="fas fa-user-check mr-1"></i> {{ syncingUsuariosRol ? 'Sync…' : 'Sincronizar usuarios del rol' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="form-row align-items-end mb-3" *ngIf="!loadingMenuCatalog && sistemasMenusRol.length">
+            <div class="form-group col-md-8 col-lg-6 mb-0">
+              <label class="small font-weight-bold mb-1">Subsistema integrado</label>
+              <select class="form-control form-control-sm"
+                      [(ngModel)]="menusRolFocusedSistemaId">
+                <option *ngFor="let s of sistemasMenusRol" [ngValue]="s.id">
+                  {{ s.nombre }}{{ s.codigo ? ' (' + s.codigo + ')' : '' }} — plantilla {{ countMenusPlantillaSistema(s).asignados }}/{{ countMenusPlantillaSistema(s).total }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap align-items-center mb-2 gap-2">
+            <input type="search" class="form-control form-control-sm menus-rol-search" placeholder="Buscar subsistema o menú…"
+                   [(ngModel)]="menuPlantillaSearch">
+            <button type="button" class="btn btn-sm btn-light border" (click)="marcarTodosFiltrados(true)">Marcar coincidencias</button>
+            <button type="button" class="btn btn-sm btn-light border" (click)="marcarTodosFiltrados(false)">Desmarcar coincidencias</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary border" (click)="expandirTodosSubsistemas(true)">
+              <i class="fas fa-expand-alt mr-1"></i> Expandir subsistemas y menús
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary border" (click)="expandirTodosSubsistemas(false)">
+              <i class="fas fa-compress-alt mr-1"></i> Contraer todo
+            </button>
+            <span class="small text-muted ml-auto" *ngIf="totalMenusRolItems">
+              Vista: {{ filteredMenuPlantillaRows.length }} / {{ totalMenusRolItems }} ítems
+            </span>
+          </div>
+
+          <app-loading-spinner [loading]="loadingMenuCatalog" message="Cargando subsistemas y plantilla…"></app-loading-spinner>
+
+          <div *ngIf="!loadingMenuCatalog && sistemasMenusRol.length === 0" class="text-muted small py-4 text-center">
+            No hay menús activos en sistemas integrados o no hay sistemas configurados.
+          </div>
+
+          <div *ngIf="!loadingMenuCatalog && menusRolSistemaActivo as sistema" class="menus-rol-subsistemas">
+            <div class="card mb-2 subsistema-card border" *ngIf="sistemaVisibleInSearch(sistema)">
+              <div class="card-header py-2 d-flex align-items-center flex-wrap subsistema-header bg-light">
+                <button type="button" class="btn btn-sm btn-link text-dark p-0 mr-2 subsistema-chevron"
+                        (click)="toggleSistemaExpanded(sistema)"
+                        [title]="sistema.expanded ? 'Contraer subsistema' : 'Expandir subsistema'">
+                  <i class="fas fa-lg" [class.fa-chevron-down]="sistema.expanded" [class.fa-chevron-right]="!sistema.expanded"></i>
+                </button>
+                <i class="fas fa-server text-primary mr-2"></i>
+                <div class="flex-grow-1">
+                  <strong>{{ sistema.nombre }}</strong>
+                  <span class="badge badge-secondary ml-2" *ngIf="sistema.codigo">{{ sistema.codigo }}</span>
+                  <span class="badge badge-info ml-2">
+                    Plantilla: {{ countMenusPlantillaSistema(sistema).asignados }} / {{ countMenusPlantillaSistema(sistema).total }} menús
+                  </span>
+                </div>
+              </div>
+              <div class="card-body py-2 bg-white" *ngIf="showMenusRolSistemaBody(sistema)">
+                <p class="small text-muted mb-2" *ngIf="!sistema.menus.length">Este subsistema no tiene menús activos.</p>
+                <ng-container *ngIf="sistema.menus.length">
+                  <ng-container *ngTemplateOutlet="menuRolRecursive; context: { $implicit: visibleMenuRolChildren(sistema.menus), sistemaId: sistema.id, nivel: 0 }"></ng-container>
+                </ng-container>
+              </div>
+            </div>
+            <div class="alert alert-light border small py-3 mb-0" *ngIf="!sistemaVisibleInSearch(sistema)">
+              No hay coincidencias con la búsqueda en este subsistema. Cambie de subsistema, ajuste el filtro o limpie la búsqueda.
+            </div>
+          </div>
+        </div>
+
+        <!-- ——— Pestaña: Matriz ——— -->
+        <div *ngIf="activeMainTab === 'matrix'" class="tab-pane-content">
+          <div class="alert alert-light border mb-3 small mb-4">
+            <i class="fas fa-th text-info mr-1"></i>
+            <strong>Matriz:</strong> cada fila es un permiso; las columnas muestran si el rol lo tiene. Use el filtro para centrarse en un <strong>área funcional</strong>.
+          </div>
+
+          <div class="form-row align-items-end mb-3">
+            <div class="form-group col-md-6 col-lg-4 mb-0">
+              <label class="small font-weight-bold text-muted mb-1">Área funcional</label>
+              <select class="form-control form-control-sm" [(ngModel)]="matrixModuleFilter">
+                <option *ngFor="let opt of matrixModuleOptions" [ngValue]="opt.value">{{ opt.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-6 col-lg-8 text-md-right small text-muted pt-2 pt-md-0">
+              Mostrando <strong>{{ permissionsForMatrix.length }}</strong> permiso(s) · <strong>{{ roles.length }}</strong> rol(es)
+            </div>
+          </div>
+
+          <div class="table-responsive matrix-scroll border rounded">
+            <table class="table w-100 mb-0 table-sm" [ngClass]="cv.tableClasses">
+              <thead class="bg-light sticky-head">
+                <tr>
+                  <th class="matrix-col-permiso">Permiso</th>
+                  <th class="matrix-col-modulo">Área</th>
+                  <th class="text-center text-nowrap" *ngFor="let role of roles">{{ role.name | uppercase }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let permission of permissionsForMatrix">
+                  <td>
+                    <strong>{{ getPermissionName(permission) }}</strong>
+                    <br><small class="text-muted font-monospace">{{ permission.name }}</small>
+                  </td>
+                  <td>
+                    <span [ngClass]="'badge ' + getModuleClass(getPermissionModuleKey(permission))">
+                      {{ getModuleCategoryTitle(getPermissionModuleKey(permission)) }}
+                    </span>
+                  </td>
+                  <td *ngFor="let role of roles" class="text-center">
+                    <span class="badge badge-pill"
+                          [ngClass]="getRolePermission(role, permission.id) ? 'badge-success' : 'badge-light border'">
+                      {{ getRolePermission(role, permission.id) ? 'Sí' : '—' }}
+                    </span>
+                  </td>
+                </tr>
+                <tr *ngIf="permissionsForMatrix.length === 0">
+                  <td [attr.colspan]="2 + roles.length" class="text-center text-muted py-4">No hay permisos en este filtro.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ——— Pestaña: Herramientas ——— -->
+        <div *ngIf="activeMainTab === 'herramientas'" class="tab-pane-content">
+          <div class="alert alert-light border mb-3 small mb-4">
+            <i class="fas fa-toolbox text-secondary mr-1"></i>
+            <strong>Herramientas:</strong> duplique la configuración de permisos entre roles o revise un resumen rápido.
+          </div>
+
+          <div class="row">
+            <div class="col-lg-6 mb-3">
+              <div class="card h-100 border shadow-sm">
+                <div class="card-header bg-white">
+                  <h3 class="card-title mb-0 h6">
+                    <i class="fas fa-copy mr-1 text-primary"></i> Copiar permisos entre roles
+                  </h3>
+                  <small class="text-muted">Replica todos los permisos del rol origen en el destino (sobrescribe).</small>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label class="font-weight-bold small">Rol origen (copiar desde)</label>
+                    <select class="form-control form-control-sm" [(ngModel)]="copyFromRoleId">
+                      <option *ngFor="let role of roles" [ngValue]="role.id">{{ role.name }}</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="font-weight-bold small">Rol destino (aplicar en)</label>
+                    <select class="form-control form-control-sm" [(ngModel)]="copyToRoleId">
+                      <option *ngFor="let role of roles" [ngValue]="role.id">{{ role.name }}</option>
+                    </select>
+                  </div>
+                  <button type="button"
+                          class="btn btn-primary btn-block btn-sm"
+                          (click)="executeCopyPermissions()"
+                          [disabled]="isLoading || roles.length < 2">
+                    <i class="fas fa-copy mr-1"></i> Copiar permisos
+                  </button>
+                  <p *ngIf="roles.length < 2" class="small text-muted mt-2 mb-0">Se necesitan al menos dos roles para copiar.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-6 mb-3">
+              <div class="card h-100 border shadow-sm">
+                <div class="card-header bg-white">
+                  <h3 class="card-title mb-0 h6">
+                    <i class="fas fa-chart-pie mr-1 text-success"></i> Resumen del sistema
+                  </h3>
+                  <small class="text-muted">Totales actuales según los datos cargados.</small>
+                </div>
+                <div class="card-body">
+                  <div class="row text-center">
+                    <div class="col-6 border-right">
+                      <div class="description-block py-2">
+                        <span class="description-percentage text-success h4 mb-0 d-block">{{ getTotalGrantedPermissions() }}</span>
+                        <h5 class="description-header small mt-2 mb-1">Asignaciones rol→permiso</h5>
+                        <span class="description-text">Suma de permisos en todos los roles</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="description-block py-2">
+                        <span class="description-percentage text-primary h4 mb-0 d-block">{{ roles.length }}</span>
+                        <h5 class="description-header small mt-2 mb-1">Roles</h5>
+                        <span class="description-text">Registrados en el sistema</span>
+                      </div>
+                    </div>
+                  </div>
+                  <hr>
+                  <div class="small text-muted mb-0">
+                    <i class="fas fa-lightbulb mr-1"></i>
+                    Los permisos se agrupan por <strong>área funcional</strong> al editar un rol (modal) y en la pestaña <strong>Matriz</strong>.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Árbol menús (compartido: pestaña Menús / sistemas + modal Permisos → accesos_usuarios) -->
+<ng-template #menuRolRecursive let-nodes let-sistemaId="sistemaId" let-nivel="nivel">
+  <ng-container *ngFor="let node of nodes">
+    <div class="menu-rol-branch mb-2" *ngIf="menuRolNodeVisibleInSearch(node)" [style.marginLeft.px]="(nivel || 0) * 14">
+      <div class="menu-main d-flex flex-wrap align-items-center py-2 px-2"
+           [class.bg-light]="node.children?.length"
+           [class.menu-main--en-plantilla]="getFlagsBySistemaMenu(sistemaId, node.id).assigned">
+        <div class="d-flex align-items-center flex-grow-1 mr-2 mb-1 mb-md-0">
+          <button type="button" class="btn btn-sm btn-outline-secondary mr-2 p-0 chevron-menu-btn"
+                  *ngIf="node.children?.length"
+                  (click)="toggleMenuNodeExpanded(node); $event.stopPropagation()"
+                  [title]="node.expanded ? 'Contraer submenús' : 'Expandir submenús'">
+            <i class="fas px-1 py-1" [class.fa-chevron-down]="node.expanded" [class.fa-chevron-right]="!node.expanded"></i>
+          </button>
+          <span class="chevron-placeholder mr-2 d-inline-flex justify-content-center" *ngIf="!node.children?.length"
+                style="width: 34px"></span>
+          <i [class]="node.icono || 'fas fa-folder-open'" class="mr-2 text-secondary"></i>
+          <div>
+            <strong>{{ node.nombre }}</strong>
+            <small class="text-muted d-block font-monospace" *ngIf="node.ruta">{{ node.ruta }}</small>
+          </div>
+          <span class="badge badge-sm ml-2" [class.badge-success]="node.activo" [class.badge-secondary]="!node.activo">
+            {{ node.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+          <span class="badge badge-info ml-1" *ngIf="node.children?.length">{{ node.children.length }} submenús</span>
+        </div>
+        <div class="d-flex align-items-center flex-wrap menus-rol-permisos">
+          <div class="custom-control custom-checkbox mr-2">
+            <input type="checkbox" class="custom-control-input" [id]="'asign_' + sistemaId + '_' + node.id"
+                   [checked]="getFlagsBySistemaMenu(sistemaId, node.id).assigned"
+                   (change)="toggleAssignedBySistemaMenu(sistemaId, node.id)">
+            <label class="custom-control-label small font-weight-bold" [attr.for]="'asign_' + sistemaId + '_' + node.id">En plantilla</label>
+          </div>
+          <span class="text-muted small mr-1">VCED</span>
+          <label class="small mb-0 mr-1"><input type="checkbox"
+                 [checked]="getFlagsBySistemaMenu(sistemaId, node.id).view"
+                 [disabled]="!getFlagsBySistemaMenu(sistemaId, node.id).assigned"
+                 (change)="setMenuFlagBySistemaMenu(sistemaId, node.id, 'view', $any($event.target).checked)"> Ver</label>
+          <label class="small mb-0 mr-1"><input type="checkbox"
+                 [checked]="getFlagsBySistemaMenu(sistemaId, node.id).create"
+                 [disabled]="!getFlagsBySistemaMenu(sistemaId, node.id).assigned"
+                 (change)="setMenuFlagBySistemaMenu(sistemaId, node.id, 'create', $any($event.target).checked)"> Crear</label>
+          <label class="small mb-0 mr-1"><input type="checkbox"
+                 [checked]="getFlagsBySistemaMenu(sistemaId, node.id).edit"
+                 [disabled]="!getFlagsBySistemaMenu(sistemaId, node.id).assigned"
+                 (change)="setMenuFlagBySistemaMenu(sistemaId, node.id, 'edit', $any($event.target).checked)"> Editar</label>
+          <label class="small mb-0"><input type="checkbox"
+                 [checked]="getFlagsBySistemaMenu(sistemaId, node.id).delete"
+                 [disabled]="!getFlagsBySistemaMenu(sistemaId, node.id).assigned"
+                 (change)="setMenuFlagBySistemaMenu(sistemaId, node.id, 'delete', $any($event.target).checked)"> Elim.</label>
+        </div>
+      </div>
+      <div class="submenus-container pl-2 mt-1 border-left border-light"
+           *ngIf="node.children?.length && (node.expanded || menuRolSearchActive)">
+        <ng-container *ngTemplateOutlet="menuRolRecursive; context: { $implicit: visibleMenuRolChildren(node.children), sistemaId: sistemaId, nivel: (nivel || 0) + 1 }"></ng-container>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>
+
+<!-- Modal: permisos por categorías (centrado vertical y horizontal en viewport) -->
+<div class="modal fade permission-modal-root" [class.show]="showPermissionModal" [style.display]="showPermissionModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h4 class="modal-title">
+          <i class="fas fa-key mr-1"></i> Permisos del rol: {{ selectedRole?.name | uppercase }}
+        </h4>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closePermissionModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body permission-modal-body" [style.background]="mc.bodyBg">
+        <app-loading-spinner [loading]="permissionModalLoading" message="Cargando permisos del rol…"></app-loading-spinner>
+
+        <div *ngIf="!permissionModalLoading && !selectedRole" class="alert alert-warning small mb-0">
+          No se pudo cargar el rol. Cierre e intente de nuevo.
+        </div>
+
+        <div *ngIf="!permissionModalLoading && selectedRole">
+          <!-- Pestañas principales: Spatie vs modelo accesos_usuarios -->
+          <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="permissionModalSection === 'spatie'" href="javascript:void(0)"
+                 (click)="setPermissionModalSection('spatie')">
+                <i class="fas fa-bars mr-1"></i> Menú lateral fijo (Spatie)
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="permissionModalSection === 'accesos'" href="javascript:void(0)"
+                 (click)="setPermissionModalSection('accesos')">
+                <i class="fas fa-database mr-1"></i> Menús / <code class="small">accesos_usuarios</code>
+              </a>
+            </li>
+          </ul>
+
+          <!-- ——— Spatie: solo permisos ligados al menú lateral fijo ——— -->
+          <div *ngIf="permissionModalSection === 'spatie'">
+            <p class="text-muted small mb-2">
+              La matriz <strong>define la visibilidad</strong> de cada enlace fijo del lateral (salvo rol <strong>Super Admin</strong>, que ve todo).
+              Cada casilla asigna los permisos Spatie indicados en <code class="small">admin-sidebar.config.ts</code>.
+              Si una casilla no responde o no guarda, el nombre puede faltar en BD: ejecute <code class="small">php artisan db:seed --class=SidebarFixedSpatiePermissionsSeeder</code>.
+              <strong>Guardar</strong> envía <em>todos</em> los permisos del rol.
+            </p>
+
+            <!-- Matriz principal: menú fijo × Ver / CRUD -->
+            <div class="card border-primary mb-3 shadow-sm sidebar-matrix-card" *ngIf="selectedRole">
+              <div class="card-header py-2 bg-white">
+                <strong class="d-block">Matriz: menú lateral ADMINISTRACIÓN</strong>
+                <span class="text-muted small d-block">Una fila por enlace del sidebar. «Gestionar» agrupa permisos <code class="small">admin.*</code> del módulo.</span>
+                <span class="text-muted small d-block mt-1">
+                  Casillas atenuadas: permiso no cargado en el catálogo (API). Tooltip en cada celda.
+                </span>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover mb-0 sidebar-matrix-table">
+                    <thead class="thead-light">
+                      <tr>
+                        <th scope="col" class="border-0 align-middle small" style="min-width: 11rem">Menú</th>
+                        <th *ngFor="let col of sidebarMenuOpColumns" scope="col"
+                            class="border-0 text-center align-middle small text-nowrap px-1"
+                            [attr.title]="col.hint">{{ col.label }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <ng-container *ngFor="let section of adminSidebarFixedMenuSections">
+                        <tr class="table-secondary">
+                          <td [attr.colspan]="1 + sidebarMenuOpColumns.length" class="py-1 small font-weight-bold text-secondary">
+                            <i [class]="section.branchIcon + ' mr-1'"></i>{{ section.branch }}
+                          </td>
+                        </tr>
+                        <tr *ngFor="let item of section.items">
+                          <td class="small align-middle">
+                            <span class="font-weight-bold text-body">{{ item.label }}</span>
+                          </td>
+                          <td *ngFor="let col of sidebarMenuOpColumns" class="text-center align-middle p-1">
+                            <input type="checkbox"
+                                   class="m-0 sidebar-matrix-op-checkbox"
+                                   [ngClass]="{ 'sidebar-matrix-op-checkbox--disabled': matrixCellMode(item.key, col.key) !== 'ok' }"
+                                   [disabled]="matrixCellMode(item.key, col.key) === 'na'"
+                                   [checked]="matrixCellMode(item.key, col.key) !== 'na' && roleHasMenuMatrixCell(item.key, col.key)"
+                                   [attr.title]="matrixCellTitle(item.key, col.key, col.hint)"
+                                   (change)="toggleMenuMatrixCell(item.key, col.key, $any($event.target).checked)"
+                                   [attr.aria-label]="item.label + ' — ' + col.label">
+                          </td>
+                        </tr>
+                      </ng-container>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mapa del menú lateral fijo (misma jerarquía que el sidebar) -->
+            <div class="card border-info mb-3 shadow-sm admin-sidebar-map-card">
+              <div class="card-header py-2 d-flex flex-wrap align-items-center bg-white">
+                <i class="fas fa-sitemap text-info mr-2"></i>
+                <span class="font-weight-bold">Menú lateral «ADMINISTRACIÓN»</span>
+                <span class="badge badge-light border ml-2 small">orden real del sidebar</span>
+              </div>
+              <div class="card-body py-2 px-3 small">
+                <p class="text-muted mb-2 mb-md-3">
+                  Cada fila es un enlace fijo. En la app, el lateral muestra el enlace si el usuario tiene <strong>al menos uno</strong> de los permisos Spatie listados debajo.
+                  Aquí la columna derecha muestra <strong>Visible</strong> en todas las filas para facilitar la edición; la <strong>matriz</strong> y los permisos asignados definen la cobertura real.
+                </p>
+                <div *ngIf="selectedRolePreviewFullAdminBlock()" class="alert alert-success py-2 px-3 small mb-3 mb-md-0">
+                  <i class="fas fa-check-circle mr-1"></i>
+                  Rol <strong>Super Admin</strong>: en la app verá <strong>todos</strong> los ítems de ADMINISTRACIÓN sin depender de la matriz.
+                  El resto de roles (incluido «ADMIN») siguen solo los permisos asignados abajo.
+                </div>
+                <div *ngFor="let section of adminSidebarFixedMenuSections" class="mb-3">
+                  <div class="text-secondary font-weight-bold small mb-1 border-bottom pb-1">
+                    <i [class]="section.branchIcon + ' mr-1'"></i>{{ section.branch }}
+                  </div>
+                  <ul class="list-group list-group-flush border rounded mb-0 admin-sidebar-map-list">
+                    <li *ngFor="let item of section.items"
+                        class="list-group-item py-2 px-2 px-sm-3 flex-column align-items-stretch">
+                      <div class="d-flex flex-wrap align-items-baseline justify-content-between w-100">
+                        <span class="font-weight-bold text-body pr-2">{{ item.label }}</span>
+                        <span class="badge badge-pill ml-auto"
+                              [ngClass]="sidebarRowPreviewVisible(item.key) ? 'badge-success' : 'badge-light border'">
+                          {{ sidebarRowPreviewVisible(item.key) ? 'Visible' : 'No cubierto' }}
+                        </span>
+                      </div>
+                      <div class="mt-1 text-monospace text-muted text-break small">
+                        {{ adminSidebarLinkPerms[item.key].join(' · ') }}
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center mb-3">
+              <span class="badge badge-secondary mr-1 mb-1" *ngIf="permisosSpatieMenuLateralFijo.length">
+                Catálogo menú fijo: {{ permisosSpatieMenuLateralFijo.length }}
+              </span>
+              <span class="badge badge-primary mr-1 mb-1" *ngIf="permisosSidebarFijosAsignadosAlRol">
+                Asignados (de esta lista) en el rol: {{ permisosSidebarFijosAsignadosAlRol }}
+              </span>
+              <span class="badge badge-light border mb-1" *ngIf="selectedRole.permissions?.length" title="Total permisos Spatie en el rol">
+                Total rol: {{ selectedRole.permissions!.length }}
+              </span>
+            </div>
+            <div class="mb-3" *ngIf="availablePermissions.length">
+              <button type="button" class="btn btn-sm btn-outline-secondary"
+                      (click)="permissionModalShowSpatieByModule = !permissionModalShowSpatieByModule">
+                <i class="fas fa-list mr-1"></i>
+                {{ permissionModalShowSpatieByModule ? 'Ocultar' : 'Mostrar' }} lista por módulo (Spatie, avanzada)
+              </button>
+            </div>
+            <ng-container *ngIf="permissionModalShowSpatieByModule">
+            <div class="form-group mb-3" *ngIf="availablePermissions.length">
+              <label class="small font-weight-bold mb-1">Buscar entre permisos del menú fijo</label>
+              <input type="search" class="form-control form-control-sm" placeholder="Nombre técnico o etiqueta…"
+                     [(ngModel)]="permissionModalSearch">
+            </div>
+            <div *ngIf="!availablePermissions.length" class="alert alert-warning small">
+              No hay permisos en BD o no se cargó el catálogo (<code>/roles/permissions</code>).
+            </div>
+            <div *ngIf="availablePermissions.length && !permisosSpatieMenuLateralFijo.length" class="alert alert-warning small">
+              Ningún permiso del catálogo coincide con la lista de <strong>menú lateral fijo</strong>.
+              Revise nombres en BD o amplíe la matriz en <code>admin-sidebar.config.ts</code>.
+            </div>
+            <div *ngIf="permisosSpatieMenuLateralFijo.length && !permissionModalModuleBlocks.length" class="alert alert-light border small">
+              Ningún permiso coincide con la búsqueda.
+            </div>
+            <ng-container *ngFor="let block of permissionModalModuleBlocks; trackBy: trackByModalBlockKey">
+              <div class="mb-3 permission-modal-block">
+                <div class="d-flex flex-wrap align-items-center py-2 px-2 border rounded-top bg-light">
+                  <span [ngClass]="'badge mr-2 ' + getModuleClass(block.key)">{{ block.key }}</span>
+                  <strong class="mr-2">{{ block.title }}</strong>
+                  <span class="badge badge-secondary mr-2">{{ block.permissions.length }}</span>
+                  <span class="badge badge-info mr-2" *ngIf="countGrantedInBlock(block)">
+                    {{ countGrantedInBlock(block) }} en rol
+                  </span>
+                  <div class="btn-group btn-group-sm ml-auto mt-1 mt-sm-0">
+                    <button type="button" class="btn btn-outline-success btn-sm" (click)="setModulePermissionsAll(block.key, true)">Todas</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setModulePermissionsAll(block.key, false)">Ninguna</button>
+                  </div>
+                </div>
+                <div class="table-responsive border border-top-0 rounded-bottom mb-0">
+                  <table class="table table-sm table-hover mb-0 permission-modal-table">
+                    <thead class="thead-light">
+                      <tr>
+                        <th class="text-center align-middle border-top-0" style="width: 42px" title="Asignar al rol"></th>
+                        <th class="border-top-0">Descripción</th>
+                        <th class="border-top-0 d-none d-md-table-cell">Nombre técnico</th>
+                        <th class="text-center border-top-0 align-middle" style="width: 72px">Asignado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let permission of block.permissions; trackBy: trackByPermissionId"
+                          [class.table-primary]="getRolePermission(selectedRole, permission.id)">
+                        <td class="text-center align-middle">
+                          <input type="checkbox" class="m-0" [id]="'perm_' + permission.id"
+                                 [checked]="getRolePermission(selectedRole, permission.id)"
+                                 (change)="togglePermission(permission)"
+                                 [attr.aria-label]="'Asignar ' + permission.name">
+                        </td>
+                        <td class="align-middle">
+                          <label class="mb-0 font-weight-normal small" [attr.for]="'perm_' + permission.id">
+                            {{ getPermissionName(permission) }}
+                          </label>
+                        </td>
+                        <td class="align-middle d-none d-md-table-cell">
+                          <code class="small text-muted">{{ permission.name }}</code>
+                        </td>
+                        <td class="text-center align-middle">
+                          <span class="badge badge-pill small"
+                                [ngClass]="getRolePermission(selectedRole, permission.id) ? 'badge-success' : 'badge-light border'">
+                            {{ getRolePermission(selectedRole, permission.id) ? 'Sí' : '—' }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </ng-container>
+            </ng-container>
+          </div>
+
+          <!-- ——— Plantilla ≡ filas accesos_usuarios (sistema_id, menu_id, permisos, activo, origen) ——— -->
+          <div *ngIf="permissionModalSection === 'accesos'">
+            <div class="alert alert-light border small mb-3">
+              <strong>Estructura real <code>accesos_usuarios</code>:</strong>
+              <span class="text-monospace ml-1">usuario_id</span> (cada usuario del rol),
+              <span class="text-monospace ml-1">sistema_id</span>,
+              <span class="text-monospace ml-1">menu_id</span>,
+              <span class="text-monospace ml-1">permisos</span> (JSON v/c/e/d),
+              <span class="text-monospace ml-1">activo</span>,
+              <span class="text-monospace ml-1">origen</span> = <code>rol</code> al sincronizar.
+              Edita la plantilla <code>accesos_roles</code>; el botón guardar reemplaza plantilla y opcionalmente sync usuarios (confirmación).
+            </div>
+            <div class="d-flex flex-wrap align-items-center mb-2">
+              <button type="button" class="btn btn-sm btn-outline-secondary mr-1 mb-1"
+                      (click)="loadMenuCatalogAndPlantillas()" [disabled]="loadingMenuCatalog || menuRolSelectedId == null">
+                <i class="fas fa-redo mr-1" [class.fa-spin]="loadingMenuCatalog"></i> Recargar catálogo
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-primary mb-1" (click)="sincronizarUsuariosSoloRol()"
+                      [disabled]="syncingUsuariosRol || menuRolSelectedId == null">
+                <i class="fas fa-user-check mr-1"></i> {{ syncingUsuariosRol ? 'Sincronizando…' : 'Sincronizar usuarios del rol' }}
+              </button>
+            </div>
+            <div class="d-flex flex-wrap align-items-center mb-2">
+              <input type="search" class="form-control form-control-sm menus-rol-search mr-1 mb-1" placeholder="Buscar menú…"
+                     [(ngModel)]="menuPlantillaSearch">
+              <button type="button" class="btn btn-sm btn-light border mb-1 mr-1" (click)="expandirTodosSubsistemas(true)">Expandir árbol</button>
+              <button type="button" class="btn btn-sm btn-light border mb-1" (click)="expandirTodosSubsistemas(false)">Contraer</button>
+            </div>
+
+            <app-loading-spinner [loading]="loadingMenuCatalog" message="Cargando sistemas y plantilla…"></app-loading-spinner>
+
+            <div *ngIf="!loadingMenuCatalog && !sistemasMenusRol.length" class="text-muted small py-3 text-center border rounded">
+              No hay subsistemas o menús activos.
+            </div>
+
+            <ng-container *ngIf="!loadingMenuCatalog && sistemasMenusRol.length">
+              <div class="form-group mb-3">
+                <label class="small font-weight-bold mb-1">Subsistema integrado</label>
+                <select class="form-control form-control-sm"
+                        [(ngModel)]="permissionModalSistemaId">
+                  <option *ngFor="let s of sistemasMenusRol" [ngValue]="s.id">
+                    {{ s.nombre }}{{ s.codigo ? ' (' + s.codigo + ')' : '' }} — plantilla {{ countMenusPlantillaSistema(s).asignados }}/{{ countMenusPlantillaSistema(s).total }}
+                  </option>
+                </select>
+              </div>
+              <ng-container *ngIf="permissionModalSistemaActivo as sistema">
+                <div class="card border permission-modal-sistema-card">
+                  <div class="card-header py-2 bg-light d-flex flex-wrap align-items-center">
+                    <strong>{{ sistema.nombre }}</strong>
+                    <code class="small mb-0 ml-2">sistema_id = {{ sistema.id }}</code>
+                    <span class="badge badge-secondary ml-2" *ngIf="sistema.codigo">{{ sistema.codigo }}</span>
+                  </div>
+                  <div class="card-body py-2">
+                    <p class="small text-muted mb-2" *ngIf="!sistema.menus.length">Sin menús activos en este subsistema.</p>
+                    <div class="menus-rol-subsistemas permission-modal-tree" *ngIf="sistema.menus.length">
+                      <ng-container *ngTemplateOutlet="menuRolRecursive; context: { $implicit: visibleMenuRolChildren(sistema.menus), sistemaId: sistema.id, nivel: 0 }"></ng-container>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" [style.background]="mc.footerBg">
+        <button type="button" [class]="'btn btn-sm ' + mc.cancelBtnClass" (click)="closePermissionModal()">
+          <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}
+        </button>
+        <button type="button" [class]="'btn btn-sm ' + mc.saveBtnClass" (click)="savePermissionModalPrimary()"
+                [disabled]="isLoading || savingPlantillas || permissionModalLoading || !selectedRole">
+          <i class="fas fa-save mr-1" *ngIf="!isLoading && !savingPlantillas"></i>
+          <i class="fas fa-spinner fa-spin mr-1" *ngIf="isLoading || savingPlantillas"></i>
+          {{ (isLoading || savingPlantillas) ? 'Guardando…' : permissionModalSaveButtonLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nuevo/Editar Rol -->
+<div class="modal fade" [class.show]="showCreateModal || showEditModal" [style.display]="(showCreateModal || showEditModal) ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" [style.border-radius.px]="mc.borderRadius">
+      <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText" [style.border-radius]="mc.borderRadius + 'px ' + mc.borderRadius + 'px 0 0'">
+        <h4 class="modal-title">
+          <i class="fas mr-1" [class.fa-plus]="showCreateModal" [class.fa-edit]="showEditModal"></i>
+          {{ showCreateModal ? mc.titleAdd : mc.titleEdit }} Rol
+        </h4>
+        <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModals()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" [style.background]="mc.bodyBg">
+        <div class="form-group">
+          <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">
+            Nombre del rol <span class="text-danger">*</span>
+          </label>
+          <input type="text" [class]="'form-control ' + mc.inputSize" [(ngModel)]="roleForm.name" placeholder="Ej: ADMIN_SISTEMAS">
+        </div>
+        <div class="form-group">
+          <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight" [style.font-size]="cv.labelFontSize">Guard</label>
+          <input type="text" [class]="'form-control ' + mc.inputSize" [(ngModel)]="roleForm.guard_name" disabled>
+          <small class="text-muted">Por defecto: web</small>
+        </div>
+      </div>
+      <div class="modal-footer" [style.background]="mc.footerBg">
+        <button type="button" [class]="'btn btn-sm ' + mc.cancelBtnClass" (click)="closeModals()">
+          <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> {{ mc.cancelBtnLabel }}
+        </button>
+        <button type="button" [class]="'btn btn-sm ' + mc.saveBtnClass" (click)="showCreateModal ? createRole() : updateRole()" [disabled]="isLoading">
+          <i [class]="mc.saveBtnIcon + ' mr-1'" *ngIf="!isLoading"></i>
+          <i class="fas fa-spinner fa-spin mr-1" *ngIf="isLoading"></i>
+          {{ isLoading ? 'Guardando...' : mc.saveBtnLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop fade" [class.show]="showPermissionModal || showCreateModal || showEditModal" [style.display]="(showPermissionModal || showCreateModal || showEditModal) ? 'block' : 'none'"></div>

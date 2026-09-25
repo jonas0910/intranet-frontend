@@ -1,0 +1,10 @@
+{
+  "APP": {
+    "TITLE": "Intranet Notaria"
+  },
+  "MENU": {
+    "HOME": "Inicio",
+    "PROFILE": "Perfil",
+    "LOGOUT": "Cerrar sesión"
+  }
+}

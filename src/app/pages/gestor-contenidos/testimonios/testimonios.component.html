@@ -1,0 +1,210 @@
+<!-- Content Header -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0"><i class="fas fa-quote-left mr-2"></i>Testimonios</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/dashboard">Inicio</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor de Contenidos</a></li>
+          <li class="breadcrumb-item active">Testimonios</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+
+    <div class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-list mr-2"></i>Listado de Testimonios</h3>
+        <div class="card-tools">
+          <button type="button" class="btn btn-primary btn-sm" (click)="openCreate()">
+            <i class="fas fa-plus mr-1"></i>Nuevo Testimonio
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body p-0">
+        <!-- Loading -->
+        <div *ngIf="loading" class="text-center py-4">
+          <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+          <p class="mt-2 mb-0">Cargando testimonios...</p>
+        </div>
+
+        <!-- Table -->
+        <div *ngIf="!loading && testimonios.length > 0" class="table-responsive">
+          <table class="table table-striped table-hover table-sm mb-0">
+            <thead>
+              <tr>
+                <th style="width:50px">ID</th>
+                <th style="width:60px">Foto</th>
+                <th>Nombre</th>
+                <th>Cargo / Empresa</th>
+                <th>Calificación</th>
+                <th>Contenido</th>
+                <th>Destacado</th>
+                <th>Estado</th>
+                <th style="width:60px">Orden</th>
+                <th style="width:120px">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of testimonios">
+                <td>{{ t.id }}</td>
+                <td>
+                  <img *ngIf="t.foto" [src]="t.foto" class="img-circle" style="width:40px;height:40px;object-fit:cover;" [alt]="t.nombre">
+                  <span *ngIf="!t.foto" class="text-muted"><i class="fas fa-user-circle fa-2x"></i></span>
+                </td>
+                <td><strong>{{ t.nombre }}</strong></td>
+                <td>
+                  {{ t.cargo }}<span *ngIf="t.cargo && t.empresa"> — </span>{{ t.empresa }}
+                </td>
+                <td>
+                  <span class="text-warning">
+                    <i *ngFor="let s of getStars(t.calificacion)" class="fas fa-star"></i>
+                    <i *ngFor="let s of getEmptyStars(t.calificacion)" class="far fa-star"></i>
+                  </span>
+                </td>
+                <td>{{ t.contenido?.length > 80 ? (t.contenido | slice:0:80) + '...' : t.contenido }}</td>
+                <td>
+                  <span class="badge" [ngClass]="t.destacado ? 'badge-warning' : 'badge-secondary'">
+                    {{ t.destacado ? 'Sí' : 'No' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="t.activo ? 'badge-success' : 'badge-secondary'">
+                    {{ t.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="text-center">{{ t.orden }}</td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-info" title="Editar" (click)="openEdit(t)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn btn-danger" title="Eliminar" (click)="eliminar(t.id)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty state -->
+        <div *ngIf="!loading && testimonios.length === 0" class="text-center p-5">
+          <i class="fas fa-quote-left fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No se encontraron testimonios</h5>
+          <p class="text-muted">Crea tu primer testimonio para comenzar.</p>
+          <button type="button" class="btn btn-primary" (click)="openCreate()">
+            <i class="fas fa-plus mr-1"></i>Nuevo Testimonio
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" [ngClass]="{'show d-block': showModal}" [ngStyle]="{'background-color': showModal ? 'rgba(0,0,0,0.5)' : 'transparent'}" tabindex="-1" role="dialog" *ngIf="showModal">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary">
+        <h5 class="modal-title">
+          <i class="fas fa-quote-left mr-2"></i>
+          {{ editingTestimonio ? 'Editar Testimonio' : 'Nuevo Testimonio' }}
+        </h5>
+        <button type="button" class="close text-white" (click)="showModal = false">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Nombre <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="form.nombre" placeholder="Nombre completo">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Cargo</label>
+              <input type="text" class="form-control" [(ngModel)]="form.cargo" placeholder="Cargo o puesto">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Empresa</label>
+              <input type="text" class="form-control" [(ngModel)]="form.empresa" placeholder="Empresa u organización">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Foto (URL)</label>
+              <input type="text" class="form-control" [(ngModel)]="form.foto" placeholder="https://...">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Contenido <span class="text-danger">*</span></label>
+          <textarea class="form-control" [(ngModel)]="form.contenido" rows="4" placeholder="Texto del testimonio"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Calificación</label>
+              <div class="d-flex align-items-center">
+                <input type="number" class="form-control" [(ngModel)]="form.calificacion" min="1" max="5" style="width:80px;">
+                <span class="ml-2 text-warning">
+                  <i *ngFor="let s of getStars(form.calificacion)" class="fas fa-star"></i>
+                  <i *ngFor="let s of getEmptyStars(form.calificacion)" class="far fa-star"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Orden</label>
+              <input type="number" class="form-control" [(ngModel)]="form.orden" min="0">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchDestacado" [(ngModel)]="form.destacado">
+                <label class="custom-control-label" for="switchDestacado">Destacado</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchActivo" [(ngModel)]="form.activo">
+                <label class="custom-control-label" for="switchActivo">Activo</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="showModal = false" [disabled]="saving">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="guardar()" [disabled]="saving || !form.nombre || !form.contenido">
+          <i class="fas fa-spinner fa-spin mr-1" *ngIf="saving"></i>
+          <i class="fas fa-save mr-1" *ngIf="!saving"></i>
+          {{ saving ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,168 @@
+<app-system-layout [title]="viewConfig.title" [subtitle]="'Registro de Inspecciones Operativas Sanitarias'"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comercialización', url: '/comercializacion'}, {label: 'Inspecciones'}]"
+    [subsystem]="'comercializacion'">
+
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Tabla de Resultados -->
+            <div class="card shadow-sm border-0" [style.border-radius.px]="cv.cardBorderRadius">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h3 class="card-title font-weight-bold">
+                        <i [class]="viewConfig.icon + ' mr-2 text-success'"></i> Listado de Inspecciones Actuales
+                    </h3>
+                    <div class="card-tools">
+                        <ng-container *ngIf="cv.showExportButtons">
+                            <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"
+                                (click)="onExportExcel()">
+                                <i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}
+                            </button>
+                        </ng-container>
+                        <button class="btn btn-sm ml-2 bg-success text-white shadow-sm" (click)="onAction('create')">
+                            <i class="fas fa-plus mr-1"></i> Programar Visita
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 ds-crud-table">
+                            <thead>
+                                <tr>
+                                    <th>Nº Acta</th>
+                                    <th>Comerciante / Establecimiento</th>
+                                    <th>Inspector Responsable</th>
+                                    <th class="text-center">Fecha</th>
+                                    <th class="text-center">Resultado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody *ngIf="data.length > 0">
+                                <tr *ngFor="let item of data">
+                                    <td><span class="badge badge-light border">{{item.nro_acta}}</span></td>
+                                    <td><strong class="text-dark">{{item.comerciante}}</strong></td>
+                                    <td class="small">{{item.inspector}}</td>
+                                    <td class="text-center">{{item.fecha | date:'dd/MM/yyyy'}}</td>
+                                    <td class="text-center">
+                                        <span class="badge badge-pill" [ngClass]="{
+                                            'badge-success': item.resultado === 'SATISFACTORIO',
+                                            'badge-warning': item.resultado === 'OBSERVADO',
+                                            'badge-danger': item.resultado === 'RECHAZADO'
+                                        }">{{item.resultado}}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm" [ngClass]="cv.viewBtnClass" title="Ver Acta"
+                                            (click)="onAction('view', item)">
+                                            <i class="fas fa-file-alt"></i>
+                                        </button>
+                                        <button class="btn btn-sm ml-1" [ngClass]="cv.editBtnClass" title="Editar"
+                                            (click)="onAction('edit', item)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody *ngIf="data.length === 0">
+                                <tr>
+                                    <td colspan="6" class="text-center p-5 text-muted">
+                                        <i class="fas fa-clipboard-list fa-3x mb-3 opacity-25"></i><br>
+                                        No se encontraron inspecciones registradas.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Registro -->
+    <div class="modal fade show" *ngIf="showModal" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0" [style.border-radius.px]="cv.cardBorderRadius">
+                <div class="modal-header shadow-sm" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+                    [style.border-top-left-radius.px]="mc.borderRadius"
+                    [style.border-top-right-radius.px]="mc.borderRadius">
+                    <h5 class="modal-title font-weight-bold">
+                        <i [class]="mc.headerIcon + ' mr-2'"></i>
+                        {{ viewMode === 'view' ? 'Detalle de Inspección' : (viewMode === 'edit' ? 'Editar Inspección' :
+                        'Programar Inspección') }}
+                    </h5>
+                    <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <form [formGroup]="form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Nº de Acta / Documento</label>
+                                    <input type="text" class="form-control" formControlName="nro_acta"
+                                        placeholder="Ej: ACT-2026-000X">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Fecha de Visita</label>
+                                    <input type="date" class="form-control" formControlName="fecha">
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Vincular Comerciante (Padrón)</label>
+                                    <select class="form-control" formControlName="comerciante_id"
+                                        (change)="onComercianteChange($event)">
+                                        <option [value]="null">-- Seleccionar del Padrón (Opcional) --</option>
+                                        <option *ngFor="let c of comerciantesPadron" [value]="c.id">
+                                            {{c.contribuyente}} (Puesto: {{c.nro_puesto}} - {{c.giro}})
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Nombre del Comerciante / Local (Manual)</label>
+                                    <input type="text" class="form-control" formControlName="comerciante"
+                                        placeholder="Nombre completo o nombre del local">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Inspector a Cargo</label>
+                                    <input type="text" class="form-control" formControlName="inspector">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Resultado Preliminar</label>
+                                    <select class="form-control" formControlName="resultado">
+                                        <option value="SATISFACTORIO">SATISFACTORIO</option>
+                                        <option value="OBSERVADO">OBSERVADO</option>
+                                        <option value="RECHAZADO">RECHAZADO</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group mb-0">
+                                    <label class="font-weight-bold">Observaciones Generales</label>
+                                    <textarea class="form-control" formControlName="observaciones" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-light shadow-sm" (click)="closeModal()">
+                        {{ viewMode === 'view' ? 'Cerrar' : 'Cancelar' }}
+                    </button>
+                    <button type="button" class="btn btn-success shadow-sm px-4" (click)="save()" [disabled]="isSaving"
+                        *ngIf="viewMode !== 'view'">
+                        <i class="fas fa-save mr-1"></i> {{ isSaving ? 'Guardando...' : (viewMode === 'edit' ?
+                        'Actualizar' : 'Guardar') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>

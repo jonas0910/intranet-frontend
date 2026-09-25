@@ -1,0 +1,326 @@
+<div class="content-wrapper">
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">Gestión de Permisos de Menús</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="#">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="#">Administración</a></li>
+            <li class="breadcrumb-item active">Permisos de Menús</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<section class="content">
+  <div class="container-fluid form-container">
+      <!-- Información del Usuario -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card card-info">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-user-shield"></i>
+                Permisos del Usuario Actual
+              </h3>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">
+                Aquí puede gestionar los permisos de acceso a los menús de los sistemas integrados.
+                Solo se mostrarán los menús para los cuales tenga permisos de lectura.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selección de Sistema y Menú -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-cogs"></i>
+                Seleccionar Sistema
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="sistemaSelect">Sistema:</label>
+                <select 
+                  id="sistemaSelect" 
+                  class="form-control" 
+                  (change)="onSistemaChange(+$event.target.value)"
+                  [disabled]="loading">
+                  <option value="">Seleccione un sistema...</option>
+                  <option 
+                    *ngFor="let sistema of sistemas" 
+                    [value]="sistema.id">
+                    {{ sistema.nombre }} ({{ sistema.menusConPermisos || 0 }} menús)
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-list"></i>
+                Seleccionar Menú
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="menuSelect">Menú:</label>
+                <select 
+                  id="menuSelect" 
+                  class="form-control" 
+                  (change)="onMenuChange(+$event.target.value)"
+                  [disabled]="!selectedSistema || loading">
+                  <option value="">Seleccione un menú...</option>
+                  <option 
+                    *ngFor="let menu of selectedSistema?.menus || []" 
+                    [value]="menu.id">
+                    {{ menu.nombre }} - {{ menu.ruta }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario de Permisos -->
+      <div class="row" *ngIf="selectedSistema && selectedMenu">
+        <div class="col-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-key"></i>
+                Permisos para: {{ selectedMenu.nombre }}
+              </h3>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="permisosForm" (ngSubmit)="savePermissions()">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <div class="custom-control custom-checkbox">
+                        <input 
+                          type="checkbox" 
+                          class="custom-control-input" 
+                          id="lectura"
+                          formControlName="lectura">
+                        <label class="custom-control-label" for="lectura">
+                          <i class="fas fa-eye text-info"></i>
+                          Lectura
+                        </label>
+                      </div>
+                      <small class="form-text text-muted">
+                        Permite ver el contenido del menú
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <div class="custom-control custom-checkbox">
+                        <input 
+                          type="checkbox" 
+                          class="custom-control-input" 
+                          id="escritura"
+                          formControlName="escritura">
+                        <label class="custom-control-label" for="escritura">
+                          <i class="fas fa-edit text-warning"></i>
+                          Escritura
+                        </label>
+                      </div>
+                      <small class="form-text text-muted">
+                        Permite crear y modificar registros
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <div class="custom-control custom-checkbox">
+                        <input 
+                          type="checkbox" 
+                          class="custom-control-input" 
+                          id="eliminacion"
+                          formControlName="eliminacion">
+                        <label class="custom-control-label" for="eliminacion">
+                          <i class="fas fa-trash text-danger"></i>
+                          Eliminación
+                        </label>
+                      </div>
+                      <small class="form-text text-muted">
+                        Permite eliminar registros
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <div class="custom-control custom-checkbox">
+                        <input 
+                          type="checkbox" 
+                          class="custom-control-input" 
+                          id="configuracion"
+                          formControlName="configuracion">
+                        <label class="custom-control-label" for="configuracion">
+                          <i class="fas fa-cog text-secondary"></i>
+                          Configuración
+                        </label>
+                      </div>
+                      <small class="form-text text-muted">
+                        Permite configurar el menú
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <div class="custom-control custom-checkbox">
+                        <input 
+                          type="checkbox" 
+                          class="custom-control-input" 
+                          id="exportacion"
+                          formControlName="exportacion">
+                        <label class="custom-control-label" for="exportacion">
+                          <i class="fas fa-download text-success"></i>
+                          Exportación
+                        </label>
+                      </div>
+                      <small class="form-text text-muted">
+                        Permite exportar datos
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <div class="custom-control custom-checkbox">
+                        <input 
+                          type="checkbox" 
+                          class="custom-control-input" 
+                          id="auditoria"
+                          formControlName="auditoria">
+                        <label class="custom-control-label" for="auditoria">
+                          <i class="fas fa-search text-dark"></i>
+                          Auditoría
+                        </label>
+                      </div>
+                      <small class="form-text text-muted">
+                        Permite ver logs y auditoría
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-12">
+                    <button 
+                      type="submit" 
+                      class="btn btn-primary"
+                      [disabled]="loading">
+                      <i class="fas fa-save" *ngIf="!loading"></i>
+                      <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+                      {{ loading ? 'Guardando...' : 'Guardar Permisos' }}
+                    </button>
+
+                    <button 
+                      type="button" 
+                      class="btn btn-danger ml-2"
+                      (click)="revokePermissions()"
+                      [disabled]="loading">
+                      <i class="fas fa-ban"></i>
+                      Revocar Permisos
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen de Permisos Actuales -->
+      <div class="row" *ngIf="permisosUsuario.length > 0">
+        <div class="col-12">
+          <div class="card card-success">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-list-check"></i>
+                Resumen de Permisos Actuales
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Sistema</th>
+                      <th>Menú</th>
+                      <th>Lectura</th>
+                      <th>Escritura</th>
+                      <th>Eliminación</th>
+                      <th>Configuración</th>
+                      <th>Exportación</th>
+                      <th>Auditoría</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let permiso of permisosUsuario">
+                      <td>
+                        <strong>{{ permiso.sistema_nombre }}</strong>
+                      </td>
+                      <td>{{ permiso.menu_id }}</td>
+                      <td>
+                        <span class="badge" [ngClass]="getPermissionBadgeClass(permiso.permisos.lectura)">
+                          {{ getPermissionText(permiso.permisos.lectura) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge" [ngClass]="getPermissionBadgeClass(permiso.permisos.escritura)">
+                          {{ getPermissionText(permiso.permisos.escritura) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge" [ngClass]="getPermissionBadgeClass(permiso.permisos.eliminacion)">
+                          {{ getPermissionText(permiso.permisos.eliminacion) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge" [ngClass]="getPermissionBadgeClass(permiso.permisos.configuracion)">
+                          {{ getPermissionText(permiso.permisos.configuracion) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge" [ngClass]="getPermissionBadgeClass(permiso.permisos.exportacion)">
+                          {{ getPermissionText(permiso.permisos.exportacion) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge" [ngClass]="getPermissionBadgeClass(permiso.permisos.auditoria)">
+                          {{ getPermissionText(permiso.permisos.auditoria) }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

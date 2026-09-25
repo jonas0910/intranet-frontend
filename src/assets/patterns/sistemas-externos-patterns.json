@@ -1,0 +1,686 @@
+{
+  "version": "1.0.0",
+  "description": "Patrones de diseño para sistemas externos de la intranet",
+  "last_updated": "2024-01-01",
+  "patterns": {
+    "rrhh": {
+      "id": "rrhh",
+      "nombre": "Sistema de Recursos Humanos",
+      "codigo": "RRHH",
+      "descripcion": "Sistema integral para la gestión completa de recursos humanos, incluyendo administración de empleados, procesamiento de nóminas, gestión de capacitación, evaluación de desempeño, control de asistencia y desarrollo organizacional. Permite la automatización de procesos críticos de RRHH y el cumplimiento normativo laboral.",
+      "categoria": "gestión_interna",
+      "prioridad": "alta",
+      "estado_default": true,
+      "keywords": ["empleados", "nóminas", "capacitación", "evaluación", "asistencia", "desarrollo", "compliance"],
+      "sso_config": {
+        "habilitado": true,
+        "force": false,
+        "provider": "saml2"
+      },
+      "menus": [
+        {
+          "id": "rrhh_empleados",
+          "nombre": "Gestión de Empleados",
+          "codigo": "empleados",
+          "descripcion": "Módulo completo para la administración de información personal, laboral y contractual de empleados. Incluye gestión de contratos, historial laboral, documentos personales, estructura organizacional y cambios de estado.",
+          "icono": "fas fa-users",
+          "orden": 1,
+          "estado_default": true,
+          "keywords": ["personal", "contratos", "historial", "documentos", "organización"],
+          "permisos_requeridos": [
+            "rrhh.empleados.read",
+            "rrhh.empleados.write",
+            "rrhh.empleados.delete"
+          ],
+          "submenus": [
+            {
+              "id": "rrhh_empleados_lista",
+              "nombre": "Lista de Empleados",
+              "codigo": "lista_empleados",
+              "descripcion": "Vista general de todos los empleados con filtros avanzados y búsqueda",
+              "icono": "fas fa-list",
+              "permisos": ["rrhh.empleados.read"]
+            },
+            {
+              "id": "rrhh_empleados_nuevo",
+              "nombre": "Nuevo Empleado",
+              "codigo": "nuevo_empleado",
+              "descripcion": "Formulario para registrar nuevos empleados en el sistema",
+              "icono": "fas fa-user-plus",
+              "permisos": ["rrhh.empleados.write"]
+            },
+            {
+              "id": "rrhh_empleados_contratos",
+              "nombre": "Contratos",
+              "codigo": "contratos",
+              "descripcion": "Gestión de contratos laborales y modificaciones",
+              "icono": "fas fa-file-signature",
+              "permisos": ["rrhh.empleados.write"]
+            }
+          ]
+        },
+        {
+          "id": "rrhh_nominas",
+          "nombre": "Nóminas y Salarios",
+          "codigo": "nominas",
+          "descripcion": "Sistema completo de procesamiento de nóminas, cálculo de salarios, gestión de beneficios, deducciones, impuestos y reportes de remuneraciones. Incluye integración con sistemas bancarios y fiscales.",
+          "icono": "fas fa-money-bill-wave",
+          "orden": 2,
+          "estado_default": true,
+          "keywords": ["salarios", "beneficios", "deducciones", "impuestos", "bancos", "fiscal"],
+          "permisos_requeridos": [
+            "rrhh.nominas.read",
+            "rrhh.nominas.write"
+          ],
+          "submenus": [
+            {
+              "id": "rrhh_nominas_procesamiento",
+              "nombre": "Procesamiento",
+              "codigo": "procesamiento",
+              "descripcion": "Cálculo y procesamiento de nóminas mensuales",
+              "icono": "fas fa-calculator",
+              "permisos": ["rrhh.nominas.write"]
+            },
+            {
+              "id": "rrhh_nominas_reportes",
+              "nombre": "Reportes",
+              "codigo": "reportes_nominas",
+              "descripcion": "Reportes de nóminas y análisis salarial",
+              "icono": "fas fa-chart-pie",
+              "permisos": ["rrhh.nominas.read"]
+            }
+          ]
+        },
+        {
+          "id": "rrhh_capacitacion",
+          "nombre": "Capacitación y Desarrollo",
+          "codigo": "capacitacion",
+          "descripcion": "Plataforma para la gestión de programas de capacitación, desarrollo de competencias, evaluación de habilidades, planificación de carreras y seguimiento del progreso profesional de los empleados.",
+          "icono": "fas fa-graduation-cap",
+          "orden": 3,
+          "estado_default": false,
+          "keywords": ["competencias", "habilidades", "carrera", "progreso", "evaluación"],
+          "permisos_requeridos": [
+            "rrhh.capacitacion.read",
+            "rrhh.capacitacion.write"
+          ]
+        },
+        {
+          "id": "rrhh_asistencia",
+          "nombre": "Control de Asistencia",
+          "codigo": "asistencia",
+          "descripcion": "Sistema de control de asistencia, horarios, vacaciones, permisos y tiempo extra. Integración con dispositivos biométricos y cálculo automático de horas trabajadas.",
+          "icono": "fas fa-clock",
+          "orden": 4,
+          "estado_default": true,
+          "keywords": ["horarios", "vacaciones", "permisos", "tiempo_extra", "biométrico"],
+          "permisos_requeridos": [
+            "rrhh.asistencia.read",
+            "rrhh.asistencia.write"
+          ]
+        }
+      ],
+      "configuracion": {
+        "url_base": "https://rrhh.empresa.com",
+        "timeout": 30000,
+        "retry_attempts": 3,
+        "cache_enabled": true
+      }
+    },
+    "contabilidad": {
+      "id": "contabilidad",
+      "nombre": "Sistema de Contabilidad",
+      "codigo": "CONTAB",
+      "descripcion": "Sistema contable integral para la gestión financiera empresarial, incluyendo contabilidad general, facturación, cuentas por cobrar/pagar, conciliación bancaria, reportes financieros y cumplimiento fiscal. Integración con sistemas bancarios y fiscales.",
+      "categoria": "finanzas",
+      "prioridad": "alta",
+      "estado_default": true,
+      "keywords": ["contabilidad", "financiero", "facturación", "bancario", "fiscal", "conciliación"],
+      "sso_config": {
+        "habilitado": true,
+        "force": true,
+        "provider": "oauth2"
+      },
+      "menus": [
+        {
+          "id": "contab_facturacion",
+          "nombre": "Facturación y Documentos",
+          "codigo": "facturacion",
+          "descripcion": "Gestión completa de facturas, notas de crédito, recibos y documentos comerciales. Incluye generación automática, envío electrónico, seguimiento de pagos y cumplimiento de normativas fiscales.",
+          "icono": "fas fa-file-invoice",
+          "orden": 1,
+          "estado_default": true,
+          "keywords": ["facturas", "notas_crédito", "documentos", "fiscal", "pagos"],
+          "permisos_requeridos": [
+            "contab.facturacion.read",
+            "contab.facturacion.write"
+          ],
+          "submenus": [
+            {
+              "id": "contab_facturacion_crear",
+              "nombre": "Crear Factura",
+              "codigo": "crear_factura",
+              "descripcion": "Generación de nuevas facturas y documentos",
+              "icono": "fas fa-plus-circle",
+              "permisos": ["contab.facturacion.write"]
+            },
+            {
+              "id": "contab_facturacion_historial",
+              "nombre": "Historial",
+              "codigo": "historial_facturas",
+              "descripcion": "Consulta de facturas emitidas y recibidas",
+              "icono": "fas fa-history",
+              "permisos": ["contab.facturacion.read"]
+            }
+          ]
+        },
+        {
+          "id": "contab_reportes",
+          "nombre": "Reportes Financieros",
+          "codigo": "reportes",
+          "descripcion": "Generación de reportes financieros avanzados, análisis de rentabilidad, flujos de caja, estados financieros consolidados y dashboards ejecutivos para la toma de decisiones estratégicas.",
+          "icono": "fas fa-chart-line",
+          "orden": 2,
+          "estado_default": true,
+          "keywords": ["reportes", "rentabilidad", "flujo_caja", "estados", "dashboard"],
+          "permisos_requeridos": [
+            "contab.reportes.read"
+          ],
+          "submenus": [
+            {
+              "id": "contab_reportes_balance",
+              "nombre": "Balance General",
+              "codigo": "balance_general",
+              "descripcion": "Reporte de balance general y situación financiera",
+              "icono": "fas fa-balance-scale",
+              "permisos": ["contab.reportes.read"]
+            },
+            {
+              "id": "contab_reportes_resultados",
+              "nombre": "Estado de Resultados",
+              "codigo": "estado_resultados",
+              "descripcion": "Análisis de ingresos, gastos y rentabilidad",
+              "icono": "fas fa-chart-area",
+              "permisos": ["contab.reportes.read"]
+            }
+          ]
+        },
+        {
+          "id": "contab_bancos",
+          "nombre": "Conciliación Bancaria",
+          "codigo": "bancos",
+          "descripcion": "Conciliación automática de cuentas bancarias, gestión de movimientos, transferencias y reconciliación de diferencias. Integración con múltiples entidades bancarias.",
+          "icono": "fas fa-university",
+          "orden": 3,
+          "estado_default": true,
+          "keywords": ["conciliación", "bancos", "movimientos", "transferencias"],
+          "permisos_requeridos": [
+            "contab.bancos.read",
+            "contab.bancos.write"
+          ]
+        }
+      ],
+      "configuracion": {
+        "url_base": "https://contabilidad.empresa.com",
+        "timeout": 45000,
+        "retry_attempts": 2,
+        "cache_enabled": false
+      }
+    },
+    "inventarios": {
+      "id": "inventarios",
+      "nombre": "Sistema de Inventarios",
+      "codigo": "INV",
+      "descripcion": "Sistema avanzado de control de inventarios para la gestión de stock, movimientos de mercancía, alertas automáticas, valuación de inventarios, análisis de rotación y optimización de niveles de stock. Incluye códigos de barras y RFID.",
+      "categoria": "logistica",
+      "prioridad": "media",
+      "estado_default": true,
+      "keywords": ["stock", "movimientos", "alertas", "valuación", "rotación", "códigos_barras"],
+      "sso_config": {
+        "habilitado": false,
+        "force": false,
+        "provider": "basic"
+      },
+      "menus": [
+        {
+          "id": "inv_stock",
+          "nombre": "Control de Stock",
+          "codigo": "stock",
+          "descripcion": "Gestión integral de inventarios, niveles de stock, ubicaciones, categorización de productos y control de calidad. Incluye trazabilidad completa de productos.",
+          "icono": "fas fa-boxes",
+          "orden": 1,
+          "estado_default": true,
+          "keywords": ["inventarios", "niveles", "ubicaciones", "trazabilidad", "calidad"],
+          "permisos_requeridos": [
+            "inv.stock.read",
+            "inv.stock.write"
+          ],
+          "submenus": [
+            {
+              "id": "inv_stock_productos",
+              "nombre": "Productos",
+              "codigo": "productos",
+              "descripcion": "Catálogo de productos y configuración de inventarios",
+              "icono": "fas fa-box",
+              "permisos": ["inv.stock.read"]
+            },
+            {
+              "id": "inv_stock_ubicaciones",
+              "nombre": "Ubicaciones",
+              "codigo": "ubicaciones",
+              "descripcion": "Gestión de almacenes y ubicaciones de stock",
+              "icono": "fas fa-map-marker-alt",
+              "permisos": ["inv.stock.write"]
+            }
+          ]
+        },
+        {
+          "id": "inv_movimientos",
+          "nombre": "Movimientos de Inventario",
+          "codigo": "movimientos",
+          "descripcion": "Registro detallado de entradas, salidas, transferencias, ajustes y devoluciones de inventario. Incluye autorizaciones y trazabilidad completa de movimientos.",
+          "icono": "fas fa-exchange-alt",
+          "orden": 2,
+          "estado_default": true,
+          "keywords": ["entradas", "salidas", "transferencias", "ajustes", "devoluciones"],
+          "permisos_requeridos": [
+            "inv.movimientos.read",
+            "inv.movimientos.write"
+          ]
+        },
+        {
+          "id": "inv_alertas",
+          "nombre": "Alertas y Notificaciones",
+          "codigo": "alertas",
+          "descripcion": "Sistema inteligente de alertas para stock mínimo, productos vencidos, movimientos inusuales y notificaciones automáticas por email/SMS para el personal responsable.",
+          "icono": "fas fa-bell",
+          "orden": 3,
+          "estado_default": false,
+          "keywords": ["stock_mínimo", "vencidos", "notificaciones", "email", "sms"],
+          "permisos_requeridos": [
+            "inv.alertas.read"
+          ]
+        },
+        {
+          "id": "inv_reportes",
+          "nombre": "Reportes de Inventario",
+          "codigo": "reportes_inv",
+          "descripcion": "Reportes analíticos de inventarios, rotación de productos, valuación de stock, análisis de tendencias y proyecciones de demanda para optimización de inventarios.",
+          "icono": "fas fa-chart-bar",
+          "orden": 4,
+          "estado_default": true,
+          "keywords": ["rotación", "valuación", "tendencias", "demanda", "optimización"],
+          "permisos_requeridos": [
+            "inv.reportes.read"
+          ]
+        }
+      ],
+      "configuracion": {
+        "url_base": "https://inventarios.empresa.com",
+        "timeout": 25000,
+        "retry_attempts": 3,
+        "cache_enabled": true
+      }
+    },
+    "ventas": {
+      "id": "ventas",
+      "nombre": "Sistema de Ventas",
+      "codigo": "VENTAS",
+      "descripcion": "Plataforma completa de gestión comercial para el manejo de clientes, oportunidades de venta, cotizaciones, pedidos, facturación y análisis de ventas. Incluye CRM integrado y herramientas de prospección.",
+      "categoria": "comercial",
+      "prioridad": "alta",
+      "estado_default": true,
+      "keywords": ["clientes", "oportunidades", "cotizaciones", "pedidos", "crm", "prospección"],
+      "sso_config": {
+        "habilitado": true,
+        "force": false,
+        "provider": "saml2"
+      },
+      "menus": [
+        {
+          "id": "ventas_clientes",
+          "nombre": "Gestión de Clientes",
+          "codigo": "clientes",
+          "descripcion": "CRM completo para la gestión de clientes, contactos, historial de compras, preferencias, segmentación y análisis de comportamiento de clientes para estrategias de retención.",
+          "icono": "fas fa-user-tie",
+          "orden": 1,
+          "estado_default": true,
+          "keywords": ["crm", "contactos", "historial", "preferencias", "segmentación"],
+          "permisos_requeridos": [
+            "ventas.clientes.read",
+            "ventas.clientes.write"
+          ],
+          "submenus": [
+            {
+              "id": "ventas_clientes_lista",
+              "nombre": "Lista de Clientes",
+              "codigo": "lista_clientes",
+              "descripcion": "Directorio completo de clientes con filtros avanzados",
+              "icono": "fas fa-address-book",
+              "permisos": ["ventas.clientes.read"]
+            },
+            {
+              "id": "ventas_clientes_nuevo",
+              "nombre": "Nuevo Cliente",
+              "codigo": "nuevo_cliente",
+              "descripcion": "Registro de nuevos clientes y contactos",
+              "icono": "fas fa-user-plus",
+              "permisos": ["ventas.clientes.write"]
+            }
+          ]
+        },
+        {
+          "id": "ventas_pedidos",
+          "nombre": "Pedidos y Cotizaciones",
+          "codigo": "pedidos",
+          "descripcion": "Gestión completa del ciclo de ventas desde cotización hasta entrega. Incluye generación de cotizaciones, conversión a pedidos, seguimiento de estado y gestión de entregas.",
+          "icono": "fas fa-shopping-cart",
+          "orden": 2,
+          "estado_default": true,
+          "keywords": ["cotizaciones", "pedidos", "ciclo_venta", "seguimiento", "entregas"],
+          "permisos_requeridos": [
+            "ventas.pedidos.read",
+            "ventas.pedidos.write"
+          ]
+        },
+        {
+          "id": "ventas_reportes",
+          "nombre": "Reportes de Ventas",
+          "codigo": "reportes-ventas",
+          "descripcion": "Análisis avanzado de ventas, métricas de rendimiento, proyecciones, análisis de productos más vendidos, comportamiento de clientes y dashboards ejecutivos para toma de decisiones.",
+          "icono": "fas fa-chart-bar",
+          "orden": 3,
+          "estado_default": true,
+          "keywords": ["análisis", "métricas", "proyecciones", "rendimiento", "dashboard"],
+          "permisos_requeridos": [
+            "ventas.reportes.read"
+          ]
+        },
+        {
+          "id": "ventas_oportunidades",
+          "nombre": "Oportunidades de Venta",
+          "codigo": "oportunidades",
+          "descripcion": "Pipeline de ventas, gestión de oportunidades, seguimiento de prospectos, análisis de probabilidades y herramientas de prospección para maximizar conversiones.",
+          "icono": "fas fa-funnel-dollar",
+          "orden": 4,
+          "estado_default": true,
+          "keywords": ["pipeline", "prospectos", "probabilidades", "prospección", "conversiones"],
+          "permisos_requeridos": [
+            "ventas.oportunidades.read",
+            "ventas.oportunidades.write"
+          ]
+        }
+      ],
+      "configuracion": {
+        "url_base": "https://ventas.empresa.com",
+        "timeout": 35000,
+        "retry_attempts": 2,
+        "cache_enabled": true
+      }
+    },
+    "compras": {
+      "id": "compras",
+      "nombre": "Sistema de Compras",
+      "codigo": "COMPRAS",
+      "descripcion": "Sistema integral de gestión de compras para el control de proveedores, solicitudes de compra, órdenes de compra, recepción de mercancías, evaluación de proveedores y análisis de costos de adquisición.",
+      "categoria": "logistica",
+      "prioridad": "media",
+      "estado_default": true,
+      "keywords": ["proveedores", "solicitudes", "órdenes", "recepción", "evaluación", "costos"],
+      "sso_config": {
+        "habilitado": false,
+        "force": false,
+        "provider": "basic"
+      },
+      "menus": [
+        {
+          "id": "compras_proveedores",
+          "nombre": "Gestión de Proveedores",
+          "codigo": "proveedores",
+          "descripcion": "Base de datos completa de proveedores, evaluación de rendimiento, clasificación por categorías, historial de compras y gestión de contratos y acuerdos comerciales.",
+          "icono": "fas fa-truck",
+          "orden": 1,
+          "estado_default": true,
+          "keywords": ["base_datos", "evaluación", "clasificación", "contratos", "acuerdos"],
+          "permisos_requeridos": [
+            "compras.proveedores.read",
+            "compras.proveedores.write"
+          ],
+          "submenus": [
+            {
+              "id": "compras_proveedores_lista",
+              "nombre": "Lista de Proveedores",
+              "codigo": "lista_proveedores",
+              "descripcion": "Directorio de proveedores con información detallada",
+              "icono": "fas fa-list-alt",
+              "permisos": ["compras.proveedores.read"]
+            },
+            {
+              "id": "compras_proveedores_evaluacion",
+              "nombre": "Evaluación",
+              "codigo": "evaluacion_proveedores",
+              "descripcion": "Sistema de evaluación y calificación de proveedores",
+              "icono": "fas fa-star",
+              "permisos": ["compras.proveedores.read"]
+            }
+          ]
+        },
+        {
+          "id": "compras_ordenes",
+          "nombre": "Órdenes de Compra",
+          "codigo": "ordenes",
+          "descripcion": "Gestión completa del proceso de compras desde solicitudes hasta recepción. Incluye aprobaciones, cotizaciones, generación de órdenes y seguimiento de entregas.",
+          "icono": "fas fa-file-contract",
+          "orden": 2,
+          "estado_default": true,
+          "keywords": ["solicitudes", "aprobaciones", "cotizaciones", "órdenes", "entregas"],
+          "permisos_requeridos": [
+            "compras.ordenes.read",
+            "compras.ordenes.write"
+          ]
+        },
+        {
+          "id": "compras_recepcion",
+          "nombre": "Recepción de Mercancías",
+          "codigo": "recepcion",
+          "descripcion": "Control de recepción de mercancías, verificación de calidad, inspección de productos, registro de devoluciones y gestión de no conformidades con proveedores.",
+          "icono": "fas fa-clipboard-check",
+          "orden": 3,
+          "estado_default": true,
+          "keywords": ["recepción", "calidad", "inspección", "devoluciones", "no_conformidades"],
+          "permisos_requeridos": [
+            "compras.recepcion.read",
+            "compras.recepcion.write"
+          ]
+        }
+      ],
+      "configuracion": {
+        "url_base": "https://compras.empresa.com",
+        "timeout": 30000,
+        "retry_attempts": 3,
+        "cache_enabled": true
+      }
+    }
+  },
+  "metadata": {
+    "total_patterns": 5,
+    "categorias": ["gestión_interna", "finanzas", "logistica", "comercial"],
+    "prioridades": ["alta", "media", "baja"],
+    "providers_sso": ["saml2", "oauth2", "basic"],
+    "iconos_disponibles": [
+      "fas fa-users",
+      "fas fa-money-bill-wave", 
+      "fas fa-graduation-cap",
+      "fas fa-file-invoice",
+      "fas fa-chart-line",
+      "fas fa-boxes",
+      "fas fa-exchange-alt",
+      "fas fa-bell",
+      "fas fa-user-tie",
+      "fas fa-shopping-cart",
+      "fas fa-chart-bar",
+      "fas fa-truck",
+      "fas fa-file-contract",
+      "fas fa-clock",
+      "fas fa-list",
+      "fas fa-user-plus",
+      "fas fa-file-signature",
+      "fas fa-calculator",
+      "fas fa-chart-pie",
+      "fas fa-university",
+      "fas fa-plus-circle",
+      "fas fa-history",
+      "fas fa-balance-scale",
+      "fas fa-chart-area",
+      "fas fa-box",
+      "fas fa-map-marker-alt",
+      "fas fa-address-book",
+      "fas fa-funnel-dollar",
+      "fas fa-list-alt",
+      "fas fa-star",
+      "fas fa-clipboard-check",
+      "fas fa-cogs",
+      "fas fa-database",
+      "fas fa-shield-alt",
+      "fas fa-tools",
+      "fas fa-book",
+      "fas fa-calendar-alt",
+      "fas fa-envelope",
+      "fas fa-phone",
+      "fas fa-mobile-alt",
+      "fas fa-desktop",
+      "fas fa-laptop",
+      "fas fa-tablet-alt",
+      "fas fa-server",
+      "fas fa-network-wired",
+      "fas fa-wifi",
+      "fas fa-cloud",
+      "fas fa-sync",
+      "fas fa-download",
+      "fas fa-upload",
+      "fas fa-save",
+      "fas fa-edit",
+      "fas fa-trash",
+      "fas fa-eye",
+      "fas fa-search",
+      "fas fa-filter",
+      "fas fa-sort",
+      "fas fa-print",
+      "fas fa-file-export",
+      "fas fa-file-import",
+      "fas fa-copy",
+      "fas fa-paste",
+      "fas fa-cut",
+      "fas fa-undo",
+      "fas fa-redo",
+      "fas fa-check",
+      "fas fa-times",
+      "fas fa-exclamation-triangle",
+      "fas fa-info-circle",
+      "fas fa-question-circle",
+      "fas fa-heart",
+      "fas fa-thumbs-up",
+      "fas fa-thumbs-down",
+      "fas fa-flag",
+      "fas fa-bookmark",
+      "fas fa-tag",
+      "fas fa-tags",
+      "fas fa-link",
+      "fas fa-unlink",
+      "fas fa-lock",
+      "fas fa-unlock",
+      "fas fa-key",
+      "fas fa-fingerprint",
+      "fas fa-id-card",
+      "fas fa-passport",
+      "fas fa-credit-card",
+      "fas fa-wallet",
+      "fas fa-piggy-bank",
+      "fas fa-coins",
+      "fas fa-gem",
+      "fas fa-diamond",
+      "fas fa-crown",
+      "fas fa-trophy",
+      "fas fa-medal",
+      "fas fa-award",
+      "fas fa-certificate",
+      "fas fa-diploma",
+      "fas fa-scroll",
+      "fas fa-paper-plane",
+      "fas fa-rocket",
+      "fas fa-plane",
+      "fas fa-car",
+      "fas fa-bus",
+      "fas fa-train",
+      "fas fa-ship",
+      "fas fa-bicycle",
+      "fas fa-walking",
+      "fas fa-running",
+      "fas fa-swimming",
+      "fas fa-dumbbell",
+      "fas fa-heartbeat",
+      "fas fa-stethoscope",
+      "fas fa-user-md",
+      "fas fa-hospital",
+      "fas fa-clinic-medical",
+      "fas fa-pills",
+      "fas fa-first-aid",
+      "fas fa-ambulance",
+      "fas fa-fire",
+      "fas fa-fire-extinguisher",
+      "fas fa-shield-virus",
+      "fas fa-virus",
+      "fas fa-bacteria",
+      "fas fa-microscope",
+      "fas fa-flask",
+      "fas fa-atom",
+      "fas fa-dna",
+      "fas fa-brain",
+      "fas fa-eye-dropper",
+      "fas fa-prescription-bottle",
+      "fas fa-thermometer-half",
+      "fas fa-weight",
+      "fas fa-ruler",
+      "fas fa-tape",
+      "fas fa-hammer",
+      "fas fa-wrench",
+      "fas fa-screwdriver",
+      "fas fa-nut",
+      "fas fa-bolt",
+      "fas fa-cog",
+      "fas fa-gear",
+      "fas fa-sliders-h",
+      "fas fa-toggle-on",
+      "fas fa-toggle-off",
+      "fas fa-power-off",
+      "fas fa-plug",
+      "fas fa-battery-full",
+      "fas fa-battery-half",
+      "fas fa-battery-empty",
+      "fas fa-charging-station",
+      "fas fa-solar-panel",
+      "fas fa-wind",
+      "fas fa-water",
+      "fas fa-leaf",
+      "fas fa-seedling",
+      "fas fa-tree",
+      "fas fa-mountain",
+      "fas fa-hill",
+      "fas fa-volcano",
+      "fas fa-umbrella",
+      "fas fa-cloud-rain",
+      "fas fa-cloud-sun",
+      "fas fa-sun",
+      "fas fa-moon",
+      "fas fa-star",
+      "fas fa-meteor",
+      "fas fa-satellite",
+      "fas fa-rocket",
+      "fas fa-space-shuttle",
+      "fas fa-user-astronaut",
+      "fas fa-meteor",
+      "fas fa-galaxy",
+      "fas fa-universe"
+    ]
+  }
+}

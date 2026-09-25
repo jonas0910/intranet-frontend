@@ -1,0 +1,196 @@
+<app-system-layout [title]="viewConfig.title" [subtitle]="'Emisión de pre-recibos de ingresos'"
+    [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comercialización', url: '/comercializacion'}, {label: 'Pre-Recibos'}]"
+    [subsystem]="'comercializacion'">
+
+    <div class="card elevation-1" [ngClass]="cv.cardOutlineColor" [style.border-radius.px]="cv.cardBorderRadius">
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-light">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                <ng-container *ngIf="cv.showExportButtons">
+                    <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass"
+                        (click)="onExportExcel()">
+                        <i [class]="cv.excelBtnIcon + ' mr-1'"></i> {{ cv.excelBtnLabel }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.pdfBtnClass"
+                        (click)="onExportPdf()">
+                        <i [class]="cv.pdfBtnIcon + ' mr-1'"></i> {{ cv.pdfBtnLabel }}
+                    </button>
+                </ng-container>
+            </div>
+            <div>
+                <button type="button" class="btn btn-sm shadow-sm" [ngClass]="cv.newBtnClass"
+                    (click)="onAction('create')">
+                    <i [class]="viewConfig.actions?.create?.icon + ' mr-1'"></i>
+                    {{viewConfig.actions?.create?.label}}
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="dtPreRecibos" datatable [dtOptions]="dtOptions"
+                    class="table table-hover mb-0 w-100 ds-crud-table">
+                    <thead>
+                        <tr>
+                            <th>Nº Pre-Recibo</th>
+                            <th>Contribuyente</th>
+                            <th class="text-center">Oficina/Ruta</th>
+                            <th class="text-center">Fecha</th>
+                            <th class="text-right">Monto</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</app-system-layout>
+
+<!-- Modal Nuevo Pre-Recibo -->
+<div class="modal fade" id="modalPreRecibo" [ngClass]="{'show': showModal}"
+    [style.display]="showModal ? 'block' : 'none'" tabindex="-1" role="dialog"
+    [ngStyle]="{'background-color': showModal ? 'rgba(0,0,0,0.5)' : 'transparent'}">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content elevation-3" [style.border-radius.px]="mc.borderRadius">
+            <div class="modal-header" [style.background]="mc.headerBg" [style.color]="mc.headerText"
+                [style.padding]="mc.headerPadding">
+                <h5 class="modal-title" [style.font-size]="mc.headerFontSize">
+                    <i [class]="mc.headerIcon + ' mr-2'"></i> Emitir Nuevo Pre-Recibo de Ingreso
+                </h5>
+                <button type="button" class="close" [style.color]="mc.headerText" (click)="closeModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" [style.background]="mc.bodyBg" [style.padding]="mc.formPadding">
+                <form [formGroup]="form">
+                    <div class="row">
+                        <div class="col-md-8 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Contribuyente /
+                                Usuario</label>
+                            <input type="text" class="form-control" [ngClass]="mc.inputSize"
+                                formControlName="contribuyente_id" placeholder="Nombre completo o DNI/RUC">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Fecha
+                                Emisión</label>
+                            <input type="date" class="form-control" [ngClass]="mc.inputSize"
+                                formControlName="fecha_emision">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Centro de Costos /
+                                Oficina</label>
+                            <select class="form-control" [ngClass]="mc.inputSize" formControlName="centro_costos_id">
+                                <option value="">Seleccione...</option>
+                                <option value="Licencias">Licencias y Trámites</option>
+                                <option value="Mercados">Mercados y Abastos</option>
+                                <option value="Fiscalización">Fiscalización (Multas)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Monto Total a
+                                Pagar (S/)</label>
+                            <input type="number" step="0.01" class="form-control" [ngClass]="mc.inputSize"
+                                formControlName="monto_total" placeholder="0.00">
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <label [style.color]="mc.labelColor" [style.font-weight]="mc.labelWeight">Observaciones /
+                                Concepto Detallado</label>
+                            <textarea class="form-control" [ngClass]="mc.inputSize" formControlName="observaciones"
+                                rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0" [style.background]="mc.footerBg">
+                <button type="button" class="btn" [ngClass]="mc.cancelBtnClass" (click)="closeModal()"
+                    [disabled]="isSaving">
+                    <i [class]="mc.cancelBtnIcon + ' mr-1'"></i> Cancelar
+                </button>
+                <button type="button" class="btn shadow-sm" [ngClass]="mc.saveBtnClass" (click)="save()"
+                    [disabled]="form.invalid || isSaving">
+                    <i class="fas fa-circle-notch fa-spin mr-1" *ngIf="isSaving"></i>
+                    <i [class]="mc.saveBtnIcon + ' mr-1'" *ngIf="!isSaving"></i>
+                    {{ isSaving ? 'Emitiendo...' : 'Generar Pre-Recibo' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle Pre-Recibo -->
+<div class="modal fade" id="modalDetail" [ngClass]="{'show': showDetailModal}"
+    [style.display]="showDetailModal ? 'block' : 'none'" tabindex="-1" role="dialog"
+    [ngStyle]="{'background-color': showDetailModal ? 'rgba(0,0,0,0.5)' : 'transparent'}">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content elevation-3" [style.border-radius.px]="mc.borderRadius" *ngIf="selectedItem">
+            <div class="modal-header bg-info text-white" [style.padding]="mc.headerPadding">
+                <h5 class="modal-title" [style.font-size]="mc.headerFontSize">
+                    <i class="fas fa-search-dollar mr-2"></i> {{ selectedItem.numero_recibo || 'Pre-Recibo: ' +
+                    selectedItem.numero_correlativo }}
+                </h5>
+                <button type="button" class="close text-white" (click)="closeDetailModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <table class="table table-sm table-bordered mb-0">
+                    <tr>
+                        <th class="bg-light w-40 px-3 py-2">Estado</th>
+                        <td class="px-3 py-2">
+                            <span class="badge" [ngClass]="{
+                                'badge-success': selectedItem.estado === 'PAGADO',
+                                'badge-warning': selectedItem.estado === 'EMITIDO',
+                                'badge-danger': selectedItem.estado === 'ANULADO' || selectedItem.estado === 'REEMBOLSADO'
+                            }">{{ selectedItem.estado }}</span>
+                        </td>
+                    </tr>
+                    <tr *ngIf="selectedItem.numero_recibo">
+                        <th class="bg-light px-3 py-2">Recibo de Caja</th>
+                        <td class="px-3 py-2 font-weight-bold text-success">{{ selectedItem.numero_recibo }}</td>
+                    </tr>
+                    <tr *ngIf="selectedItem.numero_recibo">
+                        <th class="bg-light px-3 py-2">Ref. Pre-Recibo</th>
+                        <td class="px-3 py-2">{{ selectedItem.numero_correlativo }}</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light px-3 py-2">Contribuyente</th>
+                        <td class="px-3 py-2 text-uppercase font-weight-bold">{{ selectedItem.contribuyente_nombre ||
+                            selectedItem.contribuyente_id }}</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light px-3 py-2">Centro de Costo</th>
+                        <td class="px-3 py-2">{{ selectedItem.centro_costos_id }}</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light px-3 py-2">Fecha de Emisión</th>
+                        <td class="px-3 py-2">{{ selectedItem.fecha_emision | date:'fullDate' }}</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light px-3 py-2">Monto Total</th>
+                        <td class="px-3 py-2 text-primary font-weight-bold">S/ {{ selectedItem.monto_total |
+                            number:'1.2-2' }}</td>
+                    </tr>
+                    <tr *ngIf="selectedItem.observaciones">
+                        <th class="bg-light px-3 py-2">Observaciones</th>
+                        <td class="px-3 py-2 small">{{ selectedItem.observaciones }}</td>
+                    </tr>
+                </table>
+                <div class="p-3 bg-light text-center" *ngIf="selectedItem.estado === 'EMITIDO'">
+                    <p class="mb-0 text-muted small"><i class="fas fa-info-circle mr-1"></i> Este recibo está pendiente
+                        de pago en caja.</p>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0" [style.background]="mc.footerBg">
+                <button type="button" class="btn btn-secondary btn-sm" (click)="closeDetailModal()">
+                    Cerrar
+                </button>
+                <button type="button" class="btn btn-info btn-sm" (click)="onPrint(selectedItem)">
+                    <i class="fas fa-print mr-1"></i> Imprimir Comprobante
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

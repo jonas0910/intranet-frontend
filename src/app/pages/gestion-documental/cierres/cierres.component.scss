@@ -1,0 +1,124 @@
+.modal.show {
+  display: block;
+}
+
+.modal-backdrop.show {
+  opacity: 0.5;
+}
+
+// Timeline styles
+.timeline {
+  position: relative;
+  margin: 0 0 30px 0;
+  padding: 0;
+  list-style: none;
+
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #dee2e6;
+    left: 31px;
+    margin: 0;
+  }
+
+  > li {
+    position: relative;
+    margin-right: 10px;
+    margin-bottom: 15px;
+
+    &:before,
+    &:after {
+      content: " ";
+      display: table;
+    }
+
+    &:after {
+      clear: both;
+    }
+
+    > .timeline-item {
+      margin-left: 60px;
+      margin-right: 15px;
+      padding: 0;
+      background: #fff;
+
+      > .time {
+        color: #999;
+        float: right;
+        padding: 10px;
+        font-size: 12px;
+      }
+
+      > .timeline-header {
+        margin: 0;
+        color: #555;
+        border-bottom: 1px solid #f4f4f4;
+        padding: 10px;
+        font-size: 16px;
+        line-height: 1.1;
+      }
+
+      > .timeline-body {
+        padding: 10px;
+      }
+    }
+
+    > .fa,
+    > .fas,
+    > .far,
+    > .fab,
+    > .fal,
+    > .fad,
+    > .svg-inline--fa {
+      width: 30px;
+      height: 30px;
+      font-size: 15px;
+      line-height: 30px;
+      position: absolute;
+      color: #666;
+      background: #d2d6de;
+      border-radius: 50%;
+      text-align: center;
+      left: 18px;
+      top: 0;
+
+      &.bg-info { background-color: #17a2b8 !important; color: white; }
+      &.bg-primary { background-color: #007bff !important; color: white; }
+      &.bg-success { background-color: #28a745 !important; color: white; }
+      &.bg-danger { background-color: #dc3545 !important; color: white; }
+      &.bg-warning { background-color: #ffc107 !important; color: white; }
+    }
+
+    > .time-label > span {
+      font-weight: 600;
+      padding: 5px;
+      display: inline-block;
+      background-color: #fff;
+      border-radius: 4px;
+    }
+  }
+}
+
+.info-box {
+  min-height: 80px;
+  
+  .info-box-icon {
+    width: 70px;
+    
+    > .fas, > .far {
+      font-size: 2rem;
+    }
+  }
+  
+  .info-box-content {
+    padding: 5px 10px;
+  }
+  
+  .info-box-number {
+    font-size: 1.5rem;
+  }
+}
+

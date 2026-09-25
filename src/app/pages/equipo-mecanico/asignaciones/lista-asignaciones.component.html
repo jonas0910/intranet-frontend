@@ -1,0 +1,192 @@
+<app-system-layout [title]="'Asignación de Operadores'" [subtitle]="'Control de vinculación entre personal y maquinaria'"
+  [subtitleItems]="subtitleItems"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Equipo Mecánico', url: '/equipo-mecanico'}, {label: 'Asignaciones'}]"
+  [subsystem]="subsystem">
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-primary'"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+        
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white rounded-top">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-user-tag mr-1"></i> Lista de Asignaciones
+            </h3>
+            <span class="badge"
+              [ngClass]="cv.cardOutlineColor ? 'bg-' + cv.cardOutlineColor.replace('card-', '') : 'badge-primary'"
+              *ngIf="cv.showRecordCount">{{asignaciones.length}}</span>
+            
+            <button class="btn btn-sm btn-outline-info ml-1 px-2" *ngIf="cv.collapsibleFilters"
+              (click)="isFiltersCollapsed = !isFiltersCollapsed"
+              [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'" style="height: 24px; line-height: 1;">
+              <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+            </button>
+          </div>
+          
+          <div class="ms-auto flex-shrink-0">
+            <button type="button" class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-primary'"
+              (click)="abrirModalNuevo()">
+              <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> Nueva Asignación
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="border-bottom bg-light overflow-hidden" [style.max-height]="isFiltersCollapsed ? '0px' : '500px'"
+          [style.padding]="isFiltersCollapsed ? '0px' : '0.5rem'"
+          style="transition: max-height 0.3s ease, padding 0.3s ease;">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="mb-1 ds-crud-label">Buscar equipo u operador</label>
+              <input type="text" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.search"
+                (ngModelChange)="onFilterChange()" placeholder="Código, placa, nombre...">
+            </div>
+            <div class="col-md-3">
+              <label class="mb-1 ds-crud-label">Estado</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.estado"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todos los estados</option>
+                <option value="activa">Solo Activas</option>
+                <option value="finalizada">Finalizadas</option>
+              </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-sm btn-outline-secondary btn-block" (click)="limpiarFiltros()">
+                <i class="fas fa-redo mr-1"></i> Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card-body px-0 pt-0 pb-2">
+          <div *ngIf="loading" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+            <p class="mt-3 text-muted">Consultando historial de asignaciones...</p>
+          </div>
+
+          <div class="table-responsive p-2" [hidden]="loading">
+            <table id="asignacionesTable" class="table mb-0 w-100 ds-crud-table" [ngClass]="cv.tableClasses">
+              <!-- DataTable se inicializa dinámicamente -->
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-system-layout>
+
+<!-- Modal CRUD Asignación -->
+<div class="modal fade" id="modalAsignacion" tabindex="-1" role="dialog" aria-labelledby="modalAsignacionLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" style="border-radius: var(--ds-modal-border-radius);">
+      <div class="modal-header" [style.background-color]="modalMode === 'view' ? '#17a2b8' : (modalMode === 'edit' ? '#ffc107' : '#007bff')" [style.color]="'#fff'">
+        <h5 class="modal-title" id="modalAsignacionLabel">
+          <i class="fas fa-user-tag mr-2"></i>
+          <span *ngIf="modalMode === 'create'">Registrar Nueva Asignación</span>
+          <span *ngIf="modalMode === 'edit'">Editar Asignación</span>
+          <span *ngIf="modalMode === 'view'">Detalle de la Asignación</span>
+        </h5>
+        <button type="button" class="close text-white" (click)="cerrarModal()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <form [formGroup]="asignacionForm" (ngSubmit)="guardarAsignacion()">
+        <div class="modal-body p-4" [style.background-color]="'#f4f6f9'">
+          <div class="card card-outline card-primary shadow-sm mb-0">
+            <div class="card-body">
+              <div class="row">
+                <!-- Equipo -->
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Maquinaria / Equipo <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-tractor"></i></span>
+                      </div>
+                      <select class="form-control" formControlName="equipo_id"
+                              [class.is-invalid]="asignacionForm.get('equipo_id')?.invalid && asignacionForm.get('equipo_id')?.touched">
+                        <option [ngValue]="null">Seleccione equipo</option>
+                        <option *ngFor="let equipo of equipos" [ngValue]="equipo.id">
+                          {{equipo.codigo_interno}} - {{equipo.placa || 'S/P'}} ({{equipo.marca}})
+                        </option>
+                      </select>
+                    </div>
+                    <div class="invalid-feedback d-block" *ngIf="asignacionForm.get('equipo_id')?.errors && asignacionForm.get('equipo_id')?.touched">
+                      Debe seleccionar una maquinaria para asignar
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Operador -->
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Operador Responsable <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-user-hard-hat"></i></span>
+                      </div>
+                      <select class="form-control" formControlName="operador_id"
+                              [class.is-invalid]="asignacionForm.get('operador_id')?.invalid && asignacionForm.get('operador_id')?.touched">
+                        <option [value]="null">Seleccione operador</option>
+                        <option *ngFor="let operador of operadores" [value]="operador.id">
+                          {{operador.first_name}} {{operador.last_name}} (Lic: {{operador.license || 'S/L'}})
+                        </option>
+                      </select>
+                    </div>
+                    <div class="invalid-feedback d-block" *ngIf="asignacionForm.get('operador_id')?.invalid && asignacionForm.get('operador_id')?.touched">
+                      Debe seleccionar un operador disponible
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fecha Inicio -->
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Fecha de Inicio de Asignación <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="fecha_inicio"
+                           [class.is-invalid]="asignacionForm.get('fecha_inicio')?.invalid && asignacionForm.get('fecha_inicio')?.touched">
+                    <div class="invalid-feedback" *ngIf="asignacionForm.get('fecha_inicio')?.invalid && asignacionForm.get('fecha_inicio')?.touched">
+                      Indique cuándo inicia la responsabilidad del equipo
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fecha Fin -->
+                <div class="col-md-6 mb-3">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Fecha de Finalización</label>
+                    <input type="date" class="form-control" formControlName="fecha_fin">
+                    <small class="form-text text-muted italic">Dejar vacío si la asignación es por tiempo indefinido</small>
+                  </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="col-md-12">
+                  <div class="form-group mb-0">
+                    <label class="ds-crud-label">Notas Adicionales / Observaciones</label>
+                    <textarea class="form-control" formControlName="observaciones"
+                              rows="3" placeholder="Detalles sobre el estado del equipo al entregar o condiciones..."></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light" style="border-bottom-left-radius: var(--ds-modal-border-radius); border-bottom-right-radius: var(--ds-modal-border-radius);">
+          <button type="button" class="btn btn-secondary px-4" (click)="cerrarModal()">
+            <i class="fas fa-times mr-1"></i> Cerrar
+          </button>
+          <button type="submit" class="btn px-4" [ngClass]="modalMode === 'edit' ? 'btn-warning' : 'btn-primary'" *ngIf="modalMode !== 'view'" [disabled]="submitting">
+            <i class="fas" [ngClass]="submitting ? 'fa-spinner fa-spin' : 'fa-save'" class="mr-1"></i>
+            {{ submitting ? 'Guardando...' : (modalMode === 'edit' ? 'Actualizar Asignación' : 'Registrar Asignación') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

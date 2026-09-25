@@ -1,0 +1,80 @@
+// Reportes styles
+
+.badge-purple {
+  background-color: #6f42c1;
+  color: white;
+}
+
+.bg-purple {
+  background-color: #6f42c1 !important;
+}
+
+.small-box {
+  border-radius: 0.25rem;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.125), 0 1px 3px rgba(0, 0, 0, 0.2);
+  display: block;
+  margin-bottom: 20px;
+  position: relative;
+
+  .inner {
+    padding: 10px;
+
+    h3 {
+      font-size: 38px;
+      font-weight: bold;
+      margin: 0 0 10px 0;
+      padding: 0;
+      white-space: nowrap;
+    }
+
+    p {
+      font-size: 15px;
+      margin: 0;
+    }
+  }
+
+  .icon {
+    color: rgba(0, 0, 0, 0.15);
+    z-index: 0;
+
+    i {
+      font-size: 70px;
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      transition: all 0.3s linear;
+    }
+  }
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.nav-tabs {
+  .nav-link {
+    border: 1px solid transparent;
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+
+    &:hover {
+      border-color: #e9ecef #e9ecef #dee2e6;
+    }
+
+    &.active {
+      color: #495057;
+      background-color: #fff;
+      border-color: #dee2e6 #dee2e6 #fff;
+    }
+  }
+}
+
+.card {
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.125), 0 1px 3px rgba(0, 0, 0, 0.2);
+  margin-bottom: 1rem;
+}
+
+.progress {
+  border-radius: 0.25rem;
+  overflow: hidden;
+}

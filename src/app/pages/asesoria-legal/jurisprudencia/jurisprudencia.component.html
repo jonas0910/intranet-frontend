@@ -1,0 +1,185 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-book mr-2"></i>Base de Conocimiento</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/asesoria-legal">Asesoría Jurídica</a></li>
+          <li class="breadcrumb-item active">Jurisprudencia y Normativa</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <!-- Barra de búsqueda y filtros -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="row g-2">
+          <div class="col-md-5">
+            <div class="input-group">
+              <input type="text" class="form-control" placeholder="Buscar por título, descripción, palabras clave..."
+                [(ngModel)]="busqueda" (keyup.enter)="buscar()">
+              <button class="btn btn-primary" (click)="buscar()"><i class="fas fa-search"></i></button>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <select class="form-control" [(ngModel)]="tipoFiltro" (change)="buscar()">
+              <option value="">Todos los tipos</option>
+              <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
+            </select>
+          </div>
+          <div class="col-md-4 text-right">
+            <button class="btn btn-success" (click)="abrirModalNuevo()">
+              <i class="fas fa-plus mr-1"></i>Nuevo registro
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de resultados -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title mb-0">Registros encontrados: {{ items.length }}</h3>
+      </div>
+      <div class="card-body p-0">
+        <div *ngIf="loading" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div>
+        <div *ngIf="!loading && items.length === 0" class="text-center py-5 text-muted">
+          <i class="fas fa-book fa-3x mb-3"></i>
+          <p>No hay registros. Use la búsqueda o agregue un nuevo registro.</p>
+        </div>
+        <div *ngIf="!loading && items.length > 0" class="list-group list-group-flush">
+          <div *ngFor="let item of items" class="list-group-item list-group-item-action">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <span class="badge badge-secondary mr-2">{{ item.tipo }}</span>
+                <strong>{{ item.titulo }}</strong>
+                <div class="text-muted small mt-1" *ngIf="item.descripcion">
+                  {{ item.descripcion | slice:0:150 }}{{ item.descripcion?.length > 150 ? '...' : '' }}
+                </div>
+                <div class="small mt-1">
+                  <span *ngIf="item.fuente" class="mr-2"><i class="fas fa-building mr-1"></i>{{ item.fuente }}</span>
+                  <span *ngIf="item.numero_expediente" class="mr-2"><i class="fas fa-file-alt mr-1"></i>{{ item.numero_expediente }}</span>
+                  <span *ngIf="item.fecha_emision" class="mr-2"><i class="fas fa-calendar mr-1"></i>{{ item.fecha_emision }}</span>
+                </div>
+                <div *ngIf="item.palabras_clave" class="small text-info mt-1">
+                  <i class="fas fa-tags mr-1"></i>{{ item.palabras_clave }}
+                </div>
+              </div>
+              <div class="btn-group ml-2">
+                <button class="btn btn-sm btn-outline-primary" (click)="verDetalle(item)" title="Ver"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-sm btn-outline-secondary" (click)="abrirModalEditar(item)" title="Editar"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-outline-danger" (click)="confirmarEliminar(item)" title="Eliminar"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ver detalle -->
+<div class="modal fade" [class.show]="showModalDetalle" [style.display]="showModalDetalle ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ itemSeleccionado?.titulo }}</h5>
+        <button type="button" class="close" (click)="cerrarModalDetalle()">&times;</button>
+      </div>
+      <div class="modal-body" *ngIf="itemSeleccionado">
+        <p><span class="badge badge-secondary">{{ itemSeleccionado.tipo }}</span></p>
+        <dl class="row mb-2">
+          <dt class="col-sm-3">Fuente</dt><dd class="col-sm-9">{{ itemSeleccionado.fuente || '-' }}</dd>
+          <dt class="col-sm-3">Nº Expediente</dt><dd class="col-sm-9">{{ itemSeleccionado.numero_expediente || '-' }}</dd>
+          <dt class="col-sm-3">Fecha</dt><dd class="col-sm-9">{{ itemSeleccionado.fecha_emision || '-' }}</dd>
+          <dt class="col-sm-3">Palabras clave</dt><dd class="col-sm-9">{{ itemSeleccionado.palabras_clave || '-' }}</dd>
+        </dl>
+        <div *ngIf="itemSeleccionado.descripcion" class="mb-2"><strong>Descripción:</strong><p class="mb-0">{{ itemSeleccionado.descripcion }}</p></div>
+        <div *ngIf="itemSeleccionado.contenido" class="border-top pt-2"><strong>Contenido:</strong><pre class="contenido-jurisprudencia mb-0">{{ itemSeleccionado.contenido }}</pre></div>
+        <a *ngIf="itemSeleccionado.url_externa" [href]="itemSeleccionado.url_externa" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary mt-2"><i class="fas fa-external-link-alt mr-1"></i>Ver enlace externo</a>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModalDetalle()">Cerrar</button>
+        <button class="btn btn-primary" (click)="abrirModalEditar(itemSeleccionado); cerrarModalDetalle()"><i class="fas fa-edit mr-1"></i>Editar</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showModalDetalle" *ngIf="showModalDetalle"></div>
+</div>
+
+<!-- Modal crear/editar -->
+<div class="modal fade" [class.show]="showModalForm" [style.display]="showModalForm ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ editando ? 'Editar registro' : 'Nuevo registro' }}</h5>
+        <button type="button" class="close" (click)="cerrarModalForm()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form #f="ngForm">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Tipo <span class="text-danger">*</span></label>
+                <select class="form-control" [(ngModel)]="form.tipo" name="tipo" required>
+                  <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Fecha de emisión</label>
+                <input type="date" class="form-control" [(ngModel)]="form.fecha_emision" name="fecha_emision">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Título <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="form.titulo" name="titulo" required maxlength="500" placeholder="Título del registro">
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="form.descripcion" name="descripcion" placeholder="Resumen breve"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Fuente</label>
+                <input type="text" class="form-control" [(ngModel)]="form.fuente" name="fuente" placeholder="Corte, Tribunal, Notaria">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Nº Expediente</label>
+                <input type="text" class="form-control" [(ngModel)]="form.numero_expediente" name="numero_expediente">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Contenido</label>
+            <textarea class="form-control" rows="6" [(ngModel)]="form.contenido" name="contenido" placeholder="Texto completo o extracto"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Palabras clave</label>
+            <input type="text" class="form-control" [(ngModel)]="form.palabras_clave" name="palabras_clave" placeholder="Separadas por comas">
+          </div>
+          <div class="form-group">
+            <label>URL externa</label>
+            <input type="url" class="form-control" [(ngModel)]="form.url_externa" name="url_externa" placeholder="https://...">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModalForm()">Cancelar</button>
+        <button class="btn btn-primary" (click)="guardar()" [disabled]="!form.titulo || !form.tipo || processing">
+          <i class="fas fa-save mr-1"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showModalForm" *ngIf="showModalForm"></div>
+</div>

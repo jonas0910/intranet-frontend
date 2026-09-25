@@ -1,0 +1,246 @@
+<!-- Content Header (Page header) con tema AdminLTE -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0 text-gradient">
+          <i class="fas fa-envelope mr-2 text-primary"></i>
+          Sistema de Mensajería
+          <span class="badge badge-info ml-2" *ngIf="totalUnreadCount > 0">{{ totalUnreadCount }}</span>
+        </h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item">
+            <a routerLink="/dashboard">
+              <i class="fas fa-home mr-1"></i>Inicio
+            </a>
+          </li>
+          <li class="breadcrumb-item active">
+            <i class="fas fa-envelope mr-1"></i>Mensajería
+          </li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Main content unificado con layout AdminLTE -->
+<section class="content messaging-content">
+  <div class="container-fluid">
+    <!-- Real-time Notifications integrado -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <app-real-time-notifications [userId]="currentUserId" [showStats]="true"></app-real-time-notifications>
+      </div>
+    </div>
+    
+    <div class="row">
+      <!-- Sidebar de navegación estilo Facebook -->
+      <div class="col-md-3">
+        <!-- Botón Iniciar Conversación -->
+        <button type="button"
+                class="btn btn-primary btn-block mb-3 btn-new-message"
+                (click)="openStartConversation()">
+          <i class="fas fa-plus-circle mr-2"></i>
+          Nuevo Mensaje
+        </button>
+
+        <!-- Menú de Navegación Estilo Facebook -->
+        <div class="messenger-sidebar">
+          
+          <!-- SECCIÓN CHAT -->
+          <div class="menu-section">
+            <div class="section-header" (click)="toggleSection('chat')">
+              <i class="fas fa-comment-dots section-icon"></i>
+              <span class="section-title">CHAT</span>
+              <i class="fas fa-chevron-down toggle-icon" [class.rotated]="!sections.chat"></i>
+            </div>
+            <div class="section-content" *ngIf="sections.chat">
+              <a routerLink="/mensajeria/chat" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-comments menu-icon"></i>
+                <span class="menu-text">Directo</span>
+                <span class="badge badge-primary" *ngIf="folderStats.conversations.unread > 0">
+                  {{ folderStats.conversations.unread }}
+                </span>
+              </a>
+              <a routerLink="/mensajeria/inbox" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-inbox menu-icon"></i>
+                <span class="menu-text">Bandeja</span>
+                <span class="badge badge-danger" *ngIf="folderStats.inbox.unread > 0">
+                  {{ folderStats.inbox.unread }}
+                </span>
+              </a>
+              <a routerLink="/mensajeria/conversations" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-comment-dots menu-icon"></i>
+                <span class="menu-text">Conversaciones</span>
+                <span class="badge badge-info" *ngIf="folderStats.conversations.total > 0">
+                  {{ folderStats.conversations.total }}
+                </span>
+              </a>
+              <a routerLink="/mensajeria/groups" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-users menu-icon"></i>
+                <span class="menu-text">Grupos</span>
+              </a>
+              <a routerLink="/mensajeria/channels" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-broadcast-tower menu-icon"></i>
+                <span class="menu-text">Canales</span>
+              </a>
+              <a routerLink="/mensajeria/archived" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-archive menu-icon"></i>
+                <span class="menu-text">Archivados</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- SECCIÓN COMUNICADOS -->
+          <div class="menu-section">
+            <div class="section-header" (click)="toggleSection('comunicados')">
+              <i class="fas fa-bullhorn section-icon"></i>
+              <span class="section-title">COMUNICADOS</span>
+              <i class="fas fa-chevron-down toggle-icon" [class.rotated]="!sections.comunicados"></i>
+            </div>
+            <div class="section-content" *ngIf="sections.comunicados">
+              <a routerLink="/mensajeria/comunicados" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-newspaper menu-icon"></i>
+                <span class="menu-text">Todos</span>
+                <span class="badge badge-info" *ngIf="comunicadosCount > 0">{{ comunicadosCount }}</span>
+              </a>
+              <a routerLink="/mensajeria/comunicados/crear" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-plus-circle menu-icon"></i>
+                <span class="menu-text">Crear</span>
+              </a>
+              <a routerLink="/mensajeria/comunicados/importantes" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-star menu-icon"></i>
+                <span class="menu-text">Importantes</span>
+              </a>
+              <a routerLink="/mensajeria/comunicados/mis-comunicados" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-user-edit menu-icon"></i>
+                <span class="menu-text">Mis Comunicados</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- SECCIÓN CONTACTOS -->
+          <div class="menu-section">
+            <div class="section-header" (click)="toggleSection('contacts')">
+              <i class="fas fa-address-book section-icon"></i>
+              <span class="section-title">CONTACTOS</span>
+              <i class="fas fa-chevron-down toggle-icon" [class.rotated]="!sections.contacts"></i>
+            </div>
+            <div class="section-content" *ngIf="sections.contacts">
+              <a routerLink="/mensajeria/contacts" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-user-friends menu-icon"></i>
+                <span class="menu-text">Lista</span>
+                <span class="badge badge-secondary">24</span>
+              </a>
+              <a routerLink="/mensajeria/contact-requests" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-user-plus menu-icon"></i>
+                <span class="menu-text">Solicitudes</span>
+                <span class="badge badge-warning" *ngIf="contactRequests > 0">
+                  {{ contactRequests }}
+                </span>
+              </a>
+              <a routerLink="/mensajeria/blocked" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-ban menu-icon"></i>
+                <span class="menu-text">Bloqueados</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- SECCIÓN CONFIG -->
+          <div class="menu-section">
+            <div class="section-header" (click)="toggleSection('config')">
+              <i class="fas fa-cog section-icon"></i>
+              <span class="section-title">CONFIG</span>
+              <i class="fas fa-chevron-down toggle-icon" [class.rotated]="!sections.config"></i>
+            </div>
+            <div class="section-content" *ngIf="sections.config">
+              <a routerLink="/mensajeria/configuracion" fragment="general" class="menu-item">
+                <i class="fas fa-cog menu-icon"></i>
+                <span class="menu-text">General</span>
+              </a>
+              <a routerLink="/mensajeria/configuracion" fragment="notificaciones" class="menu-item">
+                <i class="fas fa-bell menu-icon"></i>
+                <span class="menu-text">Notis</span>
+              </a>
+              <a routerLink="/mensajeria/configuracion" fragment="tema" class="menu-item">
+                <i class="fas fa-palette menu-icon"></i>
+                <span class="menu-text">Tema</span>
+              </a>
+              <a routerLink="/mensajeria/configuracion" fragment="privacidad" class="menu-item">
+                <i class="fas fa-shield-alt menu-icon"></i>
+                <span class="menu-text">Privacidad</span>
+              </a>
+              <a routerLink="/mensajeria/configuracion" fragment="storage" class="menu-item">
+                <i class="fas fa-database menu-icon"></i>
+                <span class="menu-text">Storage</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Secciones Adicionales (collapsed by default) -->
+          <div class="menu-section">
+            <div class="section-header" (click)="toggleSection('more')">
+              <i class="fas fa-ellipsis-h section-icon"></i>
+              <span class="section-title">MÁS</span>
+              <i class="fas fa-chevron-down toggle-icon" [class.rotated]="!sections.more"></i>
+            </div>
+            <div class="section-content" *ngIf="sections.more">
+              <a routerLink="/mensajeria/sent" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-paper-plane menu-icon"></i>
+                <span class="menu-text">Enviados</span>
+                <span class="badge badge-info" *ngIf="folderStats.sent.total > 0">
+                  {{ folderStats.sent.total }}
+                </span>
+              </a>
+              <a routerLink="/mensajeria/drafts" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-edit menu-icon"></i>
+                <span class="menu-text">Borradores</span>
+                <span class="badge badge-secondary" *ngIf="folderStats.drafts.total > 0">
+                  {{ folderStats.drafts.total }}
+                </span>
+              </a>
+              <a routerLink="/mensajeria/important" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-star menu-icon"></i>
+                <span class="menu-text">Importantes</span>
+                <span class="badge badge-warning" *ngIf="folderStats.important.unread > 0">
+                  {{ folderStats.important.unread }}
+                </span>
+              </a>
+              <a routerLink="/mensajeria/trash" routerLinkActive="active" class="menu-item">
+                <i class="fas fa-trash menu-icon"></i>
+                <span class="menu-text">Papelera</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Estadísticas Compactas -->
+        <div class="stats-compact">
+          <div class="stat-item">
+            <i class="fas fa-envelope"></i>
+            <span>{{ totalMessagesCount }}</span>
+          </div>
+          <div class="stat-item unread">
+            <i class="fas fa-envelope-open"></i>
+            <span>{{ totalUnreadCount }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Contenido principal -->
+      <div class="col-md-9">
+        <router-outlet></router-outlet>
+      </div>
+    </div>
+
+    <!-- Start Conversation Modal -->
+    <app-start-conversation
+      *ngIf="showStartConversation"
+      (conversationStarted)="onConversationStarted($event)"
+      (closed)="showStartConversation = false"></app-start-conversation>
+  </div>
+</section>

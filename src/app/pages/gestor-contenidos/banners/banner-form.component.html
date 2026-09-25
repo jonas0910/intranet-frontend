@@ -1,0 +1,220 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1><i class="fas fa-images mr-2"></i>{{ editMode ? 'Editar' : 'Nuevo' }} Banner</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/banners">Banners</a></li>
+          <li class="breadcrumb-item active">{{ editMode ? 'Editar' : 'Nuevo' }}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="text-center py-5" *ngIf="loading"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+
+    <div class="row" *ngIf="!loading">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <label>Título <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="banner.titulo" required>
+            </div>
+
+            <div class="form-group">
+              <label>Descripción</label>
+              <textarea class="form-control" rows="3" [(ngModel)]="banner.descripcion"></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Posición del Contenido <i class="fas fa-info-circle text-info" title="Ubicación del título, descripción y botón en el banner"></i></label>
+                  <select class="form-control" [(ngModel)]="banner.posicion_contenido">
+                    <option *ngFor="let p of posicionesContenido" [value]="p.value">{{ p.label }}</option>
+                  </select>
+                  <small class="text-muted">Dónde se ubicará el texto y el botón en el banner</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Alineación del Texto <i class="fas fa-info-circle text-info" title="Alineación del texto dentro del contenido"></i></label>
+                  <select class="form-control" [(ngModel)]="banner.alineacion_texto">
+                    <option value="left">Alineado a la izquierda</option>
+                    <option value="center">Centrado (Por defecto)</option>
+                    <option value="right">Alineado a la derecha</option>
+                  </select>
+                  <small class="text-muted">Cómo se alinea el texto dentro del contenedor</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Tipo de Contenido <span class="text-danger">*</span></label>
+              <select class="form-control" [(ngModel)]="banner.tipo_media">
+                <option value="imagen">Imagen</option>
+                <option value="video">Video</option>
+              </select>
+            </div>
+
+            <!-- Campos de Imagen -->
+            <div *ngIf="banner.tipo_media === 'imagen'">
+              <h5 class="mt-3 mb-3"><i class="fas fa-image mr-1"></i> Imágenes (Soporta hasta 20MB alta resolución)</h5>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Imagen Desktop</label>
+                    <div class="input-group mb-2">
+                      <input type="text" class="form-control" [(ngModel)]="banner.imagen_url" placeholder="URL o subir archivo">
+                      <div class="input-group-append">
+                        <label class="btn btn-primary mb-0">
+                          <i class="fas fa-upload mr-1"></i>Subir
+                          <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="d-none" (change)="subirImagen($event, 'imagen_url')">
+                        </label>
+                      </div>
+                    </div>
+                    <small class="form-text text-muted">URL de imagen o sube un archivo (JPEG, PNG, GIF, WebP)</small>
+                    <div *ngIf="uploadingImagen" class="mt-2"><i class="fas fa-spinner fa-spin mr-1"></i>Subiendo...</div>
+                    <img *ngIf="(banner.imagen_url || banner.imagen) && !uploadingImagen" [src]="getImagenPreview(banner.imagen_url || banner.imagen)"
+                         class="img-thumbnail mt-2 d-block" style="max-height:150px">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Imagen Móvil</label>
+                    <div class="input-group mb-2">
+                      <input type="text" class="form-control" [(ngModel)]="banner.imagen_movil_url" placeholder="URL o subir archivo">
+                      <div class="input-group-append">
+                        <label class="btn btn-primary mb-0">
+                          <i class="fas fa-upload mr-1"></i>Subir
+                          <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="d-none" (change)="subirImagen($event, 'imagen_movil_url')">
+                        </label>
+                      </div>
+                    </div>
+                    <small class="form-text text-muted">URL de imagen o sube un archivo (opcional)</small>
+                    <div *ngIf="uploadingMovil" class="mt-2"><i class="fas fa-spinner fa-spin mr-1"></i>Subiendo...</div>
+                    <img *ngIf="(banner.imagen_movil_url || banner.imagen_movil) && !uploadingMovil" [src]="getImagenPreview(banner.imagen_movil_url || banner.imagen_movil)"
+                         class="img-thumbnail mt-2 d-block" style="max-height:150px">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Campos de Video -->
+            <div *ngIf="banner.tipo_media === 'video'">
+              <h5 class="mt-3 mb-3"><i class="fas fa-video mr-1"></i> Videos (Soporta hasta 100MB)</h5>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Video Desktop</label>
+                    <small class="form-text text-muted">URL de video (MP4, WebM, OGV, MOV)</small>
+                    <input type="text" class="form-control" [(ngModel)]="banner.video_url" placeholder="https://ejemplo.com/video.mp4">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Video Móvil</label>
+                    <small class="form-text text-muted">URL de video (MP4, WebM, OGV, MOV)</small>
+                    <input type="text" class="form-control" [(ngModel)]="banner.video_movil_url" placeholder="https://ejemplo.com/video-movil.mp4">
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Imagen Poster del Video</label>
+                <div class="input-group mb-2">
+                  <input type="text" class="form-control" [(ngModel)]="banner.poster_url" placeholder="URL o subir archivo">
+                  <div class="input-group-append">
+                    <label class="btn btn-primary mb-0">
+                      <i class="fas fa-upload mr-1"></i>Subir
+                      <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="d-none" (change)="subirImagen($event, 'poster_url')">
+                    </label>
+                  </div>
+                </div>
+                <small class="form-text text-muted">Imagen que se muestra antes de reproducir el video</small>
+                <div *ngIf="uploadingPoster" class="mt-2"><i class="fas fa-spinner fa-spin mr-1"></i>Subiendo...</div>
+                <img *ngIf="banner.poster_url && !uploadingPoster" [src]="getImagenPreview(banner.poster_url)" class="img-thumbnail mt-2 d-block" style="max-height:150px">
+              </div>
+            </div>
+
+            <hr>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>URL Destino</label>
+                  <input type="text" class="form-control" [(ngModel)]="banner.url" placeholder="https://...">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Texto del Botón</label>
+                  <input type="text" class="form-control" [(ngModel)]="banner.boton_texto" placeholder="Ver más">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>URL del Botón</label>
+              <input type="text" class="form-control" [(ngModel)]="banner.boton_url" placeholder="https://...">
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Fecha Inicio</label>
+                  <input type="date" class="form-control" [(ngModel)]="banner.fecha_inicio">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Fecha Fin</label>
+                  <input type="date" class="form-control" [(ngModel)]="banner.fecha_fin">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <label>Posición <span class="text-danger">*</span></label>
+              <select class="form-control" [(ngModel)]="banner.posicion">
+                <option value="principal">Principal</option>
+                <option value="secundario">Secundario</option>
+                <option value="footer">Footer</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Orden</label>
+              <input type="number" class="form-control" [(ngModel)]="banner.orden" min="0">
+            </div>
+
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="activo" [(ngModel)]="banner.activo">
+                <label class="custom-control-label" for="activo">Banner activo</label>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-block" (click)="guardar()" [disabled]="saving || !banner.titulo">
+              <i class="fas" [ngClass]="saving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+              {{ saving ? 'Guardando...' : (editMode ? 'Actualizar' : 'Guardar') }}
+            </button>
+            <a routerLink="/gestor-contenidos/banners" class="btn btn-secondary btn-block">
+              <i class="fas fa-times mr-1"></i>Cancelar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

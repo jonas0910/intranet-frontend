@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test DataTables Simple</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
+    
+    <style>
+        .container { margin-top: 50px; }
+        .test-table { margin-top: 30px; }
+        .debug-info { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin-bottom: 20px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test DataTables Simple</h1>
+        <p>Esta es una página de prueba para verificar que DataTables funciona correctamente.</p>
+        
+        <div class="debug-info">
+            <h5>Información de Debug:</h5>
+            <div id="debugInfo">Cargando...</div>
+        </div>
+        
+        <div class="test-table">
+            <table id="testTable" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Juan Pérez</td>
+                        <td>juan@example.com</td>
+                        <td>Admin</td>
+                        <td><span class="badge badge-success">Activo</span></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>María García</td>
+                        <td>maria@example.com</td>
+                        <td>Usuario</td>
+                        <td><span class="badge badge-success">Activo</span></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Carlos López</td>
+                        <td>carlos@example.com</td>
+                        <td>Usuario</td>
+                        <td><span class="badge badge-danger">Inactivo</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="testDataTables()">Probar DataTables</button>
+            <button class="btn btn-secondary" onclick="clearDebug()">Limpiar Debug</button>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
+    
+    <script>
+        let dataTable = null;
+        
+        function updateDebugInfo() {
+            const debugDiv = document.getElementById('debugInfo');
+            debugDiv.innerHTML = `
+                <strong>jQuery:</strong> ${typeof $ !== 'undefined' ? '✅ Disponible' : '❌ No disponible'}<br>
+                <strong>DataTables:</strong> ${typeof $.fn !== 'undefined' && typeof $.fn.DataTable !== 'undefined' ? '✅ Disponible' : '❌ No disponible'}<br>
+                <strong>Elemento tabla:</strong> ${$('#testTable').length > 0 ? '✅ Encontrado' : '❌ No encontrado'}<br>
+                <strong>DataTable inicializado:</strong> ${dataTable ? '✅ Sí' : '❌ No'}<br>
+                <strong>Timestamp:</strong> ${new Date().toLocaleTimeString()}
+            `;
+        }
+        
+        function testDataTables() {
+            console.log('=== PROBANDO DATATABLES ===');
+            updateDebugInfo();
+            
+            if (typeof $ === 'undefined') {
+                console.error('jQuery no está disponible');
+                return;
+            }
+            
+            if (typeof $.fn.DataTable === 'undefined') {
+                console.error('DataTables no está disponible');
+                return;
+            }
+            
+            try {
+                if (dataTable) {
+                    dataTable.destroy();
+                    dataTable = null;
+                    console.log('Tabla anterior destruida');
+                }
+                
+                dataTable = $('#testTable').DataTable({
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                    },
+                    responsive: true,
+                    pageLength: 5,
+                    order: [[0, 'asc']]
+                });
+                
+                console.log('✅ DataTables inicializado correctamente');
+                updateDebugInfo();
+                
+            } catch (error) {
+                console.error('❌ Error inicializando DataTables:', error);
+            }
+        }
+        
+        function clearDebug() {
+            const debugDiv = document.getElementById('debugInfo');
+            debugDiv.innerHTML = 'Debug limpiado';
+        }
+        
+        // Actualizar info al cargar
+        $(document).ready(function() {
+            console.log('Página cargada');
+            updateDebugInfo();
+            
+            // Verificar disponibilidad cada 500ms
+            setInterval(updateDebugInfo, 500);
+        });
+    </script>
+</body>
+</html>

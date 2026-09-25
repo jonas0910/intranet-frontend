@@ -1,0 +1,194 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0" *ngIf="tramite"><i class="fas fa-file-alt mr-2"></i>{{ tramite.numero_expediente }}</h1></div>
+      <div class="col-sm-6"><ol class="breadcrumb float-sm-right"><li class="breadcrumb-item"><a routerLink="/tramite-documentario/dashboard">Inicio</a></li><li class="breadcrumb-item active">Detalle Expediente</li></ol></div>
+    </div>
+  </div>
+</div>
+<div class="content">
+  <div class="container-fluid">
+    <div *ngIf="loading" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-3x text-primary"></i></div>
+    <ng-container *ngIf="!loading && tramite">
+      <div class="row">
+        <div class="col-lg-8">
+          <!-- Progress Tracker -->
+          <div class="card mb-3"><div class="card-body py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="text-center" [class.text-success]="tramite.estado!=='registrado'"><div class="rounded-circle d-inline-flex align-items-center justify-content-center" [ngClass]="tramite.estado==='registrado'?'bg-primary text-white':'bg-success text-white'" style="width:40px;height:40px"><i class="fas fa-file-alt"></i></div><small class="d-block mt-1">Ingresado</small></div>
+              <div class="flex-grow-1 mx-2" style="height:3px" [ngClass]="tramite.estado!=='registrado'?'bg-success':'bg-light'"></div>
+              <div class="text-center"><div class="rounded-circle d-inline-flex align-items-center justify-content-center" [ngClass]="(tramite.estado==='en_proceso'||tramite.estado==='derivado'||tramite.estado==='observado')?'bg-primary text-white':(tramite.estado==='atendido'||tramite.estado==='archivado')?'bg-success text-white':'bg-light text-muted'" style="width:40px;height:40px"><i class="fas fa-cogs"></i></div><small class="d-block mt-1">En Proceso</small></div>
+              <div class="flex-grow-1 mx-2" style="height:3px" [ngClass]="(tramite.estado==='atendido'||tramite.estado==='archivado')?'bg-success':'bg-light'"></div>
+              <div class="text-center"><div class="rounded-circle d-inline-flex align-items-center justify-content-center" [ngClass]="tramite.estado==='atendido'?'bg-success text-white':'bg-light text-muted'" style="width:40px;height:40px"><i class="fas fa-check-circle"></i></div><small class="d-block mt-1">Atendido</small></div>
+            </div>
+          </div></div>
+          <div class="card">
+            <div class="card-header p-0"><ul class="nav nav-tabs card-header-tabs">
+              <li class="nav-item"><a class="nav-link" [class.active]="activeTab==='info'" (click)="activeTab='info'" style="cursor:pointer"><i class="fas fa-info-circle mr-1"></i>Información</a></li>
+              <li class="nav-item"><a class="nav-link" [class.active]="activeTab==='seguimiento'" (click)="activeTab='seguimiento'" style="cursor:pointer"><i class="fas fa-route mr-1"></i>Trazabilidad</a></li>
+              <li class="nav-item"><a class="nav-link" [class.active]="activeTab==='documentos'" (click)="activeTab='documentos'" style="cursor:pointer"><i class="fas fa-paperclip mr-1"></i>Documentos <span class="badge badge-primary" *ngIf="tramite.documentos?.length">{{ tramite.documentos.length }}</span></a></li>
+              <li class="nav-item"><a class="nav-link" [class.active]="activeTab==='copias'" (click)="activeTab='copias'" style="cursor:pointer"><i class="fas fa-copy mr-1"></i>Copias <span class="badge badge-info" *ngIf="tramite.copias?.length">{{ tramite.copias.length }}</span></a></li>
+              <li class="nav-item"><a class="nav-link" [class.active]="activeTab==='historial'" (click)="activeTab='historial'" style="cursor:pointer"><i class="fas fa-history mr-1"></i>Historial</a></li>
+            </ul></div>
+            <div class="card-body">
+              <!-- Info -->
+              <div *ngIf="activeTab==='info'">
+                <div class="row"><div class="col-md-6"><dl>
+                  <dt>N° Expediente</dt><dd>{{ tramite.numero_expediente }}</dd>
+                  <dt *ngIf="tramite.numero_documento_generado">N° Documento</dt><dd *ngIf="tramite.numero_documento_generado">{{ tramite.numero_documento_generado }}</dd>
+                  <dt>Asunto</dt><dd>{{ tramite.asunto }}</dd>
+                  <dt>Descripción</dt><dd>{{ tramite.descripcion || '—' }}</dd>
+                  <dt>Tipo Trámite</dt><dd>{{ tramite.tipo_nombre || '—' }}</dd>
+                  <dt>Folios</dt><dd>{{ tramite.folios }}</dd>
+                  <dt>Prioridad</dt><dd><span class="badge" [ngClass]="{'badge-danger':tramite.prioridad==='urgente','badge-warning':tramite.prioridad==='alta','badge-info':tramite.prioridad==='normal','badge-secondary':tramite.prioridad==='baja'}">{{ tramite.prioridad }}</span></dd>
+                </dl></div><div class="col-md-6"><dl>
+                  <dt>Solicitante</dt><dd>{{ tramite.nombres }} {{ tramite.apellidos }}</dd>
+                  <dt>Doc. Identidad</dt><dd>{{ tramite.tipo_documento }}: {{ tramite.numero_documento }}</dd>
+                  <dt>Email</dt><dd>{{ tramite.email || '—' }}</dd>
+                  <dt>Teléfono</dt><dd>{{ tramite.telefono || tramite.celular || '—' }}</dd>
+                  <dt>Origen</dt><dd><span class="badge badge-info">{{ tramite.origen }}</span></dd>
+                </dl></div></div>
+                <hr>
+                <div class="row">
+                  <div class="col-md-4"><strong>Estado:</strong> <span class="badge badge-lg" [ngClass]="getEstadoClass(tramite.estado)">{{ getEstadoLabel(tramite.estado) }}</span></div>
+                  <div class="col-md-4"><strong>Fecha Ingreso:</strong> {{ tramite.fecha_ingreso }}</div>
+                  <div class="col-md-4"><strong>Fecha Límite:</strong> {{ tramite.fecha_limite || '—' }}</div>
+                </div>
+                <div class="row mt-2" *ngIf="tramite.tramite_padre"><div class="col-12"><strong>Trámite Padre:</strong> <a [routerLink]="['/tramite-documentario/detalle', tramite.tramite_padre.id]">{{ tramite.tramite_padre.numero_expediente }}</a> — {{ tramite.tramite_padre.asunto }}</div></div>
+                <div *ngIf="tramite.tramites_hijos?.length > 0" class="mt-2"><strong>Documentos de Respuesta:</strong><ul class="list-unstyled ml-3"><li *ngFor="let h of tramite.tramites_hijos" class="mb-1"><a [routerLink]="['/tramite-documentario/detalle', h.id]">{{ h.numero_expediente }}</a> — {{ h.asunto }} <span class="badge" [ngClass]="getEstadoClass(h.estado)">{{ h.estado }}</span></li></ul></div>
+              </div>
+              <!-- Trazabilidad tabla -->
+              <div *ngIf="activeTab==='seguimiento'">
+                <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-calendar-alt text-info mr-1"></i>Etapas por fecha, área y estado</h6>
+                <div class="table-responsive" *ngIf="tramite.seguimientos?.length > 0"><table class="table table-sm table-bordered table-hover mb-0"><thead class="thead-light"><tr><th>Fecha</th><th>Área / Dependencia</th><th>Estado</th><th>Acción</th><th>Descripción</th></tr></thead><tbody>
+                  <tr *ngFor="let s of tramite.seguimientos"><td><small>{{ s.created_at | date:'dd/MM/yyyy HH:mm' }}</small></td><td>{{ s.area_destino_nombre || s.area_origen_nombre || '—' }}</td><td><span class="badge" [ngClass]="getAccionBadgeClass(s.accion)">{{ getEstadoLabel(s.estado_nuevo || s.accion) }}</span></td><td>{{ getAccionLabel(s.accion) }}</td><td><small>{{ s.descripcion }}</small></td></tr>
+                </tbody></table></div>
+                <div *ngIf="!tramite.seguimientos?.length" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2"></i><p>Sin etapas registradas</p></div>
+              </div>
+              <!-- Documentos -->
+              <div *ngIf="activeTab==='documentos'"><button class="btn btn-primary btn-sm mb-3" (click)="showDocumentoModal=true"><i class="fas fa-upload mr-1"></i>Subir Documento</button><table class="table table-striped table-sm" *ngIf="tramite.documentos?.length"><thead><tr><th>Nombre</th><th>Tipo</th><th>Tamaño</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody><tr *ngFor="let doc of tramite.documentos"><td>{{ doc.nombre }}</td><td>{{ doc.tipo_archivo || '—' }}</td><td>{{ doc.tamanio ? (doc.tamanio / 1024 | number:'1.0-0') + ' KB' : '—' }}</td><td><small>{{ doc.created_at | date:'short' }}</small></td><td><a [href]="getUrlDescarga(doc.id)" target="_blank" class="btn btn-xs btn-info mr-1"><i class="fas fa-download"></i></a><button class="btn btn-xs btn-danger" (click)="eliminarDocumento(doc.id)"><i class="fas fa-trash"></i></button></td></tr></tbody></table><div *ngIf="!tramite.documentos?.length" class="text-muted">Sin documentos</div></div>
+              <!-- Copias -->
+              <div *ngIf="activeTab==='copias'"><button class="btn btn-info btn-sm mb-3" (click)="showCopiaModal=true"><i class="fas fa-copy mr-1"></i>Enviar Copias</button><table class="table table-striped table-sm" *ngIf="tramite.copias?.length"><thead><tr><th>Área Destino</th><th>Estado</th><th>Fecha</th><th>Observación</th><th>Acciones</th></tr></thead><tbody><tr *ngFor="let c of tramite.copias"><td>{{ c.area_destino_nombre }}</td><td><span class="badge" [ngClass]="{'badge-warning':c.estado==='pendiente','badge-success':c.estado==='recibido'}">{{ c.estado }}</span></td><td><small>{{ c.fecha_envio | date:'short' }}</small></td><td>{{ c.observacion || '—' }}</td><td><button class="btn btn-xs btn-success" *ngIf="c.estado==='pendiente'" (click)="recibirCopia(c.id)"><i class="fas fa-check mr-1"></i>Recibir</button></td></tr></tbody></table><div *ngIf="!tramite.copias?.length" class="text-muted">Sin copias</div></div>
+              <!-- Historial timeline moderno -->
+              <div *ngIf="activeTab==='historial'">
+                <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-route text-primary mr-1"></i>Historial detallado <span class="badge badge-info ml-1">{{ tramite.linea_tiempo?.length || 0 }}</span></h6>
+                <div class="timeline-modern" *ngIf="tramite.linea_tiempo?.length"><div class="timeline-item-modern" *ngFor="let ev of tramite.linea_tiempo">
+                  <div class="timeline-icon" [ngClass]="'bg-'+getTimelineBg(ev.accion)"><i class="fas" [ngClass]="getTimelineIcon(ev.accion)"></i></div>
+                  <div class="timeline-content" [ngClass]="ev.accion">
+                    <div class="d-flex justify-content-between flex-wrap mb-1"><span class="badge" [ngClass]="getAccionBadgeClass(ev.accion)">{{ ev.titulo || getAccionLabel(ev.accion) }}</span><small class="text-muted">{{ ev.fecha | date:'dd/MM/yyyy HH:mm' }}</small></div>
+                    <div class="small text-dark" *ngIf="ev.detalle">{{ ev.detalle }}</div>
+                    <div class="timeline-areas mt-1" *ngIf="ev.area_origen_nombre || ev.area_destino_nombre">
+                      <span class="area-badge origen" *ngIf="ev.area_origen_nombre"><i class="fas fa-building mr-1"></i>{{ ev.area_origen_nombre }}</span>
+                      <span class="text-muted" *ngIf="ev.area_origen_nombre && ev.area_destino_nombre"><i class="fas fa-arrow-right"></i></span>
+                      <span class="area-badge destino" *ngIf="ev.area_destino_nombre"><i class="fas fa-building mr-1"></i>{{ ev.area_destino_nombre }}</span>
+                    </div>
+                  </div>
+                </div></div>
+                <div *ngIf="!tramite.linea_tiempo?.length" class="text-center text-muted py-4">Sin historial</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+          <div class="card card-primary card-outline"><div class="card-header"><h3 class="card-title"><i class="fas fa-cogs mr-2"></i>Acciones</h3></div><div class="card-body"><div class="d-flex flex-column">
+            <button class="btn btn-success btn-block mb-2" *ngIf="tramite.pendiente_recepcion" (click)="recibir()" [disabled]="processing"><i class="fas fa-inbox mr-1"></i>Recibir</button>
+            <button class="btn btn-danger btn-block mb-2" *ngIf="tramite.pendiente_recepcion && tramite.estado!=='archivado'" (click)="showRechazarModal=true" [disabled]="processing"><i class="fas fa-times mr-1"></i>Rechazar</button>
+            <button class="btn btn-info btn-block mb-2" *ngIf="!tramite.pendiente_recepcion && tramite.estado!=='archivado' && tramite.estado!=='atendido'" (click)="showDerivarModal=true" [disabled]="processing"><i class="fas fa-share mr-1"></i>Derivar</button>
+            <button class="btn btn-success btn-block mb-2" *ngIf="!tramite.pendiente_recepcion && tramite.estado==='en_proceso'" (click)="openAtender()" [disabled]="processing"><i class="fas fa-check-circle mr-1"></i>Atender</button>
+            <button class="btn btn-outline-warning btn-block mb-2" *ngIf="tramite.puede_recuperar" (click)="showRecuperarModal=true" [disabled]="processing"><i class="fas fa-undo-alt mr-1"></i>Recuperar</button>
+            <button class="btn btn-secondary btn-block mb-2" *ngIf="tramite.estado!=='archivado' && tramite.estado!=='atendido'" (click)="showArchivarModal=true" [disabled]="processing"><i class="fas fa-archive mr-1"></i>Archivar</button>
+            <button class="btn btn-outline-secondary btn-block mb-2" *ngIf="tramite.estado==='archivado'" (click)="desarchivar()" [disabled]="processing"><i class="fas fa-box-open mr-1"></i>Desarchivar</button>
+            <hr>
+            <button class="btn btn-outline-info btn-block mb-2" (click)="showComentarioModal=true"><i class="fas fa-comment mr-1"></i>Comentario</button>
+            <button class="btn btn-outline-primary btn-block mb-2" (click)="showDocumentoModal=true"><i class="fas fa-upload mr-1"></i>Documento</button>
+            <button class="btn btn-outline-info btn-block mb-2" (click)="showCopiaModal=true"><i class="fas fa-copy mr-1"></i>Copias</button>
+            <hr>
+            <a [routerLink]="['/tramite-documentario/editar', tramite.id]" class="btn btn-outline-warning btn-block mb-2" *ngIf="tramite.estado==='registrado'||tramite.estado==='en_proceso'"><i class="fas fa-edit mr-1"></i>Editar</a>
+            <button class="btn btn-outline-secondary btn-block" (click)="router.navigate(['/tramite-documentario/dashboard'])"><i class="fas fa-arrow-left mr-1"></i>Volver</button>
+          </div></div></div>
+          <div class="card" *ngIf="tramite.codigo_verificacion">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-barcode mr-2"></i>Código de Verificación</h3></div>
+            <div class="card-body text-center">
+              <svg #barcodeCanvas></svg>
+              <div class="mt-2"><button class="btn btn-sm btn-outline-secondary" (click)="printBarcode()"><i class="fas fa-print mr-1"></i>Imprimir Etiqueta</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Modals -->
+      <div class="modal fade" [class.show]="showDerivarModal" [style.display]="showDerivarModal?'block':'none'" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fas fa-share mr-2"></i>Derivar</h5><button class="close text-white" (click)="showDerivarModal=false">&times;</button></div>
+        <div class="modal-body">
+          <div class="form-group"><label>Área Destino *</label><select class="form-control" [(ngModel)]="derivarForm.area_destino_id"><option [ngValue]="0" disabled>Seleccione...</option><option *ngFor="let a of areas" [ngValue]="a.id">{{ a.nombre }}</option></select></div>
+          <div class="form-group"><label>Observación</label><textarea class="form-control" rows="3" [(ngModel)]="derivarForm.observacion"></textarea></div>
+          <div class="form-group"><label><i class="fas fa-copy mr-1"></i>Copias:</label><div class="border rounded p-2 bg-light" style="max-height:140px;overflow-y:auto"><div class="custom-control custom-checkbox py-1" *ngFor="let a of areas"><input type="checkbox" class="custom-control-input" [id]="'d_c_'+a.id" [checked]="derivarForm.areas_copia.includes(a.id)" (change)="toggleDerivarCopiaArea(a.id)"><label class="custom-control-label" [for]="'d_c_'+a.id">{{ a.nombre }}</label></div></div></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary" (click)="showDerivarModal=false">Cancelar</button><button class="btn btn-info" (click)="confirmarDerivar()" [disabled]="!derivarForm.area_destino_id||processing">Derivar</button></div>
+      </div></div></div>
+      <div class="modal-backdrop fade show" *ngIf="showDerivarModal" (click)="showDerivarModal=false"></div>
+
+      <div class="modal fade" [class.show]="showRechazarModal" [style.display]="showRechazarModal?'block':'none'" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-times mr-2"></i>Rechazar</h5><button class="close text-white" (click)="showRechazarModal=false">&times;</button></div>
+        <div class="modal-body"><div class="form-group"><label>Motivo * (mín. 10 car.)</label><textarea class="form-control" rows="4" [(ngModel)]="rechazarMotivo"></textarea></div></div>
+        <div class="modal-footer"><button class="btn btn-secondary" (click)="showRechazarModal=false">Cancelar</button><button class="btn btn-danger" (click)="confirmarRechazar()" [disabled]="rechazarMotivo.length<10||processing">Rechazar</button></div>
+      </div></div></div>
+      <div class="modal-backdrop fade show" *ngIf="showRechazarModal" (click)="showRechazarModal=false"></div>
+
+      <div class="modal fade" [class.show]="showRecuperarModal" [style.display]="showRecuperarModal?'block':'none'" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header bg-warning"><h5 class="modal-title"><i class="fas fa-undo-alt mr-2"></i>Recuperar</h5><button class="close" (click)="showRecuperarModal=false">&times;</button></div>
+        <div class="modal-body"><div class="form-group"><label>Motivo * (mín. 10 car.)</label><textarea class="form-control" rows="4" [(ngModel)]="recuperarMotivo"></textarea></div></div>
+        <div class="modal-footer"><button class="btn btn-secondary" (click)="showRecuperarModal=false">Cancelar</button><button class="btn btn-warning" (click)="confirmarRecuperar()" [disabled]="recuperarMotivo.length<10||processing">Recuperar</button></div>
+      </div></div></div>
+      <div class="modal-backdrop fade show" *ngIf="showRecuperarModal" (click)="showRecuperarModal=false"></div>
+
+      <div class="modal fade" [class.show]="showArchivarModal" [style.display]="showArchivarModal?'block':'none'" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header bg-secondary text-white"><h5 class="modal-title"><i class="fas fa-archive mr-2"></i>Archivar</h5><button class="close text-white" (click)="showArchivarModal=false">&times;</button></div>
+        <div class="modal-body"><div class="form-group"><label>Motivo (opcional)</label><textarea class="form-control" rows="3" [(ngModel)]="archivarMotivo"></textarea></div></div>
+        <div class="modal-footer"><button class="btn btn-secondary" (click)="showArchivarModal=false">Cancelar</button><button class="btn btn-dark" (click)="confirmarArchivar()" [disabled]="processing">Archivar</button></div>
+      </div></div></div>
+      <div class="modal-backdrop fade show" *ngIf="showArchivarModal" (click)="showArchivarModal=false"></div>
+
+      <div class="modal fade" [class.show]="showAtenderModal" [style.display]="showAtenderModal?'block':'none'" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fas fa-check-circle mr-2"></i>Atender - Crear Respuesta</h5><button class="close text-white" (click)="showAtenderModal=false">&times;</button></div>
+        <div class="modal-body">
+          <p><strong>Expediente:</strong> <span class="badge badge-primary">{{ tramite.numero_expediente }}</span></p>
+          <div class="alert alert-info mb-3"><strong class="mr-2"><i class="fas fa-hashtag"></i> N° Documento:</strong><span class="badge badge-primary" style="font-size:1em">{{ atenderPreviewNumero || 'Seleccione tipo' }}</span></div>
+          <div class="row"><div class="col-md-6 form-group"><label>Tipo Documento *</label><select class="form-control" [(ngModel)]="atenderForm.tipo_documento_respuesta" (change)="actualizarAtenderPreview()"><option value="">-- Seleccione --</option><option *ngFor="let td of tiposDocGenerado" [value]="td">{{ td }}</option></select></div></div>
+          <div class="form-group"><label>Asunto Respuesta *</label><input type="text" class="form-control" [(ngModel)]="atenderForm.asunto_respuesta" maxlength="255"></div>
+          <div class="form-group"><label>Descripción</label><textarea class="form-control" rows="3" [(ngModel)]="atenderForm.descripcion_respuesta"></textarea></div>
+          <hr><h6 class="text-info"><i class="fas fa-share mr-1"></i>Derivar con copias</h6>
+          <div class="custom-control custom-switch mb-3"><input type="checkbox" class="custom-control-input" id="at_d_ck" [(ngModel)]="atenderForm.derivar_inmediatamente"><label class="custom-control-label" for="at_d_ck">Derivar respuesta y/o copias</label></div>
+          <div *ngIf="atenderForm.derivar_inmediatamente">
+            <div class="form-group"><label>Área destino *</label><select class="form-control" [(ngModel)]="atenderForm.area_destino_id"><option [ngValue]="0">-- Seleccione --</option><option *ngFor="let a of areas" [ngValue]="a.id">{{ a.nombre }}</option></select></div>
+            <div class="form-group"><label>Copias:</label><div class="border rounded p-2 bg-light" style="max-height:140px;overflow-y:auto"><div class="custom-control custom-checkbox py-1" *ngFor="let a of areas"><input type="checkbox" class="custom-control-input" [id]="'at_c_'+a.id" [checked]="atenderForm.areas_copia.includes(a.id)" (change)="toggleAtenderCopiaArea(a.id)"><label class="custom-control-label" [for]="'at_c_'+a.id">{{ a.nombre }}</label></div></div></div>
+            <div class="form-group"><label>Observación</label><textarea class="form-control" rows="2" [(ngModel)]="atenderForm.observacion_derivar"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary" (click)="showAtenderModal=false">Cancelar</button><button class="btn btn-success" (click)="confirmarAtender()" [disabled]="processing"><i class="fas fa-check mr-1"></i>Atender y Crear</button></div>
+      </div></div></div>
+      <div class="modal-backdrop fade show" *ngIf="showAtenderModal" (click)="showAtenderModal=false"></div>
+
+      <div class="modal fade" [class.show]="showComentarioModal" [style.display]="showComentarioModal?'block':'none'" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fas fa-comment mr-2"></i>Comentario</h5><button class="close text-white" (click)="showComentarioModal=false">&times;</button></div>
+        <div class="modal-body"><div class="form-group"><label>Comentario</label><textarea class="form-control" rows="4" [(ngModel)]="comentarioTexto"></textarea></div><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="cv" [(ngModel)]="comentarioVisible"><label class="custom-control-label" for="cv">Visible para ciudadano</label></div></div>
+        <div class="modal-footer"><button class="btn btn-secondary" (click)="showComentarioModal=false">Cancelar</button><button class="btn btn-info" (click)="agregarComentario()" [disabled]="!comentarioTexto.trim()||processing">Guardar</button></div>
+      </div></div></div>
+      <div class="modal-backdrop fade show" *ngIf="showComentarioModal" (click)="showComentarioModal=false"></div>
+
+      <div class="modal fade" [class.show]="showCopiaModal" [style.display]="showCopiaModal?'block':'none'" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fas fa-copy mr-2"></i>Enviar Copias</h5><button class="close text-white" (click)="showCopiaModal=false">&times;</button></div>
+        <div class="modal-body"><div class="form-group"><label>Áreas:</label><div class="border rounded p-2 bg-light" style="max-height:200px;overflow-y:auto"><div class="custom-control custom-checkbox py-1" *ngFor="let a of areas"><input type="checkbox" class="custom-control-input" [id]="'cp_'+a.id" [checked]="copiaAreas.includes(a.id)" (change)="toggleCopiaArea(a.id)"><label class="custom-control-label" [for]="'cp_'+a.id">{{ a.nombre }}</label></div></div></div><div class="form-group"><label>Observación</label><textarea class="form-control" rows="3" [(ngModel)]="copiaObservacion"></textarea></div></div>
+        <div class="modal-footer"><button class="btn btn-secondary" (click)="showCopiaModal=false">Cancelar</button><button class="btn btn-info" (click)="enviarCopias()" [disabled]="copiaAreas.length===0||processing">Enviar</button></div>
+      </div></div></div>
+      <div class="modal-backdrop fade show" *ngIf="showCopiaModal" (click)="showCopiaModal=false"></div>
+
+      <div class="modal fade" [class.show]="showDocumentoModal" [style.display]="showDocumentoModal?'block':'none'" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fas fa-upload mr-2"></i>Subir Documento</h5><button class="close text-white" (click)="showDocumentoModal=false">&times;</button></div>
+        <div class="modal-body"><div class="form-group"><label>Nombre</label><input type="text" class="form-control" [(ngModel)]="documentoNombre"></div><div class="form-group"><label>Archivo *</label><input type="file" class="form-control-file" (change)="onFileSelected($event)"></div></div>
+        <div class="modal-footer"><button class="btn btn-secondary" (click)="showDocumentoModal=false">Cancelar</button><button class="btn btn-primary" (click)="subirDocumento()" [disabled]="!archivoSeleccionado||processing">Subir</button></div>
+      </div></div></div>
+      <div class="modal-backdrop fade show" *ngIf="showDocumentoModal" (click)="showDocumentoModal=false"></div>
+    </ng-container>
+  </div>
+</div>

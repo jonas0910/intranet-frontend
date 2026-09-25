@@ -1,0 +1,171 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0">Servicios</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor</a></li>
+          <li class="breadcrumb-item active">Servicios</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-concierge-bell mr-2"></i>Listado de Servicios</h3>
+        <div class="card-tools">
+          <button class="btn btn-primary btn-sm" (click)="openCreate()">
+            <i class="fas fa-plus mr-1"></i>Nuevo Servicio
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="text-center py-5" *ngIf="loading">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+        </div>
+        <div class="table-responsive" *ngIf="!loading">
+          <table class="table table-hover table-striped mb-0">
+            <thead>
+              <tr>
+                <th style="width:50px">Icono</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Precio</th>
+                <th>Duración</th>
+                <th>Activo</th>
+                <th>Orden</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="servicios.length === 0">
+                <td colspan="8" class="text-center text-muted py-4">No hay servicios registrados</td>
+              </tr>
+              <tr *ngFor="let item of servicios">
+                <td class="text-center"><i [class]="item.icono || 'fas fa-cog'" class="fa-lg"></i></td>
+                <td>{{ item.nombre }}</td>
+                <td><span class="badge badge-{{ getCategoriaBadge(item.categoria) }}">{{ item.categoria }}</span></td>
+                <td>{{ item.precio ? ('S/ ' + item.precio) : '-' }}</td>
+                <td>{{ item.duracion || '-' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="item.activo ? 'badge-success' : 'badge-danger'">
+                    {{ item.activo ? 'Sí' : 'No' }}
+                  </span>
+                </td>
+                <td>{{ item.orden }}</td>
+                <td class="text-right">
+                  <button class="btn btn-info btn-xs mr-1" (click)="openEdit(item)" title="Editar">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn btn-danger btn-xs" (click)="delete(item.id)" title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal -->
+<div class="modal fade show d-block" *ngIf="showModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ editing ? 'Editar' : 'Nuevo' }} Servicio</h5>
+        <button type="button" class="close" (click)="showModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-8">
+            <div class="form-group">
+              <label>Nombre</label>
+              <input type="text" class="form-control" [(ngModel)]="form.nombre" placeholder="Nombre del servicio">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Categoría</label>
+              <select class="form-control" [(ngModel)]="form.categoria">
+                <option *ngFor="let c of categorias" [value]="c">{{ c | titlecase }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="form.descripcion" placeholder="Descripción del servicio"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Precio (S/)</label>
+              <input type="number" class="form-control" [(ngModel)]="form.precio" placeholder="0.00" step="0.01">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Duración</label>
+              <input type="text" class="form-control" [(ngModel)]="form.duracion" placeholder="Ej: 30 min, 1 hora">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Icono (clase FA)</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i [class]="form.icono || 'fas fa-cog'"></i></span>
+                </div>
+                <input type="text" class="form-control" [(ngModel)]="form.icono" placeholder="fas fa-cog">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Requisitos</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="form.requisitos" placeholder="Requisitos del servicio"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Procedimiento</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="form.procedimiento" placeholder="Procedimiento a seguir"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Imagen URL</label>
+              <input type="text" class="form-control" [(ngModel)]="form.imagen" placeholder="URL de imagen">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Orden</label>
+              <input type="number" class="form-control" [(ngModel)]="form.orden">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Activo</label>
+              <div class="custom-control custom-switch mt-2">
+                <input type="checkbox" class="custom-control-input" id="servicioActivo" [(ngModel)]="form.activo">
+                <label class="custom-control-label" for="servicioActivo">{{ form.activo ? 'Sí' : 'No' }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="showModal = false">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="save()">
+          <i class="fas fa-save mr-1"></i>{{ editing ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

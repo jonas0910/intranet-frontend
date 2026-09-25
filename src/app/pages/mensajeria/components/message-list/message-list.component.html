@@ -1,0 +1,234 @@
+<!-- Toolbar -->
+<div class="card">
+  <div class="card-header">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <div class="btn-group" role="group">
+          <button type="button" 
+                  class="btn btn-outline-secondary btn-sm"
+                  (click)="onRefresh()"
+                  [disabled]="loading">
+            <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+            Actualizar
+          </button>
+          
+          <div class="btn-group" ngbDropdown role="group">
+            <button type="button" 
+                    class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                    ngbDropdownToggle
+                    [disabled]="selectedMessages.length === 0">
+              Acciones
+            </button>
+            <div class="dropdown-menu" ngbDropdownMenu>
+              <button class="dropdown-item" 
+                      (click)="onMarkAsRead()"
+                      [disabled]="selectedMessages.length === 0">
+                <i class="fas fa-envelope-open"></i> Marcar como leído
+              </button>
+              <button class="dropdown-item" 
+                      (click)="onMarkAsUnread()"
+                      [disabled]="selectedMessages.length === 0">
+                <i class="fas fa-envelope"></i> Marcar como no leído
+              </button>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" 
+                      (click)="onMoveToFolder('archive')"
+                      [disabled]="selectedMessages.length === 0">
+                <i class="fas fa-archive"></i> Archivar
+              </button>
+              <button class="dropdown-item" 
+                      (click)="onMoveToFolder('trash')"
+                      [disabled]="selectedMessages.length === 0">
+                <i class="fas fa-trash"></i> Mover a papelera
+              </button>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item text-danger" 
+                      (click)="onDeleteMessages()"
+                      [disabled]="selectedMessages.length === 0">
+                <i class="fas fa-times"></i> Eliminar permanentemente
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6 text-right">
+        <span class="text-muted" *ngIf="selectedMessages.length > 0">
+          {{ selectedMessages.length }} mensaje(s) seleccionado(s)
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Messages Table -->
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table datatable 
+             [dtOptions]="dtOptions" 
+             [dtTrigger]="dtTrigger"
+             class="table table-hover table-striped">
+        <thead>
+          <tr>
+            <th>
+              <div class="form-check">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       [checked]="selectAll"
+                       (change)="onSelectAll()">
+              </div>
+            </th>
+            <th></th>
+            <th>De</th>
+            <th>Asunto</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let message of messages" 
+              [class.table-active]="isSelected(message)"
+              [class.font-weight-bold]="!message.is_read">
+            
+            <!-- Checkbox -->
+            <td>
+              <div class="form-check">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       [checked]="isSelected(message)"
+                       (change)="onSelectMessage(message)">
+              </div>
+            </td>
+            
+            <!-- Priority & Type Icons -->
+            <td>
+              <div class="d-flex flex-column align-items-center">
+                <i [class]="getPriorityIcon(message.priority)" 
+                   [title]="getPriorityTitle(message.priority)"
+                   *ngIf="message.priority !== 'normal'"></i>
+                <i [class]="getMessageTypeIcon(message.message_type)"
+                   [title]="message.message_type"
+                   class="mt-1"></i>
+                <i class="fas fa-paperclip text-muted mt-1" 
+                   *ngIf="message.has_attachments"
+                   title="Tiene adjuntos"></i>
+              </div>
+            </td>
+            
+            <!-- Sender -->
+            <td (click)="onMessageClick(message)" 
+                style="cursor: pointer;">
+              <div class="d-flex align-items-center">
+                <div class="user-avatar me-2">
+                  <i class="fas fa-user-circle fa-2x text-muted"></i>
+                </div>
+                <div>
+                  <div class="fw-bold">{{ message.sender.name }}</div>
+                  <small class="text-muted">{{ message.sender.email }}</small>
+                </div>
+              </div>
+            </td>
+            
+            <!-- Subject -->
+            <td (click)="onMessageClick(message)" 
+                style="cursor: pointer;">
+              <div>
+                <span class="fw-bold" *ngIf="message.subject">
+                  {{ message.subject }}
+                </span>
+                <span class="text-muted" *ngIf="!message.subject">
+                  (Sin asunto)
+                </span>
+                <br>
+                <small class="text-muted">
+                  {{ message.content | slice:0:100 }}
+                  <span *ngIf="message.content.length > 100">...</span>
+                </small>
+              </div>
+            </td>
+            
+            <!-- Date -->
+            <td (click)="onMessageClick(message)" 
+                style="cursor: pointer;">
+              <small [title]="message.created_at | date:'medium'">
+                {{ formatDate(message.created_at) }}
+              </small>
+            </td>
+            
+            <!-- Actions -->
+            <td>
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" 
+                        class="btn btn-outline-primary"
+                        (click)="onMessageClick(message)"
+                        title="Ver mensaje">
+                  <i class="fas fa-eye"></i>
+                </button>
+                
+                <div class="btn-group btn-group-sm" ngbDropdown role="group">
+                  <button type="button" 
+                          class="btn btn-outline-secondary dropdown-toggle"
+                          ngbDropdownToggle>
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <div class="dropdown-menu" ngbDropdownMenu>
+                    <button class="dropdown-item" 
+                            *ngIf="!message.is_read"
+                            (click)="messageAction.emit({action: 'mark_read', messages: [message]})">
+                      <i class="fas fa-envelope-open"></i> Marcar como leído
+                    </button>
+                    <button class="dropdown-item" 
+                            *ngIf="message.is_read"
+                            (click)="messageAction.emit({action: 'mark_unread', messages: [message]})">
+                      <i class="fas fa-envelope"></i> Marcar como no leído
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item"
+                            (click)="messageAction.emit({action: 'reply', messages: [message]})">
+                      <i class="fas fa-reply"></i> Responder
+                    </button>
+                    <button class="dropdown-item"
+                            (click)="messageAction.emit({action: 'forward', messages: [message]})">
+                      <i class="fas fa-share"></i> Reenviar
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item"
+                            (click)="messageAction.emit({action: 'move_to_folder', messages: [message], folder: 'archive'})">
+                      <i class="fas fa-archive"></i> Archivar
+                    </button>
+                    <button class="dropdown-item text-danger"
+                            (click)="messageAction.emit({action: 'delete', messages: [message]})">
+                      <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Empty State -->
+<div class="card" *ngIf="messages.length === 0 && !loading">
+  <div class="card-body text-center py-5">
+    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">No hay mensajes</h5>
+    <p class="text-muted">
+      No tienes mensajes en esta carpeta.
+    </p>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="card" *ngIf="loading">
+  <div class="card-body text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only">Cargando...</span>
+    </div>
+    <p class="text-muted mt-3">Cargando mensajes...</p>
+  </div>
+</div>

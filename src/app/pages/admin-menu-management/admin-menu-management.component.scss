@@ -1,0 +1,346 @@
+// Integración de Subsistemas - Herramienta funcional compacta
+
+$primary: #007bff;
+$success: #28a745;
+$info: #17a2b8;
+$warning: #ffc107;
+$danger: #dc3545;
+$secondary: #6c757d;
+$light: #f8f9fa;
+$dark: #343a40;
+$white: #fff;
+$border: #dee2e6;
+
+:host { display: block; }
+
+// ─── Header ───
+.compact-header {
+  background: $white;
+  border-bottom: 1px solid $border;
+  padding: 0.5rem 0;
+  margin-bottom: 0;
+
+  .page-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: $dark;
+  }
+
+  .breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    font-size: 0.8rem;
+    a { color: $primary; text-decoration: none; }
+    .breadcrumb-item.active { color: $secondary; }
+  }
+}
+
+// ─── Toolbar ───
+.tool-bar {
+  background: $white;
+  border: 1px solid $border;
+  border-radius: 4px;
+  padding: 0.35rem 0.75rem;
+
+  .nav-sm .nav-link {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #495057;
+    border-radius: 3px;
+    transition: all 0.15s;
+    &:hover { background: #e9ecef; }
+    &.active {
+      background: $primary;
+      color: $white;
+      .badge { background: rgba($white, 0.25) !important; color: $white; }
+    }
+    .badge { font-size: 0.65rem; padding: 0.1rem 0.35rem; }
+  }
+
+  .gap-1 { gap: 0.35rem; }
+}
+
+// ─── Panel (tabla contenedora) ───
+.panel {
+  background: $white;
+  border: 1px solid $border;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+}
+
+// ─── Tabla compacta (compartida) ───
+.compact-table {
+  font-size: 0.8rem;
+  margin: 0;
+
+  thead tr {
+    background: #f4f6f9;
+    th {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: $secondary;
+      font-weight: 600;
+      border-bottom: 1px solid $border;
+      padding: 0.4rem 0.5rem;
+      white-space: nowrap;
+    }
+  }
+
+  tbody td {
+    padding: 0.35rem 0.5rem;
+    vertical-align: middle;
+  }
+
+  .col-expand { width: 32px; }
+  .col-num { width: 55px; }
+  .col-code { width: 120px; }
+  .col-status { width: 50px; }
+  .col-actions { width: 90px; }
+  .col-actions-lg { width: 140px; }
+}
+
+// ─── Filas ───
+.row-main {
+  transition: background 0.1s;
+  &:hover { background: rgba($primary, 0.025); }
+  &.row-inactive { opacity: 0.6; }
+}
+
+.row-discovery:hover { background: rgba($info, 0.025); }
+
+.row-unauthorized {
+  background: rgba($danger, 0.03);
+  &:hover { background: rgba($danger, 0.06); }
+}
+
+.row-expand > td {
+  background: #fafbfc !important;
+  border-top: none !important;
+}
+
+// ─── Toggle button ───
+.toggle-btn {
+  color: $secondary;
+  font-size: 0.85rem;
+  transition: transform 0.15s;
+  &:hover { color: $primary; }
+  .fa-rotate-90 { transform: rotate(90deg); }
+}
+
+// ─── Number badges ───
+.num-badge {
+  display: inline-block;
+  min-width: 20px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: $white;
+  text-align: center;
+  border-radius: 3px;
+  line-height: 1.3;
+
+  &.bg-primary { background: $primary; }
+  &.bg-info { background: $info; }
+  &.bg-secondary { background: #adb5bd; }
+}
+
+// ─── Code tag ───
+.code-tag {
+  font-size: 0.7rem;
+  color: #6f42c1;
+  background: #f3f0ff;
+  padding: 0.1rem 0.3rem;
+  border-radius: 2px;
+}
+
+// ─── Status dot ───
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  &.dot-on { background: $success; box-shadow: 0 0 0 2px rgba($success, 0.2); }
+  &.dot-off { background: $secondary; }
+}
+
+// ─── Expand content (menu tree) ───
+.expand-content {
+  border-top: 1px dashed $border;
+  padding: 0.4rem 0;
+}
+
+.tree-item {
+  &:hover > .tree-node { background: rgba($primary, 0.02); }
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  padding: 0.2rem 0.75rem 0.2rem 1.5rem;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+}
+
+.tree-icon {
+  width: 14px;
+  text-align: center;
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+
+.tree-arrow {
+  font-size: 0.6rem;
+  color: #bbb;
+  width: 10px;
+  flex-shrink: 0;
+}
+
+.tree-label {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tree-route {
+  font-size: 0.65rem;
+  color: #999;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-children {
+  .tree-node {
+    padding-left: 2.5rem;
+    font-size: 0.75rem;
+    .tree-label { font-weight: 400; color: #555; }
+  }
+}
+
+// ─── Discovery expand ───
+.expand-discovery {
+  padding: 0.5rem 0.75rem;
+}
+
+.expand-label {
+  font-size: 0.7rem;
+  color: $secondary;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 0.35rem;
+}
+
+.menu-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.menu-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.72rem;
+  background: $white;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  white-space: nowrap;
+  max-width: 260px;
+
+  i { font-size: 0.65rem; }
+
+  &.chip-parent {
+    border-left: 3px solid $primary;
+    font-weight: 500;
+  }
+
+  &.chip-child {
+    border-left: 3px solid #ccc;
+    color: #555;
+  }
+
+  .chip-route {
+    font-size: 0.6rem;
+    color: #aaa;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: 4px;
+  }
+}
+
+// ─── Empty state ───
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: $secondary;
+
+  i { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; }
+  p { margin: 0.25rem 0 0.75rem; font-size: 0.85rem; }
+}
+
+// ─── Access bar ───
+.access-bar {
+  padding: 0.6rem 0.75rem;
+  gap: 1.25rem;
+  border-bottom: 1px solid $border;
+}
+
+.access-stat-inline {
+  font-size: 0.8rem;
+  strong {
+    font-size: 1.1rem;
+    color: $dark;
+    margin-right: 0.2rem;
+  }
+  span { color: $secondary; }
+}
+
+// ─── Buttons ───
+.btn-xs {
+  padding: 0.15rem 0.4rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.btn-sm {
+  font-size: 0.8rem;
+}
+
+// ─── Modal ───
+.modal { display: block; }
+.modal-body { max-height: 70vh; overflow-y: auto; }
+
+.table-responsive {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+// ─── Badges ───
+.badge { font-size: 0.7rem; padding: 0.15rem 0.4rem; }
+.badge-sm { font-size: 0.65rem; padding: 0.1rem 0.3rem; }
+.badge-pill { border-radius: 10rem; }
+
+// ─── Responsive ───
+@media (max-width: 768px) {
+  .compact-header .page-title { font-size: 1rem; }
+
+  .tool-bar {
+    flex-wrap: wrap;
+    .nav-sm { width: 100%; margin-bottom: 0.25rem; }
+  }
+
+  .compact-table {
+    .col-code, .col-status { display: none; }
+  }
+
+  .menu-chip { max-width: 200px; }
+
+  .access-bar {
+    gap: 0.75rem;
+    .access-stat-inline strong { font-size: 0.95rem; }
+  }
+}

@@ -1,0 +1,136 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0"><i class="fas fa-users text-primary mr-2"></i>Usuarios del Área: {{ area?.nombre }}</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/tramite-documentario/dashboard">Trámites</a></li>
+          <li class="breadcrumb-item"><a routerLink="/areas">Áreas</a></li>
+          <li class="breadcrumb-item active">Usuarios</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="content">
+  <div class="container-fluid">
+    <div *ngIf="loading" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div>
+    <div *ngIf="!loading && area" class="row">
+      <div class="col-lg-4">
+        <div class="card card-primary card-outline">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-building"></i> Información del Área</h3></div>
+          <div class="card-body">
+            <p><strong>Código:</strong> {{ area.codigo }}</p>
+            <p><strong>Nombre:</strong> {{ area.nombre }}</p>
+            <p><strong>Descripción:</strong> {{ area.descripcion || 'Sin descripción' }}</p>
+            <p><strong>Email:</strong> {{ area.email || 'No especificado' }}</p>
+            <p><strong>Teléfono:</strong> {{ area.telefono || 'No especificado' }}</p>
+            <p><strong>Estado:</strong> <span class="badge" [ngClass]="area.activo ? 'badge-success' : 'badge-danger'">{{ area.activo ? 'Activo' : 'Inactivo' }}</span></p>
+          </div>
+        </div>
+        <div class="card card-warning">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-door-open"></i> Mesa de Partes</h3></div>
+          <div class="card-body">
+            <div class="form-check form-switch">
+              <input type="checkbox" class="form-check-input" [checked]="area.es_mesa_partes" (change)="toggleMesaPartes()">
+              <label class="form-check-label">
+                <span *ngIf="area.es_mesa_partes"><strong class="text-success"><i class="fas fa-check-circle"></i> Esta es la Mesa de Partes</strong></span>
+                <span *ngIf="!area.es_mesa_partes">Establecer como Mesa de Partes</span>
+              </label>
+            </div>
+            <small class="text-muted d-block mt-2"><i class="fas fa-info-circle"></i> La Mesa de Partes es la oficina principal que recibe todos los documentos entrantes.</small>
+          </div>
+        </div>
+        <div class="card card-success">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-user-plus"></i> Asignar Usuario</h3></div>
+          <div class="card-body">
+            <button *ngIf="usuariosDisponibles.length > 0" type="button" class="btn btn-success btn-block" (click)="abrirAsignar()"><i class="fas fa-user-plus"></i> Asignar Usuario</button>
+            <div *ngIf="usuariosDisponibles.length === 0" class="text-center text-muted py-3"><i class="fas fa-users fa-2x mb-2"></i><p class="mb-0">Todos los usuarios ya están asignados</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-users"></i> Usuarios Asignados <span class="badge badge-info">{{ usuarios.length }}</span></h3></div>
+          <div class="card-body p-0">
+            <div *ngIf="usuarios.length > 0" class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light"><tr><th>Usuario</th><th class="text-center">Responsable</th><th class="text-center">Permisos</th><th class="text-center">Estado</th><th class="text-center">Acciones</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let u of usuarios">
+                    <td><strong>{{ u.name }}</strong><i *ngIf="u.es_responsable" class="fas fa-star text-warning ml-1"></i><br><small class="text-muted">{{ u.email }}</small></td>
+                    <td class="text-center"><span class="badge" [ngClass]="u.es_responsable ? 'badge-warning' : 'badge-secondary'">{{ u.es_responsable ? 'Sí' : 'No' }}</span></td>
+                    <td class="text-center">
+                      <span *ngIf="u.puede_recibir" class="badge badge-info mr-1">Recibir</span>
+                      <span *ngIf="u.puede_derivar" class="badge badge-primary mr-1">Derivar</span>
+                      <span *ngIf="u.puede_atender" class="badge badge-success">Atender</span>
+                    </td>
+                    <td class="text-center"><span class="badge" [ngClass]="u.activo ? 'badge-success' : 'badge-danger'">{{ u.activo ? 'Activo' : 'Inactivo' }}</span></td>
+                    <td class="text-center">
+                      <button type="button" class="btn btn-sm btn-info mr-1" (click)="abrirEditarUsuario(u)"><i class="fas fa-edit"></i></button>
+                      <button type="button" class="btn btn-sm btn-danger" (click)="desasignarUsuario(u.id)"><i class="fas fa-user-minus"></i></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div *ngIf="usuarios.length === 0" class="text-center text-muted py-5">
+              <i class="fas fa-users fa-3x mb-3"></i>
+              <p>No hay usuarios asignados a esta área</p>
+              <p class="small">Utilice el botón de la izquierda para asignar usuarios</p>
+            </div>
+          </div>
+        </div>
+        <div class="card card-secondary mt-3">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-info-circle"></i> Leyenda de Permisos</h3></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3"><span class="badge badge-warning"><i class="fas fa-star"></i></span> <strong>Responsable:</strong> Encargado principal</div>
+              <div class="col-md-3"><span class="badge badge-info"><i class="fas fa-inbox"></i></span> <strong>Recibir:</strong> Puede recibir trámites</div>
+              <div class="col-md-3"><span class="badge badge-primary"><i class="fas fa-share"></i></span> <strong>Derivar:</strong> Puede derivar trámites</div>
+              <div class="col-md-3"><span class="badge badge-success"><i class="fas fa-check"></i></span> <strong>Atender:</strong> Puede atender trámites</div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3"><button type="button" class="btn btn-secondary" (click)="volver()"><i class="fas fa-arrow-left"></i> Volver a Áreas</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Asignar Usuario -->
+<div class="modal fade" [class.show]="showModalAsignar" [style.display]="showModalAsignar ? 'block' : 'none'">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fas fa-user-plus"></i> Asignar Usuario al Área</h5><button class="close text-white" (click)="showModalAsignar=false">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Seleccionar Usuario</label><select class="form-control" [(ngModel)]="formAsignar.user_id" required><option value="">-- Seleccionar --</option><option *ngFor="let u of usuariosDisponibles" [ngValue]="u.id">{{ u.name }} ({{ u.email }})</option></select></div>
+      <div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="formAsignar.es_responsable"><label class="form-check-label"><i class="fas fa-star text-warning"></i> Es Responsable del Área</label></div>
+      <div class="form-group mt-2"><label>Permisos:</label>
+        <div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="formAsignar.puede_recibir"><label class="form-check-label">Puede Recibir Trámites</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="formAsignar.puede_derivar"><label class="form-check-label">Puede Derivar Trámites</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="formAsignar.puede_atender"><label class="form-check-label">Puede Atender Trámites</label></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" (click)="showModalAsignar=false">Cancelar</button><button class="btn btn-success" (click)="asignarUsuario()" [disabled]="!formAsignar.user_id || processing"><i class="fas fa-user-plus"></i> Asignar Usuario</button></div>
+  </div></div>
+</div>
+
+<!-- Modal Editar Usuario -->
+<div class="modal fade" [class.show]="showModalEditar" [style.display]="showModalEditar ? 'block' : 'none'">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fas fa-user-edit"></i> Editar Permisos: {{ formEditarUsuario?.name }}</h5><button class="close text-white" (click)="showModalEditar=false; formEditarUsuario=null">&times;</button></div>
+    <div class="modal-body" *ngIf="formEditarUsuario">
+      <div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="formEditarUsuario.es_responsable"><label class="form-check-label"><i class="fas fa-star text-warning"></i> Es Responsable del Área</label></div>
+      <hr><h6>Permisos:</h6>
+      <div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="formEditarUsuario.puede_recibir"><label class="form-check-label"><i class="fas fa-inbox text-info"></i> Puede Recibir Trámites</label></div>
+      <div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="formEditarUsuario.puede_derivar"><label class="form-check-label"><i class="fas fa-share text-primary"></i> Puede Derivar Trámites</label></div>
+      <div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="formEditarUsuario.puede_atender"><label class="form-check-label"><i class="fas fa-check text-success"></i> Puede Atender Trámites</label></div>
+      <hr><div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="formEditarUsuario.activo"><label class="form-check-label">Usuario Activo en esta Área</label></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" (click)="showModalEditar=false; formEditarUsuario=null">Cancelar</button><button class="btn btn-info" (click)="guardarUsuario()" [disabled]="processing"><i class="fas fa-save"></i> Guardar Cambios</button></div>
+  </div></div>
+</div>
+
+<div class="modal-backdrop fade show" *ngIf="showModalAsignar || showModalEditar" (click)="showModalAsignar=false; showModalEditar=false; formEditarUsuario=null"></div>

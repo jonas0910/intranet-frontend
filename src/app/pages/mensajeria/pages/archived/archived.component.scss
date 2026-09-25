@@ -1,0 +1,163 @@
+.archived-container {
+  padding: 1rem;
+
+  .info-box {
+    min-height: 90px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .info-box-icon {
+      border-radius: 8px;
+      width: 70px;
+
+      i {
+        font-size: 2rem;
+      }
+    }
+
+    .info-box-content {
+      padding-left: 80px;
+
+      .info-box-text {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+
+      .info-box-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+      }
+    }
+  }
+
+  // List View
+  .archived-list {
+    .archived-item {
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #f8f9fa;
+        border-color: #adb5bd;
+
+        .item-actions {
+          opacity: 1;
+        }
+      }
+
+      &.selected {
+        background: #e7f3ff;
+        border-color: #007bff;
+      }
+
+      .item-icon {
+        font-size: 1.5rem;
+        width: 40px;
+        text-align: center;
+      }
+
+      .item-actions {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      h6 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #212529;
+      }
+
+      p {
+        line-height: 1.5;
+        margin-bottom: 0.5rem;
+      }
+    }
+  }
+
+  // Grid View
+  .archived-card {
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+      border-color: #adb5bd;
+    }
+
+    &.selected {
+      border-color: #007bff;
+      background: #f0f7ff;
+    }
+
+    .card-header {
+      background: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
+      padding: 0.75rem 1rem;
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    .card-footer {
+      background: #fff;
+      border-top: 1px solid #dee2e6;
+    }
+  }
+
+  // Buttons
+  .btn-group-sm {
+    .btn {
+      &.active {
+        background: #6c757d;
+        color: #fff;
+        border-color: #6c757d;
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .archived-container {
+    padding: 0.5rem;
+
+    .info-box {
+      margin-bottom: 0.75rem;
+    }
+
+    .archived-item {
+      .item-actions {
+        opacity: 1;
+      }
+
+      .d-flex {
+        flex-wrap: wrap;
+
+        .item-actions {
+          width: 100%;
+          margin-top: 0.5rem;
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+

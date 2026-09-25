@@ -1,0 +1,338 @@
+<!-- Advanced Search Component -->
+<div class="advanced-search-container">
+  <form [formGroup]="searchForm">
+    <!-- Quick Search -->
+    <div class="quick-search-section">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text">
+            <i class="fas fa-search"></i>
+          </span>
+        </div>
+        <input type="text" 
+               class="form-control" 
+               formControlName="quickSearch"
+               placeholder="Buscar mensajes..."
+               [disabled]="searching">
+        <div class="input-group-append">
+          <button type="button" 
+                  class="btn btn-outline-secondary"
+                  (click)="toggleAdvanced()"
+                  [class.active]="showAdvanced"
+                  title="Búsqueda avanzada">
+            <i class="fas fa-sliders-h"></i>
+          </button>
+          <button type="button" 
+                  class="btn btn-outline-secondary"
+                  (click)="clearSearch()"
+                  *ngIf="hasQuickSearch || hasActiveFilters"
+                  title="Limpiar búsqueda">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Search Status -->
+      <div class="search-status mt-2" *ngIf="searching || searchResults">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="search-info">
+            <span *ngIf="searching" class="text-muted">
+              <i class="fas fa-spinner fa-spin mr-1"></i>
+              Buscando...
+            </span>
+            <span *ngIf="searchResults && !searching" class="text-muted">
+              {{ searchResults.total }} resultados encontrados
+            </span>
+          </div>
+          <div class="search-actions" *ngIf="hasActiveFilters && !searching">
+            <button type="button" 
+                    class="btn btn-outline-primary btn-sm"
+                    (click)="saveCurrentSearch()"
+                    [disabled]="!canSaveSearch"
+                    title="Guardar búsqueda">
+              <i class="fas fa-bookmark"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Search Panel -->
+    <div class="advanced-search-panel" *ngIf="showAdvanced">
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0">
+            <i class="fas fa-filter mr-2"></i>
+            Búsqueda Avanzada
+          </h6>
+        </div>
+        <div class="card-body">
+          <!-- Filters -->
+          <div class="filters-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <label class="form-label font-weight-bold">Filtros:</label>
+              <div class="filter-actions">
+                <button type="button" 
+                        class="btn btn-outline-secondary btn-sm"
+                        (click)="addFilter()"
+                        title="Agregar filtro">
+                  <i class="fas fa-plus"></i>
+                </button>
+                <button type="button" 
+                        class="btn btn-outline-danger btn-sm ml-1"
+                        (click)="clearAllFilters()"
+                        *ngIf="filtersArray.length > 1"
+                        title="Limpiar filtros">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Filter Rows -->
+            <div formArrayName="filters">
+              <div class="filter-row mb-3" 
+                   *ngFor="let filter of filtersArray.controls; let i = index"
+                   [formGroupName]="i">
+                <div class="row">
+                  <!-- Field Selection -->
+                  <div class="col-md-3">
+                    <select class="form-control form-control-sm" 
+                            formControlName="field">
+                      <option value="">Seleccionar campo...</option>
+                      <option *ngFor="let field of searchFields" 
+                              [value]="field.value">
+                        {{ field.label }}
+                      </option>
+                    </select>
+                  </div>
+                  
+                  <!-- Operator Selection -->
+                  <div class="col-md-2">
+                    <select class="form-control form-control-sm" 
+                            formControlName="operator"
+                            [disabled]="!filter.get('field')?.value">
+                      <option value="">Operador...</option>
+                      <option *ngFor="let op of getOperatorsForField(filter.get('field')?.value)" 
+                              [value]="op.value">
+                        {{ op.label }}
+                      </option>
+                    </select>
+                  </div>
+                  
+                  <!-- Value Input -->
+                  <div class="col-md-3" 
+                       *ngIf="shouldShowValueInput(filter.get('field')?.value, filter.get('operator')?.value)">
+                    <!-- Text/Number/Date Input -->
+                    <input *ngIf="filter.get('field')?.value !== 'folder' && filter.get('field')?.value !== 'priority'"
+                           class="form-control form-control-sm" 
+                           formControlName="value"
+                           [type]="getInputType(filter.get('field')?.value)"
+                           placeholder="Valor...">
+                    
+                    <!-- Folder Selection -->
+                    <select *ngIf="filter.get('field')?.value === 'folder'"
+                            class="form-control form-control-sm" 
+                            formControlName="value">
+                      <option value="">Seleccionar carpeta...</option>
+                      <option *ngFor="let folder of folders" 
+                              [value]="folder.id">
+                        {{ folder.name }}
+                      </option>
+                    </select>
+                    
+                    <!-- Priority Selection -->
+                    <select *ngIf="filter.get('field')?.value === 'priority'"
+                            class="form-control form-control-sm" 
+                            formControlName="value">
+                      <option value="">Seleccionar prioridad...</option>
+                      <option *ngFor="let priority of priorityOptions" 
+                              [value]="priority.value">
+                        {{ priority.label }}
+                      </option>
+                    </select>
+                  </div>
+                  
+                  <!-- Second Value (for between operator) -->
+                  <div class="col-md-2" 
+                       *ngIf="shouldShowValue2(filter.get('operator')?.value)">
+                    <input class="form-control form-control-sm" 
+                           formControlName="value2"
+                           [type]="getInputType(filter.get('field')?.value)"
+                           placeholder="Hasta...">
+                  </div>
+                  
+                  <!-- Remove Filter Button -->
+                  <div class="col-md-2">
+                    <button type="button" 
+                            class="btn btn-outline-danger btn-sm"
+                            (click)="removeFilter(i)"
+                            *ngIf="filtersArray.length > 1"
+                            title="Eliminar filtro">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Date Range -->
+          <div class="date-range-section mb-3" formGroupName="dateRange">
+            <label class="form-label font-weight-bold">Rango de fechas:</label>
+            <div class="row">
+              <div class="col-md-6">
+                <input type="date" 
+                       class="form-control form-control-sm" 
+                       formControlName="from"
+                       placeholder="Desde">
+              </div>
+              <div class="col-md-6">
+                <input type="date" 
+                       class="form-control form-control-sm" 
+                       formControlName="to"
+                       placeholder="Hasta">
+              </div>
+            </div>
+          </div>
+
+          <!-- Sort Options -->
+          <div class="sort-section">
+            <label class="form-label font-weight-bold">Ordenar por:</label>
+            <div class="row">
+              <div class="col-md-6">
+                <select class="form-control form-control-sm" 
+                        formControlName="sortBy">
+                  <option value="date">Fecha</option>
+                  <option value="subject">Asunto</option>
+                  <option value="sender">Remitente</option>
+                  <option value="priority">Prioridad</option>
+                  <option value="read_status">Estado de lectura</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <select class="form-control form-control-sm" 
+                        formControlName="sortOrder">
+                  <option value="desc">Descendente</option>
+                  <option value="asc">Ascendente</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Card Footer with Actions -->
+        <div class="card-footer">
+          <div class="d-flex justify-content-between">
+            <div class="search-actions">
+              <button type="button" 
+                      class="btn btn-primary"
+                      (click)="executeAdvancedSearch()"
+                      [disabled]="!hasActiveFilters || searching">
+                <i class="fas fa-search mr-1"></i>
+                Buscar
+              </button>
+              <button type="button" 
+                      class="btn btn-outline-secondary ml-2"
+                      (click)="clearAllFilters()">
+                <i class="fas fa-eraser mr-1"></i>
+                Limpiar
+              </button>
+            </div>
+            <div class="save-actions">
+              <button type="button" 
+                      class="btn btn-outline-primary"
+                      (click)="saveCurrentSearch()"
+                      [disabled]="!canSaveSearch"
+                      title="Guardar búsqueda">
+                <i class="fas fa-bookmark mr-1"></i>
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Saved Searches -->
+    <div class="saved-searches-section" *ngIf="hasSavedSearches">
+      <div class="card mt-3">
+        <div class="card-header">
+          <h6 class="mb-0">
+            <i class="fas fa-bookmark mr-2"></i>
+            Búsquedas Guardadas
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="saved-search-list">
+            <div class="saved-search-item" 
+                 *ngFor="let savedSearch of savedSearches">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="search-info">
+                  <div class="search-name font-weight-bold">
+                    <i class="fas fa-star text-warning mr-1" 
+                       *ngIf="savedSearch.is_favorite"></i>
+                    {{ savedSearch.name }}
+                  </div>
+                  <div class="search-details text-muted">
+                    <small>
+                      {{ savedSearch.filters.length }} filtros • 
+                      Creada {{ savedSearch.created_at | date:'short' }}
+                    </small>
+                  </div>
+                  <!-- Filter Preview -->
+                  <div class="filter-preview mt-1">
+                    <span class="badge badge-secondary badge-sm mr-1"
+                          *ngFor="let filter of savedSearch.filters.slice(0, 3)">
+                      {{ filter.label }}
+                    </span>
+                    <span class="text-muted" 
+                          *ngIf="savedSearch.filters.length > 3">
+                      <small>+{{ savedSearch.filters.length - 3 }} más</small>
+                    </span>
+                  </div>
+                </div>
+                <div class="search-actions">
+                  <button type="button" 
+                          class="btn btn-outline-primary btn-sm"
+                          (click)="loadSavedSearch(savedSearch)"
+                          title="Cargar búsqueda">
+                    <i class="fas fa-play"></i>
+                  </button>
+                  <button type="button" 
+                          class="btn btn-outline-danger btn-sm ml-1"
+                          (click)="deleteSavedSearch(savedSearch)"
+                          title="Eliminar búsqueda">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Filters Display -->
+    <div class="active-filters-section mt-3" 
+         *ngIf="searchResults && searchResults.filters_applied.length > 0">
+      <div class="card">
+        <div class="card-body py-2">
+          <div class="d-flex align-items-center">
+            <small class="text-muted mr-2">Filtros activos:</small>
+            <div class="filter-tags">
+              <span class="badge badge-primary mr-1"
+                    *ngFor="let filter of searchResults.filters_applied">
+                {{ filter.label }}
+              </span>
+            </div>
+            <button type="button" 
+                    class="btn btn-link btn-sm ml-auto"
+                    (click)="clearSearch()">
+              <i class="fas fa-times"></i> Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

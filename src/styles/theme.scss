@@ -1,0 +1,266 @@
+/* Theme Variables */
+:root {
+  --primary-color: #007bff;
+  --accent-color: #17a2b8;
+}
+
+/* Light Theme */
+body.theme-light {
+  background-color: #f4f6f9;
+  color: #212529;
+
+  .card {
+    background-color: #ffffff;
+    color: #212529;
+  }
+
+  .sidebar {
+    background-color: #343a40;
+  }
+
+  .navbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+  }
+}
+
+/* Dark Theme */
+body.theme-dark {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+
+  .card {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border-color: #3d3d3d;
+  }
+
+  .form-control {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border-color: #3d3d3d;
+
+    &:focus {
+      background-color: #2d2d2d;
+      color: #e0e0e0;
+      border-color: var(--primary-color);
+    }
+  }
+
+  .table {
+    color: #e0e0e0;
+
+    thead th {
+      border-color: #3d3d3d;
+    }
+
+    td, th {
+      border-color: #3d3d3d;
+    }
+
+    &-striped tbody tr:nth-of-type(odd) {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  }
+
+  .sidebar {
+    background-color: #2d2d2d;
+  }
+
+  .navbar {
+    background-color: #2d2d2d;
+    border-bottom: 1px solid #3d3d3d;
+  }
+
+  .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+
+  .text-muted {
+    color: #999 !important;
+  }
+}
+
+/* Font Sizes */
+body.font-small {
+  font-size: 12px;
+
+  .card-title {
+    font-size: 16px;
+  }
+
+  h1 { font-size: 24px; }
+  h2 { font-size: 20px; }
+  h3 { font-size: 18px; }
+  h4 { font-size: 16px; }
+  h5 { font-size: 14px; }
+  h6 { font-size: 12px; }
+}
+
+body.font-medium {
+  font-size: 14px;
+
+  .card-title {
+    font-size: 18px;
+  }
+
+  h1 { font-size: 28px; }
+  h2 { font-size: 24px; }
+  h3 { font-size: 20px; }
+  h4 { font-size: 18px; }
+  h5 { font-size: 16px; }
+  h6 { font-size: 14px; }
+}
+
+body.font-large {
+  font-size: 16px;
+
+  .card-title {
+    font-size: 20px;
+  }
+
+  h1 { font-size: 32px; }
+  h2 { font-size: 28px; }
+  h3 { font-size: 24px; }
+  h4 { font-size: 20px; }
+  h5 { font-size: 18px; }
+  h6 { font-size: 16px; }
+}
+
+/* Compact Mode */
+body.compact-mode {
+  .card {
+    margin-bottom: 0.5rem;
+  }
+
+  .card-body {
+    padding: 0.75rem;
+  }
+
+  .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .form-group {
+    margin-bottom: 0.5rem;
+  }
+
+  .info-box {
+    min-height: 60px;
+    padding: 0.5rem;
+  }
+
+  .small-box {
+    padding: 10px;
+  }
+}
+
+/* No Animations */
+body.no-animations * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Primary and Accent Color Applications */
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--primary-color) 80%, black);
+    border-color: color-mix(in srgb, var(--primary-color) 80%, black);
+  }
+}
+
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
+.bg-primary {
+  background-color: var(--primary-color) !important;
+}
+
+.border-primary {
+  border-color: var(--primary-color) !important;
+}
+
+.btn-info {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--accent-color) 80%, black);
+    border-color: color-mix(in srgb, var(--accent-color) 80%, black);
+  }
+}
+
+.text-info {
+  color: var(--accent-color) !important;
+}
+
+.bg-info {
+  background-color: var(--accent-color) !important;
+}
+
+.badge-primary {
+  background-color: var(--primary-color);
+}
+
+.badge-info {
+  background-color: var(--accent-color);
+}
+
+/* Progress bars */
+.progress-bar {
+  background-color: var(--primary-color);
+}
+
+/* Links */
+a {
+  color: var(--primary-color);
+
+  &:hover {
+    color: color-mix(in srgb, var(--primary-color) 80%, black);
+  }
+}
+
+/* Nav tabs */
+.nav-tabs .nav-link.active {
+  color: var(--primary-color);
+  border-color: var(--primary-color) var(--primary-color) #fff;
+}
+
+/* Custom scrollbar for dark theme */
+body.theme-dark {
+  scrollbar-width: thin;
+  scrollbar-color: #4d4d4d #2d2d2d;
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #2d2d2d;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #4d4d4d;
+    border-radius: 4px;
+
+    &:hover {
+      background: #5d5d5d;
+    }
+  }
+}
+
+
+
+
+
+
+
+
+

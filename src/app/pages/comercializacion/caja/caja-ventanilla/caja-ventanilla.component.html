@@ -1,0 +1,482 @@
+<app-system-layout
+  [title]="'Caja / Ventanilla'"
+  [subtitle]="'Cobro en caja, listado de recibos y cierre de caja'"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Comercialización', url: '/comercializacion'}, {label: 'Caja / Ventanilla'}]"
+  [subsystem]="'comercializacion'">
+
+  <div class="card elevation-1">
+    <div class="card-header p-0 border-bottom-0">
+      <ul class="nav nav-tabs px-3 pt-2" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link font-weight-bold" [ngClass]="{'active text-success': activeTab === 'caja', 'text-muted': activeTab !== 'caja'}"
+             (click)="activeTab = 'caja'" style="cursor: pointer;">
+            <i class="fas fa-cash-register mr-1"></i> Cobro en caja
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link font-weight-bold" [ngClass]="{'active text-info': activeTab === 'recibos', 'text-muted': activeTab !== 'recibos'}"
+             (click)="activeTab = 'recibos'; bindDtRecibosActions(); recargarRecibosTab()" style="cursor: pointer;">
+            <i class="fas fa-clipboard-list mr-1"></i> Listado de Recibos
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link font-weight-bold" [ngClass]="{'active text-secondary': activeTab === 'cierre', 'text-muted': activeTab !== 'cierre'}"
+             (click)="activeTab = 'cierre'; cargarCierresCaja()" style="cursor: pointer;">
+            <i class="fas fa-calculator mr-1"></i> Cierre de Caja
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- TAB: COBRO EN CAJA -->
+    <ng-container *ngIf="activeTab === 'caja'">
+      <div class="card-body bg-light" style="min-height: 400px;">
+        <div class="row justify-content-center">
+          <div class="col-md-8 col-lg-6">
+            <div class="text-center mb-4">
+              <i class="fas fa-cash-register fa-3x text-success mb-3"></i>
+              <h4>Ventanilla de Cobro</h4>
+              <p class="text-muted">Ingrese el número de pre-recibo a pagar</p>
+            </div>
+            <div class="input-group input-group-lg mb-3 shadow-sm">
+              <input type="text" class="form-control font-weight-bold text-center text-uppercase"
+                     placeholder="Ej: REC-202603-001" [(ngModel)]="cajaSearchQuery"
+                     (keyup.enter)="buscarPreRecibo()">
+              <div class="input-group-append">
+                <button class="btn btn-success" type="button" (click)="buscarPreRecibo()" [disabled]="isSearching">
+                  <i class="fas fa-search" *ngIf="!isSearching"></i>
+                  <i class="fas fa-spinner fa-spin" *ngIf="isSearching"></i>
+                </button>
+              </div>
+            </div>
+            <div *ngIf="cajaError" class="alert alert-warning text-center">
+              <i class="fas fa-exclamation-triangle mr-2"></i> {{ cajaError }}
+            </div>
+            <div class="card shadow-sm border-0" *ngIf="cajaResult">
+              <div class="card-body">
+                <h5 class="card-title text-primary font-weight-bold mb-3 border-bottom pb-2">
+                  <i class="fas fa-file-invoice mr-2"></i>
+                  <span *ngIf="cajaResult.estado === 'EMITIDO'">Detalle a Cobrar: {{ cajaResult.numero_correlativo }}</span>
+                  <span *ngIf="cajaResult.estado === 'PAGADO'">Recibo de Pago: {{ cajaResult.numero_recibo || cajaResult.numero_correlativo }}</span>
+                </h5>
+                <div class="row mb-2">
+                  <div class="col-sm-4 text-muted">Contribuyente:</div>
+                  <div class="col-sm-8 font-weight-bold">{{ cajaResult.contribuyente_nombre || cajaResult.contribuyente_id }}</div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-sm-4 text-muted">Centro Costo:</div>
+                  <div class="col-sm-8">{{ cajaResult.centro_costos_id }}</div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-sm-4 text-muted">Abono Total:</div>
+                  <div class="col-sm-8 h4 text-success font-weight-bold mb-0">S/ {{ cajaResult.monto_total | number:'1.2-2' }}</div>
+                </div>
+                <div class="mt-4 pt-3 border-top text-center" *ngIf="cajaResult.estado === 'EMITIDO'">
+                  <button class="btn btn-lg btn-success shadow px-5" (click)="pagarPreRecibo()" [disabled]="isPaying">
+                    <i class="fas fa-check-circle mr-2" *ngIf="!isPaying"></i>
+                    <i class="fas fa-spinner fa-spin mr-2" *ngIf="isPaying"></i>
+                    Procesar Pago e Imprimir
+                  </button>
+                </div>
+                <div class="alert alert-info mt-3 mb-0 text-center" *ngIf="cajaResult.estado === 'PAGADO'">
+                  <i class="fas fa-info-circle mr-1"></i> Este pre-recibo ya ha sido pagado.
+                </div>
+                <div class="alert alert-danger mt-3 mb-0 text-center" *ngIf="cajaResult.estado === 'ANULADO'">
+                  <i class="fas fa-times-circle mr-1"></i> Este recibo se encuentra ANULADO.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- TAB: LISTADO DE RECIBOS -->
+    <ng-container *ngIf="activeTab === 'recibos'">
+      <div class="card-body">
+        <div class="row mb-3 bg-light p-3 rounded align-items-end">
+          <div class="col-md-3">
+            <label class="font-weight-bold">Filtrar por Centro de Costo</label>
+            <select class="form-control" [(ngModel)]="filtroRecibosCentro" (change)="recargarRecibos()">
+              <option value="">Todos</option>
+              <option value="Licencias">Licencias y Trámites</option>
+              <option value="Mercados">Mercados y Abastos</option>
+              <option value="Fiscalización">Fiscalización (Multas)</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="font-weight-bold">Filtrar por Estado</label>
+            <select class="form-control" [(ngModel)]="filtroRecibosEstado" (change)="recargarRecibos()">
+              <option value="">Todos</option>
+              <option value="PAGADO">Pagados (Efectivos)</option>
+              <option value="ANULADO">Anulados</option>
+              <option value="REEMBOLSADO">Reembolsados</option>
+            </select>
+          </div>
+          <div class="col-md-6 text-right">
+            <button class="btn btn-primary" (click)="recargarRecibos()">
+              <i class="fas fa-search mr-1"></i> Buscar
+            </button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table id="dtRecibosVentanilla" datatable [dtOptions]="dtOptionsRecibos"
+                 class="table table-hover mb-0 w-100 ds-crud-table">
+            <thead>
+              <tr>
+                <th>Nº Recibo</th>
+                <th>Contribuyente</th>
+                <th class="text-center">Oficina/Ruta</th>
+                <th class="text-center">Fecha Pago</th>
+                <th class="text-right">Monto</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- TAB: CIERRE DE CAJA -->
+    <ng-container *ngIf="activeTab === 'cierre'">
+      <div class="card-body">
+        <h5 class="mb-4"><i class="fas fa-calculator mr-2"></i> Cierre de Caja</h5>
+        <div class="mb-4">
+          <h6 class="text-muted mb-2"><i class="fas fa-history mr-1"></i> Cierres realizados</h6>
+          <div *ngIf="isCargandoCierres" class="text-center py-3">
+            <i class="fas fa-spinner fa-spin"></i> Cargando...
+          </div>
+          <div *ngIf="!isCargandoCierres && cierresCajaList.length === 0" class="alert alert-info py-2">
+            No hay cierres de caja registrados.
+          </div>
+          <div *ngIf="!isCargandoCierres && cierresCajaList.length > 0" class="table-responsive">
+            <table class="table table-sm table-bordered table-hover mb-0">
+              <thead class="thead-light">
+                <tr>
+                  <th>Período</th>
+                  <th class="text-right">Total Recaudado</th>
+                  <th class="text-center">Cant. Recibos</th>
+                  <th>Observaciones</th>
+                  <th class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of cierresCajaList">
+                  <td>{{ c.fecha_inicio | date:'dd/MM/yyyy' }} - {{ c.fecha_fin | date:'dd/MM/yyyy' }}</td>
+                  <td class="text-right font-weight-bold text-success">S/ {{ c.total_recaudado | number:'1.2-2' }}</td>
+                  <td class="text-center">{{ c.cantidad_recibos }}</td>
+                  <td class="small">{{ c.observaciones || '-' }}</td>
+                  <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-secondary mr-1" title="Previsualizar cierre"
+                            (click)="previsualizarCierre(c)" [disabled]="isCargandoPreviewCierre">
+                      <i class="fas fa-eye" *ngIf="!isCargandoPreviewCierre"></i>
+                      <i class="fas fa-spinner fa-spin" *ngIf="isCargandoPreviewCierre"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar cierre (permite regenerar)"
+                            (click)="eliminarCierreCaja(c)" [disabled]="isEliminandoCierre">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <hr class="my-4">
+        <h6 class="text-muted mb-3"><i class="fas fa-sync-alt mr-1"></i> Generar nuevo arqueo</h6>
+        <div class="row mb-3 bg-light p-3 rounded align-items-end">
+          <div class="col-md-2">
+            <label class="font-weight-bold small">Desde</label>
+            <input type="date" class="form-control form-control-sm" [(ngModel)]="reporteRecibosFechaInicio">
+          </div>
+          <div class="col-md-2">
+            <label class="font-weight-bold small">Hasta</label>
+            <input type="date" class="form-control form-control-sm" [(ngModel)]="reporteRecibosFechaFin">
+          </div>
+          <div class="col-md-8 text-right">
+            <button class="btn btn-outline-primary btn-sm mr-2" (click)="generarReporteRecibos()"
+                    [disabled]="isGeneratingReporteRecibos">
+              <i class="fas fa-spinner fa-spin mr-1" *ngIf="isGeneratingReporteRecibos"></i>
+              <i class="fas fa-sync-alt mr-1" *ngIf="!isGeneratingReporteRecibos"></i>
+              Generar Arqueo
+            </button>
+            <button class="btn btn-outline-secondary btn-sm mr-2" (click)="openPreviewCierre()"
+                    [disabled]="!reporteRecibosData || reporteRecibosData?.data?.length === 0"
+                    title="Previsualizar reporte antes de exportar">
+              <i class="fas fa-eye mr-1"></i> Previsualizar
+            </button>
+            <button class="btn btn-danger btn-sm" (click)="imprimirReporteRecibos()"
+                    [disabled]="!reporteRecibosData || reporteRecibosData?.data?.length === 0">
+              <i class="fas fa-file-pdf mr-1"></i> Exportar Cierre a PDF
+            </button>
+          </div>
+        </div>
+        <div *ngIf="reporteRecibosData" class="row">
+          <div class="col-md-4">
+            <div class="info-box shadow-sm mb-2">
+              <span class="info-box-icon bg-success elevation-1"><i class="fas fa-money-bill-wave"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text text-muted small">Total Recaudado</span>
+                <span class="info-box-number text-success">S/ {{ reporteRecibosData.summary.total_recaudado | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            <div class="info-box shadow-sm border mb-0">
+              <span class="info-box-icon bg-info elevation-1"><i class="fas fa-receipt"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text text-muted small">Operaciones</span>
+                <span class="info-box-number text-info">{{ reporteRecibosData.summary.cantidad }}</span>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="reporteRecibosData.data.length > 0" class="col-md-8">
+            <p class="small text-muted mb-1">Detalle de recibos pagados en el rango seleccionado.</p>
+          </div>
+        </div>
+        <!-- 1. Detalle de recibos procesados (ordenado por nro. recibo) -->
+        <div *ngIf="reporteRecibosData?.data?.length > 0" class="row mt-3">
+          <div class="col-md-12">
+            <h6 class="text-secondary mb-2"><i class="fas fa-receipt mr-1"></i> Detalle de recibos procesados (ordenado por nro. recibo)</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered table-hover mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Nº Recibo</th>
+                    <th>Contribuyente</th>
+                    <th class="text-center">Centro de Costo</th>
+                    <th class="text-center">Concepto / Partida</th>
+                    <th class="text-center">Fecha Pago</th>
+                    <th class="text-right">Monto (S/)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let r of reporteRecibosData.data">
+                    <td><strong>{{ r.numero_recibo || r.numero_correlativo }}</strong></td>
+                    <td>{{ r.contribuyente_nombre || '-' }}</td>
+                    <td class="text-center">{{ r.centro_costos_id || '-' }}</td>
+                    <td class="small">
+                      <span *ngIf="r.concepto_descripcion">{{ r.concepto_descripcion }}</span>
+                      <span *ngIf="r.partida_ingreso" class="d-block text-muted" style="font-size: 0.85em;">Partida: {{ r.partida_ingreso }}</span>
+                      <span *ngIf="!r.concepto_descripcion && !r.partida_ingreso">—</span>
+                    </td>
+                    <td class="text-center">{{ r.fecha_pago | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td class="text-right font-weight-bold text-success">{{ r.monto_total | number:'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- 2. Consolidado por conceptos -->
+        <div *ngIf="reporteRecibosData?.resumen_por_concepto?.length" class="row mt-3">
+          <div class="col-md-12">
+            <h6 class="text-primary mb-2"><i class="fas fa-tags mr-1"></i> Consolidado por conceptos</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered table-hover mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Código</th>
+                    <th>Concepto</th>
+                    <th class="text-center">Cant.</th>
+                    <th class="text-right">Monto (S/)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let c of reporteRecibosData.resumen_por_concepto">
+                    <td>{{ c.concepto_codigo }}</td>
+                    <td>{{ c.concepto_descripcion }}</td>
+                    <td class="text-center">{{ c.cantidad }}</td>
+                    <td class="text-right font-weight-bold text-success">{{ c.monto_total | number:'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- 2. Consolidado por partidas de ingreso (MEF) -->
+        <div *ngIf="reporteRecibosData?.resumen_por_partida?.length" class="row mt-3">
+          <div class="col-md-12">
+            <h6 class="text-primary mb-2"><i class="fas fa-list-ol mr-1"></i> Consolidado por partidas de ingreso (MEF)</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered table-hover mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Partida ingreso</th>
+                    <th>Desc. partida</th>
+                    <th class="text-center">Cant.</th>
+                    <th class="text-right">Monto (S/)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let p of reporteRecibosData.resumen_por_partida">
+                    <td class="text-monospace small">{{ p.partida_ingreso || '—' }}</td>
+                    <td class="small">{{ p.partida_descripcion || '—' }}</td>
+                    <td class="text-center">{{ p.cantidad }}</td>
+                    <td class="text-right font-weight-bold text-success">{{ p.monto_total | number:'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- 3. Consolidado por área -->
+        <div *ngIf="reporteRecibosData?.resumen_por_area?.length" class="row mt-3">
+          <div class="col-md-12">
+            <h6 class="text-info mb-2"><i class="fas fa-sitemap mr-1"></i> Consolidado por área</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered table-hover mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Área / Centro de costo</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-right">Monto (S/)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let a of reporteRecibosData.resumen_por_area">
+                    <td>{{ a.nombre || a.centro_costos_id || '—' }}</td>
+                    <td class="text-center">{{ a.cantidad }}</td>
+                    <td class="text-right font-weight-bold text-success">{{ a.monto_total | number:'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="reporteRecibosData" class="row mt-3">
+          <div class="col-md-12">
+            <label class="font-weight-bold small">Observaciones del cierre</label>
+            <textarea class="form-control form-control-sm" [(ngModel)]="reporteRecibosObservaciones"
+                      rows="2" placeholder="Observaciones o notas para este cierre de caja..."></textarea>
+            <div class="mt-2 text-right">
+              <button type="button" class="btn btn-success btn-sm" (click)="guardarCierreRecibos()"
+                      [disabled]="isGuardandoCierre">
+                <i class="fas fa-spinner fa-spin mr-1" *ngIf="isGuardandoCierre"></i>
+                <i class="fas fa-save mr-1" *ngIf="!isGuardandoCierre"></i>
+                Guardar Cierre
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</app-system-layout>
+
+<!-- Modal Previsualización Cierre de Caja -->
+<div class="modal fade" [class.show]="showPreviewCierre" [style.display]="showPreviewCierre ? 'block' : 'none'"
+     tabindex="-1" role="dialog" [style.background-color]="showPreviewCierre ? 'rgba(0,0,0,0.5)' : 'transparent'">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-secondary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-eye mr-2"></i> Previsualización – Cierre de Caja
+          <span class="ml-2 small font-weight-normal">del {{ reporteRecibosFechaInicio | date:'dd/MM/yyyy' }} al {{ reporteRecibosFechaFin | date:'dd/MM/yyyy' }}</span>
+        </h5>
+        <button type="button" class="close text-white" (click)="closePreviewCierre()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">Vista previa del contenido que se exportará al PDF.</p>
+        <div *ngIf="reporteRecibosData?.data?.length" class="mb-4">
+          <h6 class="text-secondary"><i class="fas fa-receipt mr-1"></i> Detalle de recibos procesados (ordenado por nro. recibo)</h6>
+          <table class="table table-sm table-bordered">
+            <thead class="thead-light">
+              <tr>
+                <th>Nº Recibo</th>
+                <th>Contribuyente</th>
+                <th class="text-center">Área</th>
+                <th>Concepto / Partida</th>
+                <th class="text-center">Fecha Pago</th>
+                <th class="text-right">Monto (S/)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of reporteRecibosData.data">
+                <td><strong>{{ r.numero_recibo || r.numero_correlativo }}</strong></td>
+                <td>{{ r.contribuyente_nombre || '-' }}</td>
+                <td class="text-center">{{ r.centro_costos_id || '-' }}</td>
+                <td class="small">
+                  <span *ngIf="r.concepto_descripcion">{{ r.concepto_descripcion }}</span>
+                  <span *ngIf="r.partida_ingreso" class="d-block text-muted" style="font-size: 0.85em;">Partida: {{ r.partida_ingreso }}</span>
+                  <span *ngIf="!r.concepto_descripcion && !r.partida_ingreso">—</span>
+                </td>
+                <td class="text-center">{{ r.fecha_pago | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="text-right font-weight-bold text-success">{{ r.monto_total | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="reporteRecibosData?.resumen_por_concepto?.length" class="mb-4">
+          <h6 class="text-primary"><i class="fas fa-tags mr-1"></i> Consolidado por conceptos</h6>
+          <table class="table table-sm table-bordered">
+            <thead class="thead-light">
+              <tr>
+                <th>Código</th>
+                <th>Concepto</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-right">Monto (S/)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of reporteRecibosData.resumen_por_concepto">
+                <td>{{ c.concepto_codigo }}</td>
+                <td>{{ c.concepto_descripcion }}</td>
+                <td class="text-center">{{ c.cantidad }}</td>
+                <td class="text-right font-weight-bold text-success">{{ c.monto_total | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="reporteRecibosData?.resumen_por_partida?.length" class="mb-4">
+          <h6 class="text-primary"><i class="fas fa-list-ol mr-1"></i> Consolidado por partidas de ingreso (MEF)</h6>
+          <table class="table table-sm table-bordered">
+            <thead class="thead-light">
+              <tr>
+                <th>Partida ingreso</th>
+                <th>Desc. partida</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-right">Monto (S/)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of reporteRecibosData.resumen_por_partida">
+                <td class="text-monospace small">{{ p.partida_ingreso || '—' }}</td>
+                <td class="small">{{ p.partida_descripcion || '—' }}</td>
+                <td class="text-center">{{ p.cantidad }}</td>
+                <td class="text-right font-weight-bold text-success">{{ p.monto_total | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="reporteRecibosData?.resumen_por_area?.length" class="mb-4">
+          <h6 class="text-info"><i class="fas fa-sitemap mr-1"></i> Consolidado por área</h6>
+          <table class="table table-sm table-bordered">
+            <thead class="thead-light">
+              <tr>
+                <th>Área / Centro de costo</th>
+                <th class="text-center">Cantidad</th>
+                <th class="text-right">Monto (S/)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of reporteRecibosData.resumen_por_area">
+                <td>{{ a.nombre || a.centro_costos_id || '—' }}</td>
+                <td class="text-center">{{ a.cantidad }}</td>
+                <td class="text-right font-weight-bold text-success">{{ a.monto_total | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closePreviewCierre()">Cerrar</button>
+        <button type="button" class="btn btn-danger" (click)="imprimirReporteRecibos(); closePreviewCierre()">
+          <i class="fas fa-file-pdf mr-1"></i> Exportar a PDF
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

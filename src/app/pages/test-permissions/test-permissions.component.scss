@@ -1,0 +1,202 @@
+// Estilos para el componente de prueba de permisos
+
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  
+  .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    
+    .card-title {
+      margin-bottom: 0;
+      font-weight: 600;
+    }
+  }
+}
+
+.table {
+  th {
+    background-color: #f8f9fa;
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+  
+  td {
+    vertical-align: middle;
+    font-size: 0.875rem;
+  }
+}
+
+.badge {
+  &.badge-sm {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  &.badge-success {
+    background-color: #28a745;
+  }
+  
+  &.badge-info {
+    background-color: #17a2b8;
+  }
+  
+  &.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+  }
+  
+  &.badge-danger {
+    background-color: #dc3545;
+  }
+  
+  &.badge-primary {
+    background-color: #007bff;
+  }
+  
+  &.badge-secondary {
+    background-color: #6c757d;
+  }
+}
+
+.text-success {
+  color: #28a745 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-primary {
+  color: #007bff !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+.text-info {
+  color: #17a2b8 !important;
+}
+
+.text-secondary {
+  color: #6c757d !important;
+}
+
+// Módulos específicos
+.badge-module-core {
+  background-color: #007bff;
+}
+
+.badge-module-planillas {
+  background-color: #17a2b8;
+}
+
+.badge-module-reportes {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-module-documentos {
+  background-color: #28a745;
+}
+
+.badge-module-soporte {
+  background-color: #dc3545;
+}
+
+.badge-module-administracion {
+  background-color: #6f42c1;
+}
+
+// Lista de permisos
+.list-group-item {
+  border-left: none;
+  border-right: none;
+  
+  &:first-child {
+    border-top: none;
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+// Cards de prueba múltiple
+.card.bg-light {
+  background-color: #f8f9fa !important;
+  
+  .card-body {
+    padding: 1.5rem;
+    
+    h6 {
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    
+    i {
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.8rem;
+  }
+  
+  .card.bg-light .card-body {
+    padding: 1rem;
+    
+    h6 {
+      font-size: 0.9rem;
+    }
+    
+    i {
+      font-size: 1.5rem !important;
+    }
+  }
+}
+
+// Animaciones
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+// Hover effects
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+// Iconos de estado
+.fas.fa-check-circle {
+  color: #28a745;
+}
+
+.fas.fa-times-circle {
+  color: #dc3545;
+}
+
+// Botones de acción
+.btn-tool {
+  color: #6c757d;
+  
+  &:hover {
+    color: #495057;
+  }
+}

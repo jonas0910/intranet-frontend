@@ -1,0 +1,927 @@
+<app-system-layout [title]="'Equipos Mecánicos'" [subtitle]="'Gestión y control de maquinaria y flota vehicular'"
+  [subtitleItems]="subtitleItems"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Equipo Mecánico', url: '/equipo-mecanico'}, {label: 'Equipos'}]"
+  [subsystem]="subsystem">
+
+  <!-- Tabs Navigation -->
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'lista-equipos'" (click)="setActiveTab('lista-equipos')" role="tab">
+        <i class="fas fa-truck mr-1"></i> Lista de Equipos
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'tipos-mantenimiento'" (click)="setActiveTab('tipos-mantenimiento')" role="tab">
+        <i class="fas fa-tools mr-1"></i> Configuración de Mantenimientos
+      </a>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    <!-- Tab: Lista de Equipos -->
+    <div class="tab-pane fade" [class.show]="activeTab === 'lista-equipos'" [class.active]="activeTab === 'lista-equipos'">
+      <!-- Card de Equipos con Design System -->
+      <div class="card elevation-1 mb-3" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-primary'"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+        
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white rounded-top">
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+              <i class="fas fa-truck mr-1"></i> Inventario de Equipos
+            </h3>
+            <span class="badge"
+              [ngClass]="cv.cardOutlineColor ? 'bg-' + cv.cardOutlineColor.replace('card-', '') : 'badge-primary'"
+              *ngIf="cv.showRecordCount">{{equipos.length}}</span>
+            
+            <button class="btn btn-sm btn-outline-info ml-1 px-2" *ngIf="cv.collapsibleFilters"
+              (click)="isFiltersCollapsed = !isFiltersCollapsed"
+              [title]="isFiltersCollapsed ? 'Ver filtros' : 'Ocultar filtros'" style="height: 24px; line-height: 1;">
+              <i class="fas" [ngClass]="isFiltersCollapsed ? 'fa-filter' : 'fa-filter-circle-xmark'"></i>
+            </button>
+
+            <!-- Export Buttons (Placeholder for now as they are not implemented in TS yet, but keeping the UI design) -->
+            <ng-container *ngIf="cv.showExportButtons">
+              <button type="button" class="btn btn-sm btn-flat" [ngClass]="cv.excelBtnClass || 'btn-success'">
+                <i [class]="(cv.excelBtnIcon || 'fas fa-file-excel') + ' mr-1'"></i> {{ cv.excelBtnLabel || 'Excel' }}
+              </button>
+            </ng-container>
+          </div>
+          
+          <div class="ms-auto flex-shrink-0">
+            <button type="button" class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-primary'"
+              (click)="abrirModalNuevo()">
+              <i [class]="(cv.newBtnIcon || 'fas fa-plus') + ' mr-1'"></i> Nuevo Equipo
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros colapsables -->
+        <div class="border-bottom bg-light overflow-hidden" [style.max-height]="isFiltersCollapsed ? '0px' : '500px'"
+          [style.padding]="isFiltersCollapsed ? '0px' : '0.5rem'"
+          style="transition: max-height 0.3s ease, padding 0.3s ease;">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="mb-1 ds-crud-label">Buscar</label>
+              <input type="text" class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.search"
+                (ngModelChange)="onFilterChange()" placeholder="Código, placa, marca...">
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Tipo</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.tipo"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Todos</option>
+                <option value="vehiculo">Vehículo</option>
+                <option value="maquinaria">Maquinaria</option>
+                <option value="equipo">Equipo</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="mb-1 ds-crud-label">Estado</label>
+              <select class="form-control form-control-sm ds-crud-filter" [(ngModel)]="filtros.estado"
+                (ngModelChange)="onFilterChange()">
+                <option value="">Cualquier estado</option>
+                <option value="operativo">Operativo</option>
+                <option value="mantenimiento">Mantenimiento</option>
+                <option value="fuera_servicio">Fuera de Servicio</option>
+              </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-sm btn-outline-secondary btn-block" (click)="limpiarFiltros()">
+                <i class="fas fa-redo mr-1"></i> Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card-body px-0 pt-0 pb-2">
+          <div *ngIf="loading" class="text-center p-5">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+            <p class="mt-3">Cargando equipos...</p>
+          </div>
+
+          <div class="table-responsive p-2" [hidden]="loading">
+            <table id="equiposTable" class="table mb-0 w-100 ds-crud-table" [ngClass]="cv.tableClasses">
+              <!-- DataTable se inicializa dinámicamente -->
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Configuración de Mantenimientos -->
+    <div class="tab-pane fade" [class.show]="activeTab === 'tipos-mantenimiento'" [class.active]="activeTab === 'tipos-mantenimiento'">
+      <div class="card elevation-1" [ngClass]="cv.cardOutlineColor ? 'card-outline ' + cv.cardOutlineColor : 'card-outline card-success'"
+        [style.border-radius.px]="cv.cardBorderRadius != null ? cv.cardBorderRadius : 6">
+        
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white rounded-top">
+          <h3 class="card-title mb-0" [style.font-size]="cv.headerFontSize">
+            <i class="fas fa-cogs mr-1"></i> Tipos de Mantenimiento Preventivo
+          </h3>
+          <button class="btn btn-sm" [ngClass]="cv.newBtnClass || 'btn-success'" (click)="abrirModalNuevoTipo()">
+            <i class="fas fa-plus"></i> Nuevo Tipo
+          </button>
+        </div>
+
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            <i class="fas fa-info-circle mr-1"></i> Defina las reglas de mantenimiento preventivo aplicables a sus equipos para generar alertas automáticas.
+          </p>
+          
+          <div class="table-responsive">
+            <table [ngClass]="cv.tableClasses" class="table mb-0 w-100 ds-crud-table">
+              <thead>
+                <tr>
+                  <th>Nombre / Categoría</th>
+                  <th class="text-center">Medición</th>
+                  <th>Frecuencia</th>
+                  <th>Alertas</th>
+                  <th class="text-center">Estado</th>
+                  <th width="100px" class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let t of tiposMantenimiento">
+                  <td>
+                    <strong>{{t.nombre}}</strong>
+                    <span class="badge badge-primary ml-1" *ngIf="t.obligatorio" title="Generación automática obligatoria">
+                      <i class="fas fa-star"></i>
+                    </span>
+                    <br>
+                    <small class="text-muted">{{t.categoria}} - {{t.criticidad}}</small>
+                    <div class="mt-1">
+                      <span class="badge badge-info mr-1" *ngFor="let te of (t.tipos_equipo_aplicables || [])">
+                        {{te | titlecase}}
+                      </span>
+                      <span class="badge badge-light border text-muted" *ngIf="!(t.tipos_equipo_aplicables?.length)">
+                        <i class="fas fa-check-double mr-1"></i> Todos los tipos
+                      </span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge badge-info">{{t.tipo_medicion | titlecase}}</span>
+                  </td>
+                  <td>
+                    <div class="small">
+                      <span *ngIf="t.frecuencia_kilometros"><i class="fas fa-road fa-fw text-muted"></i> {{t.frecuencia_kilometros | number}} km</span><br>
+                      <span *ngIf="t.frecuencia_horas"><i class="fas fa-hourglass-half fa-fw text-muted"></i> {{t.frecuencia_horas | number}} h</span><br>
+                      <span *ngIf="t.frecuencia_dias"><i class="fas fa-calendar-day fa-fw text-muted"></i> {{t.frecuencia_dias}} días</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="small d-flex flex-column" style="gap: 2px;">
+                      <span *ngIf="t.alerta_verde_dias" class="badge badge-success text-left" style="width: fit-content;"><i class="fas fa-check"></i> {{t.alerta_verde_dias}} días</span>
+                      <span *ngIf="t.alerta_amarilla_dias" class="badge badge-warning text-left" style="width: fit-content;"><i class="fas fa-exclamation"></i> {{t.alerta_amarilla_dias}} días</span>
+                      <span *ngIf="t.alerta_roja_dias" class="badge badge-danger text-left" style="width: fit-content;"><i class="fas fa-exclamation-triangle"></i> {{t.alerta_roja_dias}} días</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <span [class]="t.activo ? 'text-success' : 'text-danger'">
+                      <i class="fas" [ngClass]="t.activo ? 'fa-check-circle' : 'fa-times-circle'"></i>
+                      {{t.activo ? 'Activo' : 'Inactivo'}}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-warning" (click)="editarTipoMantenimiento(t)" title="Editar">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-danger" (click)="eliminarTipoMantenimiento(t.id)" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-system-layout>
+
+<!-- Modal CRUD Equipo -->
+<div class="modal fade" id="modalEquipo" tabindex="-1" role="dialog" aria-labelledby="modalEquipoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content" style="border-radius: var(--ds-modal-border-radius);">
+      <div class="modal-header" [style.background-color]="modalMode === 'view' ? '#17a2b8' : (modalMode === 'edit' ? '#ffc107' : '#007bff')" [style.color]="'#fff'">
+        <h5 class="modal-title" id="modalEquipoLabel">
+          <i class="fas fa-truck mr-2"></i>
+          <span *ngIf="modalMode === 'create'">Registrar Nuevo Equipo</span>
+          <span *ngIf="modalMode === 'edit'">Editar Información del Equipo</span>
+          <span *ngIf="modalMode === 'view'">Ficha Técnica del Equipo</span>
+        </h5>
+        <button type="button" class="close text-white" (click)="cerrarModal()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <form [formGroup]="equipoForm" (ngSubmit)="guardarEquipo()">
+        <div class="bg-white border-bottom px-4">
+          <ul class="nav nav-tabs border-0 mt-3">
+            <li class="nav-item">
+              <a class="nav-link cursor-pointer border-0 py-2 px-4 font-weight-bold" 
+                 [class.active]="activeTabModal === 'info'"
+                 [class.text-primary]="activeTabModal === 'info'"
+                 (click)="activeTabModal = 'info'">
+                <i class="fas fa-info-circle mr-2"></i> Información General
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link cursor-pointer border-0 py-2 px-4 font-weight-bold" 
+                 [class.active]="activeTabModal === 'mantenimientos'"
+                 [class.text-primary]="activeTabModal === 'mantenimientos'"
+                 (click)="activeTabModal = 'mantenimientos'">
+                <i class="fas fa-tools mr-2"></i> Mantenimiento
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="modal-body p-4 bg-light" style="min-height: 500px;">
+          <!-- TAB: INFORMACIÓN -->
+          <div *ngIf="activeTabModal === 'info'">
+            <div class="row">
+              <div class="col-md-8">
+                <!-- Información Básica -->
+                <div class="card card-outline card-primary shadow-sm mb-3">
+                  <div class="card-header py-2">
+                    <h3 class="card-title small font-weight-bold"><i class="fas fa-info-circle mr-1"></i>Información Básica</h3>
+                  </div>
+                  <div class="card-body">
+                    <div class="row g-2">
+                      <div class="col-md-6">
+                        <div class="form-group mb-2">
+                          <label class="small font-weight-bold">Código Interno <span class="text-danger">*</span></label>
+                          <input type="text" class="form-control form-control-sm" formControlName="codigo_interno" placeholder="Ej: EQ-001">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group mb-2">
+                          <label class="small font-weight-bold">Placa</label>
+                          <input type="text" class="form-control form-control-sm text-uppercase" formControlName="placa" placeholder="ABC-123">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group mb-2">
+                          <label class="small font-weight-bold">Origen <span class="text-danger">*</span></label>
+                          <select class="form-control form-control-sm" formControlName="origen">
+                            <option value="interna">Interna/Propia</option>
+                            <option value="externa">Externa/Alquilada</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group mb-2">
+                          <label class="small font-weight-bold">Responsable</label>
+                          <select class="form-control form-control-sm" formControlName="responsable_id">
+                            <option [ngValue]="null">Sin asignar</option>
+                            <option *ngFor="let p of personasList" [value]="p.id">{{p.nombres}} {{p.apellidos}}</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="form-group mb-2">
+                          <label class="small font-weight-bold">Tipo <span class="text-danger">*</span></label>
+                          <select class="form-control form-control-sm" formControlName="tipo">
+                            <option value="vehiculo">Vehículo</option>
+                            <option value="maquinaria">Maquinaria</option>
+                            <option value="equipo">Equipo</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="form-group mb-2">
+                          <label class="small font-weight-bold">Estado <span class="text-danger">*</span></label>
+                          <select class="form-control form-control-sm" formControlName="estado">
+                            <option value="operativo">Operativo</option>
+                            <option value="mantenimiento">Mantenimiento</option>
+                            <option value="fuera_servicio">Fuera de Servicio</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="form-group mb-2">
+                          <label class="small font-weight-bold">Año</label>
+                          <input type="number" class="form-control form-control-sm" formControlName="anio" placeholder="2024">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mediciones -->
+                <div class="card card-outline card-info shadow-sm mb-3">
+                  <div class="card-header py-2">
+                    <h3 class="card-title small font-weight-bold"><i class="fas fa-tachometer-alt mr-1"></i>Mediciones y Registro</h3>
+                  </div>
+                  <div class="card-body py-2">
+                    <div class="row g-2">
+                      <div class="col-md-6">
+                        <div class="form-group mb-0">
+                          <label class="small font-weight-bold">Odómetro Actual (km)</label>
+                          <div class="input-group input-group-sm">
+                            <input type="number" class="form-control" formControlName="odometro_actual">
+                            <span class="input-group-text font-weight-bold">km</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group mb-0">
+                          <label class="small font-weight-bold">Horas Motor Actual</label>
+                          <div class="input-group input-group-sm">
+                            <input type="number" class="form-control" formControlName="horas_motor_actual">
+                            <span class="input-group-text font-weight-bold">hrs</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sidebar: Foto y Otros -->
+              <div class="col-md-4">
+                <div class="card card-outline card-success shadow-sm mb-3">
+                  <div class="card-header py-2">
+                    <h3 class="card-title small font-weight-bold"><i class="fas fa-camera mr-1"></i>Fotografía</h3>
+                  </div>
+                  <div class="card-body text-center py-3">
+                    <div class="img-thumbnail bg-light d-flex align-items-center justify-content-center mb-2" style="height: 180px; width: 100%; border-radius: 8px; overflow: hidden;">
+                      <img *ngIf="imagePreview" [src]="imagePreview" class="img-fluid" style="max-height: 100%;" alt="Vista previa">
+                      <div *ngIf="!imagePreview" class="text-muted">
+                        <i class="fas fa-image fa-3x mb-2 opacity-50"></i><br>
+                        <span class="small">Sin imagen</span>
+                      </div>
+                    </div>
+                    <div class="custom-file custom-file-sm" *ngIf="modalMode !== 'view'">
+                      <input type="file" class="custom-file-input" id="foto" (change)="onFileSelected($event)" accept="image/*">
+                      <label class="custom-file-label small text-left" for="foto">{{ selectedFile ? selectedFile.name : 'Subir foto...' }}</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card card-outline card-warning shadow-sm">
+                    <div class="card-header py-2">
+                        <h3 class="card-title small font-weight-bold"><i class="fas fa-file-invoice mr-1"></i>Documentación</h3>
+                    </div>
+                    <div class="card-body py-2">
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold text-muted mb-0">SOAT (Vence)</label>
+                            <input type="date" class="form-control form-control-sm" formControlName="fecha_soat">
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="small font-weight-bold text-muted mb-0">Rev. Técnica (Vence)</label>
+                            <input type="date" class="form-control form-control-sm" formControlName="fecha_revision_tecnica">
+                        </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group mt-2">
+              <label class="small font-weight-bold text-muted">Observaciones Adicionales</label>
+              <textarea class="form-control form-control-sm" formControlName="observaciones" rows="2" placeholder="Notas sobre el estado general del equipo..."></textarea>
+            </div>
+          </div>
+
+          <!-- TAB: MANTENIMIENTO -->
+          <div *ngIf="activeTabModal === 'mantenimientos'">
+              <!-- Modo Edición/Creación -->
+              <div *ngIf="modalMode !== 'view'">
+                  <div class="alert alert-warning border-0 shadow-sm mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar-check fa-2x mr-3 text-warning"></i>
+                            <div>
+                                <h6 class="mb-0 font-weight-bold">Planes de Mantenimiento Programados</h6>
+                                <small>Configure los próximos mantenimientos preventivos para este activo.</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary shadow-sm" (click)="abrirModalControl()">
+                          <i class="fas fa-plus mr-1"></i> Agregar Programación
+                        </button>
+                    </div>
+                  </div>
+
+                  <div *ngIf="controlesMantenimiento.length === 0" class="text-center py-5 bg-white rounded shadow-none border">
+                    <i class="fas fa-info-circle fa-3x text-light mb-3"></i>
+                    <p class="text-muted mb-0">No hay mantenimientos programados manualmente.</p>
+                    <small class="text-muted">Los planes obligatorios se generarán automáticamente al guardar.</small>
+                  </div>
+                  
+                  <div *ngIf="controlesMantenimiento.length > 0" class="table-responsive">
+                    <table class="table table-sm table-hover bg-white border">
+                      <thead class="bg-light">
+                        <tr class="small text-uppercase font-weight-bold">
+                          <th class="px-3">Plan de Mantenimiento</th>
+                          <th>Fecha Próxima</th>
+                          <th>Metas (KM / HRS)</th>
+                          <th class="text-center">Estado</th>
+                          <th width="100px" class="text-center">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let control of controlesMantenimiento; let i = index">
+                          <td class="px-3 py-2">
+                            <span class="font-weight-bold text-primary">{{getNombreTipoMantenimiento(control.tipo_mantenimiento_id)}}</span><br>
+                            <small class="text-muted">{{getCategoriaTipoMantenimiento(control.tipo_mantenimiento_id)}}</small>
+                          </td>
+                          <td class="align-middle border-left">{{control.fecha_proxima ? (control.fecha_proxima | date:'dd/MM/yyyy') : '--/--/----'}}</td>
+                          <td class="align-middle">
+                            <div class="small">
+                                <span *ngIf="control.kilometraje_proximo" class="d-block"><i class="fas fa-road text-muted mr-1"></i> {{control.kilometraje_proximo | number}} km</span>
+                                <span *ngIf="control.horometro_proximo" class="d-block"><i class="fas fa-hourglass-start text-muted mr-1"></i> {{control.horometro_proximo | number}} hrs</span>
+                            </div>
+                          </td>
+                          <td class="text-center align-middle">
+                            <span class="badge px-3 py-1" [ngClass]="{
+                              'badge-info': control.estado === 'pendiente',
+                              'badge-warning': control.estado === 'proximo',
+                              'badge-danger': control.estado === 'vencido',
+                              'badge-success': control.estado === 'realizado'
+                            }">{{control.estado | uppercase}}</span>
+                          </td>
+                          <td class="text-center align-middle">
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-warning" (click)="editarControlMantenimiento(i)" title="Editar">
+                                  <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-danger" (click)="eliminarControlMantenimiento(i)" title="Eliminar">
+                                  <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+              </div>
+
+              <!-- Modo Vista (Pestañas Historial / Próximos) -->
+              <div *ngIf="modalMode === 'view'">
+                  <div class="card card-outline card-warning shadow-none border-0 bg-transparent">
+                    <div class="card-header p-0 bg-transparent border-bottom mb-3">
+                      <ul class="nav nav-pills" id="mantenimientoTabs" role="tablist">
+                        <li class="nav-item">
+                          <a class="nav-link active py-1 px-3 small font-weight-bold" id="programados-tab" data-toggle="pill" href="#programados" role="tab">
+                            <i class="fas fa-calendar-alt mr-1"></i> PROXIMOS
+                          </a>
+                        </li>
+                        <li class="nav-item ml-2">
+                          <a class="nav-link py-1 px-3 small font-weight-bold" id="historial-tab" data-toggle="pill" href="#historial" role="tab">
+                            <i class="fas fa-history mr-1"></i> HISTORIAL
+                            <span class="badge badge-success ml-1">{{getControlesRealizados().length}}</span>
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <div class="tab-content" id="mantenimientoTabsContent">
+                      <div class="tab-pane fade show active" id="programados" role="tabpanel">
+                        <div class="table-responsive">
+                          <table class="table table-sm table-hover bg-white border">
+                            <thead class="bg-light">
+                              <tr class="small text-uppercase font-weight-bold">
+                                <th>Tipo</th>
+                                <th>Fecha</th>
+                                <th>Metas</th>
+                                <th class="text-center">Estado / Alerta</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let control of getControlesNoRealizados()">
+                                <td class="py-2">
+                                  <span class="font-weight-bold">{{getNombreTipoMantenimiento(control.tipo_mantenimiento_id)}}</span>
+                                </td>
+                                <td>{{control.fecha_proxima ? (control.fecha_proxima | date:'dd/MM/yyyy') : '-'}}</td>
+                                <td>
+                                    <small *ngIf="control.kilometraje_proximo" class="d-block">{{control.kilometraje_proximo | number}} km</small>
+                                    <small *ngIf="control.horometro_proximo" class="d-block">{{control.horometro_proximo | number}} hrs</small>
+                                </td>
+                                <td class="text-center">
+                                  <span class="badge py-1 px-2" [ngClass]="{
+                                    'badge-info': control.estado === 'pendiente',
+                                    'badge-warning': control.estado === 'proximo',
+                                    'badge-danger': control.estado === 'vencido',
+                                    'badge-success': control.estado === 'realizado'
+                                  }">{{control.estado | uppercase}}</span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <div *ngIf="getControlesNoRealizados().length === 0" class="text-center text-muted py-4">
+                            <i class="fas fa-check-circle text-success fa-2x mb-2 opacity-50"></i>
+                            <p class="mb-0 small font-weight-bold">No hay mantenimientos pendientes</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="tab-pane fade" id="historial" role="tabpanel">
+                        <div class="table-responsive">
+                          <table class="table table-sm table-hover bg-white border">
+                            <thead class="bg-success text-white">
+                              <tr class="small text-uppercase">
+                                <th>Tipo de Mantenimiento</th>
+                                <th>Fecha Ejecución</th>
+                                <th>Metas Alcanzadas</th>
+                                <th>Próxima Cita</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let control of getControlesRealizados()">
+                                <td><strong>{{getNombreTipoMantenimiento(control.tipo_mantenimiento_id)}}</strong></td>
+                                <td>
+                                  <span class="text-success font-weight-bold">
+                                    <i class="fas fa-check-double mr-1"></i> 
+                                    {{control.fecha_ultima_realizacion ? (control.fecha_ultima_realizacion | date:'dd/MM/yyyy') : (control.fecha_proxima | date:'dd/MM/yyyy')}}
+                                  </span>
+                                </td>
+                                <td>
+                                    <small *ngIf="control.kilometraje_ultima_realizacion" class="d-block">{{control.kilometraje_ultima_realizacion | number}} km</small>
+                                    <small *ngIf="control.horometro_ultima_realizacion" class="d-block">{{control.horometro_ultima_realizacion | number}} hrs</small>
+                                </td>
+                                <td>{{control.fecha_proxima ? (control.fecha_proxima | date:'dd/MM/yyyy') : '-'}}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <div *ngIf="getControlesRealizados().length === 0" class="text-center text-muted py-4">
+                            <i class="fas fa-history fa-2x mb-2 opacity-50"></i>
+                            <p class="mb-0 small font-weight-bold">Sin historial registrado</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light" style="border-bottom-left-radius: var(--ds-modal-border-radius); border-bottom-right-radius: var(--ds-modal-border-radius);">
+          <button type="button" class="btn btn-secondary px-4 shadow-sm" (click)="cerrarModal()">
+            <i class="fas fa-times mr-1"></i> Cerrar
+          </button>
+          <button type="submit" class="btn px-4 shadow-sm" [ngClass]="modalMode === 'edit' ? 'btn-warning' : 'btn-primary'" *ngIf="modalMode !== 'view'" [disabled]="submitting">
+            <i class="fas mr-1" [ngClass]="submitting ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{ submitting ? 'Guardando...' : (modalMode === 'edit' ? 'Actualizar Cambios' : 'Registrar Equipo') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Agregar/Editar Control de Mantenimiento -->
+<div class="modal fade" id="modalControlMantenimiento" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="border-radius: var(--ds-modal-border-radius);">
+      <div class="modal-header bg-warning py-2">
+        <h5 class="modal-title" style="font-size: 1rem; font-weight: 600;">
+          <i class="fas fa-calendar-check mr-2"></i>
+          <span *ngIf="controlIndex === -1">Programar Nuevo Mantenimiento</span>
+          <span *ngIf="controlIndex !== -1">Modificar Programación</span>
+        </h5>
+        <button type="button" class="close text-dark" (click)="cerrarModalControl()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <form [formGroup]="controlForm" (ngSubmit)="guardarControlMantenimiento()">
+        <div class="modal-body">
+          <div class="row">
+            <!-- Tipo de Mantenimiento -->
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="tipo_mantenimiento_id">Tipo de Mantenimiento <span class="text-danger">*</span></label>
+                <select class="form-control" id="tipo_mantenimiento_id" formControlName="tipo_mantenimiento_id"
+                        [class.is-invalid]="controlForm.get('tipo_mantenimiento_id')?.invalid && controlForm.get('tipo_mantenimiento_id')?.touched"
+                        (change)="onTipoMantenimientoChange()">
+                  <option [value]="null">Seleccione un tipo</option>
+                  <option *ngFor="let tipo of tiposMantenimiento" [value]="tipo.id">
+                    {{tipo.nombre}} ({{tipo.categoria}} - {{tipo.criticidad}})
+                  </option>
+                </select>
+                <div class="invalid-feedback" *ngIf="controlForm.get('tipo_mantenimiento_id')?.invalid && controlForm.get('tipo_mantenimiento_id')?.touched">
+                  Debe seleccionar un tipo de mantenimiento
+                </div>
+              </div>
+              
+              <!-- Resumen de Frecuencia Visual -->
+              <div *ngIf="selectedTipoMantenimiento" class="alert alert-light border mb-2 py-2" style="border-left: 4px solid #17a2b8 !important;">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-cog text-info fa-lg mr-2"></i>
+                  <div>
+                    <span class="d-block">
+                      <strong>{{selectedTipoMantenimiento.nombre}}</strong>
+                      <span class="badge badge-info ml-1">{{selectedTipoMantenimiento.tipo_medicion | titlecase}}</span>
+                      <span class="badge badge-primary ml-1">{{selectedTipoMantenimiento.categoria}}</span>
+                    </span>
+                    <small class="text-muted d-block mt-1">
+                      <i class="fas fa-clock mr-1"></i> Frecuencia:
+                      <span *ngIf="selectedTipoMantenimiento.frecuencia_kilometros" class="text-success">{{selectedTipoMantenimiento.frecuencia_kilometros | number}} km</span>
+                      <span *ngIf="selectedTipoMantenimiento.frecuencia_kilometros && selectedTipoMantenimiento.frecuencia_horas"> / </span>
+                      <span *ngIf="selectedTipoMantenimiento.frecuencia_horas" class="text-success">{{selectedTipoMantenimiento.frecuencia_horas | number}} horas</span>
+                      <span *ngIf="(selectedTipoMantenimiento.frecuencia_kilometros || selectedTipoMantenimiento.frecuencia_horas) && selectedTipoMantenimiento.frecuencia_dias"> / </span>
+                      <span *ngIf="selectedTipoMantenimiento.frecuencia_dias" class="text-success">{{selectedTipoMantenimiento.frecuencia_dias}} días</span>
+                      <span *ngIf="!selectedTipoMantenimiento.frecuencia_kilometros && !selectedTipoMantenimiento.frecuencia_horas && !selectedTipoMantenimiento.frecuencia_dias" class="text-warning">No configurada</span>
+                    </small>
+                    <small class="text-muted d-block" *ngIf="selectedTipoMantenimiento.alerta_roja_dias || selectedTipoMantenimiento.alerta_amarilla_dias">
+                      <i class="fas fa-bell mr-1"></i> Alertas:
+                      <span *ngIf="selectedTipoMantenimiento.alerta_verde_dias" class="badge badge-success">Verde: {{selectedTipoMantenimiento.alerta_verde_dias}} días</span>
+                      <span *ngIf="selectedTipoMantenimiento.alerta_amarilla_dias" class="badge badge-warning ml-1">Amarilla: {{selectedTipoMantenimiento.alerta_amarilla_dias}} días</span>
+                      <span *ngIf="selectedTipoMantenimiento.alerta_roja_dias" class="badge badge-danger ml-1">Roja: {{selectedTipoMantenimiento.alerta_roja_dias}} días</span>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mensaje Informativo -->
+            <div class="col-md-12 mb-3">
+              <div class="callout callout-info">
+                <h5><i class="fas fa-magic mr-1"></i> Cálculo Automático</h5>
+                <p class="mb-0">Al seleccionar el tipo de mantenimiento, el sistema calculará automáticamente las metas (fecha, km, horas) basándose en el uso actual del equipo y la frecuencia del fabricante.</p>
+              </div>
+            </div>
+
+            <!-- Campos Ocultos (se calculan automáticamente) -->
+            <div class="col-12 d-none">
+              <div class="row">
+                <!-- Fecha Próxima -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="fecha_proxima">Fecha Próxima</label>
+                    <input type="date" class="form-control" id="fecha_proxima" formControlName="fecha_proxima">
+                  </div>
+                </div>
+
+                <!-- Estado -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="estado">Estado</label>
+                    <select class="form-control" id="estado" formControlName="estado">
+                      <option value="pendiente">Pendiente</option>
+                      <option value="proximo">Próximo</option>
+                      <option value="vencido">Vencido</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Kilometraje Próximo -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="kilometraje_proximo">Kilometraje Próximo (km)</label>
+                    <input type="number" class="form-control" id="kilometraje_proximo" formControlName="kilometraje_proximo">
+                  </div>
+                </div>
+
+                <!-- Horómetro Próximo -->
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="horometro_proximo">Horómetro Próximo (hrs)</label>
+                    <input type="number" class="form-control" id="horometro_proximo" formControlName="horometro_proximo">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="observaciones">Observaciones</label>
+                <textarea class="form-control" id="observaciones" formControlName="observaciones"
+                          rows="2" placeholder="Observaciones adicionales..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalControl()">
+            <i class="fas fa-times mr-1"></i> Cancelar
+          </button>
+          <button type="submit" class="btn btn-warning">
+            <i class="fas fa-save mr-1"></i>
+            {{ controlIndex === -1 ? 'Agregar' : 'Actualizar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Gestión de Tipos de Mantenimiento -->
+<div class="modal fade" id="modalTipoMantenimiento" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" style="border-radius: var(--ds-modal-border-radius);">
+      <div class="modal-header bg-success text-white py-3">
+        <h5 class="modal-title" style="font-weight: 600;">
+          <i class="fas fa-magic mr-2"></i>
+          {{ editandoTipo ? 'Editar Configuración de Mantenimiento' : 'Nueva Regla de Mantenimiento' }}
+        </h5>
+        <button type="button" class="close text-white" (click)="cerrarModalTipo()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <form [formGroup]="tipoMantenimientoForm" (ngSubmit)="guardarTipoMantenimiento()">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Código</label>
+                <input type="text" class="form-control" formControlName="codigo" placeholder="Ej: MANT-01">
+              </div>
+            </div>
+            <div class="col-md-8">
+              <div class="form-group">
+                <label>Nombre del Mantenimiento <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="nombre" placeholder="Ej: Preventivo 250 Horas">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Categoría</label>
+                <input type="text" class="form-control" formControlName="categoria" placeholder="Ej: Motor">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Criticidad</label>
+                <select class="form-control" formControlName="criticidad">
+                  <option value="baja">Baja</option>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                  <option value="critica">Crítica</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Tipo Medición</label>
+                <select class="form-control" formControlName="tipo_medicion">
+                  <option value="horometro">Horómetro</option>
+                  <option value="kilometraje">Kilometraje</option>
+                  <option value="ambos">Ambos</option>
+                  <option value="temporal">Temporal</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="card card-outline card-success mt-2">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fas fa-clock mr-1"></i> Frecuencias y Alertas</h3>
+            </div>
+            <div class="card-body">
+              <!-- Sección de Frecuencias -->
+              <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle mr-1"></i>
+                <strong>¿Con qué métrica se basa este mantenimiento?</strong>
+                <div class="mt-1">
+                  <small>
+                    <span class="text-danger">*</span> Seleccione el <strong>Tipo de Medición</strong> y luego ingrese la frecuencia correspondiente:
+                  </small>
+                </div>
+                <div class="mt-1 small">
+                  <ul class="mb-0">
+                    <li><strong>Kilometraje:</strong> Mantenimiento basado en kilómetros recorridos</li>
+                    <li><strong>Horómetro:</strong> Mantenimiento basado en horas de uso del motor</li>
+                    <li><strong>Ambos:</strong> Se activa cuando cumpla KM O Horas</li>
+                    <li><strong>Temporal:</strong> Mantenimiento basado en calendario (días)</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Frecuencia KM <small class="text-muted">(ej: 5000)</small></label>
+                    <input type="number" class="form-control" formControlName="frecuencia_kilometros" placeholder="KM">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Frecuencia Horas <small class="text-muted">(ej: 250)</small></label>
+                    <input type="number" class="form-control" formControlName="frecuencia_horas" placeholder="Horas">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Frecuencia Días <small class="text-muted">(ej: 90)</small></label>
+                    <input type="number" class="form-control" formControlName="frecuencia_dias" placeholder="Días">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sección de Alertas -->
+              <div class="alert alert-warning mt-2 mb-2">
+                <i class="fas fa-bell mr-1"></i>
+                <strong>Configuración de Alertas</strong>
+                <div class="mt-1 small">Defina cuándo desea recibir alertas para este mantenimiento:</div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label class="text-success"><i class="fas fa-check-circle"></i> Verde (días)</label>
+                    <input type="number" class="form-control border-success" formControlName="alerta_verde_dias" placeholder="15">
+                    <small class="text-muted">Alerta preventiva</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label class="text-warning"><i class="fas fa-exclamation-circle"></i> Amarilla (días)</label>
+                    <input type="number" class="form-control border-warning" formControlName="alerta_amarilla_dias" placeholder="7">
+                    <small class="text-muted">Mantenimiento próximo</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label class="text-danger"><i class="fas fa-exclamation-triangle"></i> Roja (días)</label>
+                    <input type="number" class="form-control border-danger" formControlName="alerta_roja_dias" placeholder="3">
+                    <small class="text-muted">Urgente/Vencido</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Antic. KM <small class="text-muted">(100)</small></label>
+                    <input type="number" class="form-control" formControlName="anticipacion_kilometros" placeholder="100">
+                    <small class="text-muted">Para alerta roja</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Antic. Horas <small class="text-muted">(10)</small></label>
+                    <input type="number" class="form-control" formControlName="anticipacion_horas" placeholder="10">
+                    <small class="text-muted">Para alerta roja por horas</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Antic. Días <small class="text-muted">(7)</small></label>
+                    <input type="number" class="form-control" formControlName="anticipacion_dias" placeholder="7">
+                    <small class="text-muted">Para alerta roja por fecha</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group pt-4">
+                    <div class="custom-control custom-checkbox d-inline mr-3">
+                      <input type="checkbox" class="custom-control-input" id="tipoObligatorio" formControlName="obligatorio">
+                      <label class="custom-control-label" for="tipoObligatorio">Es Obligatorio</label>
+                    </div>
+                    <div class="custom-control custom-switch d-inline">
+                      <input type="checkbox" class="custom-control-input" id="tipoActivo" formControlName="activo">
+                      <label class="custom-control-label" for="tipoActivo">Estado Activo</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mt-2">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <label class="mb-0">Aplica a Tipos de Equipo (Deje vacío para todos)</label>
+                      <button type="button" class="btn btn-link btn-xs text-danger" 
+                              (click)="limpiarTiposEquipo()" *ngIf="tipoMantenimientoForm.get('tipos_equipo_aplicables')?.value?.length">
+                        <i class="fas fa-trash-alt"></i> Limpiar selección
+                      </button>
+                    </div>
+                    <div class="d-flex flex-wrap border rounded p-2 bg-light shadow-sm">
+                      <div class="custom-control custom-checkbox mr-4" *ngFor="let t of opcionesTipoEquipo">
+                        <input type="checkbox" class="custom-control-input" [id]="'checkTipo' + t.value" 
+                               [checked]="estaTipoSeleccionado(t.value)" (change)="toggleTipoEquipo(t.value)">
+                        <label class="custom-control-label font-weight-normal" [for]="'checkTipo' + t.value">{{t.label}}</label>
+                      </div>
+                    </div>
+                    <small class="text-muted" *ngIf="!tipoMantenimientoForm.get('tipos_equipo_aplicables')?.value?.length">
+                      <i class="fas fa-info-circle"></i> Actualmente aplica a <strong>todos</strong> los tipos de equipo.
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalTipo()">Cerrar</button>
+          <button type="submit" class="btn btn-success" [disabled]="submitting">
+            <i class="fas fa-save mr-1"></i> {{ editandoTipo ? 'Actualizar' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+

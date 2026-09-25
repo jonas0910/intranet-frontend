@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test DataTables Local</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- DataTables CSS Local -->
+    <link rel="stylesheet" href="src/assets/css/datatables/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="src/assets/css/datatables/buttons.bootstrap4.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">
+            <i class="fas fa-table me-2"></i>Test DataTables Local
+        </h1>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Lista de Usuarios con Botones de Exportación
+                </h5>
+            </div>
+            <div class="card-body">
+                <table id="usuariosTable" class="table table-bordered table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Avatar</th>
+                            <th>Nombre y Email</th>
+                            <th>Cargo y Departamento</th>
+                            <th>Roles</th>
+                            <th>Estado</th>
+                            <th>Último Acceso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- DataTables JS Local -->
+    <script src="src/assets/js/datatables/jquery.dataTables.min.js"></script>
+    <script src="src/assets/js/datatables/dataTables.bootstrap4.min.js"></script>
+    <script src="src/assets/js/datatables/dataTables.buttons.min.js"></script>
+    <script src="src/assets/js/datatables/buttons.bootstrap4.min.js"></script>
+    <script src="src/assets/js/datatables/jszip.min.js"></script>
+    <script src="src/assets/js/datatables/pdfmake.min.js"></script>
+    <script src="src/assets/js/datatables/vfs_fonts.js"></script>
+    <script src="src/assets/js/datatables/buttons.html5.min.js"></script>
+    <script src="src/assets/js/datatables/buttons.print.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Datos de ejemplo
+            const usuarios = [
+                {
+                    id: 1,
+                    empleado: {
+                        foto: 'assets/img/user1-128x128.jpg',
+                        nombres: 'Juan',
+                        apellidos: 'Pérez',
+                        cargo: 'Administrador',
+                        departamento: { nombre: 'Sistemas' }
+                    },
+                    email: 'juan.perez@Notaria.com',
+                    roles: ['admin', 'usuario'],
+                    activo: true,
+                    last_login: '2024-01-15 10:30:00'
+                },
+                {
+                    id: 2,
+                    empleado: {
+                        foto: 'assets/img/user2-160x160.jpg',
+                        nombres: 'María',
+                        apellidos: 'García',
+                        cargo: 'Analista',
+                        departamento: { nombre: 'Recursos Humanos' }
+                    },
+                    email: 'maria.garcia@Notaria.com',
+                    roles: ['usuario'],
+                    activo: true,
+                    last_login: '2024-01-15 09:15:00'
+                },
+                {
+                    id: 3,
+                    empleado: {
+                        foto: 'assets/img/user3-128x128.jpg',
+                        nombres: 'Carlos',
+                        apellidos: 'López',
+                        cargo: 'Supervisor',
+                        departamento: { nombre: 'Contabilidad' }
+                    },
+                    email: 'carlos.lopez@Notaria.com',
+                    roles: ['supervisor', 'usuario'],
+                    activo: false,
+                    last_login: null
+                }
+            ];
+
+            // Configuración de DataTable
+            $('#usuariosTable').DataTable({
+                data: usuarios,
+                columns: [
+                    {
+                        data: 'empleado.foto',
+                        title: 'Avatar',
+                        render: function(data, type, row) {
+                            return `<img src="${data || 'assets/img/user1-128x128.jpg'}" class="img-circle" width="40" height="40" alt="Avatar">`;
+                        }
+                    },
+                    {
+                        data: 'empleado.nombres',
+                        title: 'Nombre y Email',
+                        render: function(data, type, row) {
+                            return `<strong>${row.empleado.nombres} ${row.empleado.apellidos}</strong><br><small>${row.email}</small>`;
+                        }
+                    },
+                    {
+                        data: 'empleado.cargo',
+                        title: 'Cargo y Departamento',
+                        render: function(data, type, row) {
+                            return `${data}<br><small class="text-muted">${row.empleado.departamento.nombre}</small>`;
+                        }
+                    },
+                    {
+                        data: 'roles',
+                        title: 'Roles',
+                        render: function(data, type, row) {
+                            return data.map(role => `<span class="badge bg-primary me-1">${role}</span>`).join('');
+                        }
+                    },
+                    {
+                        data: 'activo',
+                        title: 'Estado',
+                        render: function(data, type, row) {
+                            const statusClass = data ? 'success' : 'danger';
+                            const statusText = data ? 'Activo' : 'Inactivo';
+                            return `<span class="badge bg-${statusClass}">${statusText}</span>`;
+                        }
+                    },
+                    {
+                        data: 'last_login',
+                        title: 'Último Acceso',
+                        render: function(data, type, row) {
+                            if (!data) return '<span class="text-muted">Nunca</span>';
+                            const date = new Date(data);
+                            return `<small>${date.toLocaleDateString()}<br>${date.toLocaleTimeString()}</small>`;
+                        }
+                    },
+                    {
+                        data: null,
+                        title: 'Acciones',
+                        orderable: false,
+                        render: function(data, type, row) {
+                            return `
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="editUser(${row.id})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="openAccesosModal(${row.id})">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="toggleUserStatus(${row.id})">
+                                        <i class="fas fa-power-off"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteUser(${row.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                },
+                responsive: true,
+                pageLength: 10,
+                order: [[1, 'asc']],
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                     '<"row"<"col-sm-12"B>>' +
+                     '<"row"<"col-sm-12"tr>>' +
+                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Todos"]],
+                buttons: [
+                    {
+                        extend: 'excel',
+                        text: '<i class="fas fa-file-excel"></i> Excel',
+                        className: 'btn btn-success btn-sm',
+                        title: 'Lista de Usuarios',
+                        exportOptions: {
+                            columns: [1, 2, 3, 4, 5] // Excluir avatar y acciones
+                        }
+                    },
+                    {
+                        extend: 'pdf',
+                        text: '<i class="fas fa-file-pdf"></i> PDF',
+                        className: 'btn btn-danger btn-sm',
+                        title: 'Lista de Usuarios',
+                        exportOptions: {
+                            columns: [1, 2, 3, 4, 5] // Excluir avatar y acciones
+                        }
+                    },
+                    {
+                        extend: 'csv',
+                        text: '<i class="fas fa-file-csv"></i> CSV',
+                        className: 'btn btn-info btn-sm',
+                        title: 'Lista de Usuarios',
+                        exportOptions: {
+                            columns: [1, 2, 3, 4, 5] // Excluir avatar y acciones
+                        }
+                    },
+                    {
+                        extend: 'print',
+                        text: '<i class="fas fa-print"></i> Imprimir',
+                        className: 'btn btn-secondary btn-sm',
+                        title: 'Lista de Usuarios',
+                        exportOptions: {
+                            columns: [1, 2, 3, 4, 5] // Excluir avatar y acciones
+                        }
+                    },
+                    {
+                        extend: 'copy',
+                        text: '<i class="fas fa-copy"></i> Copiar',
+                        className: 'btn btn-warning btn-sm'
+                    }
+                ],
+                initComplete: function() {
+                    console.log('✅ DataTables inicializado correctamente con botones de exportación locales');
+                }
+            });
+        });
+
+        // Funciones para los botones de acción
+        function editUser(id) {
+            alert('Editar usuario: ' + id);
+        }
+
+        function openAccesosModal(id) {
+            alert('Abrir modal de accesos para usuario: ' + id);
+        }
+
+        function toggleUserStatus(id) {
+            alert('Cambiar estado del usuario: ' + id);
+        }
+
+        function deleteUser(id) {
+            alert('Eliminar usuario: ' + id);
+        }
+    </script>
+</body>
+</html>

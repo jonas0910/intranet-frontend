@@ -1,0 +1,495 @@
+<!-- AdminLTE 3.2.0 Dashboard Completo -->
+
+<!-- Content Header (Page header) -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">
+          ¡Bienvenido, {{ currentUser?.name || 'Usuario' }}!
+        </h1>
+        <p class="text-muted mb-0" *ngIf="currentUser?.empleado?.cargo">
+          {{ currentUser?.empleado?.cargo }}
+          <span *ngIf="currentUser?.empleado?.departamento"> - {{ currentUser?.empleado?.departamento?.nombre }}</span>
+        </p>
+        <small class="text-muted">
+          <i class="fas fa-clock mr-1"></i>{{ getCurrentTime() }} | 
+          <i class="fas fa-calendar mr-1"></i>{{ getCurrentDate() }}
+        </small>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a [routerLink]="['/dashboard']">Inicio</a></li>
+          <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+  <div class="container-fluid dashboard-container">
+    
+    <!-- Estadísticas Principales -->
+    <div class="row">
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+          <div class="inner">
+            <h3>{{ dashboardData.totalUsuarios || 0 }}</h3>
+            <p>Usuarios Registrados</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-users"></i>
+          </div>
+          <a [routerLink]="['/usuarios']" class="small-box-footer">
+            Ver detalles <i class="fas fa-arrow-circle-right"></i>
+          </a>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-success">
+          <div class="inner">
+            <h3>{{ dashboardData.empleadosActivos || 0 }}</h3>
+            <p>Empleados Activos</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-user-check"></i>
+          </div>
+          <a [routerLink]="['/empleados']" class="small-box-footer">
+            Ver detalles <i class="fas fa-arrow-circle-right"></i>
+          </a>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+          <div class="inner">
+            <h3>{{ dashboardData.ticketsPendientes || 0 }}</h3>
+            <p>Tickets Pendientes</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-ticket-alt"></i>
+          </div>
+          <a [routerLink]="['/tickets']" class="small-box-footer">
+            Ver detalles <i class="fas fa-arrow-circle-right"></i>
+          </a>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+          <div class="inner">
+            <h3>{{ dashboardData.documentosSubidos || 0 }}</h3>
+            <p>Documentos Subidos</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <a [routerLink]="['/documentos']" class="small-box-footer">
+            Ver detalles <i class="fas fa-arrow-circle-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comunicados vigentes (visibles para todos los usuarios) -->
+    <div class="row" *ngIf="!loadingComunicados && comunicadosVigentes.length > 0">
+      <div class="col-12">
+        <div class="card card-outline card-primary">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-bullhorn mr-2"></i>
+              Avisos y comunicados
+            </h3>
+            <div class="card-tools">
+              <a [routerLink]="['/comunicados']" class="btn btn-primary btn-sm">
+                Ver todos <i class="fas fa-arrow-circle-right ml-1"></i>
+              </a>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between align-items-start" *ngFor="let c of comunicadosVigentes">
+                <div class="flex-grow-1">
+                  <span class="badge mr-2" [ngClass]="getTipoBadgeComunicado(c.tipo)">{{ c.tipo }}</span>
+                  <strong>{{ c.titulo }}</strong>
+                  <p class="mb-0 mt-1 text-muted small">{{ (c.contenido || '').substring(0, 120) }}{{ (c.contenido || '').length > 120 ? '...' : '' }}</p>
+                  <small class="text-muted">
+                    <i class="fas fa-calendar mr-1"></i>{{ formatDateComunicado(c.fecha_publicacion) }}
+                    <span *ngIf="c.created_by?.name" class="ml-2"><i class="fas fa-user mr-1"></i>{{ c.created_by.name }}</span>
+                  </small>
+                </div>
+                <a [routerLink]="['/comunicados']" class="btn btn-sm btn-outline-primary ml-2">Ver</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-2" *ngIf="loadingComunicados">
+      <div class="col-12">
+        <div class="text-center py-2">
+          <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+          <span class="ml-2">Cargando comunicados...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documentos institucionales (RIT, Directivas) -->
+    <div class="row" *ngIf="!loadingDocumentos && documentosRecientes.length > 0">
+      <div class="col-12">
+        <div class="card card-outline card-success">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-file-pdf mr-2"></i>
+              Documentos institucionales
+            </h3>
+            <div class="card-tools">
+              <a [routerLink]="['/comunicados/documentos']" class="btn btn-success btn-sm">
+                Ver todos <i class="fas fa-arrow-circle-right ml-1"></i>
+              </a>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="row p-3">
+              <div class="col-md-6 col-lg-4 mb-2" *ngFor="let doc of documentosRecientes">
+                <div class="border rounded p-2 d-flex justify-content-between align-items-center">
+                  <div class="flex-grow-1 min-w-0">
+                    <i class="fas fa-file-pdf text-danger mr-2"></i>
+                    <strong class="d-block text-truncate" [title]="doc.titulo">{{ doc.titulo }}</strong>
+                    <span class="badge badge-secondary mr-1" *ngIf="doc.categoria">{{ doc.categoria.nombre }}</span>
+                    <span class="badge badge-info">{{ getTipoLabelDocumento(doc.tipo) }}</span>
+                  </div>
+                  <a [routerLink]="['/comunicados/documentos']" class="btn btn-sm btn-outline-success ml-2">Ver</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-2" *ngIf="loadingDocumentos">
+      <div class="col-12">
+        <div class="text-center py-2">
+          <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+          <span class="ml-2">Cargando documentos...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Información del Usuario y widgets -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <!-- Widgets Adicionales -->
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card bg-gradient-info">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-calendar-alt mr-2"></i>
+                  Próximos Eventos
+                </h3>
+              </div>
+              <div class="card-body">
+                <div class="list-group list-group-flush">
+                  <div class="list-group-item bg-transparent text-white" *ngFor="let evento of proximosEventos">
+                    <div class="d-flex justify-content-between">
+                      <div>
+                        <strong>{{ evento.titulo }}</strong>
+                        <br><small>{{ evento.descripcion }}</small>
+                      </div>
+                      <div class="text-right">
+                        <small>{{ evento.fecha }}</small>
+                        <br><span class="badge badge-light">{{ evento.tipo }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card bg-gradient-success">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-chart-line mr-2"></i>
+                  Actividad Reciente
+                </h3>
+              </div>
+              <div class="card-body">
+                <div class="list-group list-group-flush">
+                  <div class="list-group-item bg-transparent text-white" *ngFor="let actividad of actividadReciente">
+                    <div class="d-flex align-items-center">
+                      <i [class]="actividad.icono" class="mr-3"></i>
+                      <div class="flex-grow-1">
+                        <div><strong>{{ actividad.titulo }}</strong></div>
+                        <small>{{ actividad.descripcion }}</small>
+                      </div>
+                      <small>{{ actividad.tiempo }}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card bg-gradient-warning">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-bell mr-2"></i>
+                  Notificaciones
+                </h3>
+              </div>
+              <div class="card-body">
+                <div class="list-group list-group-flush">
+                  <div class="list-group-item bg-transparent text-white" *ngFor="let notificacion of notificacionesImportantes">
+                    <div class="d-flex align-items-center">
+                      <i [class]="notificacion.icono" class="mr-3"></i>
+                      <div class="flex-grow-1">
+                        <div><strong>{{ notificacion.titulo }}</strong></div>
+                        <small>{{ notificacion.descripcion }}</small>
+                      </div>
+                      <small>{{ notificacion.tiempo }}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráficos y Estadísticas -->
+    <div class="row">
+      <!-- Left col -->
+      <section class="col-lg-7 connectedSortable">
+        
+        <!-- Custom tabs (Charts with tabs)-->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-chart-pie mr-1"></i>
+              Estadísticas del Sistema
+            </h3>
+            <div class="card-tools">
+              <ul class="nav nav-pills ml-auto">
+                <li class="nav-item">
+                  <a class="nav-link active" href="#revenue-chart" data-toggle="tab">Actividad</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#sales-chart" data-toggle="tab">Distribución</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="card-body">
+            <div class="tab-content p-0">
+              <!-- Morris chart - Sales -->
+              <div class="chart tab-pane active" id="revenue-chart" style="position: relative; height: 300px;">
+                <canvas id="revenue-chart-canvas" height="300" style="height: 300px;"></canvas>
+              </div>
+              <div class="chart tab-pane" id="sales-chart" style="position: relative; height: 300px;">
+                <canvas id="sales-chart-canvas" height="300" style="height: 300px;"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Chat Directo -->
+        <div class="card direct-chat direct-chat-primary">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-comments mr-2"></i>
+              Chat Directo
+            </h3>
+            <div class="card-tools">
+              <span title="3 Nuevos Mensajes" class="badge badge-primary">3</span>
+              <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                <i class="fas fa-minus"></i>
+              </button>
+              <button type="button" class="btn btn-tool" title="Contactos" data-widget="chat-pane-toggle">
+                <i class="fas fa-comments"></i>
+              </button>
+              <button type="button" class="btn btn-tool" data-card-widget="remove">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="card-body">
+            <!-- Conversations are loaded here -->
+            <div class="direct-chat-messages">
+              <!-- Message. Default to the left -->
+              <div class="direct-chat-msg">
+                <div class="direct-chat-infos clearfix">
+                  <span class="direct-chat-name float-left">Alexander Pierce</span>
+                  <span class="direct-chat-timestamp float-right">23 Ene 2:00 pm</span>
+                </div>
+                <img class="direct-chat-img" src="assets/img/user3-128x128.jpg" alt="message user image">
+                <div class="direct-chat-text">
+                  ¿Está funcionando el nuevo sistema de intranet?
+                </div>
+              </div>
+
+              <!-- Message to the right -->
+              <div class="direct-chat-msg right">
+                <div class="direct-chat-infos clearfix">
+                  <span class="direct-chat-name float-right">Sarah Bullock</span>
+                  <span class="direct-chat-timestamp float-left">23 Ene 2:05 pm</span>
+                </div>
+                <img class="direct-chat-img" src="assets/img/user4-128x128.jpg" alt="message user image">
+                <div class="direct-chat-text">
+                  ¡Sí! El nuevo AdminLTE 3.2.0 se ve genial.
+                </div>
+              </div>
+
+              <!-- Message. Default to the left -->
+              <div class="direct-chat-msg">
+                <div class="direct-chat-infos clearfix">
+                  <span class="direct-chat-name float-left">Alexander Pierce</span>
+                  <span class="direct-chat-timestamp float-right">23 Ene 2:15 pm</span>
+                </div>
+                <img class="direct-chat-img" src="assets/img/user5-128x128.jpg" alt="message user image">
+                <div class="direct-chat-text">
+                  Perfecto, todos los componentes funcionan bien.
+                </div>
+              </div>
+            </div>
+
+            <!-- Contacts are loaded here -->
+            <div class="direct-chat-contacts">
+              <ul class="contacts-list">
+                <li>
+                  <a href="#">
+                    <img class="contacts-list-img" src="assets/img/user6-128x128.jpg" alt="User Avatar">
+                    <div class="contacts-list-info">
+                      <span class="contacts-list-name">
+                        Count Dracula
+                        <small class="contacts-list-date float-right">2/28/2015</small>
+                      </span>
+                      <span class="contacts-list-msg">¿Cómo has estado? Yo he estado...</span>
+                    </div>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="card-footer">
+            <form action="#" method="post">
+              <div class="input-group">
+                <input type="text" name="message" placeholder="Escribe Mensaje ..." class="form-control">
+                <span class="input-group-append">
+                  <button type="button" class="btn btn-primary">Enviar</button>
+                </span>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+      </section>
+      
+      <!-- Right col (fixed) -->
+      <section class="col-lg-5 connectedSortable">
+
+        <!-- Calendario -->
+        <div class="card bg-gradient-success">
+          <div class="card-header border-0">
+            <h3 class="card-title">
+              <i class="far fa-calendar-alt mr-2"></i>
+              Calendario de Eventos
+            </h3>
+            <div class="card-tools">
+              <div class="btn-group">
+                <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-toggle="dropdown" data-offset="-52">
+                  <i class="fas fa-bars"></i>
+                </button>
+                <div class="dropdown-menu" role="menu">
+                  <a href="#" class="dropdown-item">Agregar nuevo evento</a>
+                  <a href="#" class="dropdown-item">Limpiar eventos</a>
+                  <div class="dropdown-divider"></div>
+                  <a href="#" class="dropdown-item">Ver calendario</a>
+                </div>
+              </div>
+              <button type="button" class="btn btn-success btn-sm" data-card-widget="collapse">
+                <i class="fas fa-minus"></i>
+              </button>
+              <button type="button" class="btn btn-success btn-sm" data-card-widget="remove">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body pt-0">
+            <div id="calendar" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <!-- Notificaciones Importantes -->
+        <div class="card bg-gradient-warning">
+          <div class="card-header border-0">
+            <h3 class="card-title">
+              <i class="fas fa-bell mr-2"></i>
+              Notificaciones Importantes
+            </h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-warning btn-sm" data-card-widget="collapse">
+                <i class="fas fa-minus"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="list-group list-group-flush">
+              <div class="list-group-item bg-transparent text-white" *ngFor="let notificacion of notificacionesImportantes">
+                <div class="d-flex align-items-center">
+                  <i [class]="notificacion.icono" class="mr-3"></i>
+                  <div class="flex-grow-1">
+                    <div><strong>{{ notificacion.titulo }}</strong></div>
+                    <small>{{ notificacion.descripcion }}</small>
+                  </div>
+                  <small>{{ notificacion.tiempo }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado del Sistema -->
+        <div class="card bg-gradient-info">
+          <div class="card-header border-0">
+            <h3 class="card-title">
+              <i class="fas fa-server mr-2"></i>
+              Estado del Sistema
+            </h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-info btn-sm" data-card-widget="collapse">
+                <i class="fas fa-minus"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-4 text-center">
+                <div id="sparkline-1"></div>
+                <div class="text-white">CPU</div>
+              </div>
+              <div class="col-4 text-center">
+                <div id="sparkline-2"></div>
+                <div class="text-white">RAM</div>
+              </div>
+              <div class="col-4 text-center">
+                <div id="sparkline-3"></div>
+                <div class="text-white">Disco</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+    
+  </div>
+</section>

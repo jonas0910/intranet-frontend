@@ -1,0 +1,397 @@
+<div class="modal fade" [class.show]="isVisible" [style.display]="isVisible ? 'block' : 'none'" [style.z-index]="isVisible ? 1100 : -1" tabindex="-1" (click)="onBackdropClick($event)">
+  <div #modalDialog 
+       class="modal-dialog modal-dialog-centered modal-dialog-scrollable" 
+       [style.max-width.px]="1000"
+       [style.width.%]="90"
+       [style.margin]="'1.75rem auto'">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-contract me-2"></i>
+          {{ isEditMode ? 'Editar Orden de Servicio' : 'Nueva Orden de Servicio' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="onCancel()" aria-label="Close"></button>
+      </div>
+      
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <form [formGroup]="contractForm" (ngSubmit)="onSubmit()">
+          
+          <!-- Sección: Información del Contrato -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="fas fa-file-alt text-primary"></i>
+              Información de la Orden
+            </h6>
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label for="contract_number" class="form-label required">N° Orden de Servicio</label>
+                <div class="input-group">
+                  <input 
+                    #firstInput
+                    type="text" 
+                    id="contract_number" 
+                    class="form-control"
+                    formControlName="contract_number"
+                    [class.is-invalid]="hasError('contract_number')">
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-secondary"
+                    (click)="generateContractNumber()"
+                    title="Generar número automático">
+                    <i class="fas fa-magic"></i>
+                  </button>
+                </div>
+                <div class="invalid-feedback" *ngIf="hasError('contract_number')">
+                  {{ getError('contract_number') }}
+                </div>
+              </div>
+
+              <!-- Tipo de Orden (Forzado a Servicio) -->
+              <div class="col-md-4">
+                <label for="contract_type" class="form-label required">Tipo de Orden</label>
+                <input 
+                  type="text" 
+                  class="form-control bg-light" 
+                  value="Servicio" 
+                  readonly>
+                <input type="hidden" formControlName="contract_type">
+              </div>
+
+              <!-- Fecha de Inicio -->
+              <div class="col-md-4">
+                <label for="start_date" class="form-label required">Fecha de Inicio</label>
+                <input 
+                  type="date" 
+                  id="start_date" 
+                  class="form-control"
+                  formControlName="start_date"
+                  [class.is-invalid]="hasError('start_date')">
+                <div class="invalid-feedback" *ngIf="hasError('start_date')">
+                  {{ getError('start_date') }}
+                </div>
+              </div>
+
+              <!-- Fecha de Fin -->
+              <div class="col-md-4">
+                <label for="end_date" class="form-label required">Fecha de Fin</label>
+                <input 
+                  type="date" 
+                  id="end_date" 
+                  class="form-control"
+                  formControlName="end_date"
+                  [class.is-invalid]="hasError('end_date')">
+                <div class="invalid-feedback" *ngIf="hasError('end_date')">
+                  {{ getError('end_date') }}
+                </div>
+              </div>
+
+
+
+              <!-- Estado -->
+              <div class="col-md-4">
+                <label for="status" class="form-label required">Estado</label>
+                <select 
+                  id="status" 
+                  class="form-select"
+                  formControlName="status"
+                  [class.is-invalid]="hasError('status')">
+                  <option *ngFor="let status of statusOptions" [value]="status.value">
+                    {{ status.label }}
+                  </option>
+                </select>
+                <div class="invalid-feedback" *ngIf="hasError('status')">
+                  {{ getError('status') }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección: Detalles Laborales -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="fas fa-briefcase text-success"></i>
+              Detalles Laborales
+            </h6>
+            <div class="row g-2">
+              <!-- Concepto de Servicio -->
+              <div class="col-md-4">
+                <label for="position" class="form-label required">Concepto de Servicio</label>
+                <select 
+                  id="position" 
+                  class="form-select"
+                  formControlName="position"
+                  [class.is-invalid]="hasError('position')">
+                  <option value="">Seleccione un concepto</option>
+                  <option *ngFor="let position of positions" [value]="position.id">
+                    {{ position.name }}
+                  </option>
+                </select>
+                <div class="invalid-feedback" *ngIf="hasError('position')">
+                  {{ getError('position') }}
+                </div>
+              </div>
+
+              <!-- Salario -->
+              <div class="col-md-4">
+                <label for="salary" class="form-label required">Salario</label>
+                <div class="input-group">
+                  <span class="input-group-text">S/</span>
+                  <input 
+                    type="number" 
+                    id="salary" 
+                    class="form-control"
+                    formControlName="salary"
+                    step="0.01"
+                    min="0"
+                    [class.is-invalid]="hasError('salary')">
+                </div>
+                <div class="invalid-feedback" *ngIf="hasError('salary')">
+                  {{ getError('salary') }}
+                </div>
+              </div>
+
+
+
+              <!-- Centro de Costo -->
+              <div class="col-md-4">
+                <label for="cost_center_id" class="form-label">
+                  <i class="fas fa-building text-warning me-1"></i>
+                  Centro de Costo
+                </label>
+                <select 
+                  id="cost_center_id" 
+                  class="form-select"
+                  formControlName="cost_center_id">
+                  <option value="">Seleccionar centro de costo</option>
+                  <option *ngFor="let center of costCenters" [value]="center.id">
+                    {{ center.code }} - {{ center.name }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Horas Semanales -->
+              <div class="col-md-4">
+                <label for="weekly_hours" class="form-label required">Horas Semanales</label>
+                <input 
+                  type="number" 
+                  id="weekly_hours" 
+                  class="form-control"
+                  formControlName="weekly_hours"
+                  min="1"
+                  max="168"
+                  [class.is-invalid]="hasError('weekly_hours')">
+                <div class="invalid-feedback" *ngIf="hasError('weekly_hours')">
+                  {{ getError('weekly_hours') }}
+                </div>
+              </div>
+
+              <!-- Horario de Trabajo -->
+              <div class="col-md-4">
+                <label for="work_schedule" class="form-label required">Horario de Trabajo</label>
+                <select 
+                  id="work_schedule" 
+                  class="form-select"
+                  formControlName="work_schedule"
+                  [class.is-invalid]="hasError('work_schedule')">
+                  <option *ngFor="let schedule of workSchedules" [value]="schedule.value">
+                    {{ schedule.label }}
+                  </option>
+                </select>
+                <div class="invalid-feedback" *ngIf="hasError('work_schedule')">
+                  {{ getError('work_schedule') }}
+                </div>
+              </div>
+
+              <!-- Beneficios (Ocultos para Servicios) -->
+              <div class="col-md-12" *ngIf="false">
+                <label class="form-label mb-3">
+                  <i class="fas fa-gift me-2"></i>
+                  Beneficios Adicionales
+                </label>
+                <div class="row g-2">
+                  <div class="col-md-4">
+                    <div class="form-check">
+                      <input 
+                        type="checkbox" 
+                        id="has_benefits" 
+                        class="form-check-input"
+                        formControlName="has_benefits">
+                      <label for="has_benefits" class="form-check-label">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Tiene Beneficios
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-check">
+                      <input 
+                        type="checkbox" 
+                        id="has_bonus" 
+                        class="form-check-input"
+                        formControlName="has_bonus">
+                      <label for="has_bonus" class="form-check-label">
+                        <i class="fas fa-dollar-sign me-2"></i>
+                        Tiene Bonificaciones
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-check">
+                      <input 
+                        type="checkbox" 
+                        id="has_overtime" 
+                        class="form-check-input"
+                        formControlName="has_overtime">
+                      <label for="has_overtime" class="form-check-label">
+                        <i class="fas fa-clock me-2"></i>
+                        Horas Extras
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección: Firma y Documentación -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="fas fa-pen-fancy text-info"></i>
+              Firma y Documentación
+            </h6>
+            <div class="row g-2">
+              <!-- Fecha de Firma -->
+              <div class="col-md-4">
+                <label for="signed_date" class="form-label">
+                  <i class="fas fa-calendar-check me-1"></i>
+                  Fecha de Firma
+                </label>
+                <input 
+                  type="date" 
+                  id="signed_date" 
+                  class="form-control"
+                  formControlName="signed_date">
+              </div>
+
+              <!-- Firmado Por -->
+              <div class="col-md-4">
+                <label for="signed_by" class="form-label">Firmado Por</label>
+                <input 
+                  type="text" 
+                  id="signed_by" 
+                  class="form-control"
+                  formControlName="signed_by"
+                  placeholder="Nombre del representante de la empresa">
+              </div>
+
+              <!-- Upload de Documento -->
+              <div class="col-md-4">
+                <label for="document_file" class="form-label">
+                  <i class="fas fa-file-pdf me-1"></i>
+                  Documento del Contrato (PDF, DOC, DOCX, IMG)
+                </label>
+                <div class="file-upload-container">
+                  <input 
+                    type="file" 
+                    id="document_file" 
+                    class="form-control"
+                    (change)="onFileSelected($event)"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                  
+                  <div class="file-preview mt-2" *ngIf="filePreview">
+                    <div class="alert alert-info d-flex justify-content-between align-items-center">
+                      <span>
+                        <i class="fas fa-file me-2"></i>
+                        {{ filePreview }}
+                      </span>
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-danger"
+                        (click)="removeFile()">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <small class="text-muted">
+                  Formatos permitidos: PDF, DOC, DOCX, JPG, PNG. Tamaño máximo: 10MB
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección: Condiciones y Observaciones -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="fas fa-clipboard-list text-secondary"></i>
+              Condiciones y Observaciones
+            </h6>
+            <div class="row g-2">
+              <!-- Condiciones Especiales -->
+              <div class="col-md-6">
+                <label for="special_conditions" class="form-label">Condiciones Especiales</label>
+                <textarea 
+                  id="special_conditions" 
+                  class="form-control"
+                  formControlName="special_conditions"
+                  rows="2"
+                  placeholder="Descripción de condiciones especiales del contrato"></textarea>
+              </div>
+
+              <!-- Observaciones/Notas -->
+              <div class="col-md-6">
+                <label for="notes" class="form-label">
+                  <i class="fas fa-sticky-note me-1"></i>
+                  Observaciones al Contrato
+                </label>
+                <textarea 
+                  id="notes" 
+                  class="form-control"
+                  formControlName="notes"
+                  rows="2"
+                  placeholder="Notas adicionales o comentarios sobre el contrato"></textarea>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          class="btn btn-info"
+          (click)="generateWordDocument()"
+          [disabled]="saving || !isEditMode"
+          *ngIf="isEditMode">
+          <i class="fas fa-file-word me-1"></i>
+          Generar Word
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-secondary"
+          (click)="onCancel()"
+          [disabled]="saving">
+          <i class="fas fa-times me-1"></i>
+          Cancelar
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary"
+          (click)="onSubmit()"
+          [disabled]="saving || contractForm.invalid">
+          <i class="fas fa-spinner fa-spin me-1" *ngIf="saving"></i>
+          <i class="fas fa-save me-1" *ngIf="!saving"></i>
+          {{ saving ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Guardar') }} Orden
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal backdrop -->
+<div class="modal-backdrop fade" [class.show]="isVisible" *ngIf="isVisible" [style.z-index]="1090"></div>
+

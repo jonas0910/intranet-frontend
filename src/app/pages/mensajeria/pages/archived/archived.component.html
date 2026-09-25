@@ -1,0 +1,290 @@
+<!-- Archived Items Management -->
+<div class="archived-container">
+  
+  <!-- Header -->
+  <div class="card card-secondary card-outline">
+    <div class="card-header bg-gradient-secondary">
+      <h3 class="card-title text-white">
+        <i class="fas fa-archive mr-2"></i>
+        Elementos Archivados
+        <span class="badge badge-light ml-2">{{ stats.total }}</span>
+      </h3>
+      <div class="card-tools">
+        <div class="btn-group btn-group-sm mr-2">
+          <button type="button" class="btn btn-light" [class.active]="viewMode === 'list'" (click)="setViewMode('list')">
+            <i class="fas fa-list"></i>
+          </button>
+          <button type="button" class="btn btn-light" [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')">
+            <i class="fas fa-th"></i>
+          </button>
+        </div>
+        <button type="button" class="btn btn-sm btn-light" (click)="unarchiveSelected()"
+                [disabled]="selectedItems.size === 0">
+          <i class="fas fa-undo mr-1"></i>
+          Desarchivar ({{ selectedItems.size }})
+        </button>
+        <button type="button" class="btn btn-sm btn-danger text-white" (click)="deleteSelected()"
+                [disabled]="selectedItems.size === 0">
+          <i class="fas fa-trash mr-1"></i>
+          Eliminar ({{ selectedItems.size }})
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="card-body">
+      <div class="row mb-4">
+        <div class="col-md-3 col-6">
+          <div class="info-box bg-gradient-secondary">
+            <span class="info-box-icon">
+              <i class="fas fa-archive"></i>
+            </span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Archivados</span>
+              <span class="info-box-number">{{ stats.total }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="info-box bg-gradient-primary">
+            <span class="info-box-icon">
+              <i class="fas fa-envelope"></i>
+            </span>
+            <div class="info-box-content">
+              <span class="info-box-text">Mensajes</span>
+              <span class="info-box-number">{{ stats.messages }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="info-box bg-gradient-info">
+            <span class="info-box-icon">
+              <i class="fas fa-comments"></i>
+            </span>
+            <div class="info-box-content">
+              <span class="info-box-text">Conversaciones</span>
+              <span class="info-box-number">{{ stats.conversations }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="info-box bg-gradient-success">
+            <span class="info-box-icon">
+              <i class="fas fa-calendar-week"></i>
+            </span>
+            <div class="info-box-content">
+              <span class="info-box-text">Esta Semana</span>
+              <span class="info-box-number">{{ stats.thisWeek }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters and Sort -->
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">
+                <i class="fas fa-search"></i>
+              </span>
+            </div>
+            <input type="text" 
+                   class="form-control" 
+                   [(ngModel)]="searchQuery"
+                   (input)="onSearchChange()"
+                   placeholder="Buscar...">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <select class="form-control" [(ngModel)]="filterType" (change)="onFilterChange()">
+            <option value="all">Todos</option>
+            <option value="message">Mensajes</option>
+            <option value="conversation">Conversaciones</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-control" [(ngModel)]="filterDate" (change)="onFilterChange()">
+            <option value="all">Todo el tiempo</option>
+            <option value="week">Última semana</option>
+            <option value="month">Último mes</option>
+            <option value="year">Último año</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-control" [(ngModel)]="sortBy" (change)="onSortChange()">
+            <option value="date">Fecha</option>
+            <option value="title">Título</option>
+            <option value="sender">Remitente</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <div class="btn-group w-100">
+            <button type="button" class="btn btn-outline-secondary" (click)="selectAll()">
+              <i class="fas fa-check-square"></i>
+              {{ selectedItems.size === filteredItems.length && filteredItems.length > 0 ? 'Deseleccionar' : 'Seleccionar' }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary" (click)="toggleSortOrder()">
+              <i class="fas" [ngClass]="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loading" class="text-center p-5">
+        <div class="spinner-border text-secondary" role="status">
+          <span class="sr-only">Cargando...</span>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && filteredItems.length === 0" class="text-center p-5">
+        <i class="fas fa-archive fa-5x text-muted mb-4" style="opacity: 0.3;"></i>
+        <h4 class="text-muted">No hay elementos archivados</h4>
+        <p class="text-muted">Los mensajes y conversaciones archivados aparecerán aquí</p>
+      </div>
+
+      <!-- List View -->
+      <div class="archived-list" *ngIf="!loading && filteredItems.length > 0 && viewMode === 'list'">
+        <div class="list-group">
+          <div class="list-group-item list-group-item-action archived-item"
+               *ngFor="let item of filteredItems"
+               [class.selected]="isSelected(item.id)"
+               (click)="toggleSelection(item.id)">
+            
+            <div class="d-flex align-items-start">
+              <!-- Selection Checkbox -->
+              <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" 
+                       class="custom-control-input" 
+                       [id]="'item-' + item.id"
+                       [checked]="isSelected(item.id)"
+                       (click)="$event.stopPropagation()">
+                <label class="custom-control-label" [for]="'item-' + item.id"></label>
+              </div>
+
+              <!-- Icon -->
+              <div class="item-icon mr-3">
+                <i [class]="getItemIcon(item)" [style.color]="getItemIconColor(item)"></i>
+              </div>
+
+              <!-- Content -->
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="mb-1">
+                      {{ item.title }}
+                      <span class="badge badge-warning badge-sm ml-2" *ngIf="item.priority === 'high'">
+                        Alta
+                      </span>
+                      <span class="badge badge-danger badge-sm ml-2" *ngIf="item.priority === 'urgent'">
+                        Urgente
+                      </span>
+                      <span class="badge badge-info badge-sm ml-2" *ngIf="item.has_attachments">
+                        <i class="fas fa-paperclip"></i> {{ item.attachment_count }}
+                      </span>
+                    </h6>
+                    <p class="text-muted small mb-1" *ngIf="item.content">
+                      {{ item.content | slice:0:150 }}{{ item.content.length > 150 ? '...' : '' }}
+                    </p>
+                    <small class="text-muted">
+                      <i class="fas fa-user mr-1" *ngIf="item.sender_name"></i>
+                      {{ item.sender_name }}
+                      <span class="mx-2" *ngIf="item.sender_name">·</span>
+                      <i class="far fa-calendar mr-1"></i>
+                      Archivado {{ formatRelativeDate(item.archived_at) }}
+                      <span class="mx-2">·</span>
+                      <i class="far fa-clock mr-1"></i>
+                      Original del {{ formatDate(item.original_date) }}
+                    </small>
+                  </div>
+
+                  <!-- Actions -->
+                  <div class="item-actions">
+                    <button type="button" class="btn btn-sm btn-outline-primary mr-1"
+                            (click)="openItem(item); $event.stopPropagation()"
+                            title="Abrir">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success mr-1"
+                            (click)="unarchiveItem(item, $event)"
+                            title="Desarchivar">
+                      <i class="fas fa-undo"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            (click)="deleteItem(item, $event)"
+                            title="Eliminar permanentemente">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid View -->
+      <div class="row" *ngIf="!loading && filteredItems.length > 0 && viewMode === 'grid'">
+        <div class="col-md-6 col-lg-4" *ngFor="let item of filteredItems">
+          <div class="card shadow-sm mb-3 archived-card" [class.selected]="isSelected(item.id)">
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" 
+                         class="custom-control-input" 
+                         [id]="'grid-item-' + item.id"
+                         [checked]="isSelected(item.id)"
+                         (change)="toggleSelection(item.id)">
+                  <label class="custom-control-label" [for]="'grid-item-' + item.id"></label>
+                </div>
+                <span class="badge badge-secondary">
+                  {{ item.type === 'message' ? 'Mensaje' : 'Conversación' }}
+                </span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="text-center mb-3">
+                <i [class]="getItemIcon(item)" 
+                   [style.color]="getItemIconColor(item)"
+                   class="fa-3x"></i>
+              </div>
+              <h6 class="text-center mb-2">{{ item.title }}</h6>
+              <p class="text-muted small text-center" *ngIf="item.content">
+                {{ item.content | slice:0:100 }}...
+              </p>
+              <div class="text-center">
+                <small class="text-muted d-block">
+                  Archivado {{ formatRelativeDate(item.archived_at) }}
+                </small>
+              </div>
+            </div>
+            <div class="card-footer p-2">
+              <div class="btn-group btn-group-sm w-100">
+                <button type="button" class="btn btn-outline-primary" (click)="openItem(item)">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button type="button" class="btn btn-outline-success" (click)="unarchiveItem(item)">
+                  <i class="fas fa-undo"></i>
+                </button>
+                <button type="button" class="btn btn-outline-danger" (click)="deleteItem(item)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+

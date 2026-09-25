@@ -1,0 +1,54 @@
+<app-system-layout
+  title="Base de conocimientos"
+  subtitle="Soluciones a casos frecuentes de soporte"
+  [breadcrumbs]="[{label: 'Inicio', url: '/'}, {label: 'Helpdesk', url: '/helpdesk'}, {label: 'Base de conocimientos'}]"
+  subsystem="helpdesk">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <a routerLink="/helpdesk" class="btn btn-outline-secondary">Volver al portal</a>
+  </div>
+
+  <div class="row">
+    <div class="col-md-3 mb-3" *ngIf="categorias.length > 0">
+      <div class="card">
+        <div class="card-header">Categorías</div>
+        <div class="list-group list-group-flush">
+          <button type="button" class="list-group-item list-group-item-action" [class.active]="categoriaId === null" (click)="cambiarCategoria(null)">
+            Todas
+          </button>
+          <button type="button" *ngFor="let cat of categorias" class="list-group-item list-group-item-action" [class.active]="categoriaId === cat.id" (click)="cambiarCategoria(cat.id)">
+            {{ cat.nombre }} <span class="badge badge-secondary">{{ cat.articulos_count ?? 0 }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="Buscar en la base de conocimientos..." [(ngModel)]="busqueda" (keyup.enter)="filtrar()">
+            <button class="btn btn-primary" (click)="filtrar()">Buscar</button>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="loadingArticulos" class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+      <div *ngIf="!loadingArticulos && articulos.length === 0" class="alert alert-info">
+        No hay artículos que coincidan. Prueba otra categoría o búsqueda.
+      </div>
+      <div *ngIf="!loadingArticulos && articulos.length > 0" class="list-group">
+        <a *ngFor="let a of articulos" [routerLink]="['/helpdesk/base-conocimientos', a.id]" class="list-group-item list-group-item-action">
+          <h6 class="mb-1">{{ a.titulo }}</h6>
+          <p class="mb-0 small text-muted" *ngIf="a.resumen">{{ a.resumen }}</p>
+          <small class="text-muted">{{ a.categoria?.nombre }} · {{ a.vistas || 0 }} vistas</small>
+        </a>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="meta.last_page > 1">
+        <small>Página {{ meta.current_page }} de {{ meta.last_page }} ({{ meta.total }} en total)</small>
+        <div>
+          <button class="btn btn-sm btn-outline-secondary mr-1" [disabled]="meta.current_page <= 1" (click)="cambiarPagina(meta.current_page - 1)">Anterior</button>
+          <button class="btn btn-sm btn-outline-secondary" [disabled]="meta.current_page >= meta.last_page" (click)="cambiarPagina(meta.current_page + 1)">Siguiente</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-system-layout>

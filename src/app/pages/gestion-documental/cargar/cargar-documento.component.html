@@ -1,0 +1,403 @@
+<!-- Content Header (Page header) -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0"><i class="fas fa-file-upload mr-2"></i>Cargar Documento</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/">Inicio</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestion-documental">Gestión Documental</a></li>
+          <li class="breadcrumb-item active">Cargar Documento</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+  <div class="container-fluid">
+    
+      <form (ngSubmit)="onSubmit()">
+        <div class="row">
+          <!-- Formulario Principal -->
+          <div class="col-md-8">
+            <div class="card card-primary">
+              <div class="card-header">
+                <h3 class="card-title">Información del Documento</h3>
+              </div>
+              <div class="card-body">
+                
+                <div class="form-group">
+                  <label for="titulo">Título <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="titulo" 
+                         [(ngModel)]="formData.titulo" name="titulo"
+                         [class.is-invalid]="errors.titulo" required>
+                  <div class="invalid-feedback" *ngIf="errors.titulo">{{errors.titulo}}</div>
+                </div>
+
+                <div class="form-group">
+                  <label for="descripcion">Descripción</label>
+                  <textarea class="form-control" id="descripcion" rows="3"
+                            [(ngModel)]="formData.descripcion" name="descripcion"></textarea>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="tipo_documento_id">Tipo de Documento <span class="text-danger">*</span></label>
+                      <select class="form-control" id="tipo_documento_id" 
+                              [(ngModel)]="formData.tipo_documento_id" name="tipo_documento_id"
+                              (ngModelChange)="onTipoDocumentoChange()"
+                              [class.is-invalid]="errors.tipo_documento_id" required>
+                        <option [ngValue]="null">Seleccione un tipo</option>
+                        <option *ngFor="let tipo of tiposDocumento" [ngValue]="tipo.id">
+                          {{tipo.nombre}}
+                        </option>
+                      </select>
+                      <div class="invalid-feedback" *ngIf="errors.tipo_documento_id">{{errors.tipo_documento_id}}</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="area_id">Área <span class="text-danger">*</span></label>
+                      <select class="form-control" id="area_id" 
+                              [(ngModel)]="formData.area_id" name="area_id"
+                              (ngModelChange)="onAreaChange()"
+                              [class.is-invalid]="errors.area_id" required>
+                        <option [ngValue]="null">Seleccione un área</option>
+                        <option *ngFor="let area of areas" [ngValue]="area.id">
+                          {{area.nombre}}
+                        </option>
+                      </select>
+                      <div class="invalid-feedback" *ngIf="errors.area_id">{{errors.area_id}}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="clasificacion">Clasificación <span class="text-danger">*</span></label>
+                      <select class="form-control" id="clasificacion" 
+                              [(ngModel)]="formData.clasificacion" name="clasificacion" required>
+                        <option *ngFor="let clasif of clasificaciones" [value]="clasif.value">
+                          {{clasif.label}}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="fecha_documento">Fecha del Documento <span class="text-danger">*</span></label>
+                      <input type="date" class="form-control" id="fecha_documento" 
+                             [(ngModel)]="formData.fecha_documento" name="fecha_documento" required>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="numero_documento">Número de Documento</label>
+                      <input type="text" class="form-control" id="numero_documento" 
+                             [(ngModel)]="formData.numero_documento" name="numero_documento">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="paginas">Número de Páginas</label>
+                      <input type="number" class="form-control" id="paginas" min="1"
+                             [(ngModel)]="formData.paginas" name="paginas">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="asunto">Asunto</label>
+                  <input type="text" class="form-control" id="asunto" 
+                         [(ngModel)]="formData.asunto" name="asunto">
+                </div>
+
+                <div class="form-group">
+                  <label for="palabras_clave">Palabras Clave</label>
+                  <input type="text" class="form-control" id="palabras_clave" 
+                         [(ngModel)]="formData.palabras_clave" name="palabras_clave"
+                         placeholder="Separadas por comas">
+                  <small class="form-text text-muted">Ej: contrato, personal, 2025</small>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Carga de Archivo -->
+          <div class="col-md-4">
+            <div class="card card-success">
+              <div class="card-header">
+                <h3 class="card-title">Archivo Digital</h3>
+              </div>
+              <div class="card-body">
+                
+                <!-- Selector de Modo de Captura -->
+                <div class="form-group">
+                  <label>Modo de Captura <span class="text-danger">*</span></label>
+                  <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
+                    <label class="btn btn-outline-primary flex-fill" [class.active]="modoCaptura === 'archivo'">
+                      <input type="radio" name="modoCaptura" value="archivo" 
+                             [(ngModel)]="modoCaptura" (change)="cambiarModoCaptura('archivo')">
+                      <i class="fas fa-file-upload mr-2"></i>Cargar Archivo
+                    </label>
+                    <label class="btn btn-outline-success flex-fill" [class.active]="modoCaptura === 'escaner'"
+                           [class.disabled]="!scannerDisponible">
+                      <input type="radio" name="modoCaptura" value="escaner" 
+                             [(ngModel)]="modoCaptura" (change)="cambiarModoCaptura('escaner')"
+                             [disabled]="!scannerDisponible">
+                      <i class="fas fa-print mr-2"></i>Escanear Documento
+                      <span *ngIf="!scannerDisponible" class="badge badge-warning badge-sm ml-1">No disponible</span>
+                    </label>
+                  </div>
+                  <small class="form-text text-muted">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    <span *ngIf="scannerDisponible">Selecciona cómo deseas capturar el documento</span>
+                    <span *ngIf="!scannerDisponible" class="text-warning">
+                      El escaneo directo requiere un escáner conectado o cámara disponible
+                    </span>
+                  </small>
+                </div>
+
+                <!-- Opción 1: Cargar Archivo -->
+                <div class="form-group" *ngIf="modoCaptura === 'archivo'">
+                  <label for="archivo">Seleccionar Archivo <span class="text-danger">*</span></label>
+                  <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="archivo" 
+                           (change)="onFileSelected($event)"
+                           [class.is-invalid]="errors.archivo"
+                           accept=".pdf,.jpg,.jpeg,.png,.tiff,.tif">
+                    <label class="custom-file-label" for="archivo">
+                      {{selectedFile ? selectedFile.name : 'Elegir archivo...'}}
+                    </label>
+                    <div class="invalid-feedback" *ngIf="errors.archivo">{{errors.archivo}}</div>
+                  </div>
+                  <small class="form-text text-muted">
+                    <i class="fas fa-file mr-1"></i>Formatos: {{allowedExtensions.join(', ')}}<br>
+                    <i class="fas fa-weight mr-1"></i>Tamaño máximo: {{maxFileSize/1024}}MB
+                  </small>
+                </div>
+
+                <!-- Opción 2: Escanear -->
+                <div class="form-group" *ngIf="modoCaptura === 'escaner'">
+                  <label>Escanear Documento <span class="text-danger">*</span></label>
+                  <div class="card bg-light">
+                    <div class="card-body text-center py-5">
+                      <i class="fas fa-print fa-4x text-success mb-3"></i>
+                      <h5>Escáner Listo</h5>
+                      <p class="text-muted mb-3">
+                        Coloca el documento en el escáner y haz clic en el botón
+                      </p>
+                      <button type="button" class="btn btn-success btn-lg" (click)="openScannerModal()">
+                        <i class="fas fa-play mr-2"></i>Iniciar Escaneo
+                      </button>
+                      <div *ngIf="paginasEscaneadas.length > 0" class="mt-3">
+                        <span class="badge badge-success">
+                          <i class="fas fa-check mr-1"></i>
+                          {{paginasEscaneadas.length}} página(s) escaneada(s)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <small class="form-text text-muted">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Puedes escanear múltiples páginas que se combinarán automáticamente
+                  </small>
+                </div>
+
+                <!-- Vista Previa del Archivo -->
+                <div *ngIf="filePreview" class="alert alert-info">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <i [class]="getFileIcon(filePreview.extension)" class="fa-3x mr-3"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <strong>{{filePreview.name}}</strong><br>
+                      <small>Tamaño: {{formatFileSize(filePreview.size)}}</small><br>
+                      <small>Tipo: {{filePreview.type}}</small>
+                    </div>
+                    <div>
+                      <button type="button" class="btn btn-sm btn-danger" (click)="removeFile()">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="dpi">DPI (Calidad)</label>
+                  <input type="number" class="form-control" id="dpi" min="72" max="600"
+                         [(ngModel)]="formData.dpi" name="dpi"
+                         placeholder="Ej: 150, 300">
+                  <small class="form-text text-muted">Resolución del escaneo (opcional)</small>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="card">
+              <div class="card-body">
+                <button type="submit" class="btn btn-success btn-block" [disabled]="loading">
+                  <i class="fas fa-save mr-2"></i>
+                  <span *ngIf="!loading">Guardar Documento</span>
+                  <span *ngIf="loading"><i class="fas fa-spinner fa-spin"></i> Guardando...</span>
+                </button>
+                <button type="button" class="btn btn-secondary btn-block" (click)="onCancel()" [disabled]="loading">
+                  <i class="fas fa-times mr-2"></i> Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </form>
+  </div>
+</section>
+
+<!-- Modal de Escáner -->
+<div class="modal" [class.show]="showScannerModal" [style.display]="showScannerModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h4 class="modal-title">
+          <i class="fas fa-print mr-2"></i>Gestión de Escáner
+        </h4>
+        <button type="button" class="close text-white" (click)="closeScannerModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Controles del Escáner -->
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-cog mr-2"></i>Controles de Escaneo
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label>Resolución (DPI)</label>
+                      <select class="form-control">
+                        <option value="150">150 DPI (Borrador)</option>
+                        <option value="300" selected>300 DPI (Recomendado)</option>
+                        <option value="600">600 DPI (Alta calidad)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label>Modo de Color</label>
+                      <select class="form-control">
+                        <option value="color">Color</option>
+                        <option value="gris">Escala de grises</option>
+                        <option value="bw">Blanco y negro</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label>Tamaño de Papel</label>
+                      <select class="form-control">
+                        <option value="a4">A4</option>
+                        <option value="letter">Carta (Letter)</option>
+                        <option value="legal">Legal</option>
+                        <option value="auto">Detección automática</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="text-center mt-3">
+                  <button type="button" class="btn btn-success btn-lg" 
+                          (click)="iniciarEscaneo()" 
+                          [disabled]="escaneando">
+                    <i [class]="escaneando ? 'fas fa-spinner fa-spin' : 'fas fa-play'" class="mr-2"></i>
+                    {{escaneando ? 'Escaneando...' : 'Escanear Página'}}
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary btn-lg ml-2" 
+                          (click)="closeScannerModal()">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Páginas Escaneadas -->
+        <div class="row" *ngIf="paginasEscaneadas.length > 0">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-images mr-2"></i>Páginas Escaneadas ({{paginasEscaneadas.length}})
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-2" *ngFor="let pagina of paginasEscaneadas; let i = index">
+                    <div class="card">
+                      <img [src]="pagina.preview" class="card-img-top" alt="Página {{i+1}}">
+                      <div class="card-body p-2 text-center">
+                        <small><strong>{{pagina.nombre}}</strong></small>
+                        <br>
+                        <small class="text-muted">{{formatFileSize(pagina.tamano)}}</small>
+                        <br>
+                        <button type="button" class="btn btn-danger btn-sm mt-1" 
+                                (click)="eliminarPaginaEscaneada(i)">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje informativo -->
+        <div class="alert alert-warning" *ngIf="paginasEscaneadas.length === 0">
+          <i class="fas fa-info-circle mr-2"></i>
+          <strong>No hay páginas escaneadas aún.</strong>
+          Haz clic en "Escanear Página" para comenzar.
+        </div>
+
+        <div class="alert alert-success" *ngIf="paginasEscaneadas.length > 0">
+          <i class="fas fa-check-circle mr-2"></i>
+          <strong>{{paginasEscaneadas.length}} página(s) lista(s).</strong>
+          {{paginasEscaneadas.length > 1 ? 'Se combinarán en un único PDF.' : 'Puedes escanear más páginas o confirmar.'}}
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeScannerModal()">
+          <i class="fas fa-times mr-2"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-success" 
+                (click)="confirmarEscaneo()"
+                [disabled]="paginasEscaneadas.length === 0">
+          <i class="fas fa-check mr-2"></i>
+          Usar Páginas Escaneadas ({{paginasEscaneadas.length}})
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showScannerModal" *ngIf="showScannerModal"></div>
+

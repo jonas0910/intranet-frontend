@@ -1,0 +1,181 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-cog mr-1"></i>Configurar Modal de Aniversario</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos">Gestor</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/fotos-aniversario">Fotos Aniversario</a></li>
+          <li class="breadcrumb-item active">Configurar Modal</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="text-center py-5" *ngIf="loading"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+
+    <form *ngIf="!loading" (ngSubmit)="guardar()">
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h3 class="card-title"><i class="fas fa-sliders-h mr-1"></i>Configuración del Modal</h3>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+
+              <div class="form-group">
+                <div class="custom-control custom-switch custom-control-lg">
+                  <input type="checkbox" class="custom-control-input" id="modal_activo" [ngModel]="config.modal_aniversario_activo === '1'" (ngModelChange)="config.modal_aniversario_activo = $event ? '1' : '0'" name="modal_aniversario_activo">
+                  <label class="custom-control-label" for="modal_activo"><strong>Activar Modal de Aniversario</strong></label>
+                </div>
+                <small class="form-text text-muted">Si está desactivado, el modal no aparecerá en ninguna parte del sitio</small>
+              </div>
+              <hr>
+
+              <div class="form-group">
+                <div class="custom-control custom-switch custom-control-lg">
+                  <input type="checkbox" class="custom-control-input" id="auto_abrir" [ngModel]="config.modal_aniversario_auto_abrir === '1'" (ngModelChange)="config.modal_aniversario_auto_abrir = $event ? '1' : '0'" name="modal_aniversario_auto_abrir">
+                  <label class="custom-control-label" for="auto_abrir"><strong>Abrir automáticamente al entrar al portal</strong></label>
+                </div>
+                <small class="form-text text-muted">El modal se abrirá automáticamente cuando los usuarios entren al sitio</small>
+              </div>
+
+              <div class="form-group">
+                <label><strong>Frecuencia de aparición automática</strong></label>
+                <select class="form-control" [(ngModel)]="config.modal_aniversario_frecuencia" name="modal_aniversario_frecuencia">
+                  <option value="siempre">Siempre (cada vez que entran)</option>
+                  <option value="una_vez_por_sesion">Una vez por sesión (hasta cerrar navegador)</option>
+                  <option value="una_vez_por_dia">Una vez por día</option>
+                </select>
+                <small class="form-text text-muted">Controla con qué frecuencia se muestra automáticamente el modal</small>
+              </div>
+
+              <div class="form-group">
+                <label><strong>Tiempo de espera antes de abrir (milisegundos)</strong></label>
+                <input type="number" class="form-control" [(ngModel)]="config.modal_aniversario_delay" name="modal_aniversario_delay" min="0" max="10000" step="100">
+                <small class="form-text text-muted">Espera este tiempo antes de mostrar el modal (1000ms = 1 segundo). Recomendado: 1000-3000ms</small>
+              </div>
+              <hr>
+
+              <div class="form-group">
+                <div class="custom-control custom-switch">
+                  <input type="checkbox" class="custom-control-input" id="mostrar_boton" [ngModel]="config.modal_aniversario_mostrar_boton === '1'" (ngModelChange)="config.modal_aniversario_mostrar_boton = $event ? '1' : '0'" name="modal_aniversario_mostrar_boton">
+                  <label class="custom-control-label" for="mostrar_boton"><strong>Mostrar botón flotante</strong></label>
+                </div>
+                <small class="form-text text-muted">Muestra un botón flotante en la esquina inferior derecha para abrir el modal</small>
+              </div>
+
+              <div class="form-group">
+                <label><strong>Título del Modal</strong></label>
+                <input type="text" class="form-control" [(ngModel)]="config.modal_aniversario_titulo" name="modal_aniversario_titulo">
+                <small class="form-text text-muted">El título que aparece en la parte superior del modal</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header bg-info text-white">
+              <h3 class="card-title"><i class="fas fa-palette mr-1"></i>Apariencia del Modal</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label><strong>Modo de visualización</strong></label>
+                <div class="row mt-2">
+                  <div class="col-md-6">
+                    <div class="card" [class.border-primary]="config.modal_aniversario_mostrar_texto === '1'" style="cursor:pointer" (click)="config.modal_aniversario_mostrar_texto = '1'">
+                      <div class="card-body text-center p-3">
+                        <i class="fas fa-image fa-2x mb-2 text-primary"></i>
+                        <i class="fas fa-plus mx-2 text-muted"></i>
+                        <i class="fas fa-align-left fa-2x mb-2 text-primary"></i>
+                        <h6 class="mb-1">Imagen + Texto</h6>
+                        <small class="text-muted">Muestra título, descripción y fecha de cada foto</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card" [class.border-primary]="config.modal_aniversario_mostrar_texto === '0'" style="cursor:pointer" (click)="config.modal_aniversario_mostrar_texto = '0'">
+                      <div class="card-body text-center p-3">
+                        <i class="fas fa-image fa-3x mb-2 text-success"></i>
+                        <h6 class="mb-1">Solo Imagen</h6>
+                        <small class="text-muted">Modal limpio, solo muestra las fotos</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label><strong>Intensidad del fondo oscuro</strong> ({{ config.modal_aniversario_backdrop_opacity }}%)</label>
+                <input type="range" class="custom-range" min="50" max="95" step="5" [(ngModel)]="config.modal_aniversario_backdrop_opacity" name="modal_aniversario_backdrop_opacity">
+                <small class="form-text text-muted">Qué tan oscuro se ve el fondo cuando el modal está abierto</small>
+              </div>
+
+              <div class="form-group">
+                <label><strong>Tamaño del modal</strong> ({{ config.modal_aniversario_tamano }}% de la ventana)</label>
+                <input type="range" class="custom-range" min="50" max="95" step="5" [(ngModel)]="config.modal_aniversario_tamano" name="modal_aniversario_tamano">
+                <small class="form-text text-muted">Proporción del modal respecto a la ventana del navegador. Recomendado: 60-75%</small>
+              </div>
+
+              <div class="form-group">
+                <label><strong>Suavidad de la animación</strong> ({{ config.modal_aniversario_transicion }} ms)</label>
+                <select class="form-control" [(ngModel)]="config.modal_aniversario_transicion" name="modal_aniversario_transicion">
+                  <option value="400">Rápida (400 ms)</option>
+                  <option value="500">Normal (500 ms)</option>
+                  <option value="600">Suave (600 ms)</option>
+                  <option value="800">Muy suave (800 ms)</option>
+                  <option value="1000">Extra suave (1 s)</option>
+                </select>
+                <small class="form-text text-muted">Duración de la transición entre fotos del carrusel</small>
+              </div>
+
+              <div class="form-group">
+                <label><strong>Intervalo del carrusel (milisegundos)</strong></label>
+                <select class="form-control" [(ngModel)]="config.modal_aniversario_intervalo" name="modal_aniversario_intervalo">
+                  <option value="3000">3 segundos</option>
+                  <option value="4000">4 segundos</option>
+                  <option value="5000">5 segundos</option>
+                  <option value="6000">6 segundos</option>
+                  <option value="8000">8 segundos</option>
+                  <option value="0">Manual (sin auto-avance)</option>
+                </select>
+                <small class="form-text text-muted">Tiempo que se muestra cada foto antes de pasar a la siguiente</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header bg-success text-white">
+              <h3 class="card-title"><i class="fas fa-save mr-1"></i>Guardar Cambios</h3>
+            </div>
+            <div class="card-body">
+              <button type="submit" class="btn btn-success btn-block btn-lg" [disabled]="saving">
+                <i class="fas fa-save mr-1"></i>{{ saving ? 'Guardando...' : 'Guardar Configuración' }}
+              </button>
+              <a routerLink="/gestor-contenidos/fotos-aniversario" class="btn btn-secondary btn-block mt-2">
+                <i class="fas fa-arrow-left mr-1"></i>Volver a Fotos
+              </a>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header bg-secondary">
+              <h3 class="card-title"><i class="fas fa-chart-bar mr-1"></i>Estadísticas</h3>
+            </div>
+            <div class="card-body">
+              <p class="mb-1"><strong>Fotos activas:</strong> {{ fotosActivas }}</p>
+              <div class="alert alert-warning mt-3 mb-0" *ngIf="fotosActivas === 0">
+                <small><i class="fas fa-exclamation-triangle mr-1"></i>No hay fotos activas. <a routerLink="/gestor-contenidos/fotos-aniversario">Agrega fotos</a> antes de activar el modal.</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>

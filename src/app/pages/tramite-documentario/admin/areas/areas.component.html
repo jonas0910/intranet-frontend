@@ -1,0 +1,321 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0"><i class="fas fa-sitemap mr-2"></i>Áreas de Trámite</h1>
+        <small class="text-muted">Jerarquía según organigrama (clic en +/− para expandir/colapsar)</small>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/tramite-documentario/dashboard">Trámites</a></li>
+          <li class="breadcrumb-item active">Áreas</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Lista de Áreas <span class="badge badge-info">{{ totalFiltered }}</span></h3>
+        <div class="card-tools d-flex align-items-center flex-wrap gap-2">
+          <div class="input-group input-group-sm" style="max-width: 220px;">
+            <div class="input-group-prepend"><span class="input-group-text"><i class="fas fa-search"></i></span></div>
+            <input type="text" class="form-control" placeholder="Buscar por nombre, código..." [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()">
+          </div>
+          <small class="text-muted"><i class="fas fa-arrows-alt"></i> Arrastre una fila para reordenar</small>
+          <button type="button" class="btn btn-sm btn-outline-secondary mr-1" (click)="expandirTodo()" title="Expandir todo">
+            <i class="fas fa-plus-square"></i> Expandir todo
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary mr-1" (click)="colapsarTodo()" title="Colapsar todo">
+            <i class="fas fa-minus-square"></i> Colapsar todo
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" (click)="abrirNuevo()">
+            <i class="fas fa-plus"></i> Nueva Área
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table #tablaAreas id="tablaAreas" class="table table-bordered table-hover mb-0">
+            <thead class="thead-dark">
+              <tr>
+                <th style="width: 32px" class="text-center"></th>
+                <th style="width: 44px" class="text-center"></th>
+                <th style="width: 1%">Nivel</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Usuarios</th>
+                <th>Email</th>
+                <th>Trámites</th>
+                <th>Estado</th>
+                <th width="130">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="loading"><td colspan="11" class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></td></tr>
+              <tr *ngIf="!loading && totalFiltered === 0"><td colspan="11" class="text-center py-4 text-muted"><i class="fas fa-search mr-1"></i>No se encontraron áreas</td></tr>
+              <ng-container *ngFor="let item of getCurrentPageItems()">
+                <tr *ngIf="!loading"
+                    class="fila-area"
+                    [class.fila-hija]="esHija(item)"
+                    [attr.data-area-id]="item.area.id"
+                    [attr.data-parent-id]="item.parent_id ?? ''"
+                    [attr.data-orden]="item.area.orden"
+                    [attr.data-nivel]="item.nivel">
+                  <td class="text-center align-middle drag-handle" title="Arrastrar para reordenar" draggable="true">
+                    <i class="fas fa-grip-vertical text-muted"></i>
+                  </td>
+                  <td class="text-center">
+                    <button *ngIf="item.has_children" type="button" class="btn btn-sm btn-outline-secondary btn-toggle p-0" style="width:28px;height:28px;line-height:1" (click)="toggleExpand(item)" title="Expandir / Colapsar">
+                      <i class="fas" [ngClass]="expandidos.has(item.area.id) ? 'fa-minus' : 'fa-plus'"></i>
+                    </button>
+                    <span *ngIf="!item.has_children" class="text-muted">—</span>
+                  </td>
+                  <td class="text-center">
+                    <span *ngIf="item.nivel === 0" class="badge badge-primary" title="Raíz / Nivel 0">0</span>
+                    <span *ngIf="item.nivel > 0" class="badge badge-light" title="Nivel {{ item.nivel }}">{{ item.nivel }}</span>
+                  </td>
+                  <td><span class="badge badge-secondary">{{ item.area.codigo }}</span></td>
+                  <td>
+                    <span [style.padding-left.px]="item.nivel * 20" style="display: inline-block;">
+                      <i *ngIf="item.nivel > 0" class="fas fa-level-up-alt fa-rotate-90 text-muted mr-1"></i>
+                      <strong>{{ item.area.nombre }}</strong>
+                    </span>
+                  </td>
+                  <td><small class="text-muted">{{ (item.area.descripcion | slice:0:50) || '-' }}</small></td>
+                  <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-info" (click)="abrirUsuarios(item.area)" title="Gestionar Usuarios">
+                      <i class="fas fa-users"></i>
+                      <span class="badge badge-info">{{ item.area.usuarios_count ?? 0 }}</span>
+                    </button>
+                  </td>
+                  <td><small>{{ item.area.email || '-' }}</small></td>
+                  <td class="text-center">
+                    <span class="badge" [ngClass]="(item.area.tramites_actuales_count || 0) > 0 ? 'badge-warning' : 'badge-success'">
+                      {{ item.area.tramites_actuales_count ?? 0 }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <span *ngIf="item.area.activo" class="badge badge-success">Activo</span>
+                    <span *ngIf="!item.area.activo" class="badge badge-danger">Inactivo</span>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <button type="button" class="btn btn-info" (click)="abrirUsuarios(item.area)" title="Gestionar Usuarios">
+                        <i class="fas fa-users"></i>
+                      </button>
+                      <button type="button" class="btn btn-primary" (click)="abrirEditar(item.area)" title="Editar">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="btn btn-success btn-subarea" (click)="abrirNuevo(item.area.id); $event.stopPropagation()" title="Nueva subárea">
+                        <i class="fas fa-level-up-alt fa-rotate-90"></i>
+                      </button>
+                      <button type="button" class="btn btn-danger" (click)="eliminar(item.area); $event.stopPropagation()" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                      <button *ngIf="!item.area.es_mesa_partes" type="button" class="btn btn-outline-success" (click)="establecerMesaPartes(item.area.id); $event.stopPropagation()" title="Establecer como Mesa de Partes">
+                        <i class="fas fa-stamp"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="!loading && totalFiltered > 0" class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2 py-2">
+          <small class="text-muted">
+            Mostrando {{ (currentPage - 1) * pageSize + 1 }}-{{ min((currentPage) * pageSize, totalFiltered) }} de {{ totalFiltered }}
+          </small>
+          <nav>
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item" [class.disabled]="currentPage <= 1">
+                <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage - 1)"><i class="fas fa-chevron-left"></i></a>
+              </li>
+              <ng-container *ngFor="let p of getPageNumbers()">
+                <li *ngIf="p !== '...'" class="page-item" [class.active]="currentPage === p">
+                  <a class="page-link" href="javascript:void(0)" (click)="goToPage($any(p))">{{ p }}</a>
+                </li>
+                <li *ngIf="p === '...'" class="page-item disabled"><span class="page-link">…</span></li>
+              </ng-container>
+              <li class="page-item" [class.disabled]="currentPage >= totalPages">
+                <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage + 1)"><i class="fas fa-chevron-right"></i></a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Crear Área -->
+<div class="modal fade" [class.show]="showModalCrear" [style.display]="showModalCrear ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fas fa-plus mr-2"></i>Nueva Área</h5><button class="close text-white" (click)="showModalCrear=false">&times;</button></div>
+    <div class="modal-body">
+      <div class="alert alert-info py-2 mb-2" *ngIf="form.parent_id">
+        <i class="fas fa-level-up-alt fa-rotate-90"></i>
+        <strong>Subárea bajo:</strong> {{ getNombreAreaPadre(form.parent_id) }}
+      </div>
+      <div class="row">
+        <div class="col-md-8 form-group"><label>Nombre del Área *</label><input type="text" class="form-control" [(ngModel)]="form.nombre" required></div>
+        <div class="col-md-4 form-group"><label>Código *</label><input type="text" class="form-control" [(ngModel)]="form.codigo" maxlength="20" style="text-transform:uppercase"></div>
+      </div>
+      <div class="form-group"><label>Descripción</label><textarea class="form-control" rows="2" [(ngModel)]="form.descripcion"></textarea></div>
+      <div class="row">
+        <div class="col-md-6 form-group"><label>Responsable</label><input type="text" class="form-control" [(ngModel)]="form.responsable"></div>
+        <div class="col-md-6 form-group"><label>Email</label><input type="email" class="form-control" [(ngModel)]="form.email"></div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 form-group"><label>Teléfono</label><input type="text" class="form-control" [(ngModel)]="form.telefono"></div>
+        <div class="col-md-6 form-group"><label>Orden</label><input type="number" class="form-control" [(ngModel)]="form.orden"></div>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-sitemap"></i> Depende de (organigrama)</label>
+        <select class="form-control" [(ngModel)]="form.parent_id">
+          <option value="">— Ninguno (área raíz) —</option>
+          <option *ngFor="let it of getArbolParaPadre([])" [ngValue]="it.area.id">{{ indent(it.nivel) }}{{ it.area.nombre }} ({{ it.area.codigo }})</option>
+        </select>
+      </div>
+      <div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="form.activo"><label class="form-check-label">Área Activa</label></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" (click)="showModalCrear=false">Cancelar</button><button class="btn btn-primary" (click)="guardar()" [disabled]="!form.nombre || !form.codigo || processing">Crear Área</button></div>
+  </div></div>
+</div>
+
+<!-- Modal Editar Área -->
+<div class="modal fade" [class.show]="showModalEditar" [style.display]="showModalEditar ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Editar Área</h5><button class="close text-white" (click)="showModalEditar=false">&times;</button></div>
+    <div class="modal-body">
+      <div class="row">
+        <div class="col-md-8 form-group"><label>Nombre del Área *</label><input type="text" class="form-control" [(ngModel)]="form.nombre" required></div>
+        <div class="col-md-4 form-group"><label>Código *</label><input type="text" class="form-control" [(ngModel)]="form.codigo" maxlength="20" style="text-transform:uppercase"></div>
+      </div>
+      <div class="form-group"><label>Descripción</label><textarea class="form-control" rows="2" [(ngModel)]="form.descripcion"></textarea></div>
+      <div class="row">
+        <div class="col-md-6 form-group"><label>Responsable</label><input type="text" class="form-control" [(ngModel)]="form.responsable"></div>
+        <div class="col-md-6 form-group"><label>Email</label><input type="email" class="form-control" [(ngModel)]="form.email"></div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 form-group"><label>Teléfono</label><input type="text" class="form-control" [(ngModel)]="form.telefono"></div>
+        <div class="col-md-6 form-group"><label>Orden</label><input type="number" class="form-control" [(ngModel)]="form.orden"></div>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-sitemap"></i> Depende de (organigrama)</label>
+        <select class="form-control" [(ngModel)]="form.parent_id">
+          <option value="">— Ninguno (área raíz) —</option>
+          <option *ngFor="let it of getArbolParaEditar()" [ngValue]="it.area.id">{{ indent(it.nivel) }}{{ it.area.nombre }} ({{ it.area.codigo }})</option>
+        </select>
+        <small class="text-muted">No se listan esta área ni sus dependientes.</small>
+      </div>
+      <div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="form.activo"><label class="form-check-label">Área Activa</label></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" (click)="showModalEditar=false">Cancelar</button><button class="btn btn-primary" (click)="guardar()" [disabled]="!form.nombre || !form.codigo || processing">Guardar Cambios</button></div>
+  </div></div>
+</div>
+
+<!-- Modal Gestionar Usuarios -->
+<div class="modal fade" [class.show]="showModalUsuarios" [style.display]="showModalUsuarios ? 'block' : 'none'">
+  <div class="modal-dialog modal-xl"><div class="modal-content">
+    <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fas fa-users mr-2"></i>Usuarios del Área: {{ areaUsuarios?.nombre }}</h5><button class="close text-white" (click)="showModalUsuarios=false">&times;</button></div>
+    <div class="modal-body">
+      <div class="card card-success mb-3">
+        <div class="card-header py-2"><h6 class="mb-0"><i class="fas fa-user-plus"></i> Asignar Usuario</h6></div>
+        <div class="card-body py-2">
+          <div *ngIf="usuariosDisponibles.length > 0" class="form-inline flex-wrap">
+            <div class="form-group mr-2 mb-1">
+              <select class="form-control form-control-sm" [(ngModel)]="formAsignar.user_id" style="min-width: 200px;">
+                <option value="">-- Seleccionar usuario --</option>
+                <option *ngFor="let u of usuariosDisponibles" [ngValue]="u.id">{{ u.name }} ({{ u.email }})</option>
+              </select>
+            </div>
+            <div class="form-group mr-2 mb-1 form-check">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="formAsignar.es_responsable">
+              <label class="form-check-label">Responsable</label>
+            </div>
+            <button type="button" class="btn btn-success btn-sm mb-1" (click)="asignarUsuario()" [disabled]="!formAsignar.user_id">
+              <i class="fas fa-user-plus"></i> Asignar
+            </button>
+          </div>
+          <p *ngIf="usuariosDisponibles.length === 0" class="text-muted mb-0 small">Todos los usuarios ya están asignados a esta área.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header py-2"><h6 class="mb-0"><i class="fas fa-users"></i> Usuarios asignados <span class="badge badge-info">{{ usuariosArea.length }}</span></h6></div>
+        <div class="card-body p-0">
+          <div *ngIf="usuariosArea.length > 0" class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+              <thead class="thead-light"><tr><th>Usuario</th><th class="text-center">Responsable</th><th class="text-center">Permisos</th><th class="text-center">Estado</th><th class="text-center">Acciones</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let u of usuariosArea">
+                  <td><strong>{{ u.name }}</strong><i *ngIf="u.es_responsable" class="fas fa-star text-warning ml-1"></i><br><small class="text-muted">{{ u.email }}</small></td>
+                  <td class="text-center"><span class="badge" [ngClass]="u.es_responsable ? 'badge-warning' : 'badge-secondary'">{{ u.es_responsable ? 'Sí' : 'No' }}</span></td>
+                  <td class="text-center">
+                    <span *ngIf="u.puede_recibir" class="badge badge-info mr-1">Recibir</span>
+                    <span *ngIf="u.puede_derivar" class="badge badge-primary mr-1">Derivar</span>
+                    <span *ngIf="u.puede_atender" class="badge badge-success">Atender</span>
+                  </td>
+                  <td class="text-center"><span class="badge" [ngClass]="u.activo ? 'badge-success' : 'badge-danger'">{{ u.activo ? 'Activo' : 'Inactivo' }}</span></td>
+                  <td class="text-center">
+                    <button type="button" class="btn btn-xs btn-info mr-1" (click)="abrirEditarUsuario(u)"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-xs btn-danger" (click)="desasignarUsuario(u.id)"><i class="fas fa-user-minus"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="usuariosArea.length === 0" class="text-center text-muted py-4">
+            <i class="fas fa-users fa-2x mb-2"></i>
+            <p class="mb-0">No hay usuarios asignados. Use el formulario de arriba para asignar.</p>
+          </div>
+        </div>
+      </div>
+      <div class="mt-2">
+        <a class="btn btn-outline-primary btn-sm" (click)="irUsuariosPage(areaUsuarios?.id); showModalUsuarios=false">
+          <i class="fas fa-external-link-alt"></i> Ver página completa de usuarios
+        </a>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- Modal Editar Usuario (inline en modal usuarios) -->
+<div *ngIf="formEditarUsuario" class="modal fade show" style="display:block" (click)="formEditarUsuario=null">
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header py-2 bg-info text-white"><h6 class="modal-title">Editar: {{ formEditarUsuario?.name }}</h6><button type="button" class="close text-white" (click)="formEditarUsuario=null">&times;</button></div>
+      <div class="modal-body py-2">
+        <div class="form-check mb-1"><input type="checkbox" class="form-check-input" [(ngModel)]="formEditarUsuario.es_responsable"><label class="form-check-label">Responsable</label></div>
+        <div class="form-check mb-1"><input type="checkbox" class="form-check-input" [(ngModel)]="formEditarUsuario.puede_recibir"><label class="form-check-label">Puede Recibir</label></div>
+        <div class="form-check mb-1"><input type="checkbox" class="form-check-input" [(ngModel)]="formEditarUsuario.puede_derivar"><label class="form-check-label">Puede Derivar</label></div>
+        <div class="form-check mb-1"><input type="checkbox" class="form-check-input" [(ngModel)]="formEditarUsuario.puede_atender"><label class="form-check-label">Puede Atender</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input" [(ngModel)]="formEditarUsuario.activo"><label class="form-check-label">Activo en área</label></div>
+      </div>
+      <div class="modal-footer py-2"><button type="button" class="btn btn-secondary btn-sm" (click)="formEditarUsuario=null">Cancelar</button><button type="button" class="btn btn-info btn-sm" (click)="guardarUsuario()"><i class="fas fa-save"></i> Guardar</button></div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="formEditarUsuario" (click)="formEditarUsuario=null"></div>
+
+<!-- Modal Eliminar con expedientes -->
+<div class="modal fade" [class.show]="showModalEliminarExpedientes" [style.display]="showModalEliminarExpedientes ? 'block' : 'none'">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header bg-warning"><h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Advertencia</h5><button class="close" (click)="showModalEliminarExpedientes=false">&times;</button></div>
+    <div class="modal-body">
+      <p *ngIf="areaEliminarPendiente">El área <strong>{{ areaEliminarPendiente.nombre }}</strong> tiene <strong>{{ areaEliminarPendiente.expedientes }}</strong> expediente(s).</p>
+      <p class="text-danger mb-0">Al eliminar el área, <strong>también se eliminarán todos los expedientes</strong> asociados (área actual o de origen). Esta acción no se puede deshacer.</p>
+      <p class="mt-2 mb-0">¿Desea continuar?</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="showModalEliminarExpedientes=false">Cancelar</button>
+      <button type="button" class="btn btn-danger" (click)="confirmarEliminarConExpedientes()"><i class="fas fa-trash"></i> Sí, eliminar área y expedientes</button>
+    </div>
+  </div></div>
+</div>
+
+<div class="modal-backdrop fade show" *ngIf="showModalCrear || showModalEditar || showModalUsuarios || showModalEliminarExpedientes" (click)="showModalCrear=false; showModalEditar=false; showModalUsuarios=false; showModalEliminarExpedientes=false"></div>

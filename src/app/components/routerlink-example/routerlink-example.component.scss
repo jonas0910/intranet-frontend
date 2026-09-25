@@ -1,0 +1,70 @@
+// Estilos para el componente de ejemplo routerLink
+
+.card {
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.list-group-item {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background-color: rgba(0,123,255,0.1);
+  }
+}
+
+.btn {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+pre {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  
+  code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+}
+
+code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+// Mejoras responsivas
+@media (max-width: 768px) {
+  .card-body pre {
+    font-size: 0.75rem;
+  }
+  
+  .btn-group-vertical .btn {
+    margin-bottom: 0.5rem;
+  }
+}
+
+// Animaciones suaves
+.list-group-item,
+.btn,
+.card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,46 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0"><i class="fas fa-folder-open mr-2"></i>Mis Casos</h1></div>
+      <div class="col-sm-6"><ol class="breadcrumb float-sm-right"><li class="breadcrumb-item"><a routerLink="/asesoria-legal">Asesoría Jurídica</a></li><li class="breadcrumb-item active">Casos</li></ol></div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">{{ vistaTitulo || 'Casos legales' }} <span class="badge badge-info">{{ items.length }}</span></h3>
+        <div class="card-tools">
+          <div class="btn-group btn-group-sm">
+            <button class="btn" [ngClass]="!filtroEstado?'btn-primary':'btn-outline-secondary'" (click)="cambiarFiltro('')">Todos</button>
+            <button class="btn" [ngClass]="filtroEstado==='Pendiente Asignación'?'btn-warning':'btn-outline-secondary'" (click)="cambiarFiltro('Pendiente Asignación')">Pendientes</button>
+            <button class="btn" [ngClass]="filtroEstado==='En Proceso'?'btn-info':'btn-outline-secondary'" (click)="cambiarFiltro('En Proceso')">En Proceso</button>
+            <button class="btn" [ngClass]="filtroEstado==='En Revisión'?'btn-warning':'btn-outline-secondary'" (click)="cambiarFiltro('En Revisión')">En Revisión</button>
+            <button class="btn" [ngClass]="filtroEstado==='Finalizado'?'btn-success':'btn-outline-secondary'" (click)="cambiarFiltro('Finalizado')">Finalizados</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div *ngIf="loading" class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div>
+        <div *ngIf="!loading && items.length === 0" class="text-center py-5 text-muted"><i class="fas fa-folder-open fa-3x mb-3"></i><p>No hay casos</p></div>
+        <table *ngIf="!loading && items.length > 0" class="table table-hover mb-0">
+          <thead class="thead-light"><tr><th>N° Legal</th><th>Exp. STD</th><th>Asunto</th><th>Solicitante</th><th>Abogado</th><th>Estado</th><th>Límite</th><th width="80"></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let s of items" [class.table-warning]="diasRestantes(s.asignacion_fecha_limite) !== null && diasRestantes(s.asignacion_fecha_limite)! <= 2">
+              <td><a [routerLink]="['/asesoria-legal/casos', s.id]"><strong>{{ s.numero_expediente_legal }}</strong></a></td>
+              <td><small>{{ s.numero_expediente_std || '-' }}</small></td>
+              <td class="text-truncate" style="max-width:200px" [title]="s.asunto">{{ s.asunto }}</td>
+              <td><small>{{ s.solicitante_nombre || '-' }}</small></td>
+              <td><small>{{ s.abogado_nombre || '-' }}</small></td>
+              <td><span class="badge" [ngClass]="getEstadoClass(s.estado)">{{ s.estado }}</span></td>
+              <td><small>{{ s.asignacion_fecha_limite | date:'dd/MM/yyyy' }}</small><span *ngIf="diasRestantes(s.asignacion_fecha_limite) !== null" class="badge badge-danger ml-1">{{ diasRestantes(s.asignacion_fecha_limite) }}d</span></td>
+              <td><a [routerLink]="['/asesoria-legal/casos', s.id]" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

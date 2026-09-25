@@ -1,0 +1,270 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0"><i class="fas fa-bars"></i> Constructor de Menús</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item"><a routerLink="/gestor-contenidos/menus">Menús</a></li>
+          <li class="breadcrumb-item active">Constructor de Menús</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Panel Izquierdo: Menús Disponibles -->
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-sitemap"></i> Estructura del Menú</h3>
+            <div class="card-tools">
+              <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-primary" (click)="expandAll()">
+                  <i class="fas fa-expand"></i> Expandir Todo
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" (click)="collapseAll()">
+                  <i class="fas fa-compress"></i> Contraer Todo
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- Tabs para diferentes ubicaciones -->
+            <ul class="nav nav-tabs mb-3" role="tablist">
+              <li class="nav-item" *ngFor="let tab of tabs">
+                <a class="nav-link" [class.active]="activeTab === tab.key"
+                   (click)="activeTab = tab.key; nuevoItem.ubicacion = tab.key" style="cursor: pointer">
+                  <i [class]="tab.icon"></i> {{ tab.label }}
+                </a>
+              </li>
+            </ul>
+
+            <!-- Loading -->
+            <div *ngIf="cargando" class="text-center py-4">
+              <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+              <p class="mt-2 text-muted">Cargando estructura de menús...</p>
+            </div>
+
+            <!-- Tab content -->
+            <div *ngIf="!cargando">
+              <!-- Nestable container -->
+              <div class="dd" [id]="'nestable-' + activeTab">
+                <ng-container *ngIf="getMenusActivos().length === 0">
+                  <div class="dd-empty">
+                    <p class="text-center text-muted py-3 mb-0">
+                      <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                      No hay elementos en este menú. Agrega uno desde el panel derecho.
+                    </p>
+                  </div>
+                </ng-container>
+                <ol class="dd-list" *ngIf="getMenusActivos().length > 0">
+                  <ng-container *ngFor="let item of getMenusActivos()">
+                    <ng-container *ngTemplateOutlet="menuItemTpl; context: { $implicit: item, depth: 0, parentList: getMenusActivos() }"></ng-container>
+                  </ng-container>
+                </ol>
+              </div>
+
+              <button type="button" class="btn btn-success mt-3" (click)="guardarOrden()"
+                      [disabled]="guardando || cargando || getMenusActivos().length === 0">
+                <i class="fas" [ngClass]="guardando ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                {{ guardando ? 'Guardando...' : 'Guardar Orden' }}
+              </button>
+            </div>
+
+            <div class="alert alert-info mt-3">
+              <i class="fas fa-info-circle"></i>
+              <strong>Instrucciones:</strong> Arrastra y suelta los elementos para reorganizarlos.
+              Puedes crear submenús arrastrando un elemento sobre otro.
+              Haz click en los botones para editar o eliminar.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Derecho: Agregar Nuevo Item -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-primary">
+            <h3 class="card-title text-white">
+              <i class="fas fa-plus-circle"></i> Agregar Ítem de Menú
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Nombre del Menú <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="nuevoItem.nombre"
+                     placeholder="Ej: Servicios" required>
+            </div>
+
+            <div class="form-group">
+              <label>Ubicación <span class="text-danger">*</span></label>
+              <select class="form-control" [(ngModel)]="nuevoItem.ubicacion">
+                <option value="principal">Menú Principal</option>
+                <option value="footer">Menú Footer</option>
+                <option value="lateral">Menú Lateral</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Tipo de Enlace</label>
+              <select class="form-control" [(ngModel)]="nuevoItem.tipo" (change)="onTipoChange()">
+                <option value="interno">Página Interna</option>
+                <option value="externo">URL Externa</option>
+                <option value="custom">URL Personalizada</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="nuevoItem.tipo === 'interno'">
+              <label>Página Interna</label>
+              <select class="form-control" [(ngModel)]="nuevoItem.pagina_id">
+                <option [ngValue]="null">-- Seleccionar --</option>
+                <option *ngFor="let p of paginas" [ngValue]="p.id">{{ p.titulo }}</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="nuevoItem.tipo !== 'interno'">
+              <label>URL</label>
+              <input type="text" class="form-control" [(ngModel)]="nuevoItem.url" placeholder="https://...">
+            </div>
+
+            <div class="form-group">
+              <label>Icono (Font Awesome)</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">
+                    <i [class]="nuevoItem.icono || 'fas fa-link'"></i>
+                  </span>
+                </div>
+                <input type="text" class="form-control" [(ngModel)]="nuevoItem.icono"
+                       placeholder="fas fa-home">
+              </div>
+              <small class="text-muted">Busca iconos en: <a href="https://fontawesome.com/icons" target="_blank">fontawesome.com/icons</a></small>
+            </div>
+
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="activo" [(ngModel)]="nuevoItem.activo">
+                <label class="custom-control-label" for="activo">Activo</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="nueva_ventana"
+                       [(ngModel)]="nuevoItem.abrir_nueva_ventana">
+                <label class="custom-control-label" for="nueva_ventana">Abrir en nueva ventana</label>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-block" (click)="agregarItem()"
+                    [disabled]="!nuevoItem.nombre.trim()">
+              <i class="fas fa-plus"></i> Agregar al Menú
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header bg-info">
+            <h3 class="card-title text-white">
+              <i class="fas fa-info-circle"></i> Ayuda Rápida
+            </h3>
+          </div>
+          <div class="card-body">
+            <h6><i class="fas fa-mouse-pointer"></i> Arrastrar y Soltar:</h6>
+            <p class="small">Arrastra los elementos para reorganizarlos o crear submenús.</p>
+
+            <h6><i class="fas fa-layer-group"></i> Crear Submenús:</h6>
+            <p class="small">Arrastra un elemento sobre otro para convertirlo en hijo (submenú).</p>
+
+            <h6><i class="fas fa-save"></i> Guardar Cambios:</h6>
+            <p class="small">Recuerda hacer click en "Guardar Orden" después de reorganizar.</p>
+
+            <h6><i class="fas fa-eye"></i> Vista Previa:</h6>
+            <p class="small">Ve cómo se ve el menú en la página principal después de guardar.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Recursive template for menu items -->
+<ng-template #menuItemTpl let-item let-depth="depth" let-parentList="parentList">
+  <li class="dd-item dd3-item"
+      [attr.data-id]="item.id"
+      draggable="true"
+      (dragstart)="onDragStart($event, item, parentList)"
+      (dragend)="onDragEnd($event)"
+      (dragover)="onDragOver($event, item)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event, item, parentList, false)">
+
+    <div class="dd-handle dd3-handle"
+         (drop)="onDrop($event, item, parentList, true)"
+         (dragover)="onDragOver($event, item)">
+    </div>
+
+    <div class="dd3-content" [class.dd-dragover]="dragOverId === item.id">
+      <span class="menu-label">
+        <i *ngIf="item.icono" [class]="item.icono"></i>
+        {{ item.nombre }}
+      </span>
+      <span class="menu-url"><code>{{ item.url || '#' }}</code></span>
+      <span class="badge menu-badge" [ngClass]="item.activo ? 'badge-success' : 'badge-danger'">
+        {{ item.activo ? 'Activo' : 'Inactivo' }}
+      </span>
+      <div class="menu-actions">
+        <button class="btn btn-sm btn-info" (click)="editarMenu(item.id)" title="Editar">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-sm btn-warning" (click)="toggleEstado(item)" title="Cambiar estado">
+          <i class="fas fa-toggle-on"></i>
+        </button>
+        <button class="btn btn-sm btn-danger" (click)="eliminarMenu(item)" title="Eliminar">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+
+      <button *ngIf="item.children && item.children.length > 0" class="dd-collapse-btn"
+              (click)="toggleExpand(item.id); $event.stopPropagation()">
+        <i class="fas" [ngClass]="isExpanded(item.id) ? 'fa-minus' : 'fa-plus'"></i>
+      </button>
+    </div>
+
+    <ol class="dd-list" *ngIf="item.children && item.children.length > 0 && isExpanded(item.id)">
+      <ng-container *ngFor="let child of item.children">
+        <ng-container *ngTemplateOutlet="menuItemTpl; context: { $implicit: child, depth: depth + 1, parentList: item.children }"></ng-container>
+      </ng-container>
+    </ol>
+  </li>
+</ng-template>
+
+<!-- Nestable Styles -->
+<style>
+.dd { position: relative; display: block; margin: 0; padding: 0; list-style: none; font-size: 14px; line-height: 20px; }
+.dd-list { display: block; position: relative; margin: 0; padding: 0; list-style: none; }
+.dd-list .dd-list { padding-left: 30px; }
+.dd-item, .dd-empty, .dd-placeholder { display: block; position: relative; margin: 0; padding: 0; min-height: 20px; line-height: 20px; }
+.dd-empty { border: 1px dashed #bbb; min-height: 100px; background-color: #f5f5f5; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.dd-placeholder { margin: 5px 0; padding: 0; min-height: 30px; background: #f2fbff; border: 1px dashed #b6bcbf; box-sizing: border-box; }
+.dd3-content { display: block; margin: 5px 0; padding: 10px 15px 10px 45px; color: #333; text-decoration: none; border: 1px solid #e5e5e5; background: #fafafa; border-radius: 3px; box-sizing: border-box; position: relative; }
+.dd3-content:hover { background: #f0f0f0; border-color: #d0d0d0; }
+.dd3-content.dd-dragover { background: #e3f2fd; border-color: #2196f3; border-style: dashed; }
+.dd3-handle { position: absolute; margin: 0; left: 0; top: 0; cursor: move; width: 35px; height: 100%; padding: 10px; background: #007bff; border-radius: 3px 0 0 3px; color: white; z-index: 2; display: flex; align-items: center; justify-content: center; }
+.dd3-handle:hover { background: #0056b3; }
+.dd3-handle::before { content: '≡'; font-size: 20px; color: white; }
+.dd-dragging { opacity: 0.5; }
+.menu-actions { float: right; }
+.menu-actions .btn { padding: 2px 8px; font-size: 12px; margin-left: 2px; }
+.menu-label { font-weight: 600; margin-right: 10px; }
+.menu-url { font-size: 11px; color: #6c757d; margin-left: 5px; }
+.menu-badge { font-size: 10px; margin-left: 5px; }
+.dd-collapse-btn { position: absolute; right: -25px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; font-size: 10px; width: 20px; height: 20px; padding: 0; line-height: 20px; text-align: center; }
+.dd-collapse-btn:hover { color: #333; }
+</style>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Almacenamiento de Patrones</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { margin: 5px; padding: 8px 15px; border: none; border-radius: 3px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test - Almacenamiento de Patrones de Diseño</h1>
+    
+    <div class="test-section info">
+        <h3>📋 Información</h3>
+        <p>Esta página de prueba verifica que el almacenamiento de patrones en localStorage funciona correctamente.</p>
+        <p><strong>Ubicación de almacenamiento:</strong> <code>localStorage.getItem('custom_patterns')</code></p>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 Verificar Estado Actual</h3>
+        <button class="btn-primary" onclick="checkCurrentStorage()">Verificar Almacenamiento</button>
+        <button class="btn-success" onclick="clearStorage()">Limpiar Almacenamiento</button>
+        <div id="current-status"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>➕ Crear Patrón de Prueba</h3>
+        <button class="btn-primary" onclick="createTestPattern()">Crear Patrón de Prueba</button>
+        <div id="create-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Ver Patrones Almacenados</h3>
+        <button class="btn-primary" onclick="showStoredPatterns()">Mostrar Patrones</button>
+        <div id="stored-patterns"></div>
+    </div>
+
+    <script>
+        // Función para verificar el estado actual del almacenamiento
+        function checkCurrentStorage() {
+            const customPatterns = localStorage.getItem('custom_patterns');
+            const statusDiv = document.getElementById('current-status');
+            
+            if (customPatterns) {
+                try {
+                    const data = JSON.parse(customPatterns);
+                    statusDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Almacenamiento Activo</h4>
+                            <p><strong>Total de patrones:</strong> ${data.metadata?.total_patterns || 0}</p>
+                            <p><strong>Última actualización:</strong> ${data.last_updated || 'N/A'}</p>
+                            <p><strong>Patrones personalizados:</strong> ${Object.keys(data.patterns || {}).length}</p>
+                        </div>
+                    `;
+                } catch (error) {
+                    statusDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Error en Datos</h4>
+                            <p>Error al parsear datos: ${error.message}</p>
+                        </div>
+                    `;
+                }
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="info">
+                        <h4>ℹ️ Sin Datos</h4>
+                        <p>No hay patrones personalizados almacenados.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Función para limpiar el almacenamiento
+        function clearStorage() {
+            localStorage.removeItem('custom_patterns');
+            document.getElementById('current-status').innerHTML = `
+                <div class="success">
+                    <h4>✅ Almacenamiento Limpiado</h4>
+                    <p>Los patrones personalizados han sido eliminados.</p>
+                </div>
+            `;
+        }
+
+        // Función para crear un patrón de prueba
+        function createTestPattern() {
+            const testPattern = {
+                id: 'test_sistema_' + Date.now(),
+                nombre: 'Sistema de Prueba',
+                codigo: 'TEST',
+                descripcion: 'Sistema de prueba para verificar el almacenamiento',
+                categoria: 'gestión_interna',
+                prioridad: 'media',
+                estado_default: true,
+                keywords: ['prueba', 'test', 'verificación'],
+                sso_config: {
+                    habilitado: false,
+                    force: false,
+                    provider: 'saml2'
+                },
+                menus: [
+                    {
+                        id: 'menu_test_1',
+                        nombre: 'Menú de Prueba',
+                        codigo: 'TEST_MENU',
+                        descripcion: 'Menú de prueba',
+                        icono: 'fas fa-cog',
+                        orden: 1,
+                        estado_default: true,
+                        keywords: ['menú', 'prueba'],
+                        permisos_requeridos: ['test.view'],
+                        submenus: []
+                    }
+                ],
+                configuracion: {
+                    url_base: 'https://test.example.com',
+                    timeout: 30000,
+                    retry_attempts: 3,
+                    cache_enabled: true
+                }
+            };
+
+            // Crear estructura de datos completa
+            const patternFile = {
+                version: '1.0.0',
+                description: 'Patrones de diseño para sistemas externos',
+                last_updated: new Date().toISOString(),
+                patterns: {
+                    [testPattern.id]: testPattern
+                },
+                metadata: {
+                    total_patterns: 1,
+                    categorias: ['gestión_interna'],
+                    prioridades: ['media'],
+                    providers_sso: ['saml2'],
+                    iconos_disponibles: ['fas fa-cog']
+                }
+            };
+
+            // Guardar en localStorage
+            localStorage.setItem('custom_patterns', JSON.stringify(patternFile));
+            
+            document.getElementById('create-result').innerHTML = `
+                <div class="success">
+                    <h4>✅ Patrón Creado</h4>
+                    <p><strong>ID:</strong> ${testPattern.id}</p>
+                    <p><strong>Nombre:</strong> ${testPattern.nombre}</p>
+                    <p><strong>Categoría:</strong> ${testPattern.categoria}</p>
+                    <p><strong>Prioridad:</strong> ${testPattern.prioridad}</p>
+                </div>
+            `;
+        }
+
+        // Función para mostrar patrones almacenados
+        function showStoredPatterns() {
+            const customPatterns = localStorage.getItem('custom_patterns');
+            const patternsDiv = document.getElementById('stored-patterns');
+            
+            if (customPatterns) {
+                try {
+                    const data = JSON.parse(customPatterns);
+                    const patterns = data.patterns || {};
+                    
+                    let html = '<div class="success"><h4>📋 Patrones Almacenados</h4>';
+                    
+                    if (Object.keys(patterns).length === 0) {
+                        html += '<p>No hay patrones personalizados almacenados.</p>';
+                    } else {
+                        html += '<ul>';
+                        Object.entries(patterns).forEach(([id, pattern]) => {
+                            html += `
+                                <li>
+                                    <strong>${pattern.nombre}</strong> (${id})
+                                    <br><small>Categoría: ${pattern.categoria} | Prioridad: ${pattern.prioridad}</small>
+                                </li>
+                            `;
+                        });
+                        html += '</ul>';
+                    }
+                    
+                    html += '</div>';
+                    patternsDiv.innerHTML = html;
+                } catch (error) {
+                    patternsDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Error</h4>
+                            <p>Error al leer patrones: ${error.message}</p>
+                        </div>
+                    `;
+                }
+            } else {
+                patternsDiv.innerHTML = `
+                    <div class="info">
+                        <h4>ℹ️ Sin Datos</h4>
+                        <p>No hay patrones personalizados almacenados.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Verificar estado inicial
+        checkCurrentStorage();
+    </script>
+</body>
+</html>
